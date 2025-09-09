@@ -11,24 +11,24 @@ const Navigation = () => {
   }
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-200">
+    <nav className="bg-white card-shadow border-b" style={{ borderColor: 'var(--border-color)' }}>
       <div className="ml-64 px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <div className="text-gray-800 text-2xl font-bold">
+            <div className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
               🏊‍♂️ LA OLA Intranet
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             {/* Benutzername anzeigen */}
-            <div className="flex items-center space-x-3 px-4 py-2 bg-blue-50 rounded-lg">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--secondary-blue)' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--primary-blue)' }}>
                 <span className="text-white text-xs font-bold">
                   {currentUser?.charAt(0) || 'U'}
                 </span>
               </div>
-              <span className="text-sm font-medium text-blue-900">
+              <span className="text-sm font-medium" style={{ color: 'var(--primary-blue)' }}>
                 Willkommen, {currentUser}
               </span>
             </div>

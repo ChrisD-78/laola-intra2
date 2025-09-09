@@ -72,7 +72,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
+      <div className="gradient-bg rounded-2xl card-shadow-lg p-8 text-white">
         <h1 className="text-4xl font-bold mb-4 text-center">
           Willkommen im LA OLA Intranet
         </h1>
@@ -81,61 +81,61 @@ export default function Dashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className="card-shadow rounded-2xl p-6 hover:card-shadow-lg transition-all duration-300" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--primary-blue)' }}>
               <span className="text-2xl">📋</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Offene Aufgaben</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.open}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Offene Aufgaben</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{taskStats.open}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className="card-shadow rounded-2xl p-6 hover:card-shadow-lg transition-all duration-300" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg">
+            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--success-green)' }}>
               <span className="text-2xl">🔄</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">In Bearbeitung</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.inProgress}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>In Bearbeitung</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{taskStats.inProgress}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className="card-shadow rounded-2xl p-6 hover:card-shadow-lg transition-all duration-300" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
+            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--warning-orange)' }}>
               <span className="text-2xl">📄</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Abgeschlossen</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.completed}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Abgeschlossen</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{taskStats.completed}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className="card-shadow rounded-2xl p-6 hover:card-shadow-lg transition-all duration-300" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--accent-blue)' }}>
               <span className="text-2xl">🎓</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Gesamt Aufgaben</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.total}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Gesamt Aufgaben</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{taskStats.total}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Aktuelle Informationen */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
+      <div className="card-shadow rounded-2xl" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
           <div className="flex items-center justify-between">
             <div className="flex-1"></div>
-            <h2 className="text-2xl font-bold text-gray-900 text-center">
+            <h2 className="text-2xl font-bold text-center" style={{ color: 'var(--foreground)' }}>
               Aktuelle Informationen
             </h2>
             <div className="flex-1 flex justify-end">
@@ -147,21 +147,21 @@ export default function Dashboard() {
           
           {/* Bestehende Informationen */}
           {currentInfos.map((info) => (
-            <div key={info.id} className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-              <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg mt-2 flex-shrink-0"></div>
+            <div key={info.id} className="flex items-start space-x-4 p-4 rounded-xl border" style={{ backgroundColor: 'var(--secondary-blue)', borderColor: 'var(--border-color)' }}>
+              <div className="w-3 h-3 rounded-full shadow-lg mt-2 flex-shrink-0" style={{ backgroundColor: 'var(--primary-blue)' }}></div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--primary-blue)' }}>
                   {info.title}
                 </h3>
-                <p className="text-sm text-blue-800 mb-2">
+                <p className="text-sm mb-2" style={{ color: 'var(--foreground)' }}>
                   {info.content}
                 </p>
                 <div className="flex items-center space-x-4">
-                  <span className="text-xs text-blue-600 font-medium">
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                     {info.timestamp}
                   </span>
                   {info.pdfFileName && (
-                    <span className="text-xs text-blue-600 font-medium">
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                       📄 {info.pdfFileName}
                     </span>
                   )}
@@ -171,7 +171,10 @@ export default function Dashboard() {
                 {info.pdfFile && (
                   <button
                     onClick={() => downloadPdf(info)}
-                    className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                    className="transition-colors p-1"
+                    style={{ color: 'var(--primary-blue)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-blue-dark)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--primary-blue)'}
                     title="PDF herunterladen"
                   >
                     📥
@@ -179,7 +182,10 @@ export default function Dashboard() {
                 )}
                 <button
                   onClick={() => removeInfo(info.id)}
-                  className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                  className="transition-colors p-1"
+                  style={{ color: 'var(--error-red)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-blue-dark)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--error-red)'}
                   title="Information entfernen"
                 >
                   🗑️
@@ -191,32 +197,32 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activities */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">
+      <div className="card-shadow rounded-2xl" style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--border-color)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
             Letzte Aktivitäten
           </h2>
         </div>
         <div className="p-6 space-y-4">
           {recentTasks.length > 0 ? (
             recentTasks.map((task) => (
-              <div key={task.id} className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg"></div>
+              <div key={task.id} className="flex items-center space-x-4 p-4 rounded-xl border" style={{ backgroundColor: 'var(--secondary-blue)', borderColor: 'var(--border-color)' }}>
+                <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: 'var(--primary-blue)' }}></div>
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-blue-800">
+                  <span className="text-sm font-medium" style={{ color: 'var(--primary-blue)' }}>
                     Offene Aufgabe: &quot;{task.title}&quot;
                   </span>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                     Zugewiesen an: {task.assignedTo} • Fällig: {new Date(task.dueDate).toLocaleDateString('de-DE')}
                   </p>
                 </div>
-                <span className="text-xs text-blue-600 font-medium">
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                   {task.priority}
                 </span>
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
               <span className="text-4xl">✅</span>
               <p className="mt-2">Keine offenen Aufgaben</p>
             </div>
