@@ -41,24 +41,32 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+      
+      <div className="relative max-w-md w-full space-y-8">
+        {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-3xl">🏊‍♂️</span>
+          <div className="mx-auto h-24 w-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-2xl">
+            <span className="text-white text-4xl">⚙️</span>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            LA OLA Intranet
+          <h1 className="mt-8 text-4xl font-bold text-white tracking-tight">
+            LA OLA
+          </h1>
+          <h2 className="mt-2 text-xl font-semibold text-blue-200">
+            Technik Portal
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Melden Sie sich an, um auf das Mitarbeiter-Portal zuzugreifen
+          <p className="mt-4 text-sm text-gray-300">
+            Anmeldung für technische Mitarbeiter
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-lg rounded-lg">
+        {/* Login Card */}
+        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-2xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-sm font-semibold text-white mb-2">
                 Benutzername
               </label>
               <input
@@ -68,13 +76,13 @@ const LoginForm = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ihr vollständiger Name"
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="Ihr Benutzername"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
                 Passwort
               </label>
               <input
@@ -84,14 +92,14 @@ const LoginForm = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="Ihr Passwort"
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="bg-red-500/20 border border-red-400/50 rounded-xl p-4">
+                <p className="text-sm text-red-200">{error}</p>
               </div>
             )}
 
@@ -99,24 +107,36 @@ const LoginForm = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
               >
-                {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Anmeldung läuft...
+                  </div>
+                ) : (
+                  'Anmelden'
+                )}
               </button>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Demo-Anmeldung: Christof Drost / 12345
+          {/* Demo Credentials */}
+          <div className="mt-8 p-4 bg-blue-500/20 border border-blue-400/30 rounded-xl">
+            <p className="text-xs text-blue-200 text-center font-medium">
+              Demo-Anmeldung
+            </p>
+            <p className="text-sm text-white text-center mt-1">
+              <span className="font-mono">Christof Drost</span> / <span className="font-mono">12345</span>
             </p>
           </div>
+        </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">
-              Debug: Versuchen Sie es mit den exakten Anmeldedaten
-            </p>
-          </div>
+        {/* Footer */}
+        <div className="text-center">
+          <p className="text-xs text-gray-400">
+            © 2024 LA OLA Technik Portal
+          </p>
         </div>
       </div>
     </div>
