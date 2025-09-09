@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 
 const DailyMotivation = () => {
   const [quote, setQuote] = useState('')
-  const [author, setAuthor] = useState('')
 
   const motivationalQuotes = [
     {
@@ -134,7 +133,6 @@ const DailyMotivation = () => {
     // Verwende den Tag des Jahres, um den Spruch zu wählen
     const quoteIndex = dayOfYear % motivationalQuotes.length
     setQuote(motivationalQuotes[quoteIndex].quote)
-    setAuthor(motivationalQuotes[quoteIndex].author)
   }, [])
 
   if (!quote) return null
@@ -148,7 +146,7 @@ const DailyMotivation = () => {
           <span className="text-2xl ml-2">💫</span>
         </div>
         <blockquote className="text-xl text-white font-medium italic leading-relaxed mb-3">
-          "{quote}"
+          &quot;{quote}&quot;
         </blockquote>
       </div>
     </div>

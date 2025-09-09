@@ -204,7 +204,7 @@ export default function Dashboard() {
                 <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg"></div>
                 <div className="flex-1">
                   <span className="text-sm font-medium text-blue-800">
-                    Offene Aufgabe: "{task.title}"
+                    Offene Aufgabe: &quot;{task.title}&quot;
                   </span>
                   <p className="text-xs text-blue-600 mt-1">
                     Zugewiesen an: {task.assignedTo} • Fällig: {new Date(task.dueDate).toLocaleDateString('de-DE')}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navigation from "@/components/Navigation";
 import { AuthProvider } from "@/components/AuthProvider";
 import ProtectedLayout from "@/components/ProtectedLayout";
 import { TaskProvider } from "@/contexts/TaskContext";

@@ -116,7 +116,7 @@ export default function WiederkehrendeAufgaben() {
     }
   }
 
-  const getFrequencyColor = (frequency: string) => {
+  const getFrequencyColor = () => {
     return 'bg-purple-100 text-purple-800'
   }
 
@@ -169,7 +169,7 @@ export default function WiederkehrendeAufgaben() {
                       <span className={`text-xs ${getPriorityBgColor(task.priority)} px-2 py-1 rounded-full`}>
                         {task.priority}
                       </span>
-                      <span className={`text-xs ${getFrequencyColor(task.frequency)} px-2 py-1 rounded-full`}>
+                      <span className={`text-xs ${getFrequencyColor()} px-2 py-1 rounded-full`}>
                         {task.frequency}
                       </span>
                       <span className="text-xs text-gray-500">

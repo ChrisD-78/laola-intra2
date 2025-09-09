@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   isLoggedIn: boolean
@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentUser, setCurrentUser] = useState<string | null>(null)
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
     // Prüfe den Anmeldestatus beim Laden der Seite

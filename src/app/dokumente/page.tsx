@@ -101,28 +101,28 @@ export default function Dokumente() {
     setIsEditMode(false)
   }
 
-  const downloadDocument = (document: Document) => {
+  const downloadDocument = (doc: Document) => {
     // Erstelle einen Blob mit dem Dokumenteninhalt
-    const content = document.fileContent || `Titel: ${document.title}\nBeschreibung: ${document.description}\nKategorie: ${document.category}`
+    const content = doc.fileContent || `Titel: ${doc.title}\nBeschreibung: ${doc.description}\nKategorie: ${doc.category}`
     const blob = new Blob([content], { type: 'text/plain' })
     
     // Erstelle einen Download-Link
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = document.fileName.replace('.pdf', '.txt') // Konvertiere zu .txt für Demo
+    link.download = doc.fileName.replace('.pdf', '.txt') // Konvertiere zu .txt für Demo
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   }
 
-  const startEditDocument = (document: Document) => {
-    setSelectedDocument(document)
-    setEditTitle(document.title)
-    setEditDescription(document.description)
-    setEditCategory(document.category)
-    setEditTags(document.tags.join(', '))
+  const startEditDocument = (doc: Document) => {
+    setSelectedDocument(doc)
+    setEditTitle(doc.title)
+    setEditDescription(doc.description)
+    setEditCategory(doc.category)
+    setEditTags(doc.tags.join(', '))
     setIsEditMode(true)
     setIsViewerOpen(true)
   }
@@ -157,16 +157,6 @@ export default function Dokumente() {
     setEditTags('')
   }
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'Sicherheit': return '🛡️'
-      case 'Betrieb': return '⚙️'
-      case 'Personal': return '👥'
-      case 'Wartung': return '🔧'
-      case 'Schulung': return '🎓'
-      default: return '📎'
-    }
-  }
 
   const getCategoryColor = (category: string) => {
     switch (category) {

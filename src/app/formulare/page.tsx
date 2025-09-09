@@ -47,7 +47,7 @@ export default function Formulare() {
 
   const [openForm, setOpenForm] = useState<string | null>(null)
 
-  const handleFormSubmit = (type: string, data: any) => {
+  const handleFormSubmit = (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const newSubmission: FormSubmission = {
       id: Date.now().toString(),
       type,
@@ -59,7 +59,7 @@ export default function Formulare() {
     setSubmissions([newSubmission, ...submissions])
   }
 
-  const generateDescription = (type: string, data: any): string => {
+  const generateDescription = (type: string, data: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any
     switch (type) {
       case 'wassermessung':
         return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l`
