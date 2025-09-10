@@ -21,6 +21,7 @@ export default function Schulungen() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
+  const [showSchulungViewer, setShowSchulungViewer] = useState<Schulung | null>(null)
 
   // Beispiel-Schulungen
   const [schulungen, setSchulungen] = useState<Schulung[]>([
@@ -359,6 +360,179 @@ export default function Schulungen() {
     )
   }
 
+  const SchulungViewer = ({ schulung }: { schulung: Schulung }) => {
+    const [currentStep, setCurrentStep] = useState(0)
+    const [isCompleted, setIsCompleted] = useState(false)
+
+    const steps = [
+      { title: 'Einführung', content: 'Willkommen zur Schulung: ' + schulung.title },
+      { title: 'Theorie', content: schulung.description },
+      { title: 'Materialien', content: 'Hier finden Sie alle wichtigen Unterlagen und Videos.' },
+      { title: 'Abschluss', content: 'Herzlichen Glückwunsch! Sie haben die Schulung erfolgreich abgeschlossen.' }
+    ]
+
+    const handleNext = () => {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1)
+      } else {
+        setIsCompleted(true)
+        // Hier könnte man den Status der Schulung auf "Abgeschlossen" setzen
+        setSchulungen(schulungen.map(s => 
+          s.id === schulung.id ? { ...s, status: 'Abgeschlossen' as const } : s
+        ))
+      }
+    }
+
+    const handlePrevious = () => {
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1)
+      }
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-2xl">
+                  {schulung.thumbnail}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{schulung.title}</h2>
+                  <p className="text-gray-600">Referent: {schulung.instructor}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowSchulungViewer(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {!isCompleted ? (
+              <div className="space-y-6">
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                  ></div>
+                </div>
+
+                {/* Step Indicator */}
+                <div className="flex justify-between">
+                  {steps.map((step, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        index <= currentStep 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <span className="text-xs text-gray-600 mt-1">{step.title}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Content */}
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    {steps[currentStep].title}
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {steps[currentStep].content}
+                  </p>
+
+                  {/* Materialien anzeigen */}
+                  {currentStep === 2 && (
+                    <div className="mt-6 space-y-4">
+                      {schulung.pdfUrl && (
+                        <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">📄</span>
+                            <div>
+                              <p className="font-medium text-gray-900">PDF-Dokument</p>
+                              <p className="text-sm text-gray-600">Schulungsunterlagen</p>
+                            </div>
+                          </div>
+                          <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            Öffnen
+                          </button>
+                        </div>
+                      )}
+
+                      {schulung.videoUrl && (
+                        <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">🎥</span>
+                            <div>
+                              <p className="font-medium text-gray-900">Schulungsvideo</p>
+                              <p className="text-sm text-gray-600">Video-Tutorial</p>
+                            </div>
+                          </div>
+                          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Abspielen
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Navigation */}
+                <div className="flex justify-between">
+                  <button
+                    onClick={handlePrevious}
+                    disabled={currentStep === 0}
+                    className={`px-6 py-2 rounded-lg transition-colors ${
+                      currentStep === 0
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-600 text-white hover:bg-gray-700'
+                    }`}
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {currentStep === steps.length - 1 ? 'Abschließen' : 'Weiter'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-4xl">🎉</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Schulung abgeschlossen!</h3>
+                <p className="text-gray-600 mb-8">
+                  Herzlichen Glückwunsch! Sie haben die Schulung &quot;{schulung.title}&quot; erfolgreich abgeschlossen.
+                </p>
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setShowSchulungViewer(null)}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Zurück zu den Schulungen
+                  </button>
+                  <div className="text-sm text-gray-500">
+                    Ihr Fortschritt wurde gespeichert.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const SchulungDetail = ({ schulung }: { schulung: Schulung }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -412,7 +586,13 @@ export default function Schulungen() {
             <div className="space-y-6">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Schulung starten</h3>
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                <button 
+                  onClick={() => {
+                    setSelectedSchulung(null)
+                    setShowSchulungViewer(schulung)
+                  }}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
                   🎯 Schulung beginnen
                 </button>
               </div>
@@ -608,6 +788,7 @@ export default function Schulungen() {
       {/* Modals */}
       {showCreateForm && <CreateSchulungForm />}
       {selectedSchulung && <SchulungDetail schulung={selectedSchulung} />}
+      {showSchulungViewer && <SchulungViewer schulung={showSchulungViewer} />}
     </div>
   )
 }
