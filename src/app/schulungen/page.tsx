@@ -128,34 +128,39 @@ export default function Schulungen() {
           </span>
         </div>
 
-            <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">📅 {schulung.date}</span>
-          <div className="flex space-x-2">
-            {schulung.pdfUrl && (
-              <button className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="PDF anzeigen">
-                📄
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">📅 {schulung.date}</span>
+            <div className="flex space-x-2">
+              {schulung.pdfUrl && (
+                <button className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="PDF anzeigen">
+                  📄
+                </button>
+              )}
+              {schulung.videoUrl && (
+                <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Video ansehen">
+                  🎥
+                </button>
+              )}
+              <button 
+                onClick={() => setShowDeleteConfirm(schulung)}
+                className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                title="Schulung löschen"
+              >
+                🗑️
               </button>
-            )}
-            {schulung.videoUrl && (
-              <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Video ansehen">
-                🎥
-              </button>
-            )}
-            <button 
-              onClick={() => setShowDeleteConfirm(schulung)}
-              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-              title="Schulung löschen"
-            >
-              🗑️
-            </button>
+            </div>
+          </div>
+          
+          <div className="flex justify-center">
             <button 
               onClick={() => setSelectedSchulung(schulung)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               Starten
             </button>
-                </div>
-                  </div>
+          </div>
+        </div>
                 </div>
               </div>
   )
