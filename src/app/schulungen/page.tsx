@@ -155,7 +155,7 @@ export default function Schulungen() {
           
           <div className="flex justify-center">
             <button 
-              onClick={() => setSelectedSchulung(schulung)}
+              onClick={() => setShowSchulungViewer(schulung)}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               Starten
