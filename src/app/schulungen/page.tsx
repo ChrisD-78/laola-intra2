@@ -8,7 +8,6 @@ interface Schulung {
   description: string
   category: string
   duration: string
-  difficulty: 'Anfänger' | 'Fortgeschritten' | 'Experte'
   status: 'Verfügbar' | 'In Bearbeitung' | 'Abgeschlossen'
   date: string
   instructor: string
@@ -21,6 +20,7 @@ export default function Schulungen() {
   const [activeTab, setActiveTab] = useState<'available' | 'create' | 'my-trainings'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
 
   // Beispiel-Schulungen
   const [schulungen, setSchulungen] = useState<Schulung[]>([
@@ -30,7 +30,6 @@ export default function Schulungen() {
       description: 'Auffrischung der Erste-Hilfe-Kenntnisse für alle Mitarbeiter. Lernen Sie die wichtigsten Sofortmaßnahmen und Notfallverfahren.',
       category: 'Sicherheit',
       duration: '8 Stunden',
-      difficulty: 'Anfänger',
       status: 'Verfügbar',
       date: '15. Dezember 2024',
       instructor: 'Dr. Maria Schmidt',
@@ -44,7 +43,6 @@ export default function Schulungen() {
       description: 'Schulung zu Datenschutzrichtlinien und DSGVO-Compliance. Verstehen Sie Ihre Verantwortlichkeiten im Umgang mit personenbezogenen Daten.',
       category: 'Compliance',
       duration: '2 Stunden',
-      difficulty: 'Anfänger',
       status: 'Verfügbar',
       date: '20. Dezember 2024',
       instructor: 'Rechtsanwalt Thomas Weber',
@@ -58,7 +56,6 @@ export default function Schulungen() {
       description: 'Einführung in neue Pooltechnologien und Wartungsverfahren. Bleiben Sie auf dem neuesten Stand der Technik.',
       category: 'Fachwissen',
       duration: '5 Stunden',
-      difficulty: 'Fortgeschritten',
       status: 'Verfügbar',
       date: '10. Januar 2025',
       instructor: 'Ing. Peter Müller',
@@ -72,7 +69,6 @@ export default function Schulungen() {
       description: 'Verbessern Sie Ihre Kommunikationsfähigkeiten und lernen Sie, wie Sie herausragenden Kundenservice bieten.',
       category: 'Soft Skills',
       duration: '3 Stunden',
-      difficulty: 'Anfänger',
       status: 'Verfügbar',
       date: '25. Januar 2025',
       instructor: 'Sarah Johnson',
@@ -89,13 +85,9 @@ export default function Schulungen() {
     { name: 'Soft Skills', icon: '👥', color: 'bg-purple-100 text-purple-800', count: 2 }
   ]
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Anfänger': return 'bg-green-100 text-green-800'
-      case 'Fortgeschritten': return 'bg-yellow-100 text-yellow-800'
-      case 'Experte': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  const handleDeleteSchulung = (schulungId: string) => {
+    setSchulungen(schulungen.filter(s => s.id !== schulungId))
+    setShowDeleteConfirm(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -123,14 +115,11 @@ export default function Schulungen() {
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(schulung.status)}`}>
             {schulung.status}
           </span>
-        </div>
+      </div>
 
         <p className="text-gray-700 mb-4 line-clamp-2">{schulung.description}</p>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(schulung.difficulty)}`}>
-            {schulung.difficulty}
-          </span>
           <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
             {schulung.duration}
           </span>
@@ -139,7 +128,7 @@ export default function Schulungen() {
           </span>
         </div>
 
-        <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">📅 {schulung.date}</span>
           <div className="flex space-x-2">
             {schulung.pdfUrl && (
@@ -153,15 +142,22 @@ export default function Schulungen() {
               </button>
             )}
             <button 
+              onClick={() => setShowDeleteConfirm(schulung)}
+              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+              title="Schulung löschen"
+            >
+              🗑️
+            </button>
+            <button 
               onClick={() => setSelectedSchulung(schulung)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               Starten
             </button>
-          </div>
-        </div>
-      </div>
-    </div>
+                </div>
+                  </div>
+                </div>
+              </div>
   )
 
   const CreateSchulungForm = () => {
@@ -170,7 +166,6 @@ export default function Schulungen() {
       description: '',
       category: 'Sicherheit',
       duration: '',
-      difficulty: 'Anfänger' as 'Anfänger' | 'Fortgeschritten' | 'Experte',
       instructor: '',
       date: '',
       pdfFile: null as File | null,
@@ -185,7 +180,6 @@ export default function Schulungen() {
         description: formData.description,
         category: formData.category,
         duration: formData.duration,
-        difficulty: formData.difficulty,
         status: 'Verfügbar',
         date: formData.date,
         instructor: formData.instructor,
@@ -200,7 +194,6 @@ export default function Schulungen() {
         description: '',
         category: 'Sicherheit',
         duration: '',
-        difficulty: 'Anfänger',
         instructor: '',
         date: '',
         pdfFile: null,
@@ -219,7 +212,7 @@ export default function Schulungen() {
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
-              </button>
+                </button>
             </div>
           </div>
 
@@ -253,9 +246,9 @@ export default function Schulungen() {
                   <option value="Fachwissen">Fachwissen</option>
                   <option value="Soft Skills">Soft Skills</option>
                 </select>
-              </div>
+                </div>
 
-              <div>
+                <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Dauer
                 </label>
@@ -267,22 +260,8 @@ export default function Schulungen() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="z.B. 4 Stunden"
                 />
-              </div>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Schwierigkeitsgrad
-                </label>
-                <select
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData({...formData, difficulty: e.target.value as 'Anfänger' | 'Fortgeschritten' | 'Experte'})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Anfänger">Anfänger</option>
-                  <option value="Fortgeschritten">Fortgeschritten</option>
-                  <option value="Experte">Experte</option>
-                </select>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -324,10 +303,10 @@ export default function Schulungen() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Detaillierte Beschreibung der Schulungsinhalte..."
               />
-            </div>
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+                <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   PDF-Dokument hochladen
                 </label>
@@ -368,7 +347,7 @@ export default function Schulungen() {
               >
                 Schulung erstellen
               </button>
-            </div>
+          </div>
           </form>
         </div>
       </div>
@@ -383,12 +362,12 @@ export default function Schulungen() {
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-2xl">
                 {schulung.thumbnail}
-              </div>
+          </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{schulung.title}</h2>
                 <p className="text-gray-600">Referent: {schulung.instructor}</p>
-              </div>
-            </div>
+          </div>
+        </div>
             <button 
               onClick={() => setSelectedSchulung(null)}
               className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -404,7 +383,7 @@ export default function Schulungen() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Beschreibung</h3>
                 <p className="text-gray-700 leading-relaxed">{schulung.description}</p>
-              </div>
+      </div>
 
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Schulungsdetails</h3>
@@ -412,10 +391,6 @@ export default function Schulungen() {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-600">Dauer</p>
                     <p className="font-semibold text-gray-900">{schulung.duration}</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Schwierigkeitsgrad</p>
-                    <p className="font-semibold text-gray-900">{schulung.difficulty}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-600">Kategorie</p>
@@ -447,8 +422,8 @@ export default function Schulungen() {
                       <div>
                         <p className="font-medium text-gray-900">PDF-Dokument</p>
                         <p className="text-sm text-gray-600">Schulungsunterlagen</p>
-                      </div>
-                    </div>
+            </div>
+          </div>
                     <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                       Öffnen
                     </button>
@@ -462,11 +437,11 @@ export default function Schulungen() {
                       <div>
                         <p className="font-medium text-gray-900">Schulungsvideo</p>
                         <p className="text-sm text-gray-600">Video-Tutorial</p>
-                      </div>
-                    </div>
+                </div>
+              </div>
                     <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                       Abspielen
-                    </button>
+                </button>
                   </div>
                 )}
               </div>
@@ -584,6 +559,46 @@ export default function Schulungen() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-red-600 text-2xl">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Schulung löschen</h3>
+                  <p className="text-sm text-gray-600">Diese Aktion kann nicht rückgängig gemacht werden</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  Möchten Sie die Schulung <strong>&quot;{showDeleteConfirm.title}&quot;</strong> wirklich löschen?
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => handleDeleteSchulung(showDeleteConfirm.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showCreateForm && <CreateSchulungForm />}
