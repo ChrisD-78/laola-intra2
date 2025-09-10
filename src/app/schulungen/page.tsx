@@ -363,13 +363,23 @@ export default function Schulungen() {
   const SchulungViewer = ({ schulung }: { schulung: Schulung }) => {
     const [currentStep, setCurrentStep] = useState(0)
     const [isCompleted, setIsCompleted] = useState(false)
+    const [participantName, setParticipantName] = useState('')
+    const [participantSurname, setParticipantSurname] = useState('')
+    const [showNameForm, setShowNameForm] = useState(true)
 
     const steps = [
-      { title: 'Einführung', content: 'Willkommen zur Schulung: ' + schulung.title },
+      { title: 'Einführung', content: `Willkommen zur Schulung: ${schulung.title}. Hallo ${participantName} ${participantSurname}!` },
       { title: 'Theorie', content: schulung.description },
       { title: 'Materialien', content: 'Hier finden Sie alle wichtigen Unterlagen und Videos.' },
-      { title: 'Abschluss', content: 'Herzlichen Glückwunsch! Sie haben die Schulung erfolgreich abgeschlossen.' }
+      { title: 'Abschluss', content: `Herzlichen Glückwunsch ${participantName}! Sie haben die Schulung erfolgreich abgeschlossen.` }
     ]
+
+    const handleNameSubmit = (e: React.FormEvent) => {
+      e.preventDefault()
+      if (participantName.trim() && participantSurname.trim()) {
+        setShowNameForm(false)
+      }
+    }
 
     const handleNext = () => {
       if (currentStep < steps.length - 1) {
@@ -413,7 +423,51 @@ export default function Schulungen() {
           </div>
 
           <div className="p-6">
-            {!isCompleted ? (
+            {showNameForm ? (
+              <div className="max-w-md mx-auto">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Teilnehmerregistrierung</h3>
+                  <p className="text-gray-600">Bitte geben Sie Ihren Namen ein, um mit der Schulung zu beginnen.</p>
+                </div>
+                
+                <form onSubmit={handleNameSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vorname
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={participantName}
+                      onChange={(e) => setParticipantName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Ihr Vorname"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nachname
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={participantSurname}
+                      onChange={(e) => setParticipantSurname(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Ihr Nachname"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Schulung starten
+                  </button>
+                </form>
+              </div>
+            ) : !isCompleted ? (
               <div className="space-y-6">
                 {/* Progress Bar */}
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -460,7 +514,14 @@ export default function Schulungen() {
                               <p className="text-sm text-gray-600">Schulungsunterlagen</p>
                             </div>
                           </div>
-                          <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                          <button 
+                            onClick={() => {
+                              if (schulung.pdfUrl) {
+                                window.open(schulung.pdfUrl, '_blank')
+                              }
+                            }}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
                             Öffnen
                           </button>
                         </div>
@@ -475,7 +536,14 @@ export default function Schulungen() {
                               <p className="text-sm text-gray-600">Video-Tutorial</p>
                             </div>
                           </div>
-                          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          <button 
+                            onClick={() => {
+                              if (schulung.videoUrl) {
+                                window.open(schulung.videoUrl, '_blank')
+                              }
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
                             Abspielen
                           </button>
                         </div>
