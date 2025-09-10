@@ -366,12 +366,13 @@ export default function Schulungen() {
     const [participantName, setParticipantName] = useState('')
     const [participantSurname, setParticipantSurname] = useState('')
     const [showNameForm, setShowNameForm] = useState(true)
+    const [confirmationChecked, setConfirmationChecked] = useState(false)
 
     const steps = [
       { title: 'Einführung', content: `Willkommen zur Schulung: ${schulung.title}. Hallo ${participantName} ${participantSurname}!` },
       { title: 'Theorie', content: schulung.description },
       { title: 'Materialien', content: 'Hier finden Sie alle wichtigen Unterlagen und Videos.' },
-      { title: 'Abschluss', content: `Herzlichen Glückwunsch ${participantName}! Sie haben die Schulung erfolgreich abgeschlossen.` }
+      { title: 'Bestätigung', content: `Herzlichen Glückwunsch ${participantName}! Sie haben die Schulung erfolgreich abgeschlossen. Bitte bestätigen Sie, dass Sie die Schulungsinhalte verstanden haben.` }
     ]
 
     const handleNameSubmit = (e: React.FormEvent) => {
@@ -550,6 +551,26 @@ export default function Schulungen() {
                       )}
                     </div>
                   )}
+
+                  {/* Bestätigungskästchen im letzten Schritt */}
+                  {currentStep === 3 && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="checkbox"
+                          id="confirmation"
+                          checked={confirmationChecked}
+                          onChange={(e) => setConfirmationChecked(e.target.checked)}
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="confirmation" className="text-sm text-gray-700">
+                          <span className="font-medium">Hiermit bestätige ich, die Schulungsinhalte verstanden zu haben.</span>
+                          <br />
+                          <span className="text-gray-500">Diese Bestätigung ist erforderlich, um die Schulung abzuschließen.</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Navigation */}
@@ -567,7 +588,12 @@ export default function Schulungen() {
                   </button>
                   <button
                     onClick={handleNext}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={currentStep === steps.length - 1 && !confirmationChecked}
+                    className={`px-6 py-2 rounded-lg transition-colors ${
+                      currentStep === steps.length - 1 && !confirmationChecked
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                   >
                     {currentStep === steps.length - 1 ? 'Abschließen' : 'Weiter'}
                   </button>
