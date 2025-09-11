@@ -40,7 +40,9 @@ export default function Schulungen() {
     category: '',
     dateFrom: '',
     dateTo: '',
-    instructor: ''
+    instructor: '',
+    title: '',
+    instructorName: ''
   })
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'title' | 'category'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -213,7 +215,9 @@ export default function Schulungen() {
       category: '',
       dateFrom: '',
       dateTo: '',
-      instructor: ''
+      instructor: '',
+      title: '',
+      instructorName: ''
     })
     setSortBy('date')
     setSortOrder('desc')
@@ -224,12 +228,16 @@ export default function Schulungen() {
       const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
       const matchesParticipant = !overviewFilters.instructor || 
         `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
+      const matchesTitle = !overviewFilters.title || 
+        completed.schulungTitle.toLowerCase().includes(overviewFilters.title.toLowerCase())
+      const matchesInstructor = !overviewFilters.instructorName || 
+        completed.instructor.toLowerCase().includes(overviewFilters.instructorName.toLowerCase())
       
       // Date filtering for completed date
       const matchesDateFrom = !overviewFilters.dateFrom || completed.completedDate >= overviewFilters.dateFrom
       const matchesDateTo = !overviewFilters.dateTo || completed.completedDate <= overviewFilters.dateTo
       
-      return matchesCategory && matchesParticipant && matchesDateFrom && matchesDateTo
+      return matchesCategory && matchesParticipant && matchesTitle && matchesInstructor && matchesDateFrom && matchesDateTo
     })
 
     // Sort the filtered results
@@ -1058,93 +1066,6 @@ export default function Schulungen() {
 
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Filter Section */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Kategorie</label>
-                    <select
-                      value={overviewFilters.category}
-                      onChange={(e) => handleOverviewFilterChange('category', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Alle Kategorien</option>
-                      {categories.map(category => (
-                        <option key={category.name} value={category.name}>{category.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Teilnehmer</label>
-                    <input
-                      type="text"
-                      value={overviewFilters.instructor}
-                      onChange={(e) => handleOverviewFilterChange('instructor', e.target.value)}
-                      placeholder="Name suchen..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Von Datum</label>
-                    <input
-                      type="date"
-                      value={overviewFilters.dateFrom}
-                      onChange={(e) => handleOverviewFilterChange('dateFrom', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bis Datum</label>
-                    <input
-                      type="date"
-                      value={overviewFilters.dateTo}
-                      onChange={(e) => handleOverviewFilterChange('dateTo', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sortieren nach</label>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as 'date' | 'participant' | 'title' | 'category')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="date">Datum</option>
-                      <option value="participant">Teilnehmer</option>
-                      <option value="title">Schulung</option>
-                      <option value="category">Kategorie</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Reihenfolge</label>
-                    <select
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="desc">Absteigend</option>
-                      <option value="asc">Aufsteigend</option>
-                    </select>
-                  </div>
-                  
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={clearOverviewFilters}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Filter zurücksetzen
-                  </button>
-                </div>
-              </div>
-
               {/* Results Summary */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
@@ -1153,12 +1074,15 @@ export default function Schulungen() {
                       {getFilteredOverviewSchulungen().length} von {completedSchulungen.length} abgelegte Schulungen
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {overviewFilters.category || overviewFilters.instructor || overviewFilters.dateFrom || overviewFilters.dateTo
-                        ? 'Gefilterte Ergebnisse'
-                        : 'Alle abgelegten Schulungen'
-                      }
+                      {overviewFilters.category || overviewFilters.instructor || overviewFilters.title || overviewFilters.instructorName || overviewFilters.dateFrom || overviewFilters.dateTo ? 'Gefilterte Ergebnisse' : 'Alle abgelegten Schulungen'}
                     </p>
                   </div>
+                  <button
+                    onClick={clearOverviewFilters}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                  >
+                    Filter zurücksetzen
+                  </button>
                 </div>
               </div>
 
@@ -1169,19 +1093,76 @@ export default function Schulungen() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Schulung
+                          <div className="space-y-2">
+                            <div>Schulung</div>
+                            <input
+                              type="text"
+                              placeholder="Schulung suchen..."
+                              value={overviewFilters.title}
+                              onChange={(e) => handleOverviewFilterChange('title', e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Teilnehmer
+                          <div className="space-y-2">
+                            <div>Teilnehmer</div>
+                            <input
+                              type="text"
+                              placeholder="Name suchen..."
+                              value={overviewFilters.instructor}
+                              onChange={(e) => handleOverviewFilterChange('instructor', e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Kategorie
+                          <div className="space-y-2">
+                            <div>Kategorie</div>
+                            <select
+                              value={overviewFilters.category}
+                              onChange={(e) => handleOverviewFilterChange('category', e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Alle</option>
+                              {categories.map(category => (
+                                <option key={category.name} value={category.name}>{category.name}</option>
+                              ))}
+                            </select>
+                          </div>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Referent
+                          <div className="space-y-2">
+                            <div>Referent</div>
+                            <input
+                              type="text"
+                              placeholder="Referent suchen..."
+                              value={overviewFilters.instructorName}
+                              onChange={(e) => handleOverviewFilterChange('instructorName', e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Abgeschlossen
+                          <div className="space-y-2">
+                            <div>Abgeschlossen</div>
+                            <div className="flex space-x-1">
+                              <input
+                                type="date"
+                                placeholder="Von"
+                                value={overviewFilters.dateFrom}
+                                onChange={(e) => handleOverviewFilterChange('dateFrom', e.target.value)}
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <input
+                                type="date"
+                                placeholder="Bis"
+                                value={overviewFilters.dateTo}
+                                onChange={(e) => handleOverviewFilterChange('dateTo', e.target.value)}
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
                         </th>
                       </tr>
                     </thead>
