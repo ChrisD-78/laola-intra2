@@ -29,7 +29,7 @@ export default function Schulungen() {
       id: '1',
       title: 'Erste Hilfe - Auffrischung',
       description: 'Auffrischung der Erste-Hilfe-Kenntnisse für alle Mitarbeiter. Lernen Sie die wichtigsten Sofortmaßnahmen und Notfallverfahren.',
-      category: 'Sicherheit',
+      category: 'Unterweisungen',
       duration: '8 Stunden',
       status: 'Verfügbar',
       date: '15. Dezember 2024',
@@ -42,7 +42,7 @@ export default function Schulungen() {
       id: '2',
       title: 'Datenschutz und DSGVO',
       description: 'Schulung zu Datenschutzrichtlinien und DSGVO-Compliance. Verstehen Sie Ihre Verantwortlichkeiten im Umgang mit personenbezogenen Daten.',
-      category: 'Compliance',
+      category: 'Schulungen',
       duration: '2 Stunden',
       status: 'Verfügbar',
       date: '20. Dezember 2024',
@@ -55,7 +55,7 @@ export default function Schulungen() {
       id: '3',
       title: 'Neue Pooltechnologien',
       description: 'Einführung in neue Pooltechnologien und Wartungsverfahren. Bleiben Sie auf dem neuesten Stand der Technik.',
-      category: 'Fachwissen',
+      category: 'Schulungen',
       duration: '5 Stunden',
       status: 'Verfügbar',
       date: '10. Januar 2025',
@@ -68,7 +68,7 @@ export default function Schulungen() {
       id: '4',
       title: 'Kundenservice Excellence',
       description: 'Verbessern Sie Ihre Kommunikationsfähigkeiten und lernen Sie, wie Sie herausragenden Kundenservice bieten.',
-      category: 'Soft Skills',
+      category: 'Gastronomie',
       duration: '3 Stunden',
       status: 'Verfügbar',
       date: '25. Januar 2025',
@@ -80,10 +80,10 @@ export default function Schulungen() {
   ])
 
   const categories = [
-    { name: 'Sicherheit', icon: '🚨', color: 'bg-red-100 text-red-800', count: 3 },
-    { name: 'Compliance', icon: '🔒', color: 'bg-blue-100 text-blue-800', count: 2 },
-    { name: 'Fachwissen', icon: '🏊‍♂️', color: 'bg-green-100 text-green-800', count: 5 },
-    { name: 'Soft Skills', icon: '👥', color: 'bg-purple-100 text-purple-800', count: 2 }
+    { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: 3 },
+    { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: 2 },
+    { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: 5 },
+    { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: 2 }
   ]
 
   const handleDeleteSchulung = (schulungId: string) => {
@@ -170,7 +170,7 @@ export default function Schulungen() {
     const [formData, setFormData] = useState({
       title: '',
       description: '',
-      category: 'Sicherheit',
+      category: 'Unterweisungen',
       duration: '',
       instructor: '',
       date: '',
@@ -198,7 +198,7 @@ export default function Schulungen() {
       setFormData({
         title: '',
         description: '',
-        category: 'Sicherheit',
+        category: 'Unterweisungen',
         duration: '',
         instructor: '',
         date: '',
@@ -247,10 +247,10 @@ export default function Schulungen() {
                   onChange={(e) => setFormData({...formData, category: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="Sicherheit">Sicherheit</option>
-                  <option value="Compliance">Compliance</option>
-                  <option value="Fachwissen">Fachwissen</option>
-                  <option value="Soft Skills">Soft Skills</option>
+                  <option value="Unterweisungen">Unterweisungen</option>
+                  <option value="Schulungen">Schulungen</option>
+                  <option value="Gastronomie">Gastronomie</option>
+                  <option value="Kursverlaufspläne">Kursverlaufspläne</option>
                 </select>
                 </div>
 
