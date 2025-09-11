@@ -17,12 +17,19 @@ interface Schulung {
 }
 
 export default function Schulungen() {
-  const [activeTab, setActiveTab] = useState<'available' | 'create' | 'my-trainings'>('available')
+  const [activeTab, setActiveTab] = useState<'available' | 'create' | 'my-trainings' | 'overview'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
   const [showSchulungViewer, setShowSchulungViewer] = useState<Schulung | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [overviewFilters, setOverviewFilters] = useState({
+    category: '',
+    status: '',
+    dateFrom: '',
+    dateTo: '',
+    instructor: ''
+  })
 
   // Beispiel-Schulungen
   const [schulungen, setSchulungen] = useState<Schulung[]>([
@@ -103,6 +110,38 @@ export default function Schulungen() {
   const filteredSchulungen = selectedCategory 
     ? schulungen.filter(schulung => schulung.category === selectedCategory)
     : schulungen
+
+  const handleOverviewFilterChange = (filterType: string, value: string) => {
+    setOverviewFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }))
+  }
+
+  const clearOverviewFilters = () => {
+    setOverviewFilters({
+      category: '',
+      status: '',
+      dateFrom: '',
+      dateTo: '',
+      instructor: ''
+    })
+  }
+
+  const getFilteredOverviewSchulungen = () => {
+    return schulungen.filter(schulung => {
+      const matchesCategory = !overviewFilters.category || schulung.category === overviewFilters.category
+      const matchesStatus = !overviewFilters.status || schulung.status === overviewFilters.status
+      const matchesInstructor = !overviewFilters.instructor || 
+        schulung.instructor.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
+      
+      // Date filtering (simplified - in real app you'd parse dates properly)
+      const matchesDateFrom = !overviewFilters.dateFrom || schulung.date >= overviewFilters.dateFrom
+      const matchesDateTo = !overviewFilters.dateTo || schulung.date <= overviewFilters.dateTo
+      
+      return matchesCategory && matchesStatus && matchesInstructor && matchesDateFrom && matchesDateTo
+    })
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -755,13 +794,22 @@ export default function Schulungen() {
               Verwalten Sie Ihre Schulungen und Weiterbildungen
             </p>
           </div>
-          <button 
-            onClick={() => setShowCreateForm(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-          >
-            <span>➕</span>
-            <span>Neue Schulung</span>
-          </button>
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => setShowCreateForm(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
+            >
+              <span>➕</span>
+              <span>Neue Schulung</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
+            >
+              <span>📊</span>
+              <span>Schulungsübersicht</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -772,11 +820,12 @@ export default function Schulungen() {
             {[
               { id: 'available', label: 'Verfügbare Schulungen', count: schulungen.length },
               { id: 'my-trainings', label: 'Meine Schulungen', count: 0 },
+              { id: 'overview', label: 'Schulungsübersicht', count: null },
               { id: 'create', label: 'Schulung erstellen', count: null }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'available' | 'create' | 'my-trainings')}
+                onClick={() => setActiveTab(tab.id as 'available' | 'create' | 'my-trainings' | 'overview')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -886,6 +935,204 @@ export default function Schulungen() {
               >
                 Schulungen anzeigen
               </button>
+            </div>
+          )}
+
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Filter Section */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Kategorie</label>
+                    <select
+                      value={overviewFilters.category}
+                      onChange={(e) => handleOverviewFilterChange('category', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Alle Kategorien</option>
+                      {categories.map(category => (
+                        <option key={category.name} value={category.name}>{category.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      value={overviewFilters.status}
+                      onChange={(e) => handleOverviewFilterChange('status', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Alle Status</option>
+                      <option value="Verfügbar">Verfügbar</option>
+                      <option value="In Bearbeitung">In Bearbeitung</option>
+                      <option value="Abgeschlossen">Abgeschlossen</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Von Datum</label>
+                    <input
+                      type="date"
+                      value={overviewFilters.dateFrom}
+                      onChange={(e) => handleOverviewFilterChange('dateFrom', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Bis Datum</label>
+                    <input
+                      type="date"
+                      value={overviewFilters.dateTo}
+                      onChange={(e) => handleOverviewFilterChange('dateTo', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Referent</label>
+                    <input
+                      type="text"
+                      value={overviewFilters.instructor}
+                      onChange={(e) => handleOverviewFilterChange('instructor', e.target.value)}
+                      placeholder="Name suchen..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={clearOverviewFilters}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Filter zurücksetzen
+                  </button>
+                </div>
+              </div>
+
+              {/* Results Summary */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {getFilteredOverviewSchulungen().length} von {schulungen.length} Schulungen
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {overviewFilters.category || overviewFilters.status || overviewFilters.instructor || overviewFilters.dateFrom || overviewFilters.dateTo
+                        ? 'Gefilterte Ergebnisse'
+                        : 'Alle Schulungen'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Schulung
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kategorie
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Referent
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Datum
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Dauer
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Aktionen
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getFilteredOverviewSchulungen().map((schulung) => (
+                        <tr key={schulung.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg mr-3">
+                                {schulung.thumbnail}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{schulung.title}</div>
+                                <div className="text-sm text-gray-500 line-clamp-1">{schulung.description}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              categories.find(c => c.name === schulung.category)?.color || 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {schulung.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {schulung.instructor}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {schulung.date}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(schulung.status)}`}>
+                              {schulung.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {schulung.duration}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => setShowSchulungViewer(schulung)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Anzeigen
+                              </button>
+                              <button
+                                onClick={() => setShowDeleteConfirm(schulung)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Löschen
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {getFilteredOverviewSchulungen().length === 0 && (
+                  <div className="text-center py-12">
+                    <span className="text-6xl mb-4 block">🔍</span>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Keine Schulungen gefunden</h3>
+                    <p className="text-gray-600 mb-6">
+                      Keine Schulungen entsprechen den aktuellen Filterkriterien.
+                    </p>
+                    <button
+                      onClick={clearOverviewFilters}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Filter zurücksetzen
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
