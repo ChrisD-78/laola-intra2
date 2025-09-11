@@ -30,7 +30,7 @@ interface CompletedSchulung {
 }
 
 export default function Schulungen() {
-  const [activeTab, setActiveTab] = useState<'available' | 'create' | 'my-trainings' | 'overview'>('available')
+  const [activeTab, setActiveTab] = useState<'available' | 'overview'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
@@ -945,13 +945,11 @@ export default function Schulungen() {
           <nav className="flex space-x-8 px-6">
             {[
               { id: 'available', label: 'Verfügbare Schulungen', count: schulungen.length },
-              { id: 'my-trainings', label: 'Meine Schulungen', count: 0 },
-              { id: 'overview', label: 'Schulungsübersicht', count: null },
-              { id: 'create', label: 'Schulung erstellen', count: null }
+              { id: 'overview', label: 'Schulungsübersicht', count: null }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'available' | 'create' | 'my-trainings' | 'overview')}
+                onClick={() => setActiveTab(tab.id as 'available' | 'overview')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -1047,20 +1045,6 @@ export default function Schulungen() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {activeTab === 'my-trainings' && (
-            <div className="text-center py-12">
-              <span className="text-6xl mb-4 block">📚</span>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Schulungen belegt</h3>
-              <p className="text-gray-600 mb-6">Starten Sie Ihre erste Schulung und erweitern Sie Ihr Wissen!</p>
-              <button 
-                onClick={() => setActiveTab('available')}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Schulungen anzeigen
-              </button>
             </div>
           )}
 
@@ -1223,19 +1207,6 @@ export default function Schulungen() {
             </div>
           )}
 
-          {activeTab === 'create' && (
-            <div className="text-center py-12">
-              <span className="text-6xl mb-4 block">🎓</span>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Neue Schulung erstellen</h3>
-              <p className="text-gray-600 mb-6">Erstellen Sie eine neue Schulung mit Materialien und Videos für Ihr Team.</p>
-              <button 
-                onClick={() => setShowCreateForm(true)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Schulung erstellen
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
