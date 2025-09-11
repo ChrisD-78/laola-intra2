@@ -38,11 +38,12 @@ export default function Schulungen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [overviewFilters, setOverviewFilters] = useState({
     category: '',
-    status: '',
     dateFrom: '',
     dateTo: '',
     instructor: ''
   })
+  const [sortBy, setSortBy] = useState<'date' | 'participant' | 'title' | 'category'>('date')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   // Beispiel-Schulungen
   const [schulungen, setSchulungen] = useState<Schulung[]>([
@@ -210,15 +211,16 @@ export default function Schulungen() {
   const clearOverviewFilters = () => {
     setOverviewFilters({
       category: '',
-      status: '',
       dateFrom: '',
       dateTo: '',
       instructor: ''
     })
+    setSortBy('date')
+    setSortOrder('desc')
   }
 
   const getFilteredOverviewSchulungen = () => {
-    return completedSchulungen.filter(completed => {
+    const filtered = completedSchulungen.filter(completed => {
       const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
       const matchesParticipant = !overviewFilters.instructor || 
         `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
@@ -228,6 +230,30 @@ export default function Schulungen() {
       const matchesDateTo = !overviewFilters.dateTo || completed.completedDate <= overviewFilters.dateTo
       
       return matchesCategory && matchesParticipant && matchesDateFrom && matchesDateTo
+    })
+
+    // Sort the filtered results
+    return filtered.sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = a.completedDate.localeCompare(b.completedDate)
+          break
+        case 'participant':
+          const nameA = `${a.participantName} ${a.participantSurname}`
+          const nameB = `${b.participantName} ${b.participantSurname}`
+          comparison = nameA.localeCompare(nameB)
+          break
+        case 'title':
+          comparison = a.schulungTitle.localeCompare(b.schulungTitle)
+          break
+        case 'category':
+          comparison = a.category.localeCompare(b.category)
+          break
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison
     })
   }
 
@@ -1035,7 +1061,7 @@ export default function Schulungen() {
               {/* Filter Section */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Kategorie</label>
                     <select
@@ -1079,6 +1105,32 @@ export default function Schulungen() {
                       onChange={(e) => handleOverviewFilterChange('dateTo', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sortieren nach</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as 'date' | 'participant' | 'title' | 'category')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="date">Datum</option>
+                      <option value="participant">Teilnehmer</option>
+                      <option value="title">Schulung</option>
+                      <option value="category">Kategorie</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Reihenfolge</label>
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="desc">Absteigend</option>
+                      <option value="asc">Aufsteigend</option>
+                    </select>
                   </div>
                   
                 </div>
@@ -1131,12 +1183,6 @@ export default function Schulungen() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Abgeschlossen
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Bewertung
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Dauer
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1170,24 +1216,6 @@ export default function Schulungen() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {completed.completedDate}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {completed.score ? (
-                              <div className="flex items-center">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                  completed.score >= 90 ? 'bg-green-100 text-green-800' :
-                                  completed.score >= 80 ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {completed.score}%
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">-</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {completed.duration}
                           </td>
                         </tr>
                       ))}
