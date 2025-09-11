@@ -16,6 +16,19 @@ interface Schulung {
   thumbnail?: string
 }
 
+interface CompletedSchulung {
+  id: string
+  schulungId: string
+  schulungTitle: string
+  participantName: string
+  participantSurname: string
+  completedDate: string
+  score?: number
+  category: string
+  instructor: string
+  duration: string
+}
+
 export default function Schulungen() {
   const [activeTab, setActiveTab] = useState<'available' | 'create' | 'my-trainings' | 'overview'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -87,6 +100,82 @@ export default function Schulungen() {
     }
   ])
 
+  // Beispiel abgelegte Schulungen
+  const [completedSchulungen, setCompletedSchulungen] = useState<CompletedSchulung[]>([
+    {
+      id: 'c1',
+      schulungId: '1',
+      schulungTitle: 'Erste Hilfe - Auffrischung',
+      participantName: 'Max',
+      participantSurname: 'Mustermann',
+      completedDate: '2024-01-15',
+      score: 95,
+      category: 'Unterweisungen',
+      instructor: 'Dr. Sarah Weber',
+      duration: '2 Stunden'
+    },
+    {
+      id: 'c2',
+      schulungId: '2',
+      schulungTitle: 'Hygiene und Lebensmittelsicherheit',
+      participantName: 'Anna',
+      participantSurname: 'Schmidt',
+      completedDate: '2024-01-20',
+      score: 88,
+      category: 'Gastronomie',
+      instructor: 'Chefkoch Michael Müller',
+      duration: '3 Stunden'
+    },
+    {
+      id: 'c3',
+      schulungId: '1',
+      schulungTitle: 'Erste Hilfe - Auffrischung',
+      participantName: 'Thomas',
+      participantSurname: 'Klein',
+      completedDate: '2024-01-22',
+      score: 92,
+      category: 'Unterweisungen',
+      instructor: 'Dr. Sarah Weber',
+      duration: '2 Stunden'
+    },
+    {
+      id: 'c4',
+      schulungId: '3',
+      schulungTitle: 'Kundenservice Excellence',
+      participantName: 'Lisa',
+      participantSurname: 'Wagner',
+      completedDate: '2024-01-25',
+      score: 96,
+      category: 'Schulungen',
+      instructor: 'Service Managerin Petra Fischer',
+      duration: '4 Stunden'
+    },
+    {
+      id: 'c5',
+      schulungId: '4',
+      schulungTitle: 'Arbeitsschutz und Sicherheit',
+      participantName: 'Max',
+      participantSurname: 'Mustermann',
+      completedDate: '2024-01-28',
+      score: 90,
+      category: 'Unterweisungen',
+      instructor: 'Sicherheitsbeauftragter Klaus Neumann',
+      duration: '1.5 Stunden'
+    },
+    {
+      id: 'c6',
+      schulungId: '5',
+      schulungTitle: 'Menüplanung und Kostenkontrolle',
+      participantName: 'Anna',
+      participantSurname: 'Schmidt',
+      completedDate: '2024-02-01',
+      score: 94,
+      category: 'Gastronomie',
+      instructor: 'Chefkoch Michael Müller',
+      duration: '3 Stunden'
+    }
+  ])
+
   const categories = [
     { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: 3 },
     { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: 2 },
@@ -129,17 +218,16 @@ export default function Schulungen() {
   }
 
   const getFilteredOverviewSchulungen = () => {
-    return schulungen.filter(schulung => {
-      const matchesCategory = !overviewFilters.category || schulung.category === overviewFilters.category
-      const matchesStatus = !overviewFilters.status || schulung.status === overviewFilters.status
-      const matchesInstructor = !overviewFilters.instructor || 
-        schulung.instructor.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
+    return completedSchulungen.filter(completed => {
+      const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
+      const matchesParticipant = !overviewFilters.instructor || 
+        `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
       
-      // Date filtering (simplified - in real app you'd parse dates properly)
-      const matchesDateFrom = !overviewFilters.dateFrom || schulung.date >= overviewFilters.dateFrom
-      const matchesDateTo = !overviewFilters.dateTo || schulung.date <= overviewFilters.dateTo
+      // Date filtering for completed date
+      const matchesDateFrom = !overviewFilters.dateFrom || completed.completedDate >= overviewFilters.dateFrom
+      const matchesDateTo = !overviewFilters.dateTo || completed.completedDate <= overviewFilters.dateTo
       
-      return matchesCategory && matchesStatus && matchesInstructor && matchesDateFrom && matchesDateTo
+      return matchesCategory && matchesParticipant && matchesDateFrom && matchesDateTo
     })
   }
 
@@ -963,17 +1051,14 @@ export default function Schulungen() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select
-                      value={overviewFilters.status}
-                      onChange={(e) => handleOverviewFilterChange('status', e.target.value)}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Teilnehmer</label>
+                    <input
+                      type="text"
+                      value={overviewFilters.instructor}
+                      onChange={(e) => handleOverviewFilterChange('instructor', e.target.value)}
+                      placeholder="Name suchen..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Alle Status</option>
-                      <option value="Verfügbar">Verfügbar</option>
-                      <option value="In Bearbeitung">In Bearbeitung</option>
-                      <option value="Abgeschlossen">Abgeschlossen</option>
-                    </select>
+                    />
                   </div>
                   
                   <div>
@@ -996,16 +1081,6 @@ export default function Schulungen() {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Referent</label>
-                    <input
-                      type="text"
-                      value={overviewFilters.instructor}
-                      onChange={(e) => handleOverviewFilterChange('instructor', e.target.value)}
-                      placeholder="Name suchen..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
                 </div>
                 
                 <div className="flex justify-end mt-4">
@@ -1023,12 +1098,12 @@ export default function Schulungen() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {getFilteredOverviewSchulungen().length} von {schulungen.length} Schulungen
+                      {getFilteredOverviewSchulungen().length} von {completedSchulungen.length} abgelegte Schulungen
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {overviewFilters.category || overviewFilters.status || overviewFilters.instructor || overviewFilters.dateFrom || overviewFilters.dateTo
+                      {overviewFilters.category || overviewFilters.instructor || overviewFilters.dateFrom || overviewFilters.dateTo
                         ? 'Gefilterte Ergebnisse'
-                        : 'Alle Schulungen'
+                        : 'Alle abgelegten Schulungen'
                       }
                     </p>
                   </div>
@@ -1045,75 +1120,74 @@ export default function Schulungen() {
                           Schulung
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Teilnehmer
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Kategorie
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Referent
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Datum
+                          Abgeschlossen
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
+                          Bewertung
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Dauer
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Aktionen
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {getFilteredOverviewSchulungen().map((schulung) => (
-                        <tr key={schulung.id} className="hover:bg-gray-50">
+                      {getFilteredOverviewSchulungen().map((completed) => (
+                        <tr key={completed.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg mr-3">
-                                {schulung.thumbnail}
+                              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-lg mr-3">
+                                ✅
                               </div>
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{schulung.title}</div>
-                                <div className="text-sm text-gray-500 line-clamp-1">{schulung.description}</div>
+                                <div className="text-sm font-medium text-gray-900">{completed.schulungTitle}</div>
+                                <div className="text-sm text-gray-500">Abgeschlossen</div>
                               </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {completed.participantName} {completed.participantSurname}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              categories.find(c => c.name === schulung.category)?.color || 'bg-gray-100 text-gray-800'
+                              categories.find(c => c.name === completed.category)?.color || 'bg-gray-100 text-gray-800'
                             }`}>
-                              {schulung.category}
+                              {completed.category}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {schulung.instructor}
+                            {completed.instructor}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {schulung.date}
+                            {completed.completedDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(schulung.status)}`}>
-                              {schulung.status}
-                            </span>
+                            {completed.score ? (
+                              <div className="flex items-center">
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                  completed.score >= 90 ? 'bg-green-100 text-green-800' :
+                                  completed.score >= 80 ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  {completed.score}%
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {schulung.duration}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => setShowSchulungViewer(schulung)}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                Anzeigen
-                              </button>
-                              <button
-                                onClick={() => setShowDeleteConfirm(schulung)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Löschen
-                              </button>
-                            </div>
+                            {completed.duration}
                           </td>
                         </tr>
                       ))}
