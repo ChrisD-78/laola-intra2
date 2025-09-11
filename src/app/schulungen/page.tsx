@@ -165,12 +165,16 @@ export default function Schulungen() {
               <p className="text-sm text-gray-600">{schulung.instructor}</p>
             </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(schulung.status)}`}>
-            {schulung.status}
-          </span>
       </div>
 
         <p className="text-gray-700 mb-4 line-clamp-2">{schulung.description}</p>
+
+        {/* Status in separate centered row */}
+        <div className="flex justify-center mb-4">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(schulung.status)}`}>
+            {schulung.status}
+          </span>
+        </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
