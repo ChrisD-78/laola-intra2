@@ -22,6 +22,7 @@ export default function Schulungen() {
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
   const [showSchulungViewer, setShowSchulungViewer] = useState<Schulung | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   // Beispiel-Schulungen
   const [schulungen, setSchulungen] = useState<Schulung[]>([
@@ -90,6 +91,18 @@ export default function Schulungen() {
     setSchulungen(schulungen.filter(s => s.id !== schulungId))
     setShowDeleteConfirm(null)
   }
+
+  const handleCategoryFilter = (categoryName: string) => {
+    setSelectedCategory(categoryName)
+  }
+
+  const handleClearFilter = () => {
+    setSelectedCategory(null)
+  }
+
+  const filteredSchulungen = selectedCategory 
+    ? schulungen.filter(schulung => schulung.category === selectedCategory)
+    : schulungen
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -792,7 +805,10 @@ export default function Schulungen() {
                       <span className="text-3xl mb-2 block">{category.icon}</span>
                       <h3 className="font-semibold text-gray-900">{category.name}</h3>
                       <p className="text-sm text-gray-600 mt-1">{category.count} Schulungen</p>
-                      <button className={`mt-3 px-3 py-1 rounded-full text-xs font-medium ${category.color}`}>
+                      <button 
+                        onClick={() => handleCategoryFilter(category.name)}
+                        className={`mt-3 px-3 py-1 rounded-full text-xs font-medium ${category.color} hover:opacity-80 transition-opacity`}
+                      >
                         Anzeigen
                       </button>
                     </div>
@@ -800,11 +816,61 @@ export default function Schulungen() {
                 ))}
               </div>
 
+              {/* Filter Header */}
+              {selectedCategory && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">
+                        {categories.find(c => c.name === selectedCategory)?.icon}
+                      </span>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {selectedCategory} ({filteredSchulungen.length} Schulungen)
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Gefilterte Ergebnisse für {selectedCategory}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleClearFilter}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                    >
+                      Alle anzeigen
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Schulungs-Kacheln */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {schulungen.map((schulung) => (
-                  <SchulungCard key={schulung.id} schulung={schulung} />
-                ))}
+                {filteredSchulungen.length > 0 ? (
+                  filteredSchulungen.map((schulung) => (
+                    <SchulungCard key={schulung.id} schulung={schulung} />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <span className="text-6xl mb-4 block">🔍</span>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      Keine Schulungen gefunden
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      {selectedCategory 
+                        ? `Keine Schulungen in der Kategorie "${selectedCategory}" verfügbar.`
+                        : 'Keine Schulungen verfügbar.'
+                      }
+                    </p>
+                    {selectedCategory && (
+                      <button
+                        onClick={handleClearFilter}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Alle Schulungen anzeigen
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
