@@ -108,6 +108,9 @@ export default function Formulare() {
   ])
 
   const [openForm, setOpenForm] = useState<string | null>(null)
+  const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<FormSubmission | null>(null)
 
   const handleFormSubmit = (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const newSubmission: FormSubmission = {
@@ -139,6 +142,39 @@ export default function Formulare() {
         return `Kategorie: ${data.kategorie}, Bereich: ${data.betroffenerBereich}, Priorität: ${data.prioritaet}`
       default:
         return 'Formular eingereicht'
+    }
+  }
+
+  const handleViewSubmission = (submission: FormSubmission) => {
+    setSelectedSubmission(submission)
+    setShowSubmissionModal(true)
+  }
+
+  const handleDeleteSubmission = (submission: FormSubmission) => {
+    setShowDeleteConfirm(submission)
+  }
+
+  const confirmDelete = () => {
+    if (showDeleteConfirm) {
+      setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
+      setShowDeleteConfirm(null)
+    }
+  }
+
+  const closeSubmissionModal = () => {
+    setShowSubmissionModal(false)
+    setSelectedSubmission(null)
+  }
+
+  const getFormTypeLabel = (type: string) => {
+    switch (type) {
+      case 'wassermessung': return 'Wassermessung'
+      case 'rutschenkontrolle': return 'Rutschenkontrolle'
+      case 'technikkontrolle': return 'Technikkontrolle'
+      case 'kassenabrechnung': return 'Kassenabrechnung'
+      case 'arbeitsunfall': return 'Arbeitsunfall'
+      case 'feedback': return 'Feedback'
+      default: return type
     }
   }
   return (
@@ -418,13 +454,25 @@ export default function Formulare() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button 
+                        onClick={() => handleViewSubmission(submission)}
+                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        title="Formular anzeigen"
+                      >
                         👁️ Anzeigen
                       </button>
-                      <button className="text-green-600 hover:text-green-900">
+                      <button 
+                        onClick={() => handleViewSubmission(submission)}
+                        className="text-green-600 hover:text-green-900 transition-colors"
+                        title="Detaillierte Ansicht"
+                      >
                         📄 Details
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button 
+                        onClick={() => handleDeleteSubmission(submission)}
+                        className="text-red-600 hover:text-red-900 transition-colors"
+                        title="Formular löschen"
+                      >
                         🗑️ Löschen
                       </button>
                     </div>
@@ -435,6 +483,144 @@ export default function Formulare() {
           </table>
         </div>
       </div>
+
+      {/* Submission Details Modal */}
+      {showSubmissionModal && selectedSubmission && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 rounded flex items-center justify-center ${
+                    selectedSubmission.type === 'wassermessung' ? 'bg-blue-100' :
+                    selectedSubmission.type === 'rutschenkontrolle' ? 'bg-green-100' :
+                    selectedSubmission.type === 'technikkontrolle' ? 'bg-orange-100' :
+                    selectedSubmission.type === 'kassenabrechnung' ? 'bg-indigo-100' :
+                    selectedSubmission.type === 'arbeitsunfall' ? 'bg-red-100' :
+                    'bg-purple-100'
+                  }`}>
+                    <span className={`text-lg ${
+                      selectedSubmission.type === 'wassermessung' ? 'text-blue-600' :
+                      selectedSubmission.type === 'rutschenkontrolle' ? 'text-green-600' :
+                      selectedSubmission.type === 'technikkontrolle' ? 'text-orange-600' :
+                      selectedSubmission.type === 'kassenabrechnung' ? 'text-indigo-600' :
+                      selectedSubmission.type === 'arbeitsunfall' ? 'text-red-600' :
+                      'text-purple-600'
+                    }`}>
+                      {selectedSubmission.type === 'wassermessung' ? '💧' :
+                       selectedSubmission.type === 'rutschenkontrolle' ? '🎢' :
+                       selectedSubmission.type === 'technikkontrolle' ? '⚙️' :
+                       selectedSubmission.type === 'kassenabrechnung' ? '💰' :
+                       selectedSubmission.type === 'arbeitsunfall' ? '🏥' :
+                       '📝'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{selectedSubmission.title}</h3>
+                    <p className="text-sm text-gray-600">{getFormTypeLabel(selectedSubmission.type)}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeSubmissionModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6">
+              {/* Status and Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Status</p>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full mt-1 ${
+                    selectedSubmission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-800' :
+                    selectedSubmission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {selectedSubmission.status}
+                  </span>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Eingereicht von</p>
+                  <p className="text-sm text-gray-900 mt-1">{selectedSubmission.submittedBy}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Datum</p>
+                  <p className="text-sm text-gray-900 mt-1">{selectedSubmission.submittedAt}</p>
+                </div>
+              </div>
+
+              {/* Form Data */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Formulardaten</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(selectedSubmission.formData).map(([key, value]) => (
+                      <div key={key} className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-700 capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}:
+                        </span>
+                        <span className="text-sm text-gray-900 mt-1">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mt-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-2">Beschreibung</h4>
+                <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                  {selectedSubmission.description}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-lg">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Formular löschen</h3>
+                  <p className="text-sm text-gray-600">Diese Aktion kann nicht rückgängig gemacht werden</p>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <p className="text-sm font-medium text-gray-900">{showDeleteConfirm.title}</p>
+                <p className="text-sm text-gray-600 mt-1">{showDeleteConfirm.description}</p>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                >
+                  Löschen
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Popup Forms */}
       <WassermessungForm
