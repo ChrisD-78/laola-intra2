@@ -15,7 +15,7 @@ interface DokumentUploadFormProps {
 const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('Betrieb')
+  const [category, setCategory] = useState('Sicherheit')
   const [tags, setTags] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -38,7 +38,7 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
       // Reset form
       setTitle('')
       setDescription('')
-      setCategory('Betrieb')
+      setCategory('Sicherheit')
       setTags('')
       setSelectedFile(null)
       setIsOpen(false)
@@ -48,7 +48,7 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   const handleClose = () => {
     setTitle('')
     setDescription('')
-    setCategory('Betrieb')
+    setCategory('Sicherheit')
     setTags('')
     setSelectedFile(null)
     setIsOpen(false)
@@ -180,10 +180,8 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
                 >
                   <option value="Sicherheit">Sicherheit</option>
                   <option value="Betrieb">Betrieb</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Wartung">Wartung</option>
-                  <option value="Schulung">Schulung</option>
-                  <option value="Sonstiges">Sonstiges</option>
+                  <option value="Verwaltung">Verwaltung</option>
+                  <option value="Technik">Technik</option>
                 </select>
               </div>
               

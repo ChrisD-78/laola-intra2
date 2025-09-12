@@ -36,11 +36,11 @@ export default function Dokumente() {
       id: '2',
       title: 'Betriebsanleitung Filteranlage',
       description: 'Detaillierte Anleitung zur Wartung der Filteranlage',
-      category: 'Wartung',
+      category: 'Technik',
       fileName: 'filteranlage-anleitung.pdf',
       fileSize: 1.8,
       fileType: 'application/pdf',
-      tags: ['wartung', 'filteranlage', 'anleitung'],
+      tags: ['technik', 'filteranlage', 'anleitung'],
       uploadedAt: '2024-01-14T14:15:00',
       uploadedBy: 'Anna Schmidt',
       fileContent: 'Betriebsanleitung für die Filteranlage: Regelmäßige Wartung alle 2 Wochen, Filterwechsel alle 3 Monate.'
@@ -57,6 +57,19 @@ export default function Dokumente() {
       uploadedAt: '2024-01-12T09:45:00',
       uploadedBy: 'Tom Weber',
       fileContent: 'Monatsbericht November: Besucherzahl gestiegen, Umsatz erhöht, neue Mitarbeiter eingestellt.'
+    },
+    {
+      id: '4',
+      title: 'Personalrichtlinien 2024',
+      description: 'Aktuelle Personalrichtlinien und Arbeitsverträge',
+      category: 'Verwaltung',
+      fileName: 'personalrichtlinien-2024.pdf',
+      fileSize: 1.5,
+      fileType: 'application/pdf',
+      tags: ['personal', 'richtlinien', 'verwaltung'],
+      uploadedAt: '2024-01-10T16:20:00',
+      uploadedBy: 'Maria Müller',
+      fileContent: 'Personalrichtlinien 2024: Arbeitszeiten, Urlaubsregelungen, Fortbildungsmöglichkeiten.'
     }
   ])
 
@@ -162,9 +175,8 @@ export default function Dokumente() {
     switch (category) {
       case 'Sicherheit': return 'bg-red-100 text-red-800'
       case 'Betrieb': return 'bg-blue-100 text-blue-800'
-      case 'Personal': return 'bg-green-100 text-green-800'
-      case 'Wartung': return 'bg-yellow-100 text-yellow-800'
-      case 'Schulung': return 'bg-purple-100 text-purple-800'
+      case 'Verwaltung': return 'bg-green-100 text-green-800'
+      case 'Technik': return 'bg-yellow-100 text-yellow-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -219,10 +231,8 @@ export default function Dokumente() {
             <option>Alle Kategorien</option>
             <option>Sicherheit</option>
             <option>Betrieb</option>
-            <option>Personal</option>
-            <option>Wartung</option>
-            <option>Schulung</option>
-            <option>Sonstiges</option>
+            <option>Verwaltung</option>
+            <option>Technik</option>
           </select>
           <DokumentUploadForm onUploadDocument={addNewDocument} />
         </div>
@@ -246,16 +256,16 @@ export default function Dokumente() {
         </div>
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="text-center">
-            <span className="text-4xl">👥</span>
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">Personal</h3>
-            <p className="mt-2 text-sm text-gray-600">{getCategoryCount('Personal')} Dokumente</p>
+            <span className="text-4xl">📋</span>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Verwaltung</h3>
+            <p className="mt-2 text-sm text-gray-600">{getCategoryCount('Verwaltung')} Dokumente</p>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="text-center">
             <span className="text-4xl">🔧</span>
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">Wartung</h3>
-            <p className="mt-2 text-sm text-gray-600">{getCategoryCount('Wartung')} Dokumente</p>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Technik</h3>
+            <p className="mt-2 text-sm text-gray-600">{getCategoryCount('Technik')} Dokumente</p>
           </div>
         </div>
       </div>
@@ -388,10 +398,8 @@ export default function Dokumente() {
                     >
                       <option value="Sicherheit">Sicherheit</option>
                       <option value="Betrieb">Betrieb</option>
-                      <option value="Personal">Personal</option>
-                      <option value="Wartung">Wartung</option>
-                      <option value="Schulung">Schulung</option>
-                      <option value="Sonstiges">Sonstiges</option>
+                      <option value="Verwaltung">Verwaltung</option>
+                      <option value="Technik">Technik</option>
                     </select>
                   </div>
                   <div>
