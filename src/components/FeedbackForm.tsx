@@ -34,6 +34,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,10 +44,11 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
     try {
       // E-Mail erstellen und versenden
       const emailData = createFeedbackEmail(formData)
-      const emailSent = await sendEmail(emailData)
+      const result = await sendEmail(emailData)
       
-      if (emailSent) {
+      if (result.success) {
         setEmailStatus('success')
+        setErrorMessage('')
         // Kurz warten, damit der Benutzer die Erfolgsmeldung sieht
         setTimeout(() => {
           onSubmit(formData)
@@ -55,11 +57,13 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
         }, 1500)
       } else {
         setEmailStatus('error')
+        setErrorMessage(result.error || 'Unbekannter Fehler')
         setIsSubmitting(false)
       }
     } catch (error) {
       console.error('Fehler beim Senden der E-Mail:', error)
       setEmailStatus('error')
+      setErrorMessage('Netzwerkfehler - Bitte versuchen Sie es erneut')
       setIsSubmitting(false)
     }
   }
@@ -77,6 +81,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
     })
     setIsSubmitting(false)
     setEmailStatus('idle')
+    setErrorMessage('')
   }
 
   const handleClose = () => {
@@ -136,9 +141,15 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
           
           {emailStatus === 'error' && (
             <div className="mx-6 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-start space-x-3">
                 <span className="text-red-600 text-xl">❌</span>
-                <span className="text-red-800 font-medium">Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.</span>
+                <div className="flex-1">
+                  <div className="text-red-800 font-medium mb-2">Fehler beim Senden der E-Mail</div>
+                  <div className="text-red-700 text-sm">{errorMessage}</div>
+                  <div className="text-red-600 text-xs mt-2">
+                    💡 <strong>Tipp:</strong> Überprüfen Sie die Netlify-Logs für detaillierte Fehlerinformationen.
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -5,7 +5,7 @@ interface EmailData {
   text: string
 }
 
-export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
+export const sendEmail = async (emailData: EmailData): Promise<{ success: boolean; error?: string }> => {
   try {
     console.log('📧 E-Mail wird gesendet...')
     console.log('An:', emailData.to)
@@ -24,14 +24,20 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
     
     if (response.ok && result.success) {
       console.log('✅ E-Mail erfolgreich gesendet!', result.messageId)
-      return true
+      return { success: true }
     } else {
       console.error('❌ E-Mail-Versand fehlgeschlagen:', result.error)
-      return false
+      return { 
+        success: false, 
+        error: result.error || 'Unbekannter Fehler beim E-Mail-Versand'
+      }
     }
   } catch (error) {
     console.error('❌ Fehler beim Senden der E-Mail:', error)
-    return false
+    return { 
+      success: false, 
+      error: 'Netzwerkfehler - Bitte versuchen Sie es erneut'
+    }
   }
 }
 
