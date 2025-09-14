@@ -32,7 +32,7 @@ export default function Formulare() {
         becken: 'Hauptbecken',
         phWert: '7.2',
         chlorWert: '0.8',
-        temperatur: '24°C',
+ temperatur: '24°C',
         datum: '2024-01-15',
         uhrzeit: '14:30'
       },
@@ -342,7 +342,11 @@ export default function Formulare() {
                     </div>
                   </div>
                 </div>
-                <button className="p-2 text-gray-400 hover:text-gray-600">
+                <button 
+                  onClick={() => handleViewSubmission(submission)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Formular anzeigen"
+                >
                   👁️
                 </button>
               </div>
