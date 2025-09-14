@@ -32,7 +32,10 @@ export default function Formulare() {
         becken: 'Hauptbecken',
         phWert: '7.2',
         chlorWert: '0.8',
- temperatur: '24°C',
+        chlorWertGesamt: '1.2',
+        chlorWertGebunden: '0.4',
+        redox: '650',
+        temperatur: '24°C',
         datum: '2024-01-15',
         uhrzeit: '14:30'
       },
@@ -129,7 +132,7 @@ export default function Formulare() {
   const generateDescription = (type: string, data: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any
     switch (type) {
       case 'wassermessung':
-        return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l`
+        return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l, Chlor-Gesamt: ${data.chlorWertGesamt} mg/l, Chlor-Gebunden: ${data.chlorWertGebunden} mg/l, Redox: ${data.redox} mV`
       case 'rutschenkontrolle':
         return `Sicherheit: ${data.sicherheitscheck}, Funktion: ${data.funktionspruefung}`
       case 'technikkontrolle':

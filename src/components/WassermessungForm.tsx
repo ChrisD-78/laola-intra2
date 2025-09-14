@@ -12,6 +12,9 @@ interface WassermessungData {
   becken: string
   phWert: string
   chlorWert: string
+  chlorWertGesamt: string
+  chlorWertGebunden: string
+  redox: string
   temperatur: string
   datum: string
   zeit: string
@@ -24,6 +27,9 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
     becken: '',
     phWert: '',
     chlorWert: '',
+    chlorWertGesamt: '',
+    chlorWertGebunden: '',
+    redox: '',
     temperatur: '',
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
@@ -40,6 +46,9 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
       becken: '',
       phWert: '',
       chlorWert: '',
+      chlorWertGesamt: '',
+      chlorWertGebunden: '',
+      redox: '',
       temperatur: '',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
@@ -55,6 +64,9 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
       becken: '',
       phWert: '',
       chlorWert: '',
+      chlorWertGesamt: '',
+      chlorWertGebunden: '',
+      redox: '',
       temperatur: '',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
@@ -198,6 +210,60 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
                   onChange={(e) => setFormData({...formData, chlorWert: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="z.B. 0.8"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="chlorWertGesamt" className="block text-sm font-medium text-gray-700 mb-2">
+                  Chlor-Wert-Gesamt (mg/l) *
+                </label>
+                <input
+                  type="number"
+                  id="chlorWertGesamt"
+                  step="0.1"
+                  min="0.0"
+                  max="5.0"
+                  value={formData.chlorWertGesamt}
+                  onChange={(e) => setFormData({...formData, chlorWertGesamt: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="z.B. 1.2"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="chlorWertGebunden" className="block text-sm font-medium text-gray-700 mb-2">
+                  Chlor-Wert-Gebunden (mg/l) *
+                </label>
+                <input
+                  type="number"
+                  id="chlorWertGebunden"
+                  step="0.1"
+                  min="0.0"
+                  max="2.0"
+                  value={formData.chlorWertGebunden}
+                  onChange={(e) => setFormData({...formData, chlorWertGebunden: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="z.B. 0.4"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="redox" className="block text-sm font-medium text-gray-700 mb-2">
+                  Redox (mV) *
+                </label>
+                <input
+                  type="number"
+                  id="redox"
+                  step="1"
+                  min="400"
+                  max="800"
+                  value={formData.redox}
+                  onChange={(e) => setFormData({...formData, redox: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="z.B. 650"
                   required
                 />
               </div>
