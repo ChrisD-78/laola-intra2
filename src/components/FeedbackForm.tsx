@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { sendEmail, createFeedbackEmail } from '../lib/emailService'
 
 interface FeedbackFormProps {
   isOpen: boolean
@@ -30,12 +31,40 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
     meldendePerson: 'Christof Drost',
     kontakt: ''
   })
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
-    onClose()
-    // Reset form
+    setIsSubmitting(true)
+    setEmailStatus('sending')
+    
+    try {
+      // E-Mail erstellen und versenden
+      const emailData = createFeedbackEmail(formData)
+      const emailSent = await sendEmail(emailData)
+      
+      if (emailSent) {
+        setEmailStatus('success')
+        // Kurz warten, damit der Benutzer die Erfolgsmeldung sieht
+        setTimeout(() => {
+          onSubmit(formData)
+          onClose()
+          resetForm()
+        }, 1500)
+      } else {
+        setEmailStatus('error')
+        setIsSubmitting(false)
+      }
+    } catch (error) {
+      console.error('Fehler beim Senden der E-Mail:', error)
+      setEmailStatus('error')
+      setIsSubmitting(false)
+    }
+  }
+  
+  const resetForm = () => {
     setFormData({
       kategorie: '',
       betroffenerBereich: '',
@@ -46,21 +75,13 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
       meldendePerson: 'Christof Drost',
       kontakt: ''
     })
+    setIsSubmitting(false)
+    setEmailStatus('idle')
   }
 
   const handleClose = () => {
     onClose()
-    // Reset form
-    setFormData({
-      kategorie: '',
-      betroffenerBereich: '',
-      prioritaet: '',
-      titel: '',
-      beschreibung: '',
-      vorschlag: '',
-      meldendePerson: 'Christof Drost',
-      kontakt: ''
-    })
+    resetForm()
   }
 
   if (!isOpen) return null
@@ -93,6 +114,34 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
               </button>
             </div>
           </div>
+          
+          {/* Status Messages */}
+          {emailStatus === 'sending' && (
+            <div className="mx-6 mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">E-Mail wird gesendet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'success' && (
+            <div className="mx-6 mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-green-600 text-xl">✅</span>
+                <span className="text-green-800 font-medium">E-Mail erfolgreich gesendet! Feedback wird verarbeitet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'error' && (
+            <div className="mx-6 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-red-600 text-xl">❌</span>
+                <span className="text-red-800 font-medium">Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.</span>
+              </div>
+            </div>
+          )}
           
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -243,14 +292,34 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
             <div className="flex space-x-3 pt-4">
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                disabled={isSubmitting}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2 ${
+                  isSubmitting 
+                    ? 'bg-purple-400 text-white cursor-not-allowed' 
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                }`}
               >
-                Feedback senden
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Wird gesendet...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📧</span>
+                    <span>Feedback senden</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                disabled={isSubmitting}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
+                  isSubmitting 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                }`}
               >
                 Abbrechen
               </button>
