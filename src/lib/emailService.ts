@@ -7,27 +7,28 @@ interface EmailData {
 
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   try {
-    // In einer echten Anwendung würde hier ein E-Mail-Service wie SendGrid, 
-    // Nodemailer mit SMTP, oder eine andere E-Mail-API verwendet werden.
-    // Für diese Demo simulieren wir den E-Mail-Versand.
-    
     console.log('📧 E-Mail wird gesendet...')
     console.log('An:', emailData.to)
     console.log('Betreff:', emailData.subject)
-    console.log('Inhalt:', emailData.text)
     
-    // Simuliere API-Aufruf
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Echte API für E-Mail-Versand
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify(emailData)
+    })
     
-    // In der Produktion würde hier der echte E-Mail-Versand stattfinden:
-    // const response = await fetch('/api/send-email', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(emailData)
-    // })
+    const result = await response.json()
     
-    console.log('✅ E-Mail erfolgreich gesendet!')
-    return true
+    if (response.ok && result.success) {
+      console.log('✅ E-Mail erfolgreich gesendet!', result.messageId)
+      return true
+    } else {
+      console.error('❌ E-Mail-Versand fehlgeschlagen:', result.error)
+      return false
+    }
   } catch (error) {
     console.error('❌ Fehler beim Senden der E-Mail:', error)
     return false
