@@ -43,7 +43,6 @@ export const sendEmail = async (emailData: EmailData): Promise<{ success: boolea
 
 export const createFeedbackEmail = (feedbackData: {
   kategorie: string
-  betroffenerBereich: string
   prioritaet: string
   titel: string
   beschreibung: string
@@ -103,11 +102,6 @@ export const createFeedbackEmail = (feedbackData: {
           <div class="field">
             <span class="field-label">📋 Kategorie</span>
             <div class="field-value">${feedbackData.kategorie}</div>
-          </div>
-
-          <div class="field">
-            <span class="field-label">🏢 Betroffener Bereich</span>
-            <div class="field-value">${feedbackData.betroffenerBereich || 'Nicht angegeben'}</div>
           </div>
 
           <div class="field">
@@ -171,7 +165,6 @@ Neues Feedback - Laola Intranet System
 Wichtige Information: Ein neues Feedback wurde über das Laola Intranet System eingereicht.
 
 KATEGORIE: ${feedbackData.kategorie}
-BETROFFENER BEREICH: ${feedbackData.betroffenerBereich || 'Nicht angegeben'}
 PRIORITÄT: ${feedbackData.prioritaet || 'Nicht angegeben'}
 MELDENDE PERSON: ${feedbackData.meldendePerson}
 KONTAKT: ${feedbackData.kontakt || 'Nicht angegeben'}

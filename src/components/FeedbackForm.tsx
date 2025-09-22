@@ -11,7 +11,6 @@ interface FeedbackFormProps {
 
 interface FeedbackData {
   kategorie: string
-  betroffenerBereich: string
   prioritaet: string
   titel: string
   beschreibung: string
@@ -23,7 +22,6 @@ interface FeedbackData {
 const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
   const [formData, setFormData] = useState<FeedbackData>({
     kategorie: '',
-    betroffenerBereich: '',
     prioritaet: '',
     titel: '',
     beschreibung: '',
@@ -71,7 +69,6 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
   const resetForm = () => {
     setFormData({
       kategorie: '',
-      betroffenerBereich: '',
       prioritaet: '',
       titel: '',
       beschreibung: '',
@@ -175,36 +172,6 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
                   <option value="Beschwerde">Beschwerde</option>
                   <option value="Ideen">Ideen</option>
                   <option value="Sonstiges">Sonstiges</option>
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="betroffenerBereich" className="block text-sm font-medium text-gray-700 mb-2">
-                  Betroffener Bereich
-                </label>
-                <select
-                  id="betroffenerBereich"
-                  value={formData.betroffenerBereich}
-                  onChange={(e) => setFormData({...formData, betroffenerBereich: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Bereich auswählen (optional)</option>
-                  <option value="Schwimmerbecken">Schwimmerbecken</option>
-                  <option value="Lehrschwimmbecken">Lehrschwimmbecken</option>
-                  <option value="Wellenbecken">Wellenbecken</option>
-                  <option value="Rutschenbecken">Rutschenbecken</option>
-                  <option value="Kinderbecken">Kinderbecken</option>
-                  <option value="Thermalbecken">Thermalbecken</option>
-                  <option value="Sauna">Sauna</option>
-                  <option value="Umkleidekabinen">Umkleidekabinen</option>
-                  <option value="Duschen">Duschen</option>
-                  <option value="Gastronomie">Gastronomie</option>
-                  <option value="Kasse">Kasse</option>
-                  <option value="Parkplatz">Parkplatz</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Technik">Technik</option>
-                  <option value="Sicherheit">Sicherheit</option>
-                  <option value="Allgemein">Allgemein</option>
                 </select>
               </div>
               
