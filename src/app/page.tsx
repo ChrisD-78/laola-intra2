@@ -78,39 +78,39 @@ export default function Dashboard() {
           Willkommen im LA OLA Intranet
         </h1>
         <DailyMotivation />
+      </div>
 
-        {/* Aktionen unter Spruch des Tages */}
-        <div className="mt-6 space-y-4">
-          <Link
-            href="/schichtplaner"
-            className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
-          >
-            <div className="flex items-center">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-                <span className="text-2xl">📅</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-lg font-semibold text-gray-900">Schichtplaner</p>
-                <p className="text-sm text-gray-600">Dienstpläne ansehen und verwalten</p>
-              </div>
+      {/* Aktionen unterhalb des Headers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link
+          href="/schichtplaner"
+          className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+              <span className="text-2xl">📅</span>
             </div>
-          </Link>
+            <div className="ml-4">
+              <p className="text-lg font-semibold text-gray-900">Schichtplaner</p>
+              <p className="text-sm text-gray-600">Dienstpläne ansehen und verwalten</p>
+            </div>
+          </div>
+        </Link>
 
-          <Link
-            href="/kursmanager"
-            className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
-          >
-            <div className="flex items-center">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
-                <span className="text-2xl">🏊‍♂️</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-lg font-semibold text-gray-900">Kursmanager</p>
-                <p className="text-sm text-gray-600">Kurse planen und Teilnehmer verwalten</p>
-              </div>
+        <Link
+          href="/kursmanager"
+          className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+              <span className="text-2xl">🏊‍♂️</span>
             </div>
-          </Link>
-        </div>
+            <div className="ml-4">
+              <p className="text-lg font-semibold text-gray-900">Kursmanager</p>
+              <p className="text-sm text-gray-600">Kurse planen und Teilnehmer verwalten</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Quick Stats */}
