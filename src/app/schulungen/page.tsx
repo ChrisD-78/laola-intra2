@@ -228,6 +228,55 @@ export default function Schulungen() {
     setSortOrder('desc')
   }
 
+  const handleExportOverviewPdf = () => {
+    const rows = getFilteredOverviewSchulungen().map(item => {
+      const participant = `${item.participantName} ${item.participantSurname}`
+      return `<tr>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.schulungTitle}</td>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${participant}</td>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.category}</td>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.instructor}</td>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.completedDate}</td>
+      </tr>`
+    }).join('')
+
+    const html = `<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"/>
+      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
+      <title>Schulungsübersicht – Export</title>
+      <style>
+        body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:24px}
+        h1{font-size:20px;margin:0 0 16px 0}
+        .meta{color:#6b7280;font-size:12px;margin-bottom:16px}
+        table{border-collapse:collapse;width:100%;font-size:12px}
+        thead td{background:#f9fafb;font-weight:700;border:1px solid #e5e7eb;padding:8px}
+        tbody td{padding:8px;border:1px solid #e5e7eb}
+      </style>
+    </head><body>
+      <h1>Schulungsübersicht – Export</h1>
+      <div class=\"meta\">Generiert am ${new Date().toLocaleString('de-DE')}</div>
+      <table>
+        <thead>
+          <tr>
+            <td>Schulung</td>
+            <td>Teilnehmer</td>
+            <td>Kategorie</td>
+            <td>Referent</td>
+            <td>Abgeschlossen</td>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <script>window.addEventListener('load',()=>{setTimeout(()=>{window.print()},200)})</script>
+    </body></html>`
+
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.open()
+      w.document.write(html)
+      w.document.close()
+    }
+  }
+
   const getFilteredOverviewSchulungen = () => {
     const filtered = completedSchulungen.filter(completed => {
       const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
@@ -1102,6 +1151,15 @@ export default function Schulungen() {
 
               {/* Table */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                  <div className="text-sm text-gray-600">Gefilterte Ergebnisse exportieren</div>
+                  <button
+                    onClick={handleExportOverviewPdf}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                  >
+                    ⬇️ Übersicht als PDF
+                  </button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
