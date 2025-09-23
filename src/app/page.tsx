@@ -99,7 +99,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link
+        <a
           href="https://kurse.la-ola.de/de/customers/login/aHR0cHM6Ly9rdXJzZS5sYS1vbGEuZGUvZGUvYWRtaW4vZGFzaGJvYXJkcy9tb2R1bGVzLw%3D%3D/"
           target="_blank"
           rel="noopener noreferrer"
@@ -114,7 +114,7 @@ export default function Dashboard() {
               <p className="text-sm text-gray-600">Kurse planen und Teilnehmer verwalten</p>
             </div>
           </div>
-        </Link>
+        </a>
       </div>
 
       {/* Quick Stats */}
