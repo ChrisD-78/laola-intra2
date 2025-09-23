@@ -100,7 +100,9 @@ export default function Dashboard() {
         </Link>
 
         <Link
-          href="/kursmanager"
+          href="https://kurse.la-ola.de/de/customers/login/aHR0cHM6Ly9rdXJzZS5sYS1vbGEuZGUvZGUvYWRtaW4vZGFzaGJvYXJkcy9tb2R1bGVzLw%3D%3D/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
         >
           <div className="flex items-center">
