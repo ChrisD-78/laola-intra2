@@ -159,8 +159,13 @@ export default function Formulare() {
 
   const confirmDelete = () => {
     if (showDeleteConfirm) {
-      setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
-      setShowDeleteConfirm(null)
+      const pass = prompt('Bitte Passwort eingeben:')
+      if (pass === 'bl') {
+        setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
+        setShowDeleteConfirm(null)
+      } else if (pass !== null) {
+        alert('Falsches Passwort')
+      }
     }
   }
 
