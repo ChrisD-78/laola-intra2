@@ -83,7 +83,9 @@ export default function Dashboard() {
       {/* Aktionen unterhalb des Headers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
-          href="/schichtplaner"
+          href="https://stadtholding-landau-pep.dejoris.de/de/login//#%257B%2522main%2522%253A%2522de%252Fadmin%252Femployees%2522%252C%2522column%2522%253A%2522de%252Fadmin%252Findex%252Fhome_column%2522%252C%2522icon%2522%253A%2522fas%2520fa-users%2522%257D"
+          target="_blank"
+          rel="noopener noreferrer"
           className="block w-full bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
         >
           <div className="flex items-center">
