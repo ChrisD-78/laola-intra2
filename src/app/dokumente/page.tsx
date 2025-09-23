@@ -105,7 +105,12 @@ export default function Dokumente() {
   }
 
   const deleteDocument = (documentId: string) => {
-    setDocuments(documents.filter(doc => doc.id !== documentId))
+    const pass = prompt('Bitte Passwort eingeben:')
+    if (pass === 'bl') {
+      setDocuments(documents.filter(doc => doc.id !== documentId))
+    } else if (pass !== null) {
+      alert('Falsches Passwort')
+    }
   }
 
   const viewDocument = (document: Document) => {
@@ -131,13 +136,18 @@ export default function Dokumente() {
   }
 
   const startEditDocument = (doc: Document) => {
-    setSelectedDocument(doc)
-    setEditTitle(doc.title)
-    setEditDescription(doc.description)
-    setEditCategory(doc.category)
-    setEditTags(doc.tags.join(', '))
-    setIsEditMode(true)
-    setIsViewerOpen(true)
+    const pass = prompt('Bitte Passwort eingeben:')
+    if (pass === 'bl') {
+      setSelectedDocument(doc)
+      setEditTitle(doc.title)
+      setEditDescription(doc.description)
+      setEditCategory(doc.category)
+      setEditTags(doc.tags.join(', '))
+      setIsEditMode(true)
+      setIsViewerOpen(true)
+    } else if (pass !== null) {
+      alert('Falsches Passwort')
+    }
   }
 
   const saveEditDocument = () => {

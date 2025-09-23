@@ -100,7 +100,14 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          const pass = prompt('Bitte Passwort eingeben:')
+          if (pass === 'bl') {
+            setIsOpen(true)
+          } else if (pass !== null) {
+            alert('Falsches Passwort')
+          }
+        }}
         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
       >
         📤 Dokument hochladen
