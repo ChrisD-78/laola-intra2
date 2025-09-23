@@ -941,7 +941,14 @@ export default function Schulungen() {
               <span>Neue Schulung</span>
             </button>
             <button 
-              onClick={() => setActiveTab('overview')}
+              onClick={() => {
+                const pass = prompt('Bitte Passwort eingeben:')
+                if (pass === 'team') {
+                  setActiveTab('overview')
+                } else if (pass !== null) {
+                  alert('Falsches Passwort')
+                }
+              }}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
             >
               <span>📊</span>
@@ -961,7 +968,18 @@ export default function Schulungen() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'available' | 'overview')}
+                onClick={() => {
+                  if (tab.id === 'overview') {
+                    const pass = prompt('Bitte Passwort eingeben:')
+                    if (pass === 'team') {
+                      setActiveTab('overview')
+                    } else if (pass !== null) {
+                      alert('Falsches Passwort')
+                    }
+                  } else {
+                    setActiveTab(tab.id as 'available' | 'overview')
+                  }
+                }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
