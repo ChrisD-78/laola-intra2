@@ -54,7 +54,12 @@ export default function Dashboard() {
   }
 
   const removeInfo = (id: string) => {
-    setCurrentInfos(currentInfos.filter(info => info.id !== id))
+    const pass = prompt('Bitte Passwort eingeben:')
+    if (pass === 'bl') {
+      setCurrentInfos(currentInfos.filter(info => info.id !== id))
+    } else if (pass !== null) {
+      alert('Falsches Passwort')
+    }
   }
 
   const downloadPdf = (info: InfoItem) => {

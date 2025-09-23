@@ -55,7 +55,14 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          const pass = prompt('Bitte Passwort eingeben:')
+          if (pass === 'bl') {
+            setIsOpen(true)
+          } else if (pass !== null) {
+            alert('Falsches Passwort')
+          }
+        }}
         className="px-4 py-2 bg-blue-700 hover:bg-blue-800 border-2 border-dashed border-blue-600 rounded-lg text-white text-sm font-medium transition-colors"
       >
         ➕ Neue Information
