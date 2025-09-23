@@ -18,6 +18,7 @@ interface User {
   id: string
   name: string
   isOnline: boolean
+  avatar?: string
 }
 
 interface Group {
@@ -51,6 +52,9 @@ export default function Chat() {
   const [newGroupDescription, setNewGroupDescription] = useState('')
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
+  const [showProfileSettings, setShowProfileSettings] = useState(false)
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  const [profileName, setProfileName] = useState('')
 
   // Load messages from localStorage on component mount
   useEffect(() => {
@@ -62,6 +66,11 @@ export default function Chat() {
     const savedGroups = localStorage.getItem('chatGroups')
     if (savedGroups) {
       setGroups(JSON.parse(savedGroups))
+    }
+    
+    const savedUsers = localStorage.getItem('chatUsers')
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers))
     }
     
     const savedUser = localStorage.getItem('currentChatUser')
@@ -81,11 +90,22 @@ export default function Chat() {
     localStorage.setItem('chatGroups', JSON.stringify(groups))
   }, [groups])
 
+  // Save users to localStorage whenever users change
+  useEffect(() => {
+    localStorage.setItem('chatUsers', JSON.stringify(users))
+  }, [users])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (currentUser.trim()) {
       localStorage.setItem('currentChatUser', currentUser)
       setShowLogin(false)
+      // Load user profile data
+      const user = users.find(u => u.id === currentUser)
+      if (user) {
+        setProfileName(user.name)
+        setProfileAvatar(user.avatar || null)
+      }
     }
   }
 
@@ -125,6 +145,33 @@ export default function Chat() {
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     )
+  }
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setProfileAvatar(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeAvatar = () => {
+    setProfileAvatar(null)
+  }
+
+  const saveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!profileName.trim()) return
+
+    setUsers(prev => prev.map(user => 
+      user.id === currentUser 
+        ? { ...user, name: profileName.trim(), avatar: profileAvatar || undefined }
+        : user
+    ))
+    setShowProfileSettings(false)
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,6 +281,16 @@ export default function Chat() {
     }
   }
 
+  const getUserAvatar = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    return user?.avatar
+  }
+
+  const getUserInitials = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    return user?.name.split(' ').map(n => n[0]).join('') || 'U'
+  }
+
   if (showLogin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -293,12 +350,21 @@ export default function Chat() {
                 <p className="text-gray-600">Angemeldet als: {users.find(u => u.id === currentUser)?.name}</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Abmelden
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowProfileSettings(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="Profil bearbeiten"
+              >
+                ⚙️ Profil
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Abmelden
+              </button>
+            </div>
           </div>
         </div>
 
@@ -353,11 +419,19 @@ export default function Chat() {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {user.name.split(' ').map(n => n[0]).join('')}
-                            </div>
+                            {getUserAvatar(user.id) ? (
+                              <img
+                                src={getUserAvatar(user.id)}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {getUserInitials(user.id)}
+                              </div>
+                            )}
                             {user.isOnline && (
                               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                             )}
@@ -460,13 +534,21 @@ export default function Chat() {
                   <div className="flex items-center space-x-3">
                     {selectedRecipient ? (
                       <>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          users.find(u => u.id === selectedRecipient)?.isOnline 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {users.find(u => u.id === selectedRecipient)?.name.split(' ').map(n => n[0]).join('')}
-                        </div>
+                        {getUserAvatar(selectedRecipient) ? (
+                          <img
+                            src={getUserAvatar(selectedRecipient)}
+                            alt={users.find(u => u.id === selectedRecipient)?.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            users.find(u => u.id === selectedRecipient)?.isOnline 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {getUserInitials(selectedRecipient)}
+                          </div>
+                        )}
                         <div>
                           <h3 className="font-medium text-gray-900">
                             {users.find(u => u.id === selectedRecipient)?.name}
@@ -626,6 +708,99 @@ export default function Chat() {
           </div>
         </div>
 
+        {/* Profile Settings Modal */}
+        {showProfileSettings && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Profil bearbeiten</h2>
+                  <button
+                    onClick={() => setShowProfileSettings(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={saveProfile} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profilbild
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {profileAvatar ? (
+                          <img
+                            src={profileAvatar}
+                            alt="Profilbild"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-2xl text-gray-400">
+                            {getUserInitials(currentUser)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-sm">
+                          📷 Bild wählen
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarSelect}
+                            className="hidden"
+                          />
+                        </label>
+                        {profileAvatar && (
+                          <button
+                            type="button"
+                            onClick={removeAvatar}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                          >
+                            🗑️ Entfernen
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      placeholder="Ihr Name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileSettings(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!profileName.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Speichern
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Create Group Modal */}
         {showCreateGroup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -683,11 +858,19 @@ export default function Chat() {
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
                           <div className="flex items-center space-x-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {user.name.split(' ').map(n => n[0]).join('')}
-                            </div>
+                            {getUserAvatar(user.id) ? (
+                              <img
+                                src={getUserAvatar(user.id)}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {getUserInitials(user.id)}
+                              </div>
+                            )}
                             <span className="text-sm font-medium text-gray-900">{user.name}</span>
                           </div>
                         </label>
