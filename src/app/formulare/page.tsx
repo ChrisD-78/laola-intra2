@@ -157,6 +157,42 @@ export default function Formulare() {
     setShowDeleteConfirm(submission)
   }
 
+  const handleDownloadPdf = (submission: FormSubmission) => {
+    const title = `${getFormTypeLabel(submission.type)} – ${submission.title}`
+    const htmlRows = Object.entries(submission.formData).map(([key, value]) => {
+      const label = key.replace(/([A-Z])/g, ' $1').trim()
+      return `<tr><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">${label}</td><td style=\"padding:8px;border:1px solid #e5e7eb;\">${String(value)}</td></tr>`
+    }).join('')
+
+    const html = `<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"/>
+      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
+      <title>${title}</title>
+      <style>
+        body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:24px}
+        h1{font-size:20px;margin:0 0 16px 0}
+        .meta{color:#6b7280;font-size:12px;margin-bottom:16px}
+        table{border-collapse:collapse;width:100%;font-size:14px}
+        thead td{background:#f9fafb;font-weight:700}
+      </style>
+    </head><body>
+      <h1>${title}</h1>
+      <div class=\"meta\">Status: ${submission.status} • Eingereicht: ${submission.submittedAt} • Von: ${submission.submittedBy}</div>
+      <div style=\"margin:12px 0 20px 0;color:#374151;\">${submission.description}</div>
+      <table>
+        <thead><tr><td style=\"padding:8px;border:1px solid #e5e7eb;\">Feld</td><td style=\"padding:8px;border:1px solid #e5e7eb;\">Wert</td></tr></thead>
+        <tbody>${htmlRows}</tbody>
+      </table>
+      <script>window.addEventListener('load',()=>{setTimeout(()=>{window.print()},200)})</script>
+    </body></html>`
+
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.open()
+      w.document.write(html)
+      w.document.close()
+    }
+  }
+
   const confirmDelete = () => {
     if (showDeleteConfirm) {
       const pass = prompt('Bitte Passwort eingeben:')
@@ -472,6 +508,13 @@ export default function Formulare() {
                         title="Formular anzeigen"
                       >
                         👁️ Anzeigen
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(submission)}
+                        className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                        title="Als PDF herunterladen"
+                      >
+                        ⬇️ PDF
                       </button>
                       <button 
                         onClick={() => handleViewSubmission(submission)}
