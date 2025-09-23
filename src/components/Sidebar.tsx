@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
+import { useState } from 'react'
 
 const Sidebar = () => {
   const pathname = usePathname()
   const { currentUser, logout } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: '🏠' },
@@ -19,7 +21,27 @@ const Sidebar = () => {
   ]
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-blue-900/20 backdrop-blur-xl border-r border-blue-200/30 shadow-2xl z-50">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg shadow-lg"
+      >
+        <span className="text-xl">☰</span>
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`fixed left-0 top-0 h-full w-64 bg-blue-900/20 backdrop-blur-xl border-r border-blue-200/30 shadow-2xl z-50 transform transition-transform duration-300 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
       {/* Header */}
       <div className="p-6 border-b border-blue-200/30">
         <div className="flex items-center space-x-3">
@@ -59,6 +81,7 @@ const Sidebar = () => {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-blue-800/60 text-white border-r-2 border-blue-400 shadow-lg backdrop-blur-sm'
@@ -84,7 +107,8 @@ const Sidebar = () => {
           <span>Abmelden</span>
         </button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

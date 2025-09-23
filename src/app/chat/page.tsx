@@ -368,7 +368,7 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* User List */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4 border-b border-gray-200">
@@ -577,14 +577,14 @@ export default function Chat() {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 p-4 overflow-y-auto max-h-96">
+                <div className="flex-1 p-4 overflow-y-auto max-h-64 lg:max-h-96">
                   <div className="space-y-4">
                     {getCurrentMessages().map(message => (
                       <div
                         key={message.id}
                         className={`flex ${message.sender === currentUser ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        <div className={`max-w-xs sm:max-w-sm lg:max-w-md px-4 py-2 rounded-lg ${
                           message.sender === currentUser
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-200 text-gray-900'

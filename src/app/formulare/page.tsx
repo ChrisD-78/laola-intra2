@@ -222,10 +222,10 @@ export default function Formulare() {
     }
   }
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-3xl font-bold text-gray-900">Formulare</h1>
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Formulare</h1>
         <p className="mt-2 text-gray-600">
           Füllen Sie wichtige Formulare aus und verwalten Sie Ihre Einreichungen
         </p>
@@ -233,11 +233,11 @@ export default function Formulare() {
 
       {/* Available Forms */}
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 lg:p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Verfügbare Formulare</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 p-4 lg:p-6">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">🏥</span>
             </div>
@@ -255,7 +255,7 @@ export default function Formulare() {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">💧</span>
             </div>
@@ -273,7 +273,7 @@ export default function Formulare() {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">🎢</span>
             </div>
@@ -291,7 +291,7 @@ export default function Formulare() {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">⚙️</span>
             </div>
@@ -309,7 +309,7 @@ export default function Formulare() {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">📝</span>
             </div>
@@ -327,7 +327,7 @@ export default function Formulare() {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">💰</span>
             </div>

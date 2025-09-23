@@ -964,17 +964,17 @@ export default function Schulungen() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Schulungen</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Schulungen</h1>
             <p className="mt-2 text-gray-600">
               Verwalten Sie Ihre Schulungen und Weiterbildungen
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button 
               onClick={() => {
                 const pass = prompt('Bitte Passwort eingeben:')

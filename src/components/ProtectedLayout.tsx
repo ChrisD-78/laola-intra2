@@ -36,9 +36,9 @@ const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64">
         <Navigation />
-        <main className="p-8">
+        <main className="p-4 lg:p-8 pt-16 lg:pt-8">
           {children}
         </main>
       </div>

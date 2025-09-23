@@ -218,18 +218,18 @@ export default function Dokumente() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dokumente</h1>
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Dokumente</h1>
         <p className="mt-2 text-gray-600">
           Verwalten Sie alle wichtigen Dokumente und Unterlagen
         </p>
       </div>
 
       {/* Upload and Search */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <input
               type="text"
