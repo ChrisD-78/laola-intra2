@@ -187,8 +187,13 @@ export default function Schulungen() {
   ]
 
   const handleDeleteSchulung = (schulungId: string) => {
-    setSchulungen(schulungen.filter(s => s.id !== schulungId))
-    setShowDeleteConfirm(null)
+    const pass = prompt('Bitte Passwort eingeben:')
+    if (pass === 'bl') {
+      setSchulungen(schulungen.filter(s => s.id !== schulungId))
+      setShowDeleteConfirm(null)
+    } else if (pass !== null) {
+      alert('Falsches Passwort')
+    }
   }
 
   const handleCategoryFilter = (categoryName: string) => {
@@ -922,7 +927,14 @@ export default function Schulungen() {
           </div>
           <div className="flex space-x-3">
             <button 
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => {
+                const pass = prompt('Bitte Passwort eingeben:')
+                if (pass === 'bl') {
+                  setShowCreateForm(true)
+                } else if (pass !== null) {
+                  alert('Falsches Passwort')
+                }
+              }}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
             >
               <span>➕</span>
