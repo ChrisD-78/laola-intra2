@@ -9,6 +9,8 @@ interface Message {
   content: string
   timestamp: string
   isRead: boolean
+  imageUrl?: string
+  imageName?: string
 }
 
 interface User {
@@ -30,6 +32,8 @@ export default function Chat() {
     { id: 'maria', name: 'Maria Müller', isOnline: true }
   ])
   const [showLogin, setShowLogin] = useState(true)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Load messages from localStorage on component mount
   useEffect(() => {
@@ -65,9 +69,26 @@ export default function Chat() {
     setSelectedRecipient('')
   }
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeImage = () => {
+    setSelectedImage(null)
+    setImagePreview(null)
+  }
+
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !selectedRecipient) return
+    if ((!newMessage.trim() && !selectedImage) || !selectedRecipient) return
 
     const message: Message = {
       id: Date.now().toString(),
@@ -75,11 +96,15 @@ export default function Chat() {
       recipient: selectedRecipient,
       content: newMessage.trim(),
       timestamp: new Date().toISOString(),
-      isRead: false
+      isRead: false,
+      imageUrl: selectedImage ? URL.createObjectURL(selectedImage) : undefined,
+      imageName: selectedImage?.name
     }
 
     setMessages(prev => [message, ...prev])
     setNewMessage('')
+    setSelectedImage(null)
+    setImagePreview(null)
   }
 
   const getMessagesForUser = (userId: string) => {
@@ -235,7 +260,7 @@ export default function Chat() {
                         {lastMessage && (
                           <p className="text-xs text-gray-500 truncate">
                             {lastMessage.sender === currentUser ? 'Sie: ' : ''}
-                            {lastMessage.content}
+                            {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
                           </p>
                         )}
                       </div>
@@ -284,7 +309,27 @@ export default function Chat() {
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-200 text-gray-900'
                         }`}>
-                          <p className="text-sm">{message.content}</p>
+                          {message.imageUrl && (
+                            <div className="mb-2">
+                              <img
+                                src={message.imageUrl}
+                                alt={message.imageName || 'Bild'}
+                                className="max-w-full h-auto rounded-lg cursor-pointer"
+                                onClick={() => window.open(message.imageUrl, '_blank')}
+                                title="Klicken zum Vergrößern"
+                              />
+                              {message.imageName && (
+                                <p className={`text-xs mt-1 ${
+                                  message.sender === currentUser ? 'text-blue-100' : 'text-gray-500'
+                                }`}>
+                                  {message.imageName}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {message.content && (
+                            <p className="text-sm">{message.content}</p>
+                          )}
                           <p className={`text-xs mt-1 ${
                             message.sender === currentUser ? 'text-blue-100' : 'text-gray-500'
                           }`}>
@@ -298,21 +343,67 @@ export default function Chat() {
 
                 {/* Message Input */}
                 <div className="p-4 border-t border-gray-200">
-                  <form onSubmit={sendMessage} className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Nachricht eingeben..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newMessage.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      Senden
-                    </button>
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={imagePreview}
+                            alt="Vorschau"
+                            className="w-16 h-16 object-cover rounded-lg"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {selectedImage?.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(selectedImage?.size || 0) / 1024 / 1024 < 1
+                                ? `${Math.round((selectedImage?.size || 0) / 1024)} KB`
+                                : `${Math.round((selectedImage?.size || 0) / 1024 / 1024 * 10) / 10} MB`
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="text-gray-400 hover:text-red-600 transition-colors"
+                          title="Bild entfernen"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={sendMessage} className="space-y-2">
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Nachricht eingeben..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <label className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer flex items-center space-x-2">
+                        <span>📷</span>
+                        <span>Bild</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={!newMessage.trim() && !selectedImage}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        Senden
+                      </button>
+                    </div>
                   </form>
                 </div>
               </>
