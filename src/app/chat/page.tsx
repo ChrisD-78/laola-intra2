@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 interface Message {
   id: string
   sender: string
-  recipient: string
+  recipient?: string
+  groupId?: string
   content: string
   timestamp: string
   isRead: boolean
@@ -19,11 +20,22 @@ interface User {
   isOnline: boolean
 }
 
+interface Group {
+  id: string
+  name: string
+  members: string[]
+  createdBy: string
+  createdAt: string
+  description?: string
+}
+
 export default function Chat() {
   const [currentUser, setCurrentUser] = useState<string>('')
   const [selectedRecipient, setSelectedRecipient] = useState<string>('')
+  const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
   const [users, setUsers] = useState<User[]>([
     { id: 'christof', name: 'Christof Drost', isOnline: true },
     { id: 'max', name: 'Max Mustermann', isOnline: false },
@@ -34,12 +46,22 @@ export default function Chat() {
   const [showLogin, setShowLogin] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [showCreateGroup, setShowCreateGroup] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupDescription, setNewGroupDescription] = useState('')
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
 
   // Load messages from localStorage on component mount
   useEffect(() => {
     const savedMessages = localStorage.getItem('chatMessages')
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages))
+    }
+    
+    const savedGroups = localStorage.getItem('chatGroups')
+    if (savedGroups) {
+      setGroups(JSON.parse(savedGroups))
     }
     
     const savedUser = localStorage.getItem('currentChatUser')
@@ -54,6 +76,11 @@ export default function Chat() {
     localStorage.setItem('chatMessages', JSON.stringify(messages))
   }, [messages])
 
+  // Save groups to localStorage whenever groups change
+  useEffect(() => {
+    localStorage.setItem('chatGroups', JSON.stringify(groups))
+  }, [groups])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (currentUser.trim()) {
@@ -67,6 +94,37 @@ export default function Chat() {
     setCurrentUser('')
     setShowLogin(true)
     setSelectedRecipient('')
+    setSelectedGroup('')
+  }
+
+  const createGroup = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newGroupName.trim() || selectedGroupMembers.length === 0) return
+
+    const newGroup: Group = {
+      id: Date.now().toString(),
+      name: newGroupName.trim(),
+      members: [...selectedGroupMembers, currentUser],
+      createdBy: currentUser,
+      createdAt: new Date().toISOString(),
+      description: newGroupDescription.trim() || undefined
+    }
+
+    setGroups(prev => [newGroup, ...prev])
+    setNewGroupName('')
+    setNewGroupDescription('')
+    setSelectedGroupMembers([])
+    setShowCreateGroup(false)
+    setActiveTab('groups')
+    setSelectedGroup(newGroup.id)
+  }
+
+  const toggleGroupMember = (userId: string) => {
+    setSelectedGroupMembers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    )
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,12 +146,13 @@ export default function Chat() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault()
-    if ((!newMessage.trim() && !selectedImage) || !selectedRecipient) return
+    if ((!newMessage.trim() && !selectedImage) || (!selectedRecipient && !selectedGroup)) return
 
     const message: Message = {
       id: Date.now().toString(),
       sender: currentUser,
-      recipient: selectedRecipient,
+      recipient: selectedRecipient || undefined,
+      groupId: selectedGroup || undefined,
       content: newMessage.trim(),
       timestamp: new Date().toISOString(),
       isRead: false,
@@ -114,6 +173,20 @@ export default function Chat() {
     ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
   }
 
+  const getMessagesForGroup = (groupId: string) => {
+    return messages.filter(msg => msg.groupId === groupId)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+  }
+
+  const getCurrentMessages = () => {
+    if (selectedGroup) {
+      return getMessagesForGroup(selectedGroup)
+    } else if (selectedRecipient) {
+      return getMessagesForUser(selectedRecipient)
+    }
+    return []
+  }
+
   const getUnreadCount = (userId: string) => {
     return messages.filter(msg => 
       msg.sender === userId && 
@@ -122,9 +195,25 @@ export default function Chat() {
     ).length
   }
 
+  const getGroupUnreadCount = (groupId: string) => {
+    return messages.filter(msg => 
+      msg.groupId === groupId && 
+      msg.sender !== currentUser && 
+      !msg.isRead
+    ).length
+  }
+
   const markAsRead = (userId: string) => {
     setMessages(prev => prev.map(msg => 
       msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+        ? { ...msg, isRead: true }
+        : msg
+    ))
+  }
+
+  const markGroupAsRead = (groupId: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
@@ -217,89 +306,198 @@ export default function Chat() {
           {/* User List */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Kontakte</h2>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {users.filter(user => user.id !== currentUser).map(user => {
-                const unreadCount = getUnreadCount(user.id)
-                const lastMessage = getMessagesForUser(user.id).slice(-1)[0]
-                
-                return (
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
+                <div className="flex space-x-1">
                   <button
-                    key={user.id}
-                    onClick={() => {
-                      setSelectedRecipient(user.id)
-                      markAsRead(user.id)
-                    }}
-                    className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                      selectedRecipient === user.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
+                    onClick={() => setActiveTab('direct')}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      activeTab === 'direct' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
+                    Direkt
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('groups')}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      activeTab === 'groups' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Gruppen
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {activeTab === 'direct' ? (
+                <>
+                  {users.filter(user => user.id !== currentUser).map(user => {
+                    const unreadCount = getUnreadCount(user.id)
+                    const lastMessage = getMessagesForUser(user.id).slice(-1)[0]
+                    
+                    return (
+                      <button
+                        key={user.id}
+                        onClick={() => {
+                          setSelectedRecipient(user.id)
+                          setSelectedGroup('')
+                          markAsRead(user.id)
+                        }}
+                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                          selectedRecipient === user.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            {user.isOnline && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {user.name}
+                              </p>
+                              {unreadCount > 0 && (
+                                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </div>
+                            {lastMessage && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {lastMessage.sender === currentUser ? 'Sie: ' : ''}
+                                {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowCreateGroup(true)}
+                    className="w-full p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  >
                     <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {user.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        {user.isOnline && (
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                        )}
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-lg">➕</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {user.name}
-                          </p>
-                          {unreadCount > 0 && (
-                            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        {lastMessage && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {lastMessage.sender === currentUser ? 'Sie: ' : ''}
-                            {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
-                          </p>
-                        )}
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Neue Gruppe erstellen</p>
+                        <p className="text-xs text-gray-500">Gruppenchat starten</p>
                       </div>
                     </div>
                   </button>
-                )
-              })}
+                  {groups.filter(group => group.members.includes(currentUser)).map(group => {
+                    const unreadCount = getGroupUnreadCount(group.id)
+                    const lastMessage = getMessagesForGroup(group.id).slice(-1)[0]
+                    
+                    return (
+                      <button
+                        key={group.id}
+                        onClick={() => {
+                          setSelectedGroup(group.id)
+                          setSelectedRecipient('')
+                          markGroupAsRead(group.id)
+                        }}
+                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                          selectedGroup === group.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
+                            <span className="text-lg">👥</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {group.name}
+                              </p>
+                              {unreadCount > 0 && (
+                                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 truncate">
+                              {group.members.length} Mitglieder
+                            </p>
+                            {lastMessage && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {lastMessage.sender === currentUser ? 'Sie: ' : `${users.find(u => u.id === lastMessage.sender)?.name}: `}
+                                {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </>
+              )}
             </div>
           </div>
 
           {/* Chat Area */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-sm flex flex-col">
-            {selectedRecipient ? (
+            {selectedRecipient || selectedGroup ? (
               <>
                 {/* Chat Header */}
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      users.find(u => u.id === selectedRecipient)?.isOnline 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {users.find(u => u.id === selectedRecipient)?.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {users.find(u => u.id === selectedRecipient)?.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {users.find(u => u.id === selectedRecipient)?.isOnline ? 'Online' : 'Offline'}
-                      </p>
-                    </div>
+                    {selectedRecipient ? (
+                      <>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          users.find(u => u.id === selectedRecipient)?.isOnline 
+                            ? 'bg-green-100 text-green-600' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {users.find(u => u.id === selectedRecipient)?.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {users.find(u => u.id === selectedRecipient)?.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {users.find(u => u.id === selectedRecipient)?.isOnline ? 'Online' : 'Offline'}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-lg">👥</span>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {groups.find(g => g.id === selectedGroup)?.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {groups.find(g => g.id === selectedGroup)?.members.length} Mitglieder
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 p-4 overflow-y-auto max-h-96">
                   <div className="space-y-4">
-                    {getMessagesForUser(selectedRecipient).map(message => (
+                    {getCurrentMessages().map(message => (
                       <div
                         key={message.id}
                         className={`flex ${message.sender === currentUser ? 'justify-end' : 'justify-start'}`}
@@ -309,6 +507,13 @@ export default function Chat() {
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-200 text-gray-900'
                         }`}>
+                          {selectedGroup && message.sender !== currentUser && (
+                            <p className={`text-xs font-medium mb-1 ${
+                              message.sender === currentUser ? 'text-blue-100' : 'text-gray-600'
+                            }`}>
+                              {users.find(u => u.id === message.sender)?.name}
+                            </p>
+                          )}
                           {message.imageUrl && (
                             <div className="mb-2">
                               <img
@@ -413,13 +618,104 @@ export default function Chat() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-gray-400 text-2xl">💬</span>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Wählen Sie einen Kontakt</h3>
-                  <p className="text-gray-500">Wählen Sie einen Kontakt aus, um eine Nachricht zu senden</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Wählen Sie einen Chat</h3>
+                  <p className="text-gray-500">Wählen Sie einen Kontakt oder eine Gruppe aus, um eine Nachricht zu senden</p>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Create Group Modal */}
+        {showCreateGroup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Neue Gruppe erstellen</h2>
+                  <button
+                    onClick={() => setShowCreateGroup(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={createGroup} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Gruppenname
+                    </label>
+                    <input
+                      type="text"
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="z.B. Projekt Team"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Beschreibung (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newGroupDescription}
+                      onChange={(e) => setNewGroupDescription(e.target.value)}
+                      placeholder="Kurze Beschreibung der Gruppe"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mitglieder auswählen
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {users.filter(user => user.id !== currentUser).map(user => (
+                        <label key={user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedGroupMembers.includes(user.id)}
+                            onChange={() => toggleGroupMember(user.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              user.isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateGroup(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!newGroupName.trim() || selectedGroupMembers.length === 0}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Gruppe erstellen
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
