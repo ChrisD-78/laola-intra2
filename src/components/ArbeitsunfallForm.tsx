@@ -23,8 +23,7 @@ interface ArbeitsunfallData {
   beschreibung: string
   meldendePerson: string
   // Zusätzliche Felder für Mitarbeiter
-  mitarbeiterNummer?: string
-  abteilung?: string
+  unfallhergang?: string
   // Zusätzliche Felder für Gäste
   gastAlter?: string
   gastKontakt?: string
@@ -46,8 +45,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
     zeugen: '',
     beschreibung: '',
     meldendePerson: 'Christof Drost',
-    mitarbeiterNummer: '',
-    abteilung: '',
+    unfallhergang: '',
     gastAlter: '',
     gastKontakt: ''
   })
@@ -71,8 +69,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       zeugen: '',
       beschreibung: '',
       meldendePerson: 'Christof Drost',
-      mitarbeiterNummer: '',
-      abteilung: '',
+      unfallhergang: '',
       gastAlter: '',
       gastKontakt: ''
     })
@@ -215,41 +212,19 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               {/* Mitarbeiter-spezifische Felder */}
               {activeTab === 'mitarbeiter' && (
                 <>
-                  <div>
-                    <label htmlFor="mitarbeiterNummer" className="block text-sm font-medium text-gray-700 mb-2">
-                      Mitarbeiternummer *
+                  <div className="md:col-span-2">
+                    <label htmlFor="unfallhergang" className="block text-sm font-medium text-gray-700 mb-2">
+                      Unfallhergang *
                     </label>
-                    <input
-                      type="text"
-                      id="mitarbeiterNummer"
-                      value={formData.mitarbeiterNummer || ''}
-                      onChange={(e) => setFormData({...formData, mitarbeiterNummer: e.target.value})}
+                    <textarea
+                      id="unfallhergang"
+                      value={formData.unfallhergang || ''}
+                      onChange={(e) => setFormData({...formData, unfallhergang: e.target.value})}
+                      rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="z.B. MA-001"
+                      placeholder="Beschreiben Sie den genauen Hergang des Unfalls"
                       required
                     />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="abteilung" className="block text-sm font-medium text-gray-700 mb-2">
-                      Abteilung *
-                    </label>
-                    <select
-                      id="abteilung"
-                      value={formData.abteilung || ''}
-                      onChange={(e) => setFormData({...formData, abteilung: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Abteilung auswählen</option>
-                      <option value="Bäderbetrieb">Bäderbetrieb</option>
-                      <option value="Gastronomie">Gastronomie</option>
-                      <option value="Reinigung">Reinigung</option>
-                      <option value="Technik">Technik</option>
-                      <option value="Verwaltung">Verwaltung</option>
-                      <option value="Rezeption">Rezeption</option>
-                      <option value="Sonstiges">Sonstiges</option>
-                    </select>
                   </div>
                 </>
               )}
@@ -294,141 +269,117 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                 </>
               )}
               
-              <div>
-                <label htmlFor="unfallort" className="block text-sm font-medium text-gray-700 mb-2">
-                  Unfallort *
-                </label>
-                <select
-                  id="unfallort"
-                  value={formData.unfallort}
-                  onChange={(e) => setFormData({...formData, unfallort: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Unfallort auswählen</option>
-                  <option value="Schwimmerbecken">Schwimmerbecken</option>
-                  <option value="Lehrschwimmbecken">Lehrschwimmbecken</option>
-                  <option value="Wellenbecken">Wellenbecken</option>
-                  <option value="Rutschenbecken">Rutschenbecken</option>
-                  <option value="Kinderbecken 1">Kinderbecken 1</option>
-                  <option value="Kinderbecken 2">Kinderbecken 2</option>
-                  <option value="Thermalbecken">Thermalbecken</option>
-                  <option value="HWP Halle">HWP Halle</option>
-                  <option value="Sauna Außenbecken">Sauna Außenbecken</option>
-                  <option value="Sauna Außenbecken warm">Sauna Außenbecken warm</option>
-                  <option value="Sauna Außenbecken kalt">Sauna Außenbecken kalt</option>
-                  <option value="HWP Sauna">HWP Sauna</option>
-                  <option value="Umkleidekabinen">Umkleidekabinen</option>
-                  <option value="Duschen">Duschen</option>
-                  <option value="Gastronomie">Gastronomie</option>
-                  <option value="Parkplatz">Parkplatz</option>
-                  <option value="Sonstiges">Sonstiges</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div>
+                  <label htmlFor="unfallort" className="block text-sm font-medium text-gray-700 mb-2">
+                    Unfallort *
+                  </label>
+                  <input
+                    type="text"
+                    id="unfallort"
+                    value={formData.unfallort}
+                    onChange={(e) => setFormData({...formData, unfallort: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ort des Unfalls"
+                    required
+                  />
+                </div>
+              )}
               
-              <div>
-                <label htmlFor="unfallart" className="block text-sm font-medium text-gray-700 mb-2">
-                  Art des Unfalls *
-                </label>
-                <select
-                  id="unfallart"
-                  value={formData.unfallart}
-                  onChange={(e) => setFormData({...formData, unfallart: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Unfallart auswählen</option>
-                  <option value="Sturz">Sturz</option>
-                  <option value="Ausrutschen">Ausrutschen</option>
-                  <option value="Schneiden/Verletzung">Schneiden/Verletzung</option>
-                  <option value="Verbrennung">Verbrennung</option>
-                  <option value="Ertrinken/Beinahe-Ertrinken">Ertrinken/Beinahe-Ertrinken</option>
-                  <option value="Schlag/Stoß">Schlag/Stoß</option>
-                  <option value="Heben/Tragen">Heben/Tragen</option>
-                  <option value="Sonstiges">Sonstiges</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div>
+                  <label htmlFor="unfallart" className="block text-sm font-medium text-gray-700 mb-2">
+                    Art des Unfalls *
+                  </label>
+                  <input
+                    type="text"
+                    id="unfallart"
+                    value={formData.unfallart}
+                    onChange={(e) => setFormData({...formData, unfallart: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="z.B. Sturz, Schnitt, Verbrennung"
+                    required
+                  />
+                </div>
+              )}
               
-              <div>
-                <label htmlFor="verletzungsart" className="block text-sm font-medium text-gray-700 mb-2">
-                  Art der Verletzung *
-                </label>
-                <select
-                  id="verletzungsart"
-                  value={formData.verletzungsart}
-                  onChange={(e) => setFormData({...formData, verletzungsart: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Verletzungsart auswählen</option>
-                  <option value="Schürfwunde">Schürfwunde</option>
-                  <option value="Schnittwunde">Schnittwunde</option>
-                  <option value="Prellung">Prellung</option>
-                  <option value="Verstauchung">Verstauchung</option>
-                  <option value="Knochenbruch">Knochenbruch</option>
-                  <option value="Verbrennung">Verbrennung</option>
-                  <option value="Kopfverletzung">Kopfverletzung</option>
-                  <option value="Rückenverletzung">Rückenverletzung</option>
-                  <option value="Sonstiges">Sonstiges</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div>
+                  <label htmlFor="verletzungsart" className="block text-sm font-medium text-gray-700 mb-2">
+                    Art der Verletzung *
+                  </label>
+                  <input
+                    type="text"
+                    id="verletzungsart"
+                    value={formData.verletzungsart}
+                    onChange={(e) => setFormData({...formData, verletzungsart: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="z.B. Schnittwunde, Prellung"
+                    required
+                  />
+                </div>
+              )}
               
-              <div>
-                <label htmlFor="schweregrad" className="block text-sm font-medium text-gray-700 mb-2">
-                  Schweregrad *
-                </label>
-                <select
-                  id="schweregrad"
-                  value={formData.schweregrad}
-                  onChange={(e) => setFormData({...formData, schweregrad: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Schweregrad auswählen</option>
-                  <option value="Leicht">Leicht (Erste Hilfe ausreichend)</option>
-                  <option value="Mittel">Mittel (Arztbesuch erforderlich)</option>
-                  <option value="Schwer">Schwer (Krankenhaus erforderlich)</option>
-                  <option value="Kritisch">Kritisch (Notarzt erforderlich)</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div>
+                  <label htmlFor="schweregrad" className="block text-sm font-medium text-gray-700 mb-2">
+                    Schweregrad *
+                  </label>
+                  <input
+                    type="text"
+                    id="schweregrad"
+                    value={formData.schweregrad}
+                    onChange={(e) => setFormData({...formData, schweregrad: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="z.B. Leicht, Mittel, Schwer"
+                    required
+                  />
+                </div>
+              )}
               
-              <div>
-                <label htmlFor="ersteHilfe" className="block text-sm font-medium text-gray-700 mb-2">
-                  Erste Hilfe geleistet *
-                </label>
-                <select
-                  id="ersteHilfe"
-                  value={formData.ersteHilfe}
-                  onChange={(e) => setFormData({...formData, ersteHilfe: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Status auswählen</option>
-                  <option value="Ja">Ja, Erste Hilfe wurde geleistet</option>
-                  <option value="Nein">Nein, keine Erste Hilfe erforderlich</option>
-                  <option value="Nicht möglich">Nicht möglich (Notarzt erforderlich)</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div>
+                  <label htmlFor="ersteHilfe" className="block text-sm font-medium text-gray-700 mb-2">
+                    Erste Hilfe geleistet *
+                  </label>
+                  <input
+                    type="text"
+                    id="ersteHilfe"
+                    value={formData.ersteHilfe}
+                    onChange={(e) => setFormData({...formData, ersteHilfe: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ja, Nein oder Details"
+                    required
+                  />
+                </div>
+              )}
               
-              <div>
-                <label htmlFor="arztKontakt" className="block text-sm font-medium text-gray-700 mb-2">
-                  Arztkontakt *
-                </label>
-                <select
-                  id="arztKontakt"
-                  value={formData.arztKontakt}
-                  onChange={(e) => setFormData({...formData, arztKontakt: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Status auswählen</option>
-                  <option value="Nicht erforderlich">Nicht erforderlich</option>
-                  <option value="Hausarzt aufgesucht">Hausarzt aufgesucht</option>
-                  <option value="Notarzt gerufen">Notarzt gerufen</option>
-                  <option value="Krankenhaus">Krankenhaus aufgesucht</option>
-                  <option value="Geplant">Arztbesuch geplant</option>
-                </select>
-              </div>
+              {activeTab === 'mitarbeiter' && (
+                <div className="md:col-span-2">
+                  <label htmlFor="arztKontakt" className="block text-sm font-medium text-gray-700 mb-2">
+                    Arztkontakt *
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      id="arztKontakt"
+                      value={formData.arztKontakt}
+                      onChange={(e) => setFormData({...formData, arztKontakt: e.target.value})}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="z.B. Hausarzt, Notarzt, Krankenhaus"
+                      required
+                    />
+                    <a
+                      href="https://extranet.ukrlp.de/nutzungzugangscode/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      Arztbesuch melden
+                    </a>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label htmlFor="zeugen" className="block text-sm font-medium text-gray-700 mb-2">
