@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import DokumentUploadForm from '@/components/DokumentUploadForm'
-import { getDocuments, insertDocument, uploadDocumentFile, updateDocument, deleteDocumentById, DocumentRecord } from '@/lib/db'
+import { getDocuments, getDocumentsFiltered, insertDocument, uploadDocumentFile, updateDocument, deleteDocumentById, DocumentRecord } from '@/lib/db'
 
 interface Document {
   id: string
@@ -45,6 +45,34 @@ export default function Dokumente() {
     }
     load()
   }, [])
+
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('Alle Kategorien')
+
+  useEffect(() => {
+    const applyFilters = async () => {
+      try {
+        const data = await getDocumentsFiltered({ category: categoryFilter, search })
+        const mapped: Document[] = data.map((d: DocumentRecord) => ({
+          id: d.id as string,
+          title: d.title,
+          description: d.description,
+          category: d.category,
+          fileName: d.file_name,
+          fileSize: d.file_size_mb,
+          fileType: d.file_type,
+          tags: d.tags || [],
+          uploadedAt: d.uploaded_at,
+          uploadedBy: d.uploaded_by,
+          fileContent: undefined
+        }))
+        setDocuments(mapped)
+      } catch (e) {
+        console.error('Filter documents failed', e)
+      }
+    }
+    applyFilters()
+  }, [search, categoryFilter])
 
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
@@ -247,10 +275,16 @@ export default function Dokumente() {
             <input
               type="text"
               placeholder="Dokumente suchen..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
             <option>Alle Kategorien</option>
             <option>Sicherheit</option>
             <option>Betrieb</option>

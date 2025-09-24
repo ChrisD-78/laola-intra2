@@ -291,6 +291,22 @@ export async function getDocuments(): Promise<DocumentRecord[]> {
   return data as DocumentRecord[]
 }
 
+export async function getDocumentsFiltered(params: { category?: string; search?: string }): Promise<DocumentRecord[]> {
+  let query = supabase.from('documents').select('*')
+  if (params.category && params.category !== 'Alle Kategorien') {
+    query = query.eq('category', params.category)
+  }
+  if (params.search && params.search.trim()) {
+    const term = `%${params.search.trim()}%`
+    query = query.or(
+      `title.ilike.${term},description.ilike.${term},tags.cs.{${params.search.trim()}}`
+    )
+  }
+  const { data, error } = await query.order('created_at', { ascending: false })
+  if (error) throw error
+  return data as DocumentRecord[]
+}
+
 export async function uploadDocumentFile(file: File): Promise<{ path: string; publicUrl: string }> {
   const filePath = `documents/${Date.now()}_${file.name}`
   const { error: upErr } = await supabase.storage.from('proofs').upload(filePath, file, {
