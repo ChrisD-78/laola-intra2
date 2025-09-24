@@ -212,6 +212,58 @@ export async function sendChatMessage(msg: Omit<ChatMessageRecord, 'id' | 'times
   if (error) throw error
 }
 
+// =====================
+// Dashboard Infos
+// =====================
+export interface DashboardInfoRecord {
+  id?: string
+  title: string
+  content: string
+  timestamp: string
+  pdf_name?: string | null
+  pdf_url?: string | null
+  created_at?: string
+}
+
+export async function getDashboardInfos(): Promise<DashboardInfoRecord[]> {
+  const { data, error } = await supabase
+    .from('dashboard_infos')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as DashboardInfoRecord[]
+}
+
+export async function createDashboardInfo(info: Omit<DashboardInfoRecord, 'id' | 'created_at'>) {
+  const { error } = await supabase.from('dashboard_infos').insert({
+    title: info.title,
+    content: info.content,
+    timestamp: info.timestamp,
+    pdf_name: info.pdf_name ?? null,
+    pdf_url: info.pdf_url ?? null,
+  })
+  if (error) throw error
+}
+
+export async function deleteDashboardInfo(id: string) {
+  const { error } = await supabase
+    .from('dashboard_infos')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function uploadInfoPdf(file: File): Promise<{ path: string; publicUrl: string }> {
+  const filePath = `infos/${Date.now()}_${file.name}`
+  const { error: upErr } = await supabase.storage.from('proofs').upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+  if (upErr) throw upErr
+  const { data } = supabase.storage.from('proofs').getPublicUrl(filePath)
+  return { path: filePath, publicUrl: data.publicUrl }
+}
+
 export interface AccidentRecord {
   id?: string
   unfalltyp: 'mitarbeiter' | 'gast'

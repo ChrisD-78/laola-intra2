@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getDashboardInfos, createDashboardInfo, deleteDashboardInfo, uploadInfoPdf, DashboardInfoRecord } from '@/lib/db'
 import Link from 'next/link'
 import DailyMotivation from "@/components/DailyMotivation"
 import InfoForm from "@/components/InfoForm"
@@ -20,43 +21,78 @@ export default function Dashboard() {
   const taskStats = getTaskStats()
   const recentTasks = getTasksByStatus('Offen').slice(0, 3)
   
-  const [currentInfos, setCurrentInfos] = useState<InfoItem[]>([
-    {
-      id: '1',
-      title: 'Neue Sicherheitsrichtlinien',
-      content: 'Neue Sicherheitsrichtlinien sind verfügbar und müssen von allen Mitarbeitern gelesen werden.',
-      timestamp: 'vor 1 Stunde'
-    },
-    {
-      id: '2',
-      title: 'Pool-Öffnungszeiten angepasst',
-      content: 'Die Pool-Öffnungszeiten wurden aufgrund der Saison angepasst. Neue Zeiten sind im Schichtplan verfügbar.',
-      timestamp: 'vor 3 Stunden'
-    },
-    {
-      id: '3',
-      title: 'Neue Mitarbeiter-App verfügbar',
-      content: 'Die neue LA OLA Mitarbeiter-App ist jetzt verfügbar. Alle wichtigen Informationen sind dort abrufbar.',
-      timestamp: 'vor 5 Stunden'
-    }
-  ])
+  const [currentInfos, setCurrentInfos] = useState<InfoItem[]>([])
 
-  const addNewInfo = (title: string, content: string, pdfFile?: File) => {
-    const newInfo: InfoItem = {
-      id: Date.now().toString(),
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getDashboardInfos()
+        const mapped: InfoItem[] = data.map((r: DashboardInfoRecord) => ({
+          id: r.id as string,
+          title: r.title,
+          content: r.content,
+          timestamp: r.timestamp,
+          pdfFileName: r.pdf_name || undefined
+        }))
+        setCurrentInfos(mapped)
+      } catch (e) {
+        console.error('Load dashboard infos failed', e)
+      }
+    }
+    load()
+  }, [])
+
+  const addNewInfo = async (title: string, content: string, pdfFile?: File) => {
+    const optimistic: InfoItem = {
+      id: `tmp_${Date.now()}`,
       title,
       content,
       timestamp: 'gerade eben',
       pdfFile,
       pdfFileName: pdfFile?.name
     }
-    setCurrentInfos([newInfo, ...currentInfos])
+    setCurrentInfos(prev => [optimistic, ...prev])
+    try {
+      let publicUrl: string | undefined
+      if (pdfFile) {
+        const up = await uploadInfoPdf(pdfFile)
+        publicUrl = up.publicUrl
+      }
+      await createDashboardInfo({
+        title,
+        content,
+        timestamp: new Date().toLocaleString('de-DE'),
+        pdf_name: pdfFile?.name,
+        pdf_url: publicUrl
+      })
+      const fresh = await getDashboardInfos()
+      const mapped: InfoItem[] = fresh.map((r: DashboardInfoRecord) => ({
+        id: r.id as string,
+        title: r.title,
+        content: r.content,
+        timestamp: r.timestamp,
+        pdfFileName: r.pdf_name || undefined
+      }))
+      setCurrentInfos(mapped)
+    } catch (e) {
+      console.error('Create dashboard info failed', e)
+      setCurrentInfos(prev => prev.filter(i => i.id !== optimistic.id))
+      alert('Information konnte nicht gespeichert werden.')
+    }
   }
 
-  const removeInfo = (id: string) => {
+  const removeInfo = async (id: string) => {
     const pass = prompt('Bitte Passwort eingeben:')
     if (pass === 'bl') {
-      setCurrentInfos(currentInfos.filter(info => info.id !== id))
+      const prev = currentInfos
+      setCurrentInfos(prev.filter(info => info.id !== id))
+      try {
+        await deleteDashboardInfo(id)
+      } catch (e) {
+        console.error('Delete dashboard info failed', e)
+        setCurrentInfos(prev)
+        alert('Information konnte nicht gelöscht werden.')
+      }
     } else if (pass !== null) {
       alert('Falsches Passwort')
     }
@@ -211,7 +247,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {info.pdfFile && (
+                {info.pdfFileName && (
                   <button
                     onClick={() => downloadPdf(info)}
                     className="text-blue-400 hover:text-blue-600 transition-colors p-1"
