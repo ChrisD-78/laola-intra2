@@ -32,6 +32,7 @@ interface ArbeitsunfallData {
 const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps) => {
   const [activeTab, setActiveTab] = useState<'mitarbeiter' | 'gast'>('mitarbeiter')
   const [showCodesModal, setShowCodesModal] = useState<boolean>(false)
+  const [copiedKey, setCopiedKey] = useState<'freibad' | 'laola' | null>(null)
   const [formData, setFormData] = useState<ArbeitsunfallData>({
     unfalltyp: 'mitarbeiter',
     datum: new Date().toISOString().split('T')[0],
@@ -108,6 +109,17 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
   const handleArztbesuchClick = () => {
     window.open('https://extranet.ukrlp.de/nutzungzugangscode/', '_blank', 'noopener,noreferrer')
     setShowCodesModal(true)
+  }
+
+  const handleCopy = async (key: 'freibad' | 'laola', value: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 1500)
+    } catch (_) {
+      // Fallback: Auswahl markieren
+      alert('Kopieren nicht möglich. Bitte manuell kopieren.')
+    }
   }
 
   if (!isOpen) return null
@@ -466,11 +478,29 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
             <div className="space-y-3">
               <div>
                 <div className="text-sm text-gray-500">Freibad</div>
-                <div className="font-mono text-sm break-all">HPNTXUSD8KUXUDM39H5BFT4RW</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-mono text-sm break-all">HPNTXUSD8KUXUDM39H5BFT4RW</div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('freibad', 'HPNTXUSD8KUXUDM39H5BFT4RW')}
+                    className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
+                  >
+                    {copiedKey === 'freibad' ? 'Kopiert' : 'Kopieren'}
+                  </button>
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">LA OLA</div>
-                <div className="font-mono text-sm break-all">KU6X2BE2DXRDTL3SZ6A5FSQXZ</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-mono text-sm break-all">KU6X2BE2DXRDTL3SZ6A5FSQXZ</div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('laola', 'KU6X2BE2DXRDTL3SZ6A5FSQXZ')}
+                    className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
+                  >
+                    {copiedKey === 'laola' ? 'Kopiert' : 'Kopieren'}
+                  </button>
+                </div>
               </div>
             </div>
             <div className="mt-5 flex justify-end">
