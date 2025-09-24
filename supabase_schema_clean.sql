@@ -81,10 +81,35 @@ CREATE POLICY "completed_trainings update anon" ON public.completed_trainings FO
 DROP POLICY IF EXISTS "completed_trainings delete anon" ON public.completed_trainings;
 CREATE POLICY "completed_trainings delete anon" ON public.completed_trainings FOR DELETE USING (true);
 
+-- Dashboard Infos Table
+CREATE TABLE IF NOT EXISTS dashboard_infos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  timestamp VARCHAR(100) NOT NULL,
+  pdf_name VARCHAR(255),
+  pdf_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS Policies for dashboard_infos
+DROP POLICY IF EXISTS "dashboard_infos select anon" ON public.dashboard_infos;
+CREATE POLICY "dashboard_infos select anon" ON public.dashboard_infos FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "dashboard_infos insert anon" ON public.dashboard_infos;
+CREATE POLICY "dashboard_infos insert anon" ON public.dashboard_infos FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "dashboard_infos update anon" ON public.dashboard_infos;
+CREATE POLICY "dashboard_infos update anon" ON public.dashboard_infos FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "dashboard_infos delete anon" ON public.dashboard_infos;
+CREATE POLICY "dashboard_infos delete anon" ON public.dashboard_infos FOR DELETE USING (true);
+
 -- Enable RLS
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trainings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE completed_trainings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dashboard_infos ENABLE ROW LEVEL SECURITY;
 
 -- Profiles for users
 CREATE TABLE IF NOT EXISTS profiles (
