@@ -31,6 +31,7 @@ interface ArbeitsunfallData {
 
 const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps) => {
   const [activeTab, setActiveTab] = useState<'mitarbeiter' | 'gast'>('mitarbeiter')
+  const [showCodesModal, setShowCodesModal] = useState<boolean>(false)
   const [formData, setFormData] = useState<ArbeitsunfallData>({
     unfalltyp: 'mitarbeiter',
     datum: new Date().toISOString().split('T')[0],
@@ -102,6 +103,11 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
   const handleTabChange = (tab: 'mitarbeiter' | 'gast') => {
     setActiveTab(tab)
     setFormData({...formData, unfalltyp: tab})
+  }
+
+  const handleArztbesuchClick = () => {
+    window.open('https://extranet.ukrlp.de/nutzungzugangscode/', '_blank', 'noopener,noreferrer')
+    setShowCodesModal(true)
   }
 
   if (!isOpen) return null
@@ -367,14 +373,13 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                       placeholder="z.B. Hausarzt, Notarzt, Krankenhaus"
                       required
                     />
-                    <a
-                      href="https://extranet.ukrlp.de/nutzungzugangscode/"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={handleArztbesuchClick}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                     >
                       Arztbesuch melden
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}
@@ -442,6 +447,44 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
           </form>
         </div>
       </div>
+
+      {/* Zugangscodes Modal */}
+      {showCodesModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCodesModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Zugangscodes</h4>
+              <button
+                type="button"
+                onClick={() => setShowCodesModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm text-gray-500">Freibad</div>
+                <div className="font-mono text-sm break-all">HPNTXUSD8KUXUDM39H5BFT4RW</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">LA OLA</div>
+                <div className="font-mono text-sm break-all">KU6X2BE2DXRDTL3SZ6A5FSQXZ</div>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCodesModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Schließen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
