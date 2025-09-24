@@ -36,6 +36,16 @@ export default function Schulungen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
   const [showSchulungViewer, setShowSchulungViewer] = useState<Schulung | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [showProofForm, setShowProofForm] = useState(false)
+  const [schulungsnachweise, setSchulungsnachweise] = useState<Array<{
+    id: string
+    bezeichnung: string
+    vorname: string
+    nachname: string
+    datum: string
+    pdfName?: string
+    pdfUrl?: string
+  }>>([])
   const [overviewFilters, setOverviewFilters] = useState({
     category: '',
     dateFrom: '',
@@ -226,6 +236,70 @@ export default function Schulungen() {
     })
     setSortBy('date')
     setSortOrder('desc')
+  }
+
+  const ProofForm = () => {
+    const [bezeichnung, setBezeichnung] = useState('')
+    const [vorname, setVorname] = useState('')
+    const [nachname, setNachname] = useState('')
+    const [datum, setDatum] = useState('')
+    const [pdfFile, setPdfFile] = useState<File | null>(null)
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!bezeichnung.trim() || !vorname.trim() || !nachname.trim() || !datum.trim()) return
+      const entry = {
+        id: Date.now().toString(),
+        bezeichnung: bezeichnung.trim(),
+        vorname: vorname.trim(),
+        nachname: nachname.trim(),
+        datum,
+        pdfName: pdfFile?.name,
+        pdfUrl: pdfFile ? URL.createObjectURL(pdfFile) : undefined
+      }
+      setSchulungsnachweise(prev => [entry, ...prev])
+      setShowProofForm(false)
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">Neuen Nachweis hinzufügen</h2>
+            <button onClick={() => setShowProofForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bezeichnung der Schulung *</label>
+              <input type="text" value={bezeichnung} onChange={(e)=>setBezeichnung(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vorname *</label>
+                <input type="text" value={vorname} onChange={(e)=>setVorname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nachname *</label>
+                <input type="text" value={nachname} onChange={(e)=>setNachname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Datum *</label>
+              <input type="date" value={datum} onChange={(e)=>setDatum(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Schulungsnachweis (PDF optional)</label>
+              <input type="file" accept="application/pdf" onChange={(e)=>setPdfFile(e.target.files?.[0] || null)} className="w-full" />
+              <p className="text-xs text-gray-500 mt-1">Optional: PDF anhängen</p>
+            </div>
+            <div className="flex justify-end space-x-3 pt-2">
+              <button type="button" onClick={()=>setShowProofForm(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Abbrechen</button>
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Speichern</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
   }
 
   const handleExportOverviewPdf = () => {
@@ -1149,7 +1223,7 @@ export default function Schulungen() {
                 </div>
               </div>
 
-              {/* Table */}
+              {/* Table: Abgelegte Schulungen */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                   <div className="text-sm text-gray-600">Gefilterte Ergebnisse exportieren</div>
@@ -1292,6 +1366,60 @@ export default function Schulungen() {
                   </div>
                 )}
               </div>
+
+              {/* Schulungsnachweise Zusatz-Tabelle */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-900">Schulungsnachweise</h3>
+                  <button
+                    onClick={() => setShowProofForm(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    ➕ Nachweis hinzufügen
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bezeichnung der Schulung</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vorname</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schulungsnachweis (PDF)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {schulungsnachweise.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-6 text-center text-sm text-gray-500">Keine Nachweise vorhanden</td>
+                        </tr>
+                      ) : (
+                        schulungsnachweise.map(item => (
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bezeichnung}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.nachname}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.vorname}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.datum}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.pdfUrl ? (
+                                <button
+                                  onClick={() => window.open(item.pdfUrl, '_blank')}
+                                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                                >
+                                  📄 {item.pdfName || 'Anzeigen'}
+                                </button>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1342,6 +1470,7 @@ export default function Schulungen() {
       {showCreateForm && <CreateSchulungForm />}
       {selectedSchulung && <SchulungDetail schulung={selectedSchulung} />}
       {showSchulungViewer && <SchulungViewer schulung={showSchulungViewer} />}
+      {showProofForm && <ProofForm />}
     </div>
   )
 }
