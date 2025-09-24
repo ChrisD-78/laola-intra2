@@ -1,3 +1,82 @@
+## Supabase Setup
+
+1) Environment:
+
+Copy `.env.example` to `.env.local` and set:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=... 
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+# Optional for server ops not used here
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+2) Database schema (SQL):
+
+Create tables and storage bucket in your Supabase project using the SQL below.
+
+```
+-- accidents table
+create table if not exists public.accidents (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamp with time zone default now(),
+  unfalltyp text check (unfalltyp in ('mitarbeiter','gast')) not null,
+  datum date not null,
+  zeit text not null,
+  verletzte_person text not null,
+  unfallort text not null,
+  unfallart text not null,
+  verletzungsart text not null,
+  schweregrad text not null,
+  erste_hilfe text not null,
+  arzt_kontakt text not null,
+  zeugen text,
+  beschreibung text not null,
+  meldende_person text not null,
+  unfallhergang text,
+  gast_alter text,
+  gast_kontakt text
+);
+
+-- external proofs table
+create table if not exists public.external_proofs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamp with time zone default now(),
+  bezeichnung text not null,
+  vorname text not null,
+  nachname text not null,
+  datum date not null,
+  pdf_name text,
+  pdf_url text
+);
+
+-- Enable RLS (public read disabled by default, inserts allowed for anon)
+alter table public.accidents enable row level security;
+alter table public.external_proofs enable row level security;
+
+-- Policies: allow inserts for anon (adjust to your auth needs)
+create policy if not exists "accidents insert anon" on public.accidents
+  for insert to anon using (true) with check (true);
+
+create policy if not exists "external_proofs insert anon" on public.external_proofs
+  for insert to anon using (true) with check (true);
+
+-- Storage bucket for proofs
+insert into storage.buckets (id, name, public) values ('proofs','proofs', true)
+on conflict (id) do nothing;
+
+-- Public read policy for proofs bucket
+create policy if not exists "Public Access" on storage.objects
+  for select to public using ( bucket_id = 'proofs' );
+
+create policy if not exists "Anon upload proofs" on storage.objects
+  for insert to anon with check ( bucket_id = 'proofs' );
+```
+
+3) Deploy
+
+Commit and push. Netlify will build and your app will start writing to Supabase.
+
 # 🏊‍♂️ LA OLA Intranet - Mitarbeiter Portal
 
 Ein modernes und benutzerfreundliches Intranet-Portal für Mitarbeiter des Freizeitbads LA OLA.

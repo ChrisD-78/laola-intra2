@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { insertExternalProof, uploadProofPdf } from '@/lib/db'
 
 interface Schulung {
   id: string
@@ -254,9 +255,27 @@ export default function Schulungen() {
     const [datum, setDatum] = useState('')
     const [pdfFile, setPdfFile] = useState<File | null>(null)
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!bezeichnung.trim() || !vorname.trim() || !nachname.trim() || !datum.trim()) return
+      let publicUrl: string | undefined
+      try {
+        if (pdfFile) {
+          const uploaded = await uploadProofPdf(pdfFile)
+          publicUrl = uploaded.publicUrl
+        }
+        await insertExternalProof({
+          bezeichnung: bezeichnung.trim(),
+          vorname: vorname.trim(),
+          nachname: nachname.trim(),
+          datum,
+          pdf_name: pdfFile?.name,
+          pdf_url: publicUrl
+        })
+      } catch (e) {
+        console.error('Supabase proof insert error', e)
+        alert('Fehler beim Speichern des Nachweises')
+      }
       const entry = {
         id: Date.now().toString(),
         bezeichnung: bezeichnung.trim(),
@@ -264,7 +283,7 @@ export default function Schulungen() {
         nachname: nachname.trim(),
         datum,
         pdfName: pdfFile?.name,
-        pdfUrl: pdfFile ? URL.createObjectURL(pdfFile) : undefined
+        pdfUrl: publicUrl || (pdfFile ? URL.createObjectURL(pdfFile) : undefined)
       }
       setSchulungsnachweise(prev => [entry, ...prev])
       setShowProofForm(false)

@@ -7,6 +7,7 @@ import TechnikkontrolleForm from '@/components/TechnikkontrolleForm'
 import KassenabrechnungForm from '@/components/KassenabrechnungForm'
 import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
+import { insertAccident } from '@/lib/db'
 
 interface FormSubmission {
   id: string
@@ -115,7 +116,7 @@ export default function Formulare() {
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<FormSubmission | null>(null)
 
-  const handleFormSubmit = (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const handleFormSubmit = async (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const newSubmission: FormSubmission = {
       id: Date.now().toString(),
       type,
@@ -127,6 +128,32 @@ export default function Formulare() {
       submittedBy: 'Aktueller Benutzer'
     }
     setSubmissions([newSubmission, ...submissions])
+
+    if (type === 'arbeitsunfall') {
+      try {
+        await insertAccident({
+          unfalltyp: data.unfalltyp,
+          datum: data.datum,
+          zeit: data.zeit,
+          verletzte_person: data.verletztePerson,
+          unfallort: data.unfallort,
+          unfallart: data.unfallart,
+          verletzungsart: data.verletzungsart,
+          schweregrad: data.schweregrad,
+          erste_hilfe: data.ersteHilfe,
+          arzt_kontakt: data.arztKontakt,
+          zeugen: data.zeugen || null,
+          beschreibung: data.beschreibung,
+          meldende_person: data.meldendePerson,
+          unfallhergang: data.unfallhergang || null,
+          gast_alter: data.gastAlter || null,
+          gast_kontakt: data.gastKontakt || null,
+        })
+      } catch (e) {
+        console.error('Supabase insertAccident error', e)
+        alert('Fehler beim Speichern in der Datenbank.')
+      }
+    }
   }
 
   const generateDescription = (type: string, data: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any
