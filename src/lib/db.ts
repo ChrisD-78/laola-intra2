@@ -108,6 +108,110 @@ export async function deleteRecurringTask(id: string) {
   if (error) throw error
 }
 
+// =====================
+// Chat
+// =====================
+export interface ChatUserRecord {
+  id: string
+  name: string
+  is_online: boolean
+  avatar?: string | null
+}
+
+export interface ChatGroupRecord {
+  id?: string
+  name: string
+  description?: string | null
+  created_by: string
+  created_at?: string
+}
+
+export interface ChatMessageRecord {
+  id?: string
+  sender: string
+  recipient?: string | null
+  group_id?: string | null
+  content?: string | null
+  timestamp?: string
+  is_read: boolean
+  image_url?: string | null
+  image_name?: string | null
+}
+
+export async function upsertChatUser(user: ChatUserRecord) {
+  const { error } = await supabase.from('chat_users').upsert({
+    id: user.id,
+    name: user.name,
+    is_online: user.is_online,
+    avatar: user.avatar ?? null,
+  })
+  if (error) throw error
+}
+
+export async function getChatUsers(): Promise<ChatUserRecord[]> {
+  const { data, error } = await supabase.from('chat_users').select('*')
+  if (error) throw error
+  return data as ChatUserRecord[]
+}
+
+export async function getChatGroups(): Promise<ChatGroupRecord[]> {
+  const { data, error } = await supabase
+    .from('chat_groups')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as ChatGroupRecord[]
+}
+
+export async function createChatGroup(group: Omit<ChatGroupRecord, 'id' | 'created_at'>, memberIds: string[]) {
+  const { data, error } = await supabase
+    .from('chat_groups')
+    .insert({ name: group.name, description: group.description ?? null, created_by: group.created_by })
+    .select('id')
+    .single()
+  if (error) throw error
+  const groupId = data.id as string
+  if (memberIds.length > 0) {
+    const rows = memberIds.map(user_id => ({ group_id: groupId, user_id }))
+    const { error: mErr } = await supabase.from('chat_group_members').insert(rows)
+    if (mErr) throw mErr
+  }
+  return groupId
+}
+
+export async function getDirectMessages(currentUserId: string, otherUserId: string): Promise<ChatMessageRecord[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .or(`and(sender.eq.${currentUserId},recipient.eq.${otherUserId}),and(sender.eq.${otherUserId},recipient.eq.${currentUserId})`)
+    .order('timestamp', { ascending: true })
+  if (error) throw error
+  return data as ChatMessageRecord[]
+}
+
+export async function getGroupMessages(groupId: string): Promise<ChatMessageRecord[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('timestamp', { ascending: true })
+  if (error) throw error
+  return data as ChatMessageRecord[]
+}
+
+export async function sendChatMessage(msg: Omit<ChatMessageRecord, 'id' | 'timestamp' | 'is_read'> & { is_read?: boolean }) {
+  const { error } = await supabase.from('chat_messages').insert({
+    sender: msg.sender,
+    recipient: msg.recipient ?? null,
+    group_id: msg.group_id ?? null,
+    content: msg.content ?? null,
+    is_read: msg.is_read ?? false,
+    image_url: msg.image_url ?? null,
+    image_name: msg.image_name ?? null,
+  })
+  if (error) throw error
+}
+
 export interface AccidentRecord {
   id?: string
   unfalltyp: 'mitarbeiter' | 'gast'

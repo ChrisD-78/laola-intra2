@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, ChatMessageRecord } from '@/lib/db'
 
 interface Message {
   id: string
@@ -56,52 +57,35 @@ export default function Chat() {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [profileName, setProfileName] = useState('')
 
-  // Load messages from localStorage on component mount
+  // Initial load of users/groups from Supabase
   useEffect(() => {
-    const savedMessages = localStorage.getItem('chatMessages')
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages))
+    const load = async () => {
+      try {
+        const [dbUsers, dbGroups] = await Promise.all([
+          getChatUsers(),
+          getChatGroups(),
+        ])
+        // Merge DB users into local seed users (keep avatars/online flags from local if present)
+        const mergedUsers = dbUsers.length
+          ? dbUsers.map(u => ({ id: u.id, name: u.name, isOnline: u.is_online, avatar: u.avatar || undefined }))
+          : users
+        setUsers(mergedUsers as User[])
+        setGroups(dbGroups.map(g => ({ id: g.id as string, name: g.name, members: [], createdBy: g.created_by, createdAt: g.created_at || new Date().toISOString(), description: g.description || undefined })))
+      } catch (e) {
+        console.error('Load chat users/groups failed', e)
+      }
     }
-    
-    const savedGroups = localStorage.getItem('chatGroups')
-    if (savedGroups) {
-      setGroups(JSON.parse(savedGroups))
-    }
-    
-    const savedUsers = localStorage.getItem('chatUsers')
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers))
-    }
-    
-    const savedUser = localStorage.getItem('currentChatUser')
-    if (savedUser) {
-      setCurrentUser(savedUser)
-      setShowLogin(false)
-    }
+    load()
   }, [])
-
-  // Save messages to localStorage whenever messages change
-  useEffect(() => {
-    localStorage.setItem('chatMessages', JSON.stringify(messages))
-  }, [messages])
-
-  // Save groups to localStorage whenever groups change
-  useEffect(() => {
-    localStorage.setItem('chatGroups', JSON.stringify(groups))
-  }, [groups])
-
-  // Save users to localStorage whenever users change
-  useEffect(() => {
-    localStorage.setItem('chatUsers', JSON.stringify(users))
-  }, [users])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (currentUser.trim()) {
-      localStorage.setItem('currentChatUser', currentUser)
+      // upsert user in Supabase (online)
+      const user = users.find(u => u.id === currentUser)
+      upsertChatUser({ id: currentUser, name: user?.name || currentUser, is_online: true, avatar: user?.avatar || null }).catch(() => {})
       setShowLogin(false)
       // Load user profile data
-      const user = users.find(u => u.id === currentUser)
       if (user) {
         setProfileName(user.name)
         setProfileAvatar(user.avatar || null)
@@ -121,22 +105,21 @@ export default function Chat() {
     e.preventDefault()
     if (!newGroupName.trim() || selectedGroupMembers.length === 0) return
 
-    const newGroup: Group = {
-      id: Date.now().toString(),
-      name: newGroupName.trim(),
-      members: [...selectedGroupMembers, currentUser],
-      createdBy: currentUser,
-      createdAt: new Date().toISOString(),
-      description: newGroupDescription.trim() || undefined
-    }
-
-    setGroups(prev => [newGroup, ...prev])
-    setNewGroupName('')
-    setNewGroupDescription('')
-    setSelectedGroupMembers([])
-    setShowCreateGroup(false)
-    setActiveTab('groups')
-    setSelectedGroup(newGroup.id)
+    ;(async () => {
+      try {
+        const groupId = await createChatGroup({ name: newGroupName.trim(), description: newGroupDescription.trim() || null, created_by: currentUser }, [...selectedGroupMembers, currentUser])
+        setGroups(prev => [{ id: groupId, name: newGroupName.trim(), members: [...selectedGroupMembers, currentUser], createdBy: currentUser, createdAt: new Date().toISOString(), description: newGroupDescription.trim() || undefined }, ...prev])
+        setNewGroupName('')
+        setNewGroupDescription('')
+        setSelectedGroupMembers([])
+        setShowCreateGroup(false)
+        setActiveTab('groups')
+        setSelectedGroup(groupId)
+      } catch (e) {
+        console.error('Create group failed', e)
+        alert('Gruppe konnte nicht erstellt werden.')
+      }
+    })()
   }
 
   const toggleGroupMember = (userId: string) => {
@@ -211,6 +194,19 @@ export default function Chat() {
     setNewMessage('')
     setSelectedImage(null)
     setImagePreview(null)
+
+    // Persist in Supabase
+    sendChatMessage({
+      sender: currentUser,
+      recipient: selectedRecipient || null,
+      group_id: selectedGroup || null,
+      content: message.content || null,
+      is_read: false,
+      image_url: null,
+      image_name: message.imageName || null,
+    }).catch(err => {
+      console.error('Send message failed', err)
+    })
   }
 
   const getMessagesForUser = (userId: string) => {
@@ -412,6 +408,21 @@ export default function Chat() {
                           setSelectedRecipient(user.id)
                           setSelectedGroup('')
                           markAsRead(user.id)
+                          // Load direct messages from DB
+                          getDirectMessages(currentUser, user.id).then(dbMsgs => {
+                            const mapped: Message[] = dbMsgs.map((m: ChatMessageRecord) => ({
+                              id: m.id as string,
+                              sender: m.sender,
+                              recipient: m.recipient || undefined,
+                              groupId: m.group_id || undefined,
+                              content: m.content || '',
+                              timestamp: m.timestamp || new Date().toISOString(),
+                              isRead: m.is_read,
+                              imageUrl: m.image_url || undefined,
+                              imageName: m.image_name || undefined,
+                            }))
+                            setMessages(mapped)
+                          }).catch(() => {})
                         }}
                         className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
                           selectedRecipient === user.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
@@ -486,6 +497,21 @@ export default function Chat() {
                           setSelectedGroup(group.id)
                           setSelectedRecipient('')
                           markGroupAsRead(group.id)
+                          // Load group messages from DB
+                          getGroupMessages(group.id).then(dbMsgs => {
+                            const mapped: Message[] = dbMsgs.map((m: ChatMessageRecord) => ({
+                              id: m.id as string,
+                              sender: m.sender,
+                              recipient: m.recipient || undefined,
+                              groupId: m.group_id || undefined,
+                              content: m.content || '',
+                              timestamp: m.timestamp || new Date().toISOString(),
+                              isRead: m.is_read,
+                              imageUrl: m.image_url || undefined,
+                              imageName: m.image_name || undefined,
+                            }))
+                            setMessages(mapped)
+                          }).catch(() => {})
                         }}
                         className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
                           selectedGroup === group.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
