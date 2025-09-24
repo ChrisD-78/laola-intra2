@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { getTasks as dbGetTasks, createTask as dbCreateTask, updateTask as dbUpdateTask, deleteTaskById as dbDeleteTask, TaskRecord } from '@/lib/db'
 
 export interface Task {
   id: string
@@ -42,79 +43,88 @@ interface TaskProviderProps {
 }
 
 export const TaskProvider = ({ children }: TaskProviderProps) => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Poolreinigung Hauptbecken',
-      description: 'Vollständige Reinigung des Hauptbeckens und Überprüfung der Filteranlage',
-      priority: 'Hoch',
-      status: 'Offen',
-      dueDate: '2024-01-20',
-      assignedTo: 'Max Mustermann',
-      createdAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      title: 'Wartung Sauna',
-      description: 'Regelmäßige Wartung der Saunaanlage und Temperaturkontrolle',
-      priority: 'Mittel',
-      status: 'In Bearbeitung',
-      dueDate: '2024-01-18',
-      assignedTo: 'Anna Schmidt',
-      createdAt: '2024-01-14'
-    },
-    {
-      id: '3',
-      title: 'Inventur Badeutensilien',
-      description: 'Vollständige Inventur aller Badeutensilien und Bestellung fehlender Artikel',
-      priority: 'Niedrig',
-      status: 'Abgeschlossen',
-      dueDate: '2024-01-16',
-      assignedTo: 'Tom Weber',
-      createdAt: '2024-01-12'
-    },
-    {
-      id: '4',
-      title: 'Sicherheitscheck Rettungsausrüstung',
-      description: 'Überprüfung aller Rettungsringe, Rettungsbojen und Erste-Hilfe-Ausrüstung',
-      priority: 'Kritisch',
-      status: 'Offen',
-      dueDate: '2024-01-19',
-      assignedTo: 'Lisa Müller',
-      createdAt: '2024-01-13'
-    },
-    {
-      id: '5',
-      title: 'Reinigung Umkleidekabinen',
-      description: 'Tiefenreinigung aller Umkleidekabinen und Desinfektion',
-      priority: 'Mittel',
-      status: 'In Bearbeitung',
-      dueDate: '2024-01-17',
-      assignedTo: 'Peter Klein',
-      createdAt: '2024-01-11'
-    }
-  ])
+  const [tasks, setTasks] = useState<Task[]>([])
 
-  const addTask = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await dbGetTasks()
+        const mapped: Task[] = data.map((t: TaskRecord) => ({
+          id: t.id as string,
+          title: t.title,
+          description: t.description,
+          priority: t.priority,
+          status: t.status,
+          dueDate: t.due_date,
+          assignedTo: t.assigned_to,
+          createdAt: (t.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0]
+        }))
+        setTasks(mapped)
+      } catch (e) {
+        console.error('Load tasks failed', e)
+      }
+    }
+    load()
+  }, [])
+
+  const addTask = async (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+    const optimistic: Task = {
+      id: `tmp_${Date.now()}`,
       ...taskData,
       status: 'Offen',
       createdAt: new Date().toISOString().split('T')[0]
     }
-    setTasks(prevTasks => [newTask, ...prevTasks])
+    setTasks(prev => [optimistic, ...prev])
+    try {
+      await dbCreateTask({
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        due_date: taskData.dueDate,
+        assigned_to: taskData.assignedTo,
+      })
+      const refreshed = await dbGetTasks()
+      const mapped: Task[] = refreshed.map((t: TaskRecord) => ({
+        id: t.id as string,
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        status: t.status,
+        dueDate: t.due_date,
+        assignedTo: t.assigned_to,
+        createdAt: (t.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0]
+      }))
+      setTasks(mapped)
+    } catch (e) {
+      console.error('Create task failed', e)
+      // rollback
+      setTasks(prev => prev.filter(t => t.id !== optimistic.id))
+      alert('Aufgabe konnte nicht gespeichert werden.')
+    }
   }
 
-  const updateTaskStatus = (taskId: string, newStatus: string) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      )
-    )
+  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+    const prevState = tasks
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
+    try {
+      await dbUpdateTask(taskId, { status: newStatus })
+    } catch (e) {
+      console.error('Update task failed', e)
+      setTasks(prevState)
+      alert('Status konnte nicht geändert werden.')
+    }
   }
 
-  const deleteTask = (taskId: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId))
+  const deleteTask = async (taskId: string) => {
+    const prevState = tasks
+    setTasks(prev => prev.filter(t => t.id !== taskId))
+    try {
+      await dbDeleteTask(taskId)
+    } catch (e) {
+      console.error('Delete task failed', e)
+      setTasks(prevState)
+      alert('Aufgabe konnte nicht gelöscht werden.')
+    }
   }
 
   const getTasksByStatus = (status: string) => {

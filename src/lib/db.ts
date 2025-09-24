@@ -2,6 +2,57 @@
 
 import { supabase } from './supabase'
 
+// =====================
+// Tasks
+// =====================
+export interface TaskRecord {
+  id?: string
+  title: string
+  description: string
+  priority: string
+  status: string
+  due_date: string
+  assigned_to: string
+  created_at?: string
+}
+
+export async function getTasks(): Promise<TaskRecord[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as TaskRecord[]
+}
+
+export async function createTask(task: Omit<TaskRecord, 'id' | 'created_at' | 'status'> & { status?: string }) {
+  const { error } = await supabase.from('tasks').insert({
+    title: task.title,
+    description: task.description,
+    priority: task.priority,
+    status: task.status ?? 'Offen',
+    due_date: task.due_date,
+    assigned_to: task.assigned_to
+  })
+  if (error) throw error
+}
+
+export async function updateTask(id: string, partial: Partial<TaskRecord>) {
+  const { error } = await supabase
+    .from('tasks')
+    .update(partial)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteTaskById(id: string) {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 export interface AccidentRecord {
   id?: string
   unfalltyp: 'mitarbeiter' | 'gast'
