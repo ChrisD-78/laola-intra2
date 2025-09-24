@@ -16,6 +16,7 @@ interface Document {
   uploadedAt: string
   uploadedBy: string
   fileContent?: string // Für Text-basierte Dokumente
+  fileUrl?: string
 }
 
 export default function Dokumente() {
@@ -36,7 +37,8 @@ export default function Dokumente() {
           tags: d.tags || [],
           uploadedAt: d.uploaded_at,
           uploadedBy: d.uploaded_by,
-          fileContent: undefined
+          fileContent: undefined,
+          fileUrl: d.file_url
         }))
         setDocuments(mapped)
       } catch (e) {
@@ -163,15 +165,17 @@ export default function Dokumente() {
   }
 
   const downloadDocument = (doc: Document) => {
-    // Erstelle einen Blob mit dem Dokumenteninhalt
+    if (doc.fileUrl) {
+      window.open(doc.fileUrl, '_blank')
+      return
+    }
+    // Fallback (sollte nicht mehr nötig sein)
     const content = doc.fileContent || `Titel: ${doc.title}\nBeschreibung: ${doc.description}\nKategorie: ${doc.category}`
     const blob = new Blob([content], { type: 'text/plain' })
-    
-    // Erstelle einen Download-Link
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = doc.fileName.replace('.pdf', '.txt') // Konvertiere zu .txt für Demo
+    link.download = doc.fileName.replace('.pdf', '.txt')
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
