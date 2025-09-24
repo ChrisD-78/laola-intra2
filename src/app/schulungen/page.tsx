@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { insertExternalProof, uploadProofPdf } from '@/lib/db'
+import { useState, useEffect } from 'react'
+import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile } from '@/lib/db'
 
 interface Schulung {
   id: string
@@ -66,138 +66,64 @@ export default function Schulungen() {
   })
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'title' | 'category'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [loading, setLoading] = useState(true)
 
-  // Beispiel-Schulungen
-  const [schulungen, setSchulungen] = useState<Schulung[]>([
-    {
-      id: '1',
-      title: 'Erste Hilfe - Auffrischung',
-      description: 'Auffrischung der Erste-Hilfe-Kenntnisse für alle Mitarbeiter. Lernen Sie die wichtigsten Sofortmaßnahmen und Notfallverfahren.',
-      category: 'Unterweisungen',
-      duration: '8 Stunden',
-      status: 'Verfügbar',
-      date: '15. Dezember 2024',
-      instructor: 'Dr. Maria Schmidt',
-      pdfUrl: '/schulungen/erste-hilfe-handbuch.pdf',
-      videoUrl: 'https://example.com/erste-hilfe-video',
-      thumbnail: '🚨'
-    },
-    {
-      id: '2',
-      title: 'Datenschutz und DSGVO',
-      description: 'Schulung zu Datenschutzrichtlinien und DSGVO-Compliance. Verstehen Sie Ihre Verantwortlichkeiten im Umgang mit personenbezogenen Daten.',
-      category: 'Schulungen',
-      duration: '2 Stunden',
-      status: 'Verfügbar',
-      date: '20. Dezember 2024',
-      instructor: 'Rechtsanwalt Thomas Weber',
-      pdfUrl: '/schulungen/dsgvo-leitfaden.pdf',
-      videoUrl: 'https://example.com/dsgvo-video',
-      thumbnail: '🔒'
-    },
-    {
-      id: '3',
-      title: 'Neue Pooltechnologien',
-      description: 'Einführung in neue Pooltechnologien und Wartungsverfahren. Bleiben Sie auf dem neuesten Stand der Technik.',
-      category: 'Schulungen',
-      duration: '5 Stunden',
-      status: 'Verfügbar',
-      date: '10. Januar 2025',
-      instructor: 'Ing. Peter Müller',
-      pdfUrl: '/schulungen/pooltechnologie-handbuch.pdf',
-      videoUrl: 'https://example.com/pooltech-video',
-      thumbnail: '🏊‍♂️'
-    },
-    {
-      id: '4',
-      title: 'Kundenservice Excellence',
-      description: 'Verbessern Sie Ihre Kommunikationsfähigkeiten und lernen Sie, wie Sie herausragenden Kundenservice bieten.',
-      category: 'Gastronomie',
-      duration: '3 Stunden',
-      status: 'Verfügbar',
-      date: '25. Januar 2025',
-      instructor: 'Sarah Johnson',
-      pdfUrl: '/schulungen/kundenservice-guide.pdf',
-      videoUrl: 'https://example.com/kundenservice-video',
-      thumbnail: '👥'
-    }
-  ])
+  // Load trainings from Supabase
+  const [schulungen, setSchulungen] = useState<Schulung[]>([])
 
-  // Beispiel abgelegte Schulungen
-  const [completedSchulungen, setCompletedSchulungen] = useState<CompletedSchulung[]>([
-    {
-      id: 'c1',
-      schulungId: '1',
-      schulungTitle: 'Erste Hilfe - Auffrischung',
-      participantName: 'Max',
-      participantSurname: 'Mustermann',
-      completedDate: '2024-01-15',
-      score: 95,
-      category: 'Unterweisungen',
-      instructor: 'Dr. Sarah Weber',
-      duration: '2 Stunden'
-    },
-    {
-      id: 'c2',
-      schulungId: '2',
-      schulungTitle: 'Hygiene und Lebensmittelsicherheit',
-      participantName: 'Anna',
-      participantSurname: 'Schmidt',
-      completedDate: '2024-01-20',
-      score: 88,
-      category: 'Gastronomie',
-      instructor: 'Chefkoch Michael Müller',
-      duration: '3 Stunden'
-    },
-    {
-      id: 'c3',
-      schulungId: '1',
-      schulungTitle: 'Erste Hilfe - Auffrischung',
-      participantName: 'Thomas',
-      participantSurname: 'Klein',
-      completedDate: '2024-01-22',
-      score: 92,
-      category: 'Unterweisungen',
-      instructor: 'Dr. Sarah Weber',
-      duration: '2 Stunden'
-    },
-    {
-      id: 'c4',
-      schulungId: '3',
-      schulungTitle: 'Kundenservice Excellence',
-      participantName: 'Lisa',
-      participantSurname: 'Wagner',
-      completedDate: '2024-01-25',
-      score: 96,
-      category: 'Schulungen',
-      instructor: 'Service Managerin Petra Fischer',
-      duration: '4 Stunden'
-    },
-    {
-      id: 'c5',
-      schulungId: '4',
-      schulungTitle: 'Arbeitsschutz und Sicherheit',
-      participantName: 'Max',
-      participantSurname: 'Mustermann',
-      completedDate: '2024-01-28',
-      score: 90,
-      category: 'Unterweisungen',
-      instructor: 'Sicherheitsbeauftragter Klaus Neumann',
-      duration: '1.5 Stunden'
-    },
-    {
-      id: 'c6',
-      schulungId: '5',
-      schulungTitle: 'Menüplanung und Kostenkontrolle',
-      participantName: 'Anna',
-      participantSurname: 'Schmidt',
-      completedDate: '2024-02-01',
-      score: 94,
-      category: 'Gastronomie',
-      instructor: 'Chefkoch Michael Müller',
-      duration: '3 Stunden'
+  useEffect(() => {
+    const loadTrainings = async () => {
+      try {
+        const data = await getTrainings()
+        const mapped: Schulung[] = data.map((training: any) => ({
+          id: training.id,
+          title: training.title,
+          description: training.description,
+          category: training.category,
+          duration: training.duration,
+          status: training.status,
+          date: training.date,
+          instructor: training.instructor,
+          pdfUrl: training.pdf_url,
+          videoUrl: training.video_url,
+          thumbnail: training.thumbnail || '📚'
+        }))
+        setSchulungen(mapped)
+      } catch (error) {
+        console.error('Error loading trainings:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ])
+    loadTrainings()
+  }, [])
+
+  // Load completed trainings from Supabase
+  const [completedSchulungen, setCompletedSchulungen] = useState<CompletedSchulung[]>([])
+
+  useEffect(() => {
+    const loadCompletedTrainings = async () => {
+      try {
+        const data = await getCompletedTrainings()
+        const mapped: CompletedSchulung[] = data.map((training: any) => ({
+          id: training.id,
+          schulungId: training.training_id,
+          schulungTitle: training.training_title,
+          participantName: training.participant_name,
+          participantSurname: training.participant_surname,
+          completedDate: training.completed_date,
+          score: training.score,
+          category: training.category,
+          instructor: training.instructor,
+          duration: training.duration
+        }))
+        setCompletedSchulungen(mapped)
+      } catch (error) {
+        console.error('Error loading completed trainings:', error)
+      }
+    }
+    loadCompletedTrainings()
+  }, [])
 
   const categories = [
     { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: 3 },
@@ -206,11 +132,17 @@ export default function Schulungen() {
     { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: 2 }
   ]
 
-  const handleDeleteSchulung = (schulungId: string) => {
+  const handleDeleteSchulung = async (schulungId: string) => {
     const pass = prompt('Bitte Passwort eingeben:')
     if (pass === 'bl') {
-      setSchulungen(schulungen.filter(s => s.id !== schulungId))
-      setShowDeleteConfirm(null)
+      try {
+        await deleteTrainingById(schulungId)
+        setSchulungen(schulungen.filter(s => s.id !== schulungId))
+        setShowDeleteConfirm(null)
+      } catch (error) {
+        console.error('Error deleting training:', error)
+        alert('Fehler beim Löschen der Schulung.')
+      }
     } else if (pass !== null) {
       alert('Falsches Passwort')
     }
@@ -553,33 +485,67 @@ export default function Schulungen() {
       videoFile: null as File | null
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
-      const newSchulung: Schulung = {
-        id: Date.now().toString(),
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        duration: formData.duration,
-        status: 'Verfügbar',
-        date: formData.date,
-        instructor: formData.instructor,
-        pdfUrl: formData.pdfFile ? URL.createObjectURL(formData.pdfFile) : undefined,
-        videoUrl: formData.videoFile ? URL.createObjectURL(formData.videoFile) : undefined,
-        thumbnail: '📚'
+      try {
+        let pdfUrl: string | undefined
+        let videoUrl: string | undefined
+
+        if (formData.pdfFile) {
+          const pdfResult = await uploadTrainingFile(formData.pdfFile, 'pdf')
+          pdfUrl = pdfResult.publicUrl
+        }
+
+        if (formData.videoFile) {
+          const videoResult = await uploadTrainingFile(formData.videoFile, 'video')
+          videoUrl = videoResult.publicUrl
+        }
+
+        const trainingData = {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          duration: formData.duration,
+          status: 'Verfügbar',
+          date: formData.date,
+          instructor: formData.instructor,
+          pdf_url: pdfUrl,
+          video_url: videoUrl,
+          thumbnail: '📚'
+        }
+
+        const savedTraining = await insertTraining(trainingData)
+        
+        const newSchulung: Schulung = {
+          id: savedTraining.id,
+          title: savedTraining.title,
+          description: savedTraining.description,
+          category: savedTraining.category,
+          duration: savedTraining.duration,
+          status: savedTraining.status,
+          date: savedTraining.date,
+          instructor: savedTraining.instructor,
+          pdfUrl: savedTraining.pdf_url,
+          videoUrl: savedTraining.video_url,
+          thumbnail: savedTraining.thumbnail
+        }
+        
+        setSchulungen([newSchulung, ...schulungen])
+        setShowCreateForm(false)
+        setFormData({
+          title: '',
+          description: '',
+          category: 'Unterweisungen',
+          duration: '',
+          instructor: '',
+          date: '',
+          pdfFile: null,
+          videoFile: null
+        })
+      } catch (error) {
+        console.error('Error creating training:', error)
+        alert('Fehler beim Erstellen der Schulung.')
       }
-      setSchulungen([...schulungen, newSchulung])
-      setShowCreateForm(false)
-      setFormData({
-        title: '',
-        description: '',
-        category: 'Unterweisungen',
-        duration: '',
-        instructor: '',
-        date: '',
-        pdfFile: null,
-        videoFile: null
-      })
     }
 
     return (
@@ -762,10 +728,37 @@ export default function Schulungen() {
         setCurrentStep(currentStep + 1)
       } else {
         setIsCompleted(true)
-        // Hier könnte man den Status der Schulung auf "Abgeschlossen" setzen
-        setSchulungen(schulungen.map(s => 
-          s.id === schulung.id ? { ...s, status: 'Abgeschlossen' as const } : s
-        ))
+        // Save completed training to Supabase
+        try {
+          await insertCompletedTraining({
+            training_id: schulung.id,
+            training_title: schulung.title,
+            participant_name: participantName,
+            participant_surname: participantSurname,
+            completed_date: new Date().toISOString().split('T')[0],
+            score: 100, // Default score for completion
+            category: schulung.category,
+            instructor: schulung.instructor,
+            duration: schulung.duration
+          })
+          
+          // Update local state
+          const newCompletedTraining: CompletedSchulung = {
+            id: Date.now().toString(),
+            schulungId: schulung.id,
+            schulungTitle: schulung.title,
+            participantName,
+            participantSurname,
+            completedDate: new Date().toISOString().split('T')[0],
+            score: 100,
+            category: schulung.category,
+            instructor: schulung.instructor,
+            duration: schulung.duration
+          }
+          setCompletedSchulungen([newCompletedTraining, ...completedSchulungen])
+        } catch (error) {
+          console.error('Error saving completed training:', error)
+        }
       }
     }
 
@@ -1240,7 +1233,11 @@ export default function Schulungen() {
 
               {/* Schulungs-Kacheln */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSchulungen.length > 0 ? (
+                {loading ? (
+                  <div className="col-span-full text-center py-12">
+                    <div className="text-gray-500">Lade Schulungen...</div>
+                  </div>
+                ) : filteredSchulungen.length > 0 ? (
                   filteredSchulungen.map((schulung) => (
                     <SchulungCard key={schulung.id} schulung={schulung} />
                   ))

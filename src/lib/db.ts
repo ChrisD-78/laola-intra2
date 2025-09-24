@@ -427,4 +427,231 @@ export async function insertExternalProof(data: ExternalProofRecord) {
   if (error) throw error
 }
 
+// Form Submissions
+export interface FormSubmissionRecord {
+  id: string
+  type: string
+  title: string
+  description: string
+  status: string
+  submitted_at: string
+  form_data: any
+  submitted_by: string
+}
+
+export async function getFormSubmissions(filters?: {
+  type?: string
+  status?: string
+  submittedBy?: string
+}): Promise<FormSubmissionRecord[]> {
+  let query = supabase
+    .from('form_submissions')
+    .select('*')
+    .order('submitted_at', { ascending: false })
+
+  if (filters?.type) {
+    query = query.eq('type', filters.type)
+  }
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status)
+  }
+
+  if (filters?.submittedBy) {
+    query = query.eq('submitted_by', filters.submittedBy)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function insertFormSubmission(submission: Omit<FormSubmissionRecord, 'id' | 'submitted_at'>): Promise<FormSubmissionRecord> {
+  const { data, error } = await supabase
+    .from('form_submissions')
+    .insert([submission])
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function updateFormSubmission(id: string, updates: Partial<FormSubmissionRecord>): Promise<FormSubmissionRecord> {
+  const { data, error } = await supabase
+    .from('form_submissions')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function deleteFormSubmissionById(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('form_submissions')
+    .delete()
+    .eq('id', id)
+  
+  if (error) throw error
+}
+
+// Training Records
+export interface TrainingRecord {
+  id: string
+  title: string
+  description: string
+  category: string
+  duration: string
+  status: string
+  date: string
+  instructor: string
+  pdf_url?: string
+  video_url?: string
+  thumbnail?: string
+  created_at: string
+}
+
+export async function getTrainings(filters?: {
+  category?: string
+  status?: string
+  instructor?: string
+}): Promise<TrainingRecord[]> {
+  let query = supabase
+    .from('trainings')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (filters?.category) {
+    query = query.eq('category', filters.category)
+  }
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status)
+  }
+
+  if (filters?.instructor) {
+    query = query.ilike('instructor', `%${filters.instructor}%`)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function insertTraining(training: Omit<TrainingRecord, 'id' | 'created_at'>): Promise<TrainingRecord> {
+  const { data, error } = await supabase
+    .from('trainings')
+    .insert([training])
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function updateTraining(id: string, updates: Partial<TrainingRecord>): Promise<TrainingRecord> {
+  const { data, error } = await supabase
+    .from('trainings')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function deleteTrainingById(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('trainings')
+    .delete()
+    .eq('id', id)
+  
+  if (error) throw error
+}
+
+export async function uploadTrainingFile(file: File, type: 'pdf' | 'video'): Promise<{ publicUrl: string }> {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+  const filePath = `trainings/${type}/${fileName}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('proofs')
+    .upload(filePath, file)
+
+  if (uploadError) throw uploadError
+
+  const { data } = supabase.storage
+    .from('proofs')
+    .getPublicUrl(filePath)
+
+  return { publicUrl: data.publicUrl }
+}
+
+// Completed Trainings
+export interface CompletedTrainingRecord {
+  id: string
+  training_id: string
+  training_title: string
+  participant_name: string
+  participant_surname: string
+  completed_date: string
+  score?: number
+  category: string
+  instructor: string
+  duration: string
+  created_at: string
+}
+
+export async function getCompletedTrainings(filters?: {
+  category?: string
+  participant?: string
+  instructor?: string
+  dateFrom?: string
+  dateTo?: string
+}): Promise<CompletedTrainingRecord[]> {
+  let query = supabase
+    .from('completed_trainings')
+    .select('*')
+    .order('completed_date', { ascending: false })
+
+  if (filters?.category) {
+    query = query.eq('category', filters.category)
+  }
+
+  if (filters?.participant) {
+    query = query.or(`participant_name.ilike.%${filters.participant}%,participant_surname.ilike.%${filters.participant}%`)
+  }
+
+  if (filters?.instructor) {
+    query = query.ilike('instructor', `%${filters.instructor}%`)
+  }
+
+  if (filters?.dateFrom) {
+    query = query.gte('completed_date', filters.dateFrom)
+  }
+
+  if (filters?.dateTo) {
+    query = query.lte('completed_date', filters.dateTo)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function insertCompletedTraining(training: Omit<CompletedTrainingRecord, 'id' | 'created_at'>): Promise<CompletedTrainingRecord> {
+  const { data, error } = await supabase
+    .from('completed_trainings')
+    .insert([training])
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
 

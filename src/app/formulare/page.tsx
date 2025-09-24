@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import WassermessungForm from '@/components/WassermessungForm'
 import RutschenkontrolleForm from '@/components/RutschenkontrolleForm'
 import TechnikkontrolleForm from '@/components/TechnikkontrolleForm'
 import KassenabrechnungForm from '@/components/KassenabrechnungForm'
 import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
-import { insertAccident } from '@/lib/db'
+import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById } from '@/lib/db'
 
 interface FormSubmission {
   id: string
@@ -21,138 +21,95 @@ interface FormSubmission {
 }
 
 export default function Formulare() {
-  const [submissions, setSubmissions] = useState<FormSubmission[]>([
-    {
-      id: '1',
-      type: 'wassermessung',
-      title: 'Wassermessung - Hauptbecken',
-      description: 'pH-Wert: 7.2, Chlor: 0.8 mg/l',
-      status: 'Abgeschlossen',
-      submittedAt: 'vor 2 Tagen',
-      formData: {
-        becken: 'Hauptbecken',
-        phWert: '7.2',
-        chlorWert: '0.8',
-        chlorWertGesamt: '1.2',
-        chlorWertGebunden: '0.4',
-        redox: '650',
-        temperatur: '24°C',
-        datum: '2024-01-15',
-        uhrzeit: '14:30'
-      },
-      submittedBy: 'Max Mustermann'
-    },
-    {
-      id: '2',
-      type: 'rutschenkontrolle',
-      title: 'Rutschenkontrolle - Wasserrutsche',
-      description: 'Sicherheitscheck und Funktionsprüfung',
-      status: 'In Bearbeitung',
-      submittedAt: 'vor 1 Woche',
-      formData: {
-        rutschenname: 'Wasserrutsche',
-        sicherheitscheck: 'Bestanden',
-        funktionspruefung: 'Funktioniert',
-        bemerkungen: 'Keine Mängel festgestellt',
-        datum: '2024-01-08',
-        uhrzeit: '09:15'
-      },
-      submittedBy: 'Anna Schmidt'
-    },
-    {
-      id: '3',
-      type: 'kassenabrechnung',
-      title: 'Kassenabrechnung - Tagesabschluss',
-      description: 'Tagesumsatz: €2,450.00, Kassenbestand korrekt',
-      status: 'Eingegangen',
-      submittedAt: 'vor 2 Wochen',
-      formData: {
-        tagesumsatz: '2450.00',
-        kassenbestand: '150.00',
-        differenz: '0.00',
-        zahlungsarten: 'Bar: €1800, Karte: €650',
-        datum: '2024-01-01',
-        uhrzeit: '22:00'
-      },
-      submittedBy: 'Tom Weber'
-    },
-    {
-      id: '4',
-      type: 'arbeitsunfall',
-      title: 'Arbeitsunfall - Sturz im Technikraum',
-      description: 'Unfallort: Technikraum, Verletzte Person: Maria Müller, Schweregrad: Leicht',
-      status: 'Abgeschlossen',
-      submittedAt: 'vor 3 Tagen',
-      formData: {
-        unfallort: 'Technikraum',
-        verletztePerson: 'Maria Müller',
-        schweregrad: 'Leicht',
-        unfallzeit: '2024-01-12 16:30',
-        beschreibung: 'Sturz auf nassem Boden',
-        ersteHilfe: 'Ja, Pflaster aufgeklebt'
-      },
-      submittedBy: 'Maria Müller'
-    },
-    {
-      id: '5',
-      type: 'feedback',
-      title: 'Feedback - Verbesserungsvorschlag',
-      description: 'Kategorie: Service, Bereich: Kasse, Priorität: Hoch',
-      status: 'Eingegangen',
-      submittedAt: 'vor 1 Tag',
-      formData: {
-        kategorie: 'Service',
-        betroffenerBereich: 'Kasse',
-        prioritaet: 'Hoch',
-        beschreibung: 'Wartezeiten an der Kasse zu lang',
-        vorschlag: 'Zusätzliche Kasse installieren'
-      },
-      submittedBy: 'Gast 123'
-    }
-  ])
+  const [submissions, setSubmissions] = useState<FormSubmission[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [openForm, setOpenForm] = useState<string | null>(null)
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null)
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<FormSubmission | null>(null)
 
-  const handleFormSubmit = async (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    const newSubmission: FormSubmission = {
-      id: Date.now().toString(),
-      type,
-      title: `${type} - ${new Date().toLocaleDateString('de-DE')}`,
-      description: generateDescription(type, data),
-      status: 'Eingegangen',
-      submittedAt: 'gerade eben',
-      formData: data,
-      submittedBy: 'Aktueller Benutzer'
-    }
-    setSubmissions([newSubmission, ...submissions])
-
-    if (type === 'arbeitsunfall') {
+  // Load submissions from Supabase
+  useEffect(() => {
+    const loadSubmissions = async () => {
       try {
-        await insertAccident({
-          unfalltyp: data.unfalltyp,
-          datum: data.datum,
-          zeit: data.zeit,
-          verletzte_person: data.verletztePerson,
-          unfallort: data.unfallort,
-          unfallart: data.unfallart,
-          verletzungsart: data.verletzungsart,
-          schweregrad: data.schweregrad,
-          erste_hilfe: data.ersteHilfe,
-          arzt_kontakt: data.arztKontakt,
-          zeugen: data.zeugen || null,
-          beschreibung: data.beschreibung,
-          meldende_person: data.meldendePerson,
-          unfallhergang: data.unfallhergang || null,
-          gast_alter: data.gastAlter || null,
-          gast_kontakt: data.gastKontakt || null,
-        })
-      } catch (e) {
-        console.error('Supabase insertAccident error', e)
-        alert('Fehler beim Speichern in der Datenbank.')
+        const data = await getFormSubmissions()
+        const mapped: FormSubmission[] = data.map((sub: any) => ({
+          id: sub.id,
+          type: sub.type,
+          title: sub.title,
+          description: sub.description,
+          status: sub.status,
+          submittedAt: sub.submitted_at,
+          formData: sub.form_data,
+          submittedBy: sub.submitted_by
+        }))
+        setSubmissions(mapped)
+      } catch (error) {
+        console.error('Error loading submissions:', error)
+      } finally {
+        setLoading(false)
       }
+    }
+    loadSubmissions()
+  }, [])
+
+  const handleFormSubmit = async (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    try {
+      const submissionData = {
+        type,
+        title: `${type} - ${new Date().toLocaleDateString('de-DE')}`,
+        description: generateDescription(type, data),
+        status: 'Eingegangen',
+        form_data: data,
+        submitted_by: 'Aktueller Benutzer'
+      }
+
+      // Save to Supabase
+      const savedSubmission = await insertFormSubmission(submissionData)
+      
+      const newSubmission: FormSubmission = {
+        id: savedSubmission.id,
+        type: savedSubmission.type,
+        title: savedSubmission.title,
+        description: savedSubmission.description,
+        status: savedSubmission.status,
+        submittedAt: savedSubmission.submitted_at,
+        formData: savedSubmission.form_data,
+        submittedBy: savedSubmission.submitted_by
+      }
+      
+      setSubmissions([newSubmission, ...submissions])
+
+      // Special handling for arbeitsunfall
+      if (type === 'arbeitsunfall') {
+        try {
+          await insertAccident({
+            unfalltyp: data.unfalltyp,
+            datum: data.datum,
+            zeit: data.zeit,
+            verletzte_person: data.verletztePerson,
+            unfallort: data.unfallort,
+            unfallart: data.unfallart,
+            verletzungsart: data.verletzungsart,
+            schweregrad: data.schweregrad,
+            erste_hilfe: data.ersteHilfe,
+            arzt_kontakt: data.arztKontakt,
+            zeugen: data.zeugen || null,
+            beschreibung: data.beschreibung,
+            meldende_person: data.meldendePerson,
+            unfallhergang: data.unfallhergang || null,
+            gast_alter: data.gastAlter || null,
+            gast_kontakt: data.gastKontakt || null,
+          })
+        } catch (e) {
+          console.error('Supabase insertAccident error', e)
+          alert('Fehler beim Speichern des Arbeitsunfalls in der Datenbank.')
+        }
+      }
+    } catch (error) {
+      console.error('Error saving form submission:', error)
+      alert('Fehler beim Speichern des Formulars.')
     }
   }
 
@@ -220,12 +177,18 @@ export default function Formulare() {
     }
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (showDeleteConfirm) {
       const pass = prompt('Bitte Passwort eingeben:')
       if (pass === 'bl') {
-        setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
-        setShowDeleteConfirm(null)
+        try {
+          await deleteFormSubmissionById(showDeleteConfirm.id)
+          setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
+          setShowDeleteConfirm(null)
+        } catch (error) {
+          console.error('Error deleting submission:', error)
+          alert('Fehler beim Löschen des Formulars.')
+        }
       } else if (pass !== null) {
         alert('Falsches Passwort')
       }
@@ -380,7 +343,11 @@ export default function Formulare() {
           <h2 className="text-lg font-semibold text-gray-900">Ihre letzten Einreichungen</h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {submissions.slice(0, 3).map((submission) => (
+          {loading ? (
+            <div className="p-6 text-center">
+              <div className="text-gray-500">Lade Formulare...</div>
+            </div>
+          ) : submissions.slice(0, 3).map((submission) => (
             <div key={submission.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -422,7 +389,7 @@ export default function Formulare() {
                 </button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 
@@ -475,7 +442,13 @@ export default function Formulare() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {submissions.map((submission) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    Lade Formulare...
+                  </td>
+                </tr>
+              ) : submissions.map((submission) => (
                 <tr key={submission.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -560,7 +533,7 @@ export default function Formulare() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
