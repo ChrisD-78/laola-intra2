@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import WiederkehrendeAufgabenForm from '@/components/WiederkehrendeAufgabenForm'
+import { getRecurringTasks, createRecurringTask, updateRecurringTask, deleteRecurringTask, RecurringTaskRecord } from '@/lib/db'
 
 interface RecurringTask {
   id: string
@@ -17,58 +18,33 @@ interface RecurringTask {
 }
 
 export default function WiederkehrendeAufgaben() {
-  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([
-    {
-      id: '1',
-      title: 'Poolreinigung Hauptbecken',
-      description: 'Tägliche Reinigung des Hauptbeckens und der Umgebung',
-      frequency: 'Täglich',
-      priority: 'Hoch',
-      startTime: '08:00',
-      assignedTo: 'Max Mustermann',
-      isActive: true,
-      nextDue: '2024-01-16 08:00',
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '2',
-      title: 'Wasserqualität prüfen',
-      description: 'pH-Wert und Chlorgehalt aller Becken messen',
-      frequency: 'Wöchentlich',
-      priority: 'Mittel',
-      startTime: '09:00',
-      assignedTo: 'Anna Schmidt',
-      isActive: true,
-      nextDue: '2024-01-22 09:00',
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '3',
-      title: 'Umkleideräume aufräumen',
-      description: 'Reinigung und Aufräumen der Umkleideräume',
-      frequency: 'Täglich',
-      priority: 'Niedrig',
-      startTime: '18:00',
-      assignedTo: 'Tom Weber',
-      isActive: true,
-      nextDue: '2024-01-15 18:00',
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '4',
-      title: 'Sicherheitscheck',
-      description: 'Überprüfung aller Sicherheitseinrichtungen',
-      frequency: 'Monatlich',
-      priority: 'Mittel',
-      startTime: '10:00',
-      assignedTo: 'Lisa Müller',
-      isActive: true,
-      nextDue: '2024-02-15 10:00',
-      createdAt: '2024-01-01'
-    }
-  ])
+  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([])
 
-  const addNewRecurringTask = (taskData: {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getRecurringTasks()
+        const mapped: RecurringTask[] = data.map((t: RecurringTaskRecord) => ({
+          id: t.id as string,
+          title: t.title,
+          description: t.description,
+          frequency: t.frequency,
+          priority: t.priority,
+          startTime: t.start_time,
+          assignedTo: t.assigned_to,
+          isActive: t.is_active,
+          nextDue: t.next_due,
+          createdAt: (t.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0]
+        }))
+        setRecurringTasks(mapped)
+      } catch (e) {
+        console.error('Load recurring tasks failed', e)
+      }
+    }
+    load()
+  }, [])
+
+  const addNewRecurringTask = async (taskData: {
     title: string
     description: string
     frequency: string
@@ -77,23 +53,70 @@ export default function WiederkehrendeAufgaben() {
     assignedTo: string
     isActive: boolean
   }) => {
-    const newTask: RecurringTask = {
-      id: Date.now().toString(),
+    const optimistic: RecurringTask = {
+      id: `tmp_${Date.now()}`,
       ...taskData,
       nextDue: new Date().toISOString().split('T')[0] + ' ' + taskData.startTime,
       createdAt: new Date().toISOString().split('T')[0]
     }
-    setRecurringTasks([newTask, ...recurringTasks])
+    setRecurringTasks(prev => [optimistic, ...prev])
+    try {
+      await createRecurringTask({
+        title: taskData.title,
+        description: taskData.description,
+        frequency: taskData.frequency,
+        priority: taskData.priority,
+        start_time: taskData.startTime,
+        assigned_to: taskData.assignedTo,
+        is_active: taskData.isActive,
+        next_due: optimistic.nextDue,
+      })
+      const data = await getRecurringTasks()
+      const mapped: RecurringTask[] = data.map((t: RecurringTaskRecord) => ({
+        id: t.id as string,
+        title: t.title,
+        description: t.description,
+        frequency: t.frequency,
+        priority: t.priority,
+        startTime: t.start_time,
+        assignedTo: t.assigned_to,
+        isActive: t.is_active,
+        nextDue: t.next_due,
+        createdAt: (t.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0]
+      }))
+      setRecurringTasks(mapped)
+    } catch (e) {
+      console.error('Create recurring task failed', e)
+      setRecurringTasks(prev => prev.filter(t => t.id !== optimistic.id))
+      alert('Wiederkehrende Aufgabe konnte nicht gespeichert werden.')
+    }
   }
 
-  const toggleTaskStatus = (taskId: string) => {
-    setRecurringTasks(recurringTasks.map(task => 
-      task.id === taskId ? { ...task, isActive: !task.isActive } : task
-    ))
+  const toggleTaskStatus = async (taskId: string) => {
+    const prev = recurringTasks
+    const target = prev.find(t => t.id === taskId)
+    if (!target) return
+    const newVal = !target.isActive
+    setRecurringTasks(prev => prev.map(task => task.id === taskId ? { ...task, isActive: newVal } : task))
+    try {
+      await updateRecurringTask(taskId, { is_active: newVal })
+    } catch (e) {
+      console.error('Toggle recurring task failed', e)
+      setRecurringTasks(prev)
+      alert('Statuswechsel fehlgeschlagen.')
+    }
   }
 
-  const deleteTask = (taskId: string) => {
-    setRecurringTasks(recurringTasks.filter(task => task.id !== taskId))
+  const deleteTask = async (taskId: string) => {
+    const prev = recurringTasks
+    setRecurringTasks(prev.filter(task => task.id !== taskId))
+    try {
+      await deleteRecurringTask(taskId)
+    } catch (e) {
+      console.error('Delete recurring task failed', e)
+      setRecurringTasks(prev)
+      alert('Aufgabe konnte nicht gelöscht werden.')
+    }
   }
 
   const getPriorityColor = (priority: string) => {

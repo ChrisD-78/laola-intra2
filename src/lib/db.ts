@@ -53,6 +53,61 @@ export async function deleteTaskById(id: string) {
   if (error) throw error
 }
 
+// =====================
+// Recurring Tasks
+// =====================
+export interface RecurringTaskRecord {
+  id?: string
+  title: string
+  description: string
+  frequency: string
+  priority: string
+  start_time: string
+  assigned_to: string
+  is_active: boolean
+  next_due: string
+  created_at?: string
+}
+
+export async function getRecurringTasks(): Promise<RecurringTaskRecord[]> {
+  const { data, error } = await supabase
+    .from('recurring_tasks')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as RecurringTaskRecord[]
+}
+
+export async function createRecurringTask(task: Omit<RecurringTaskRecord, 'id' | 'created_at'>) {
+  const { error } = await supabase.from('recurring_tasks').insert({
+    title: task.title,
+    description: task.description,
+    frequency: task.frequency,
+    priority: task.priority,
+    start_time: task.start_time,
+    assigned_to: task.assigned_to,
+    is_active: task.is_active,
+    next_due: task.next_due,
+  })
+  if (error) throw error
+}
+
+export async function updateRecurringTask(id: string, partial: Partial<RecurringTaskRecord>) {
+  const { error } = await supabase
+    .from('recurring_tasks')
+    .update(partial)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteRecurringTask(id: string) {
+  const { error } = await supabase
+    .from('recurring_tasks')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 export interface AccidentRecord {
   id?: string
   unfalltyp: 'mitarbeiter' | 'gast'
