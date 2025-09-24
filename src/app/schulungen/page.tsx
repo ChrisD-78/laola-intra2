@@ -137,8 +137,8 @@ export default function Schulungen() {
     if (pass === 'bl') {
       try {
         await deleteTrainingById(schulungId)
-        setSchulungen(schulungen.filter(s => s.id !== schulungId))
-        setShowDeleteConfirm(null)
+      setSchulungen(schulungen.filter(s => s.id !== schulungId))
+      setShowDeleteConfirm(null)
       } catch (error) {
         console.error('Error deleting training:', error)
         alert('Fehler beim Löschen der Schulung.')
@@ -502,17 +502,17 @@ export default function Schulungen() {
         }
 
         const trainingData = {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          duration: formData.duration,
-          status: 'Verfügbar',
-          date: formData.date,
-          instructor: formData.instructor,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        duration: formData.duration,
+        status: 'Verfügbar',
+        date: formData.date,
+        instructor: formData.instructor,
           pdf_url: pdfUrl,
           video_url: videoUrl,
-          thumbnail: '📚'
-        }
+        thumbnail: '📚'
+      }
 
         const savedTraining = await insertTraining(trainingData)
         
@@ -531,17 +531,17 @@ export default function Schulungen() {
         }
         
         setSchulungen([newSchulung, ...schulungen])
-        setShowCreateForm(false)
-        setFormData({
-          title: '',
-          description: '',
-          category: 'Unterweisungen',
-          duration: '',
-          instructor: '',
-          date: '',
-          pdfFile: null,
-          videoFile: null
-        })
+      setShowCreateForm(false)
+      setFormData({
+        title: '',
+        description: '',
+        category: 'Unterweisungen',
+        duration: '',
+        instructor: '',
+        date: '',
+        pdfFile: null,
+        videoFile: null
+      })
       } catch (error) {
         console.error('Error creating training:', error)
         alert('Fehler beim Erstellen der Schulung.')
