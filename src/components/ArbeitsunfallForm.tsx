@@ -9,6 +9,7 @@ interface ArbeitsunfallFormProps {
 }
 
 interface ArbeitsunfallData {
+  unfalltyp: 'mitarbeiter' | 'gast'
   datum: string
   zeit: string
   verletztePerson: string
@@ -21,10 +22,18 @@ interface ArbeitsunfallData {
   zeugen: string
   beschreibung: string
   meldendePerson: string
+  // Zusätzliche Felder für Mitarbeiter
+  mitarbeiterNummer?: string
+  abteilung?: string
+  // Zusätzliche Felder für Gäste
+  gastAlter?: string
+  gastKontakt?: string
 }
 
 const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps) => {
+  const [activeTab, setActiveTab] = useState<'mitarbeiter' | 'gast'>('mitarbeiter')
   const [formData, setFormData] = useState<ArbeitsunfallData>({
+    unfalltyp: 'mitarbeiter',
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
     verletztePerson: '',
@@ -36,7 +45,11 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
     arztKontakt: '',
     zeugen: '',
     beschreibung: '',
-    meldendePerson: 'Christof Drost'
+    meldendePerson: 'Christof Drost',
+    mitarbeiterNummer: '',
+    abteilung: '',
+    gastAlter: '',
+    gastKontakt: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -45,6 +58,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
     onClose()
     // Reset form
     setFormData({
+      unfalltyp: 'mitarbeiter',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       verletztePerson: '',
@@ -56,14 +70,20 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       arztKontakt: '',
       zeugen: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost'
+      meldendePerson: 'Christof Drost',
+      mitarbeiterNummer: '',
+      abteilung: '',
+      gastAlter: '',
+      gastKontakt: ''
     })
+    setActiveTab('mitarbeiter')
   }
 
   const handleClose = () => {
     onClose()
     // Reset form
     setFormData({
+      unfalltyp: 'mitarbeiter',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       verletztePerson: '',
@@ -75,8 +95,18 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       arztKontakt: '',
       zeugen: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost'
+      meldendePerson: 'Christof Drost',
+      mitarbeiterNummer: '',
+      abteilung: '',
+      gastAlter: '',
+      gastKontakt: ''
     })
+    setActiveTab('mitarbeiter')
+  }
+
+  const handleTabChange = (tab: 'mitarbeiter' | 'gast') => {
+    setActiveTab(tab)
+    setFormData({...formData, unfalltyp: tab})
   }
 
   if (!isOpen) return null
@@ -106,6 +136,32 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                 className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
                 ✕
+              </button>
+            </div>
+            
+            {/* Tabs */}
+            <div className="mt-4 flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => handleTabChange('mitarbeiter')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'mitarbeiter'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                👨‍💼 Unfallmeldung Mitarbeiter
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabChange('gast')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'gast'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                👥 Unfallmeldung Gäste
               </button>
             </div>
           </div>
@@ -155,6 +211,88 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                   required
                 />
               </div>
+
+              {/* Mitarbeiter-spezifische Felder */}
+              {activeTab === 'mitarbeiter' && (
+                <>
+                  <div>
+                    <label htmlFor="mitarbeiterNummer" className="block text-sm font-medium text-gray-700 mb-2">
+                      Mitarbeiternummer *
+                    </label>
+                    <input
+                      type="text"
+                      id="mitarbeiterNummer"
+                      value={formData.mitarbeiterNummer || ''}
+                      onChange={(e) => setFormData({...formData, mitarbeiterNummer: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="z.B. MA-001"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="abteilung" className="block text-sm font-medium text-gray-700 mb-2">
+                      Abteilung *
+                    </label>
+                    <select
+                      id="abteilung"
+                      value={formData.abteilung || ''}
+                      onChange={(e) => setFormData({...formData, abteilung: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="">Abteilung auswählen</option>
+                      <option value="Bäderbetrieb">Bäderbetrieb</option>
+                      <option value="Gastronomie">Gastronomie</option>
+                      <option value="Reinigung">Reinigung</option>
+                      <option value="Technik">Technik</option>
+                      <option value="Verwaltung">Verwaltung</option>
+                      <option value="Rezeption">Rezeption</option>
+                      <option value="Sonstiges">Sonstiges</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Gast-spezifische Felder */}
+              {activeTab === 'gast' && (
+                <>
+                  <div>
+                    <label htmlFor="gastAlter" className="block text-sm font-medium text-gray-700 mb-2">
+                      Alter des Gastes
+                    </label>
+                    <select
+                      id="gastAlter"
+                      value={formData.gastAlter || ''}
+                      onChange={(e) => setFormData({...formData, gastAlter: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Alter auswählen</option>
+                      <option value="0-5 Jahre">0-5 Jahre</option>
+                      <option value="6-12 Jahre">6-12 Jahre</option>
+                      <option value="13-17 Jahre">13-17 Jahre</option>
+                      <option value="18-30 Jahre">18-30 Jahre</option>
+                      <option value="31-50 Jahre">31-50 Jahre</option>
+                      <option value="51-65 Jahre">51-65 Jahre</option>
+                      <option value="65+ Jahre">65+ Jahre</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="gastKontakt" className="block text-sm font-medium text-gray-700 mb-2">
+                      Kontakt (Telefon/E-Mail)
+                    </label>
+                    <input
+                      type="text"
+                      id="gastKontakt"
+                      value={formData.gastKontakt || ''}
+                      onChange={(e) => setFormData({...formData, gastKontakt: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Telefonnummer oder E-Mail-Adresse"
+                    />
+                  </div>
+                </>
+              )}
               
               <div>
                 <label htmlFor="unfallort" className="block text-sm font-medium text-gray-700 mb-2">
