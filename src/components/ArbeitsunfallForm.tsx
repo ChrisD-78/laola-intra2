@@ -93,8 +93,6 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       zeugen: '',
       beschreibung: '',
       meldendePerson: 'Christof Drost',
-      mitarbeiterNummer: '',
-      abteilung: '',
       gastAlter: '',
       gastKontakt: ''
     })
