@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DokumentUploadForm from '@/components/DokumentUploadForm'
+import { getDocuments, insertDocument, uploadDocumentFile, updateDocument, deleteDocumentById, DocumentRecord } from '@/lib/db'
 
 interface Document {
   id: string
@@ -18,60 +19,32 @@ interface Document {
 }
 
 export default function Dokumente() {
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: '1',
-      title: 'Sicherheitsrichtlinien 2024',
-      description: 'Aktualisierte Sicherheitsrichtlinien für alle Mitarbeiter',
-      category: 'Sicherheit',
-      fileName: 'sicherheitsrichtlinien-2024.pdf',
-      fileSize: 2.4,
-      fileType: 'application/pdf',
-      tags: ['sicherheit', 'richtlinien', '2024'],
-      uploadedAt: '2024-01-15T10:30:00',
-      uploadedBy: 'Max Mustermann',
-      fileContent: 'Dies ist der Inhalt der Sicherheitsrichtlinien 2024. Alle Mitarbeiter müssen diese Richtlinien befolgen.'
-    },
-    {
-      id: '2',
-      title: 'Betriebsanleitung Filteranlage',
-      description: 'Detaillierte Anleitung zur Wartung der Filteranlage',
-      category: 'Technik',
-      fileName: 'filteranlage-anleitung.pdf',
-      fileSize: 1.8,
-      fileType: 'application/pdf',
-      tags: ['technik', 'filteranlage', 'anleitung'],
-      uploadedAt: '2024-01-14T14:15:00',
-      uploadedBy: 'Anna Schmidt',
-      fileContent: 'Betriebsanleitung für die Filteranlage: Regelmäßige Wartung alle 2 Wochen, Filterwechsel alle 3 Monate.'
-    },
-    {
-      id: '3',
-      title: 'Monatsbericht November',
-      description: 'Zusammenfassung der Betriebsdaten und Kennzahlen',
-      category: 'Betrieb',
-      fileName: 'monatsbericht-november.pdf',
-      fileSize: 3.2,
-      fileType: 'application/pdf',
-      tags: ['bericht', 'november', 'betriebsdaten'],
-      uploadedAt: '2024-01-12T09:45:00',
-      uploadedBy: 'Tom Weber',
-      fileContent: 'Monatsbericht November: Besucherzahl gestiegen, Umsatz erhöht, neue Mitarbeiter eingestellt.'
-    },
-    {
-      id: '4',
-      title: 'Personalrichtlinien 2024',
-      description: 'Aktuelle Personalrichtlinien und Arbeitsverträge',
-      category: 'Verwaltung',
-      fileName: 'personalrichtlinien-2024.pdf',
-      fileSize: 1.5,
-      fileType: 'application/pdf',
-      tags: ['personal', 'richtlinien', 'verwaltung'],
-      uploadedAt: '2024-01-10T16:20:00',
-      uploadedBy: 'Maria Müller',
-      fileContent: 'Personalrichtlinien 2024: Arbeitszeiten, Urlaubsregelungen, Fortbildungsmöglichkeiten.'
+  const [documents, setDocuments] = useState<Document[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getDocuments()
+        const mapped: Document[] = data.map((d: DocumentRecord) => ({
+          id: d.id as string,
+          title: d.title,
+          description: d.description,
+          category: d.category,
+          fileName: d.file_name,
+          fileSize: d.file_size_mb,
+          fileType: d.file_type,
+          tags: d.tags || [],
+          uploadedAt: d.uploaded_at,
+          uploadedBy: d.uploaded_by,
+          fileContent: undefined
+        }))
+        setDocuments(mapped)
+      } catch (e) {
+        console.error('Load documents failed', e)
+      }
     }
-  ])
+    load()
+  }, [])
 
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
@@ -81,15 +54,15 @@ export default function Dokumente() {
   const [editCategory, setEditCategory] = useState('')
   const [editTags, setEditTags] = useState('')
 
-  const addNewDocument = (documentData: {
+  const addNewDocument = async (documentData: {
     title: string
     description: string
     category: string
     file: File
     tags: string[]
   }) => {
-    const newDocument: Document = {
-      id: Date.now().toString(),
+    const optimistic: Document = {
+      id: `tmp_${Date.now()}`,
       title: documentData.title,
       description: documentData.description,
       category: documentData.category,
@@ -99,15 +72,57 @@ export default function Dokumente() {
       tags: documentData.tags,
       uploadedAt: new Date().toISOString(),
       uploadedBy: 'Christof Drost',
-      fileContent: `Neues Dokument: ${documentData.title}\n\n${documentData.description}\n\nKategorie: ${documentData.category}\nTags: ${documentData.tags.join(', ')}`
+      fileContent: undefined
     }
-    setDocuments([newDocument, ...documents])
+    setDocuments(prev => [optimistic, ...prev])
+    try {
+      const uploaded = await uploadDocumentFile(documentData.file)
+      await insertDocument({
+        title: documentData.title,
+        description: documentData.description,
+        category: documentData.category,
+        file_name: documentData.file.name,
+        file_size_mb: documentData.file.size / 1024 / 1024,
+        file_type: documentData.file.type,
+        tags: documentData.tags,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: 'Christof Drost',
+        file_url: uploaded.publicUrl,
+      })
+      const fresh = await getDocuments()
+      const mapped: Document[] = fresh.map((d: DocumentRecord) => ({
+        id: d.id as string,
+        title: d.title,
+        description: d.description,
+        category: d.category,
+        fileName: d.file_name,
+        fileSize: d.file_size_mb,
+        fileType: d.file_type,
+        tags: d.tags || [],
+        uploadedAt: d.uploaded_at,
+        uploadedBy: d.uploaded_by,
+        fileContent: undefined
+      }))
+      setDocuments(mapped)
+    } catch (e) {
+      console.error('Insert document failed', e)
+      setDocuments(prev => prev.filter(d => d.id !== optimistic.id))
+      alert('Dokument konnte nicht gespeichert werden.')
+    }
   }
 
-  const deleteDocument = (documentId: string) => {
+  const deleteDocument = async (documentId: string) => {
     const pass = prompt('Bitte Passwort eingeben:')
     if (pass === 'bl') {
-      setDocuments(documents.filter(doc => doc.id !== documentId))
+      const prev = documents
+      setDocuments(prev.filter(doc => doc.id !== documentId))
+      try {
+        await deleteDocumentById(documentId)
+      } catch (e) {
+        console.error('Delete document failed', e)
+        setDocuments(prev)
+        alert('Dokument konnte nicht gelöscht werden.')
+      }
     } else if (pass !== null) {
       alert('Falsches Passwort')
     }
@@ -150,20 +165,18 @@ export default function Dokumente() {
     }
   }
 
-  const saveEditDocument = () => {
+  const saveEditDocument = async () => {
     if (selectedDocument) {
-      const updatedDocuments = documents.map(doc => 
-        doc.id === selectedDocument.id 
-          ? {
-              ...doc,
-              title: editTitle,
-              description: editDescription,
-              category: editCategory,
-              tags: editTags.trim() ? editTags.split(',').map(tag => tag.trim()) : []
-            }
-          : doc
-      )
-      setDocuments(updatedDocuments)
+      const newTags = editTags.trim() ? editTags.split(',').map(tag => tag.trim()) : []
+      const prev = documents
+      setDocuments(prev.map(doc => doc.id === selectedDocument.id ? { ...doc, title: editTitle, description: editDescription, category: editCategory, tags: newTags } : doc))
+      try {
+        await updateDocument(selectedDocument.id, { title: editTitle, description: editDescription, category: editCategory, tags: newTags })
+      } catch (e) {
+        console.error('Update document failed', e)
+        setDocuments(prev)
+        alert('Änderungen konnten nicht gespeichert werden.')
+      }
       setIsEditMode(false)
       setIsViewerOpen(false)
       setSelectedDocument(null)

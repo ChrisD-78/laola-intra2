@@ -264,6 +264,76 @@ export async function uploadInfoPdf(file: File): Promise<{ path: string; publicU
   return { path: filePath, publicUrl: data.publicUrl }
 }
 
+// =====================
+// Documents (Dokumente)
+// =====================
+export interface DocumentRecord {
+  id?: string
+  title: string
+  description: string
+  category: string
+  file_name: string
+  file_size_mb: number
+  file_type: string
+  tags: string[]
+  uploaded_at: string
+  uploaded_by: string
+  file_url: string
+  created_at?: string
+}
+
+export async function getDocuments(): Promise<DocumentRecord[]> {
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as DocumentRecord[]
+}
+
+export async function uploadDocumentFile(file: File): Promise<{ path: string; publicUrl: string }> {
+  const filePath = `documents/${Date.now()}_${file.name}`
+  const { error: upErr } = await supabase.storage.from('proofs').upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+  if (upErr) throw upErr
+  const { data } = supabase.storage.from('proofs').getPublicUrl(filePath)
+  return { path: filePath, publicUrl: data.publicUrl }
+}
+
+export async function insertDocument(doc: Omit<DocumentRecord, 'id' | 'created_at'>) {
+  const { error } = await supabase.from('documents').insert({
+    title: doc.title,
+    description: doc.description,
+    category: doc.category,
+    file_name: doc.file_name,
+    file_size_mb: doc.file_size_mb,
+    file_type: doc.file_type,
+    tags: doc.tags,
+    uploaded_at: doc.uploaded_at,
+    uploaded_by: doc.uploaded_by,
+    file_url: doc.file_url,
+  })
+  if (error) throw error
+}
+
+export async function updateDocument(id: string, partial: Partial<DocumentRecord>) {
+  const { error } = await supabase
+    .from('documents')
+    .update(partial)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteDocumentById(id: string) {
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 export interface AccidentRecord {
   id?: string
   unfalltyp: 'mitarbeiter' | 'gast'
