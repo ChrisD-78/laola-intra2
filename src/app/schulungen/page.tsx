@@ -46,6 +46,15 @@ export default function Schulungen() {
     pdfName?: string
     pdfUrl?: string
   }>>([])
+  const [proofFilters, setProofFilters] = useState({
+    bezeichnung: '',
+    vorname: '',
+    nachname: '',
+    dateFrom: '',
+    dateTo: ''
+  })
+  const [proofSortBy, setProofSortBy] = useState<'bezeichnung'|'vorname'|'nachname'|'datum'>('datum')
+  const [proofSortOrder, setProofSortOrder] = useState<'asc'|'desc'>('desc')
   const [overviewFilters, setOverviewFilters] = useState({
     category: '',
     dateFrom: '',
@@ -300,6 +309,47 @@ export default function Schulungen() {
         </div>
       </div>
     )
+  }
+
+  const getFilteredProofs = () => {
+    const filtered = schulungsnachweise.filter(item => {
+      const matchesBez = !proofFilters.bezeichnung || item.bezeichnung.toLowerCase().includes(proofFilters.bezeichnung.toLowerCase())
+      const matchesVor = !proofFilters.vorname || item.vorname.toLowerCase().includes(proofFilters.vorname.toLowerCase())
+      const matchesNach = !proofFilters.nachname || item.nachname.toLowerCase().includes(proofFilters.nachname.toLowerCase())
+      const matchesFrom = !proofFilters.dateFrom || item.datum >= proofFilters.dateFrom
+      const matchesTo = !proofFilters.dateTo || item.datum <= proofFilters.dateTo
+      return matchesBez && matchesVor && matchesNach && matchesFrom && matchesTo
+    })
+
+    const sorted = filtered.sort((a, b) => {
+      let cmp = 0
+      switch (proofSortBy) {
+        case 'bezeichnung':
+          cmp = a.bezeichnung.localeCompare(b.bezeichnung)
+          break
+        case 'vorname':
+          cmp = a.vorname.localeCompare(b.vorname)
+          break
+        case 'nachname':
+          cmp = a.nachname.localeCompare(b.nachname)
+          break
+        case 'datum':
+          cmp = a.datum.localeCompare(b.datum)
+          break
+      }
+      return proofSortOrder === 'asc' ? cmp : -cmp
+    })
+
+    return sorted
+  }
+
+  const toggleProofSort = (key: 'bezeichnung'|'vorname'|'nachname'|'datum') => {
+    if (proofSortBy === key) {
+      setProofSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setProofSortBy(key)
+      setProofSortOrder('asc')
+    }
   }
 
   const handleExportOverviewPdf = () => {
@@ -1367,10 +1417,10 @@ export default function Schulungen() {
                 )}
               </div>
 
-              {/* Schulungsnachweise Zusatz-Tabelle */}
+              {/* Externe Schulungsnachweise Zusatz-Tabelle */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">Schulungsnachweise</h3>
+                  <h3 className="font-semibold text-gray-900">Externe Schulungsnachweise</h3>
                   <button
                     onClick={() => setShowProofForm(true)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
@@ -1382,20 +1432,71 @@ export default function Schulungen() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bezeichnung der Schulung</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vorname</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>toggleProofSort('bezeichnung')} className="flex items-center gap-1 hover:text-gray-700">
+                            Bezeichnung der Schulung {proofSortBy==='bezeichnung' ? (proofSortOrder==='asc'?'▲':'▼') : ''}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Bezeichnung filtern..."
+                            value={proofFilters.bezeichnung}
+                            onChange={(e)=>setProofFilters({...proofFilters, bezeichnung: e.target.value})}
+                            className="mt-2 w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>toggleProofSort('nachname')} className="flex items-center gap-1 hover:text-gray-700">
+                            Name {proofSortBy==='nachname' ? (proofSortOrder==='asc'?'▲':'▼') : ''}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Name filtern..."
+                            value={proofFilters.nachname}
+                            onChange={(e)=>setProofFilters({...proofFilters, nachname: e.target.value})}
+                            className="mt-2 w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>toggleProofSort('vorname')} className="flex items-center gap-1 hover:text-gray-700">
+                            Vorname {proofSortBy==='vorname' ? (proofSortOrder==='asc'?'▲':'▼') : ''}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Vorname filtern..."
+                            value={proofFilters.vorname}
+                            onChange={(e)=>setProofFilters({...proofFilters, vorname: e.target.value})}
+                            className="mt-2 w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>toggleProofSort('datum')} className="flex items-center gap-1 hover:text-gray-700">
+                            Datum {proofSortBy==='datum' ? (proofSortOrder==='asc'?'▲':'▼') : ''}
+                          </button>
+                          <div className="mt-2 flex gap-1">
+                            <input
+                              type="date"
+                              value={proofFilters.dateFrom}
+                              onChange={(e)=>setProofFilters({...proofFilters, dateFrom: e.target.value})}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <input
+                              type="date"
+                              value={proofFilters.dateTo}
+                              onChange={(e)=>setProofFilters({...proofFilters, dateTo: e.target.value})}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schulungsnachweis (PDF)</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {schulungsnachweise.length === 0 ? (
+                      {getFilteredProofs().length === 0 ? (
                         <tr>
                           <td colSpan={5} className="px-6 py-6 text-center text-sm text-gray-500">Keine Nachweise vorhanden</td>
                         </tr>
                       ) : (
-                        schulungsnachweise.map(item => (
+                        getFilteredProofs().map(item => (
                           <tr key={item.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bezeichnung}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.nachname}</td>
