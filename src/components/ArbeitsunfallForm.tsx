@@ -250,23 +250,16 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                 <>
                   <div>
                     <label htmlFor="gastAlter" className="block text-sm font-medium text-gray-700 mb-2">
-                      Alter des Gastes
+                      Alter des Gastes (optional)
                     </label>
-                    <select
+                    <input
+                      type="text"
                       id="gastAlter"
                       value={formData.gastAlter || ''}
                       onChange={(e) => setFormData({...formData, gastAlter: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Alter auswählen</option>
-                      <option value="0-5 Jahre">0-5 Jahre</option>
-                      <option value="6-12 Jahre">6-12 Jahre</option>
-                      <option value="13-17 Jahre">13-17 Jahre</option>
-                      <option value="18-30 Jahre">18-30 Jahre</option>
-                      <option value="31-50 Jahre">31-50 Jahre</option>
-                      <option value="51-65 Jahre">51-65 Jahre</option>
-                      <option value="65+ Jahre">65+ Jahre</option>
-                    </select>
+                      placeholder="z.B. 8 Jahre"
+                    />
                   </div>
                   
                   <div>
