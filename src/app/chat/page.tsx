@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, ChatMessageRecord } from '@/lib/db'
+import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord } from '@/lib/db'
 
 interface Message {
   id: string
@@ -72,6 +72,42 @@ export default function Chat() {
     }
     load()
   }, [])
+
+  // Load messages when recipient or group changes
+  useEffect(() => {
+    if (!currentUser) return
+    
+    const loadMessages = async () => {
+      try {
+        let dbMessages: ChatMessageRecord[] = []
+        
+        if (selectedGroup) {
+          dbMessages = await getGroupMessages(selectedGroup)
+        } else if (selectedRecipient) {
+          dbMessages = await getDirectMessages(currentUser, selectedRecipient)
+        }
+        
+        // Convert DB messages to local Message format
+        const localMessages: Message[] = dbMessages.map(msg => ({
+          id: msg.id,
+          sender: msg.sender_id,
+          recipient: msg.recipient_id || undefined,
+          groupId: msg.group_id || undefined,
+          content: msg.content,
+          timestamp: msg.created_at,
+          isRead: msg.is_read,
+          imageUrl: msg.image_url || undefined,
+          imageName: msg.image_name || undefined
+        }))
+        
+        setMessages(localMessages)
+      } catch (e) {
+        console.error('Load messages failed', e)
+      }
+    }
+    
+    loadMessages()
+  }, [currentUser, selectedRecipient, selectedGroup])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -241,20 +277,44 @@ export default function Chat() {
     ).length
   }
 
-  const markAsRead = (userId: string) => {
+  const markAsRead = async (userId: string) => {
     setMessages(prev => prev.map(msg => 
       msg.sender === userId && msg.recipient === currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
+    
+    // Update in Supabase
+    try {
+      const unreadMessages = messages.filter(msg => 
+        msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+      )
+      for (const msg of unreadMessages) {
+        await updateChatMessageStatus(msg.id, true)
+      }
+    } catch (e) {
+      console.error('Mark as read failed', e)
+    }
   }
 
-  const markGroupAsRead = (groupId: string) => {
+  const markGroupAsRead = async (groupId: string) => {
     setMessages(prev => prev.map(msg => 
       msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
+    
+    // Update in Supabase
+    try {
+      const unreadMessages = messages.filter(msg => 
+        msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+      )
+      for (const msg of unreadMessages) {
+        await updateChatMessageStatus(msg.id, true)
+      }
+    } catch (e) {
+      console.error('Mark group as read failed', e)
+    }
   }
 
   const formatTime = (timestamp: string) => {

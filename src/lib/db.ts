@@ -663,4 +663,27 @@ export async function insertCompletedTraining(training: Omit<CompletedTrainingRe
   return data
 }
 
+// Chat Messages
+export async function getDirectMessages(userId1: string, userId2: string): Promise<ChatMessageRecord[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .or(`and(sender_id.eq.${userId1},recipient_id.eq.${userId2}),and(sender_id.eq.${userId2},recipient_id.eq.${userId1})`)
+    .order('created_at', { ascending: true })
+  
+  if (error) throw error
+  return data || []
+}
+
+export async function getGroupMessages(groupId: string): Promise<ChatMessageRecord[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: true })
+  
+  if (error) throw error
+  return data || []
+}
+
 
