@@ -309,12 +309,12 @@ export async function getDocumentsFiltered(params: { category?: string; search?:
 
 export async function uploadDocumentFile(file: File): Promise<{ path: string; publicUrl: string }> {
   const filePath = `documents/${Date.now()}_${file.name}`
-  const { error: upErr } = await supabase.storage.from('proofs').upload(filePath, file, {
+  const { error: upErr } = await supabase.storage.from('documents').upload(filePath, file, {
     cacheControl: '3600',
     upsert: false,
   })
   if (upErr) throw upErr
-  const { data } = supabase.storage.from('proofs').getPublicUrl(filePath)
+  const { data } = supabase.storage.from('documents').getPublicUrl(filePath)
   return { path: filePath, publicUrl: data.publicUrl }
 }
 
