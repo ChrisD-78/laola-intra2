@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile } from '@/lib/db'
+import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs } from '@/lib/db'
 
 interface Schulung {
   id: string
@@ -125,6 +125,28 @@ export default function Schulungen() {
     loadCompletedTrainings()
   }, [])
 
+  // Load external proofs from Supabase
+  useEffect(() => {
+    const loadProofs = async () => {
+      try {
+        const data = await getProofs()
+        const mapped = data.map((proof: any) => ({
+          id: proof.id,
+          bezeichnung: proof.bezeichnung,
+          vorname: proof.vorname,
+          nachname: proof.nachname,
+          datum: proof.datum,
+          pdfName: proof.pdf_name,
+          pdfUrl: proof.pdf_url
+        }))
+        setSchulungsnachweise(mapped)
+      } catch (error) {
+        console.error('Error loading proofs:', error)
+      }
+    }
+    loadProofs()
+  }, [])
+
   const categories = [
     { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: 3 },
     { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: 2 },
@@ -208,16 +230,18 @@ export default function Schulungen() {
         console.error('Supabase proof insert error', e)
         alert('Fehler beim Speichern des Nachweises')
       }
-      const entry = {
-        id: Date.now().toString(),
-        bezeichnung: bezeichnung.trim(),
-        vorname: vorname.trim(),
-        nachname: nachname.trim(),
-        datum,
-        pdfName: pdfFile?.name,
-        pdfUrl: publicUrl || (pdfFile ? URL.createObjectURL(pdfFile) : undefined)
-      }
-      setSchulungsnachweise(prev => [entry, ...prev])
+      // Reload proofs from Supabase to get the saved entry
+      const freshProofs = await getProofs()
+      const mapped = freshProofs.map((proof: any) => ({
+        id: proof.id,
+        bezeichnung: proof.bezeichnung,
+        vorname: proof.vorname,
+        nachname: proof.nachname,
+        datum: proof.datum,
+        pdfName: proof.pdf_name,
+        pdfUrl: proof.pdf_url
+      }))
+      setSchulungsnachweise(mapped)
       setShowProofForm(false)
     }
 

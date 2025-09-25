@@ -415,6 +415,15 @@ export async function uploadProofPdf(file: File): Promise<{ path: string; public
   return { path: filePath, publicUrl: data.publicUrl }
 }
 
+export async function getProofs(): Promise<ExternalProofRecord[]> {
+  const { data, error } = await supabase
+    .from('external_proofs')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
 export async function insertExternalProof(data: ExternalProofRecord) {
   const { error } = await supabase.from('external_proofs').insert({
     bezeichnung: data.bezeichnung,
