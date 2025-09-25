@@ -38,13 +38,7 @@ export default function Chat() {
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [groups, setGroups] = useState<Group[]>([])
-  const [users, setUsers] = useState<User[]>([
-    { id: 'christof', name: 'Christof Drost', isOnline: true },
-    { id: 'max', name: 'Max Mustermann', isOnline: false },
-    { id: 'anna', name: 'Anna Schmidt', isOnline: true },
-    { id: 'tom', name: 'Tom Weber', isOnline: false },
-    { id: 'maria', name: 'Maria Müller', isOnline: true }
-  ])
+  const [users, setUsers] = useState<User[]>([])
   const [showLogin, setShowLogin] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -56,6 +50,7 @@ export default function Chat() {
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [profileName, setProfileName] = useState('')
+
 
   // Initial load of users/groups from Supabase
   useEffect(() => {

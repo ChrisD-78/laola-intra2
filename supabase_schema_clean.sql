@@ -187,6 +187,81 @@ CREATE POLICY "documents update anon" ON public.documents FOR UPDATE USING (true
 DROP POLICY IF EXISTS "documents delete anon" ON public.documents;
 CREATE POLICY "documents delete anon" ON public.documents FOR DELETE USING (true);
 
+-- Chat Users Table
+CREATE TABLE IF NOT EXISTS chat_users (
+  id VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  is_online BOOLEAN DEFAULT false,
+  avatar TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat Groups Table
+CREATE TABLE IF NOT EXISTS chat_groups (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  created_by VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat Group Members Table
+CREATE TABLE IF NOT EXISTS chat_group_members (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  group_id UUID REFERENCES chat_groups(id) ON DELETE CASCADE,
+  user_id VARCHAR(255) NOT NULL,
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat Messages Table
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_id VARCHAR(255) NOT NULL,
+  recipient_id VARCHAR(255),
+  group_id UUID REFERENCES chat_groups(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  image_name VARCHAR(255),
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS Policies for chat_users
+DROP POLICY IF EXISTS "chat_users select anon" ON public.chat_users;
+CREATE POLICY "chat_users select anon" ON public.chat_users FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "chat_users insert anon" ON public.chat_users;
+CREATE POLICY "chat_users insert anon" ON public.chat_users FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "chat_users update anon" ON public.chat_users;
+CREATE POLICY "chat_users update anon" ON public.chat_users FOR UPDATE USING (true);
+
+-- RLS Policies for chat_groups
+DROP POLICY IF EXISTS "chat_groups select anon" ON public.chat_groups;
+CREATE POLICY "chat_groups select anon" ON public.chat_groups FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "chat_groups insert anon" ON public.chat_groups;
+CREATE POLICY "chat_groups insert anon" ON public.chat_groups FOR INSERT WITH CHECK (true);
+
+-- RLS Policies for chat_group_members
+DROP POLICY IF EXISTS "chat_group_members select anon" ON public.chat_group_members;
+CREATE POLICY "chat_group_members select anon" ON public.chat_group_members FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "chat_group_members insert anon" ON public.chat_group_members;
+CREATE POLICY "chat_group_members insert anon" ON public.chat_group_members FOR INSERT WITH CHECK (true);
+
+-- RLS Policies for chat_messages
+DROP POLICY IF EXISTS "chat_messages select anon" ON public.chat_messages;
+CREATE POLICY "chat_messages select anon" ON public.chat_messages FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "chat_messages insert anon" ON public.chat_messages;
+CREATE POLICY "chat_messages insert anon" ON public.chat_messages FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "chat_messages update anon" ON public.chat_messages;
+CREATE POLICY "chat_messages update anon" ON public.chat_messages FOR UPDATE USING (true);
+
 -- Enable RLS
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trainings ENABLE ROW LEVEL SECURITY;
@@ -195,6 +270,10 @@ ALTER TABLE dashboard_infos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Profiles for users
 CREATE TABLE IF NOT EXISTS profiles (
