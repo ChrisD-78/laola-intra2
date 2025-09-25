@@ -158,6 +158,34 @@ CREATE POLICY "recurring_tasks update anon" ON public.recurring_tasks FOR UPDATE
 DROP POLICY IF EXISTS "recurring_tasks delete anon" ON public.recurring_tasks;
 CREATE POLICY "recurring_tasks delete anon" ON public.recurring_tasks FOR DELETE USING (true);
 
+-- Documents Table
+CREATE TABLE IF NOT EXISTS documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(100) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_size_mb DECIMAL(10,2) NOT NULL,
+  file_type VARCHAR(100) NOT NULL,
+  tags TEXT[],
+  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  uploaded_by VARCHAR(255) NOT NULL,
+  file_url TEXT
+);
+
+-- RLS Policies for documents
+DROP POLICY IF EXISTS "documents select anon" ON public.documents;
+CREATE POLICY "documents select anon" ON public.documents FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "documents insert anon" ON public.documents;
+CREATE POLICY "documents insert anon" ON public.documents FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "documents update anon" ON public.documents;
+CREATE POLICY "documents update anon" ON public.documents FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "documents delete anon" ON public.documents;
+CREATE POLICY "documents delete anon" ON public.documents FOR DELETE USING (true);
+
 -- Enable RLS
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trainings ENABLE ROW LEVEL SECURITY;
@@ -165,6 +193,7 @@ ALTER TABLE completed_trainings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dashboard_infos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 
 -- Profiles for users
 CREATE TABLE IF NOT EXISTS profiles (
