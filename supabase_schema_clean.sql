@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   status VARCHAR(50) DEFAULT 'Offen',
   priority VARCHAR(50) DEFAULT 'Normal',
   assigned_to VARCHAR(255) NOT NULL,
-  due_date DATE NOT NULL,
+  due_date VARCHAR(100) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -124,10 +124,11 @@ CREATE TABLE IF NOT EXISTS recurring_tasks (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   frequency VARCHAR(50) NOT NULL,
+  priority VARCHAR(50) DEFAULT 'Normal',
+  start_time VARCHAR(100) NOT NULL,
   assigned_to VARCHAR(255) NOT NULL,
   is_active BOOLEAN DEFAULT true,
-  last_completed DATE,
-  next_due DATE,
+  next_due VARCHAR(100) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
