@@ -6,39 +6,28 @@ const sql = neon(process.env.DATABASE_URL!)
 // PATCH update task
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
-    const { id } = params
+    const { id } = await params
 
-    // Build dynamic update query
-    const updates: string[] = []
-    const values: any[] = []
-    let paramIndex = 1
+    // Simple approach: allow updating specific fields
+    const { title, description, priority, status, due_date, assigned_to } = body
 
-    Object.entries(body).forEach(([key, value]) => {
-      updates.push(`${key} = $${paramIndex}`)
-      values.push(value)
-      paramIndex++
-    })
-
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
-    }
-
-    // Add updated_at
-    updates.push(`updated_at = NOW()`)
-
-    const query = `
+    const result = await sql`
       UPDATE tasks 
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
+      SET 
+        title = COALESCE(${title}, title),
+        description = COALESCE(${description}, description),
+        priority = COALESCE(${priority}, priority),
+        status = COALESCE(${status}, status),
+        due_date = COALESCE(${due_date}, due_date),
+        assigned_to = COALESCE(${assigned_to}, assigned_to),
+        updated_at = NOW()
+      WHERE id = ${id}
       RETURNING *
     `
-    values.push(id)
-
-    const result = await sql(query, values)
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })

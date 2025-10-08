@@ -34,7 +34,7 @@ export default function Formulare() {
     const loadSubmissions = async () => {
       try {
         const data = await getFormSubmissions()
-        const mapped: FormSubmission[] = data.map((sub: any) => ({
+        const mapped: FormSubmission[] = data.map((sub) => ({
           id: sub.id,
           type: sub.type,
           title: sub.title,
@@ -389,7 +389,7 @@ export default function Formulare() {
                 </button>
               </div>
             </div>
-          )))}
+          ))}
         </div>
       </div>
 
@@ -533,7 +533,7 @@ export default function Formulare() {
                     </div>
                   </td>
                 </tr>
-              )))}
+              ))}
             </tbody>
           </table>
         </div>

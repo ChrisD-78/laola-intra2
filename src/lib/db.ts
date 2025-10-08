@@ -237,7 +237,7 @@ export interface FormSubmissionRecord {
   description?: string
   status: string
   submitted_at?: string
-  form_data: any
+  form_data: Record<string, unknown>
   submitted_by: string
   created_at?: string
 }
@@ -282,6 +282,156 @@ export async function createProof(proof: Omit<ExternalProofRecord, 'id' | 'creat
 }
 
 export async function deleteProof(id: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function insertExternalProof(proof: Omit<ExternalProofRecord, 'id' | 'created_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+// =====================
+// Chat Functions
+// =====================
+export interface ChatMessageRecord {
+  id?: string
+  sender_id: string
+  recipient_id?: string
+  group_id?: string
+  content: string
+  image_url?: string
+  image_name?: string
+  is_read: boolean
+  created_at?: string
+}
+
+export async function upsertChatUser(userId: string, name: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function getChatUsers() {
+  // TODO: Implement when needed
+  return []
+}
+
+export async function getChatGroups() {
+  // TODO: Implement when needed
+  return []
+}
+
+export async function createChatGroup(name: string, description: string, createdBy: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function getDirectMessages(user1: string, user2: string) {
+  // TODO: Implement when needed
+  return []
+}
+
+export async function getGroupMessages(groupId: string) {
+  // TODO: Implement when needed
+  return []
+}
+
+export async function sendChatMessage(message: Omit<ChatMessageRecord, 'id' | 'created_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function updateChatMessageStatus(messageId: string, isRead: boolean) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+// =====================
+// Trainings Additional
+// =====================
+export async function insertTraining(training: Omit<TrainingRecord, 'id' | 'created_at' | 'updated_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function deleteTrainingById(id: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function insertCompletedTraining(trainingId: string, completedBy: string, notes?: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function uploadTrainingFile(file: File): Promise<{ path: string; publicUrl: string }> {
+  // TODO: Implement file upload
+  throw new Error('Not implemented')
+}
+
+// =====================
+// Form Submissions Additional
+// =====================
+export interface AccidentRecord {
+  id?: string
+  unfalltyp: string
+  datum: string
+  zeit: string
+  verletzte_person: string
+  unfallort: string
+  unfallart: string
+  verletzungsart: string
+  schweregrad: string
+  erste_hilfe: string
+  arzt_kontakt: string
+  zeugen?: string
+  beschreibung: string
+  meldende_person: string
+  unfallhergang?: string
+  gast_alter?: string
+  gast_kontakt?: string
+  created_at?: string
+}
+
+export async function insertAccident(accident: Omit<AccidentRecord, 'id' | 'created_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function insertFormSubmission(submission: Omit<FormSubmissionRecord, 'id' | 'submitted_at' | 'created_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function deleteFormSubmissionById(id: string) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+// =====================
+// Documents Additional
+// =====================
+export async function getDocumentsFiltered(category?: string, tags?: string[]) {
+  // TODO: Implement when needed
+  return []
+}
+
+export async function insertDocument(doc: Omit<DocumentRecord, 'id' | 'uploaded_at'>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function uploadDocumentFile(file: File): Promise<{ path: string; publicUrl: string }> {
+  // TODO: Implement file upload
+  throw new Error('Not implemented')
+}
+
+export async function updateDocument(id: string, partial: Partial<DocumentRecord>) {
+  // TODO: Implement when needed
+  throw new Error('Not implemented')
+}
+
+export async function deleteDocumentById(id: string) {
   // TODO: Implement when needed
   throw new Error('Not implemented')
 }

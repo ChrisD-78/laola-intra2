@@ -6,39 +6,30 @@ const sql = neon(process.env.DATABASE_URL!)
 // PATCH update recurring task
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
-    const { id } = params
+    const { id } = await params
 
-    // Build dynamic update query
-    const updates: string[] = []
-    const values: any[] = []
-    let paramIndex = 1
+    // Simple approach: allow updating specific fields
+    const { title, description, frequency, priority, start_time, assigned_to, is_active, next_due } = body
 
-    Object.entries(body).forEach(([key, value]) => {
-      updates.push(`${key} = $${paramIndex}`)
-      values.push(value)
-      paramIndex++
-    })
-
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
-    }
-
-    // Add updated_at
-    updates.push(`updated_at = NOW()`)
-
-    const query = `
+    const result = await sql`
       UPDATE recurring_tasks 
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
+      SET 
+        title = COALESCE(${title}, title),
+        description = COALESCE(${description}, description),
+        frequency = COALESCE(${frequency}, frequency),
+        priority = COALESCE(${priority}, priority),
+        start_time = COALESCE(${start_time}, start_time),
+        assigned_to = COALESCE(${assigned_to}, assigned_to),
+        is_active = COALESCE(${is_active}, is_active),
+        next_due = COALESCE(${next_due}, next_due),
+        updated_at = NOW()
+      WHERE id = ${id}
       RETURNING *
     `
-    values.push(id)
-
-    const result = await sql(query, values)
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })

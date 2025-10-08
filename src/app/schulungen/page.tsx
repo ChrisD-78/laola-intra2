@@ -75,7 +75,7 @@ export default function Schulungen() {
     const loadTrainings = async () => {
       try {
         const data = await getTrainings()
-        const mapped: Schulung[] = data.map((training: any) => ({
+        const mapped: Schulung[] = data.map((training) => ({
           id: training.id,
           title: training.title,
           description: training.description,
@@ -105,7 +105,7 @@ export default function Schulungen() {
     const loadCompletedTrainings = async () => {
       try {
         const data = await getCompletedTrainings()
-        const mapped: CompletedSchulung[] = data.map((training: any) => ({
+        const mapped: CompletedSchulung[] = data.map((training) => ({
           id: training.id,
           schulungId: training.training_id,
           schulungTitle: training.training_title,
@@ -130,7 +130,7 @@ export default function Schulungen() {
     const loadProofs = async () => {
       try {
         const data = await getProofs()
-        const mapped = data.map((proof: any) => ({
+        const mapped = data.map((proof) => ({
           id: proof.id,
           bezeichnung: proof.bezeichnung,
           vorname: proof.vorname,
@@ -232,7 +232,7 @@ export default function Schulungen() {
       }
       // Reload proofs from Supabase to get the saved entry
       const freshProofs = await getProofs()
-      const mapped = freshProofs.map((proof: any) => ({
+      const mapped = freshProofs.map((proof) => ({
         id: proof.id,
         bezeichnung: proof.bezeichnung,
         vorname: proof.vorname,

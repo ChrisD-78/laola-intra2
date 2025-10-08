@@ -27,8 +27,8 @@ export default function UsersAdmin() {
       setPassword('')
       setFullName('')
       setRole('user')
-    } catch (e: any) {
-      setMessage(e.message)
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
