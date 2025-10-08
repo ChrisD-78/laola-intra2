@@ -89,12 +89,12 @@ export default function Chat() {
         
         // Convert DB messages to local Message format
         const localMessages: Message[] = dbMessages.map(msg => ({
-          id: msg.id,
+          id: msg.id as string,
           sender: msg.sender_id,
           recipient: msg.recipient_id || undefined,
           groupId: msg.group_id || undefined,
           content: msg.content,
-          timestamp: msg.created_at,
+          timestamp: msg.created_at || new Date().toISOString(),
           isRead: msg.is_read,
           imageUrl: msg.image_url || undefined,
           imageName: msg.image_name || undefined
@@ -228,10 +228,10 @@ export default function Chat() {
 
     // Persist in Supabase
     sendChatMessage({
-      sender: currentUser,
-      recipient: selectedRecipient || null,
+      sender_id: currentUser,
+      recipient_id: selectedRecipient || null,
       group_id: selectedGroup || null,
-      content: message.content || null,
+      content: message.content,
       is_read: false,
       image_url: null,
       image_name: message.imageName || null,
@@ -467,11 +467,11 @@ export default function Chat() {
                           getDirectMessages(currentUser, user.id).then(dbMsgs => {
                             const mapped: Message[] = dbMsgs.map((m: ChatMessageRecord) => ({
                               id: m.id as string,
-                              sender: m.sender,
-                              recipient: m.recipient || undefined,
+                              sender: m.sender_id,
+                              recipient: m.recipient_id || undefined,
                               groupId: m.group_id || undefined,
-                              content: m.content || '',
-                              timestamp: m.timestamp || new Date().toISOString(),
+                              content: m.content,
+                              timestamp: m.created_at || new Date().toISOString(),
                               isRead: m.is_read,
                               imageUrl: m.image_url || undefined,
                               imageName: m.image_name || undefined,
@@ -556,11 +556,11 @@ export default function Chat() {
                           getGroupMessages(group.id).then(dbMsgs => {
                             const mapped: Message[] = dbMsgs.map((m: ChatMessageRecord) => ({
                               id: m.id as string,
-                              sender: m.sender,
-                              recipient: m.recipient || undefined,
+                              sender: m.sender_id,
+                              recipient: m.recipient_id || undefined,
                               groupId: m.group_id || undefined,
-                              content: m.content || '',
-                              timestamp: m.timestamp || new Date().toISOString(),
+                              content: m.content,
+                              timestamp: m.created_at || new Date().toISOString(),
                               isRead: m.is_read,
                               imageUrl: m.image_url || undefined,
                               imageName: m.image_name || undefined,
