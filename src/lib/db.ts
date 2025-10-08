@@ -236,12 +236,24 @@ export async function deleteDashboardInfo(id: string) {
 }
 
 export async function uploadInfoPdf(file: File): Promise<{ path: string; publicUrl: string }> {
-  // For now, we'll return a mock response
-  // In production, you'd integrate with a storage service like Cloudflare R2, AWS S3, or Vercel Blob
-  console.warn('PDF upload not implemented - file will not be stored:', file.name)
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/pdf', {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to upload PDF:', error)
+    throw new Error('Failed to upload PDF')
+  }
+
+  const result = await response.json()
   return {
-    path: `dashboard/${file.name}`,
-    publicUrl: ''
+    path: result.path,
+    publicUrl: result.publicUrl
   }
 }
 
