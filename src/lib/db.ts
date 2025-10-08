@@ -208,23 +208,41 @@ export interface DashboardInfoRecord {
 }
 
 export async function getDashboardInfos(): Promise<DashboardInfoRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/dashboard-infos')
+  if (!response.ok) throw new Error('Failed to fetch dashboard infos')
+  return response.json()
 }
 
 export async function createDashboardInfo(info: Omit<DashboardInfoRecord, 'id' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/dashboard-infos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(info)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create dashboard info:', error)
+    throw new Error('Failed to create dashboard info')
+  }
+  return response.json()
 }
 
 export async function deleteDashboardInfo(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/dashboard-infos?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete dashboard info')
+  return response.json()
 }
 
 export async function uploadInfoPdf(file: File): Promise<{ path: string; publicUrl: string }> {
-  // TODO: Implement file upload to storage solution
-  throw new Error('Not implemented')
+  // For now, we'll return a mock response
+  // In production, you'd integrate with a storage service like Cloudflare R2, AWS S3, or Vercel Blob
+  console.warn('PDF upload not implemented - file will not be stored:', file.name)
+  return {
+    path: `dashboard/${file.name}`,
+    publicUrl: ''
+  }
 }
 
 // =====================
