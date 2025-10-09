@@ -355,7 +355,7 @@ export default function Dokumente() {
                         {formatDate(document.uploadedAt)}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {document.fileSize.toFixed(1)} MB
+                        {document.fileSize ? Number(document.fileSize).toFixed(1) : '0.0'} MB
                       </span>
                       {document.tags.length > 0 && (
                         <span className="text-xs text-gray-500">
@@ -502,7 +502,7 @@ export default function Dokumente() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Dateigröße:</p>
-                      <p className="text-sm text-gray-900">{selectedDocument.fileSize.toFixed(1)} MB</p>
+                      <p className="text-sm text-gray-900">{selectedDocument.fileSize ? Number(selectedDocument.fileSize).toFixed(1) : '0.0'} MB</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Kategorie:</p>
