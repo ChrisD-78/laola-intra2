@@ -123,18 +123,17 @@ export interface DocumentRecord {
 // For now, keeping placeholder functions
 
 export async function getDocuments(): Promise<DocumentRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/documents')
+  if (!response.ok) throw new Error('Failed to fetch documents')
+  return response.json()
 }
 
 export async function createDocument(doc: Omit<DocumentRecord, 'id' | 'uploaded_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return insertDocument(doc)
 }
 
 export async function deleteDocument(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return deleteDocumentById(id)
 }
 
 // =====================
@@ -441,27 +440,70 @@ export async function deleteFormSubmissionById(id: string) {
 // =====================
 // Documents Additional
 // =====================
-export async function getDocumentsFiltered(category?: string, tags?: string[]) {
-  // TODO: Implement when needed
-  return []
+export async function getDocumentsFiltered(category?: string, tags?: string[]): Promise<DocumentRecord[]> {
+  let url = '/api/documents'
+  const params = new URLSearchParams()
+  
+  if (category) params.append('category', category)
+  if (tags && tags.length > 0) params.append('tags', tags.join(','))
+  
+  if (params.toString()) url += `?${params.toString()}`
+  
+  const response = await fetch(url)
+  if (!response.ok) throw new Error('Failed to fetch documents')
+  return response.json()
 }
 
 export async function insertDocument(doc: Omit<DocumentRecord, 'id' | 'uploaded_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/documents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(doc)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create document:', error)
+    throw new Error('Failed to create document')
+  }
+  return response.json()
 }
 
 export async function uploadDocumentFile(file: File): Promise<{ path: string; publicUrl: string }> {
-  // TODO: Implement file upload
-  throw new Error('Not implemented')
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/document', {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to upload document:', error)
+    throw new Error('Failed to upload document')
+  }
+
+  const result = await response.json()
+  return {
+    path: result.path,
+    publicUrl: result.publicUrl
+  }
 }
 
 export async function updateDocument(id: string, partial: Partial<DocumentRecord>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/documents/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial)
+  })
+  if (!response.ok) throw new Error('Failed to update document')
+  return response.json()
 }
 
 export async function deleteDocumentById(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/documents?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete document')
+  return response.json()
 }
