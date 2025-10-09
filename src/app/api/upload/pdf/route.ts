@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const blob = await put(file.name, file, {
       access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN,
+      addRandomSuffix: true, // Add unique suffix to prevent duplicates
     })
 
     return NextResponse.json({
