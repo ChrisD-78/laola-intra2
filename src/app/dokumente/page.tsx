@@ -54,7 +54,9 @@ export default function Dokumente() {
   useEffect(() => {
     const applyFilters = async () => {
       try {
-        const data = await getDocumentsFiltered({ category: categoryFilter, search })
+        const data = categoryFilter === 'Alle Kategorien' 
+          ? await getDocuments()
+          : await getDocumentsFiltered(categoryFilter)
         const mapped: Document[] = data.map((d: DocumentRecord) => ({
           id: d.id as string,
           title: d.title,
@@ -66,7 +68,8 @@ export default function Dokumente() {
           tags: d.tags || [],
           uploadedAt: d.uploaded_at,
           uploadedBy: d.uploaded_by,
-          fileContent: undefined
+          fileContent: undefined,
+          fileUrl: d.file_url
         }))
         setDocuments(mapped)
       } catch (e) {
@@ -131,7 +134,8 @@ export default function Dokumente() {
         tags: d.tags || [],
         uploadedAt: d.uploaded_at,
         uploadedBy: d.uploaded_by,
-        fileContent: undefined
+        fileContent: undefined,
+        fileUrl: d.file_url
       }))
       setDocuments(mapped)
     } catch (e) {
