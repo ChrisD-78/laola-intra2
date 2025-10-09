@@ -14,6 +14,7 @@ interface InfoItem {
   timestamp: string
   pdfFile?: File
   pdfFileName?: string
+  pdfUrl?: string
 }
 
 export default function Dashboard() {
@@ -27,13 +28,14 @@ export default function Dashboard() {
     const load = async () => {
       try {
         const data = await getDashboardInfos()
-        const mapped: InfoItem[] = data.map((r: DashboardInfoRecord) => ({
-          id: r.id as string,
-          title: r.title,
-          content: r.content,
-          timestamp: r.timestamp,
-          pdfFileName: r.pdf_name || undefined
-        }))
+      const mapped: InfoItem[] = data.map((r: DashboardInfoRecord) => ({
+        id: r.id as string,
+        title: r.title,
+        content: r.content,
+        timestamp: r.timestamp,
+        pdfFileName: r.pdf_name || undefined,
+        pdfUrl: r.pdf_url || undefined
+      }))
         setCurrentInfos(mapped)
       } catch (e) {
         console.error('Load dashboard infos failed', e)
@@ -71,7 +73,8 @@ export default function Dashboard() {
         title: r.title,
         content: r.content,
         timestamp: r.timestamp,
-        pdfFileName: r.pdf_name || undefined
+        pdfFileName: r.pdf_name || undefined,
+        pdfUrl: r.pdf_url || undefined
       }))
       setCurrentInfos(mapped)
     } catch (e) {
@@ -99,6 +102,13 @@ export default function Dashboard() {
   }
 
   const downloadPdf = (info: InfoItem) => {
+    // If PDF URL is available (from database), open it
+    if (info.pdfUrl) {
+      window.open(info.pdfUrl, '_blank')
+      return
+    }
+    
+    // Otherwise, if it's a newly uploaded file in memory
     if (info.pdfFile) {
       const url = window.URL.createObjectURL(info.pdfFile)
       const link = document.createElement('a')
@@ -108,6 +118,16 @@ export default function Dashboard() {
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
+    }
+  }
+  
+  const viewPdf = (info: InfoItem) => {
+    // Open PDF in new tab for viewing
+    if (info.pdfUrl) {
+      window.open(info.pdfUrl, '_blank')
+    } else if (info.pdfFile) {
+      const url = window.URL.createObjectURL(info.pdfFile)
+      window.open(url, '_blank')
     }
   }
 
@@ -248,13 +268,22 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center space-x-2">
                 {info.pdfFileName && (
-                  <button
-                    onClick={() => downloadPdf(info)}
-                    className="text-blue-400 hover:text-blue-600 transition-colors p-1"
-                    title="PDF herunterladen"
-                  >
-                    📥
-                  </button>
+                  <>
+                    <button
+                      onClick={() => viewPdf(info)}
+                      className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                      title="PDF ansehen"
+                    >
+                      👁️
+                    </button>
+                    <button
+                      onClick={() => downloadPdf(info)}
+                      className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                      title="PDF herunterladen"
+                    >
+                      📥
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => removeInfo(info.id)}
