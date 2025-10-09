@@ -268,22 +268,13 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center space-x-2">
                 {info.pdfFileName && (
-                  <>
-                    <button
-                      onClick={() => viewPdf(info)}
-                      className="text-blue-400 hover:text-blue-600 transition-colors p-1"
-                      title="PDF ansehen"
-                    >
-                      👁️
-                    </button>
-                    <button
-                      onClick={() => downloadPdf(info)}
-                      className="text-blue-400 hover:text-blue-600 transition-colors p-1"
-                      title="PDF herunterladen"
-                    >
-                      📥
-                    </button>
-                  </>
+                  <button
+                    onClick={() => viewPdf(info)}
+                    className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                    title="PDF ansehen"
+                  >
+                    📄
+                  </button>
                 )}
                 <button
                   onClick={() => removeInfo(info.id)}
