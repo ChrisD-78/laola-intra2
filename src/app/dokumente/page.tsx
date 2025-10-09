@@ -526,12 +526,44 @@ export default function Dokumente() {
                   
                   {/* Document Content */}
                   <div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-3">Dokumentinhalt:</h4>
-                    <div className="p-4 bg-gray-50 rounded-lg border">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
-                        {selectedDocument.fileContent || 'Kein Inhalt verfügbar'}
-                      </pre>
-                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Dokumentvorschau:</h4>
+                    {selectedDocument.fileUrl ? (
+                      <div className="border border-gray-300 rounded-lg overflow-hidden">
+                        {selectedDocument.fileType === 'application/pdf' || selectedDocument.fileName.endsWith('.pdf') ? (
+                          // PDF Preview
+                          <iframe
+                            src={selectedDocument.fileUrl}
+                            className="w-full h-[600px]"
+                            title={selectedDocument.title}
+                          />
+                        ) : selectedDocument.fileType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(selectedDocument.fileName) ? (
+                          // Image Preview
+                          <img
+                            src={selectedDocument.fileUrl}
+                            alt={selectedDocument.title}
+                            className="w-full h-auto"
+                          />
+                        ) : (
+                          // Other file types - show download link
+                          <div className="p-8 text-center">
+                            <div className="text-6xl mb-4">📄</div>
+                            <p className="text-gray-600 mb-4">Vorschau nicht verfügbar für diesen Dateityp</p>
+                            <a
+                              href={selectedDocument.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Datei öffnen
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 rounded-lg border">
+                        <p className="text-sm text-gray-500">Keine Datei verfügbar</p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Action Buttons */}
