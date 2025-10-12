@@ -191,3 +191,272 @@ Diese E-Mail wurde automatisch generiert.
     text
   }
 }
+
+export const createAccidentEmail = (accidentData: {
+  unfalltyp: string
+  datum: string
+  zeit: string
+  verletztePerson: string
+  unfallort: string
+  unfallart: string
+  verletzungsart: string
+  schweregrad: string
+  ersteHilfe: string
+  arztKontakt: string
+  zeugen: string
+  beschreibung: string
+  meldendePerson: string
+  unfallhergang?: string
+  gastAlter?: string
+  gastKontakt?: string
+}) => {
+  const currentDate = new Date().toLocaleString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const severityColor = {
+    'Leicht': '#10B981',
+    'Mittel': '#F59E0B',
+    'Schwer': '#EF4444',
+    'Lebensbedrohlich': '#DC2626'
+  }[accidentData.schweregrad] || '#6B7280'
+
+  const unfallTypLabel = accidentData.unfalltyp === 'mitarbeiter' ? '👷 Mitarbeiter-Unfall' : '👤 Gast-Unfall'
+  const unfallTypColor = accidentData.unfalltyp === 'mitarbeiter' ? '#DC2626' : '#F59E0B'
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>🚨 Arbeitsunfall-Meldung - Laola Intranet</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 26px; font-weight: bold; }
+        .alert-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 20px; margin: 20px 30px; border-radius: 6px; }
+        .content { padding: 30px; }
+        .field { margin-bottom: 20px; }
+        .field-label { font-weight: bold; color: #374151; margin-bottom: 5px; display: block; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .field-value { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid #3B82F6; }
+        .severity-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; color: white; font-size: 13px; font-weight: bold; }
+        .type-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; color: white; font-size: 13px; font-weight: bold; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+        .section { margin: 25px 0; padding: 20px; background: #F9FAFB; border-radius: 6px; }
+        .section-title { font-size: 16px; font-weight: bold; color: #1F2937; margin-bottom: 15px; border-bottom: 2px solid #DC2626; padding-bottom: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🚨 ARBEITSUNFALL-MELDUNG</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">LA OLA Freizeitbad - Sofortmeldung</p>
+        </div>
+        
+        <div class="alert-box">
+          <strong style="color: #DC2626; font-size: 16px;">⚠️ WICHTIG - SOFORTIGE AUFMERKSAMKEIT ERFORDERLICH!</strong><br>
+          <p style="margin: 10px 0 0 0;">
+            Eine Arbeitsunfall-Meldung wurde über das LA OLA Intranet System eingereicht.<br>
+            Bitte überprüfen Sie die Details und leiten Sie erforderliche Maßnahmen ein.
+          </p>
+        </div>
+
+        <div class="content">
+          <!-- Unfall-Typ und Schweregrad -->
+          <div class="section">
+            <div class="field">
+              <span class="field-label">🏷️ Unfalltyp</span>
+              <div class="field-value">
+                <span class="type-badge" style="background-color: ${unfallTypColor}">
+                  ${unfallTypLabel}
+                </span>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">⚠️ Schweregrad</span>
+              <div class="field-value">
+                <span class="severity-badge" style="background-color: ${severityColor}">
+                  ${accidentData.schweregrad}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Zeitpunkt -->
+          <div class="section">
+            <div class="section-title">📅 Zeitpunkt des Unfalls</div>
+            <div class="field">
+              <span class="field-label">Datum</span>
+              <div class="field-value">${new Date(accidentData.datum).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Uhrzeit</span>
+              <div class="field-value">${accidentData.zeit} Uhr</div>
+            </div>
+          </div>
+
+          <!-- Betroffene Person -->
+          <div class="section">
+            <div class="section-title">👤 Betroffene Person</div>
+            <div class="field">
+              <span class="field-label">Name / Gast-Identifikation</span>
+              <div class="field-value"><strong>${accidentData.verletztePerson}</strong></div>
+            </div>
+            ${accidentData.gastAlter ? `
+            <div class="field">
+              <span class="field-label">Alter (Gast)</span>
+              <div class="field-value">${accidentData.gastAlter}</div>
+            </div>
+            ` : ''}
+            ${accidentData.gastKontakt ? `
+            <div class="field">
+              <span class="field-label">Kontakt (Gast)</span>
+              <div class="field-value">${accidentData.gastKontakt}</div>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Unfalldetails -->
+          <div class="section">
+            <div class="section-title">📍 Unfalldetails</div>
+            <div class="field">
+              <span class="field-label">Unfallort</span>
+              <div class="field-value">${accidentData.unfallort}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Unfallart</span>
+              <div class="field-value">${accidentData.unfallart}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Verletzungsart</span>
+              <div class="field-value">${accidentData.verletzungsart}</div>
+            </div>
+          </div>
+
+          <!-- Beschreibung -->
+          <div class="section">
+            <div class="section-title">📝 Unfallbeschreibung</div>
+            <div class="field-value" style="white-space: pre-wrap;">${accidentData.beschreibung}</div>
+          </div>
+
+          ${accidentData.unfallhergang ? `
+          <div class="section">
+            <div class="section-title">🔄 Unfallhergang (Mitarbeiter)</div>
+            <div class="field-value" style="white-space: pre-wrap;">${accidentData.unfallhergang}</div>
+          </div>
+          ` : ''}
+
+          <!-- Maßnahmen -->
+          <div class="section">
+            <div class="section-title">🏥 Ergriffene Maßnahmen</div>
+            <div class="field">
+              <span class="field-label">Erste Hilfe</span>
+              <div class="field-value">${accidentData.ersteHilfe}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Ärztlicher Kontakt / Krankenhaus</span>
+              <div class="field-value">${accidentData.arztKontakt}</div>
+            </div>
+            ${accidentData.zeugen ? `
+            <div class="field">
+              <span class="field-label">Zeugen</span>
+              <div class="field-value">${accidentData.zeugen}</div>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Meldende Person -->
+          <div class="section">
+            <div class="section-title">👨‍💼 Meldende Person</div>
+            <div class="field">
+              <span class="field-label">Name</span>
+              <div class="field-value"><strong>${accidentData.meldendePerson}</strong></div>
+            </div>
+            <div class="field">
+              <span class="field-label">Meldung eingegangen am</span>
+              <div class="field-value">${currentDate}</div>
+            </div>
+          </div>
+
+          <div style="background: #FEF2F2; padding: 15px; border-radius: 6px; border-left: 4px solid #DC2626; margin-top: 25px;">
+            <strong style="color: #DC2626;">⏰ Nächste Schritte:</strong>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #991B1B;">
+              <li>Berufsgenossenschaft informieren (bei Mitarbeiter-Unfällen)</li>
+              <li>Unfallbericht dokumentieren</li>
+              <li>Ggf. Sicherheitsmaßnahmen überprüfen und anpassen</li>
+              <li>Follow-up mit betroffenem Mitarbeiter/Gast</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>LA OLA Intranet System</strong></p>
+          <p>Diese E-Mail wurde automatisch generiert. Bei Rückfragen kontaktieren Sie bitte ${accidentData.meldendePerson}.</p>
+          <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
+            System generiert am ${new Date().toISOString()}
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+🚨 ARBEITSUNFALL-MELDUNG - LA OLA Freizeitbad
+=============================================
+
+⚠️ WICHTIG - SOFORTIGE AUFMERKSAMKEIT ERFORDERLICH!
+
+Eine Arbeitsunfall-Meldung wurde über das LA OLA Intranet System eingereicht.
+
+UNFALLTYP: ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter-Unfall' : 'Gast-Unfall'}
+SCHWEREGRAD: ${accidentData.schweregrad}
+
+ZEITPUNKT DES UNFALLS:
+Datum: ${new Date(accidentData.datum).toLocaleDateString('de-DE')}
+Uhrzeit: ${accidentData.zeit} Uhr
+
+BETROFFENE PERSON:
+Name: ${accidentData.verletztePerson}
+${accidentData.gastAlter ? `Alter: ${accidentData.gastAlter}` : ''}
+${accidentData.gastKontakt ? `Kontakt: ${accidentData.gastKontakt}` : ''}
+
+UNFALLDETAILS:
+Unfallort: ${accidentData.unfallort}
+Unfallart: ${accidentData.unfallart}
+Verletzungsart: ${accidentData.verletzungsart}
+
+UNFALLBESCHREIBUNG:
+${accidentData.beschreibung}
+
+${accidentData.unfallhergang ? `UNFALLHERGANG (Mitarbeiter):
+${accidentData.unfallhergang}
+` : ''}
+
+ERGRIFFENE MASSNAHMEN:
+Erste Hilfe: ${accidentData.ersteHilfe}
+Ärztlicher Kontakt: ${accidentData.arztKontakt}
+${accidentData.zeugen ? `Zeugen: ${accidentData.zeugen}` : ''}
+
+MELDENDE PERSON: ${accidentData.meldendePerson}
+MELDUNG EINGEGANGEN AM: ${currentDate}
+
+---
+LA OLA Intranet System
+Diese E-Mail wurde automatisch generiert.
+  `
+
+  return {
+    to: 'christof.drost@gmail.com',
+    subject: `🚨 [ARBEITSUNFALL] ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter' : 'Gast'}: ${accidentData.verletztePerson} - ${accidentData.schweregrad}`,
+    html,
+    text
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { sendEmail, createAccidentEmail } from '../lib/emailService'
 
 interface ArbeitsunfallFormProps {
   isOpen: boolean
@@ -33,6 +34,10 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
   const [activeTab, setActiveTab] = useState<'mitarbeiter' | 'gast'>('mitarbeiter')
   const [showCodesModal, setShowCodesModal] = useState<boolean>(false)
   const [copiedKey, setCopiedKey] = useState<'freibad' | 'laola' | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
+  
   const [formData, setFormData] = useState<ArbeitsunfallData>({
     unfalltyp: 'mitarbeiter',
     datum: new Date().toISOString().split('T')[0],
@@ -52,11 +57,39 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
     gastKontakt: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
-    onClose()
-    // Reset form
+    setIsSubmitting(true)
+    setEmailStatus('sending')
+    
+    try {
+      // E-Mail erstellen und versenden
+      const emailData = createAccidentEmail(formData)
+      const result = await sendEmail(emailData)
+      
+      if (result.success) {
+        setEmailStatus('success')
+        setErrorMessage('')
+        // Kurz warten, damit der Benutzer die Erfolgsmeldung sieht
+        setTimeout(() => {
+          onSubmit(formData)
+          onClose()
+          resetForm()
+        }, 1500)
+      } else {
+        setEmailStatus('error')
+        setErrorMessage(result.error || 'Unbekannter Fehler beim E-Mail-Versand')
+        setIsSubmitting(false)
+      }
+    } catch (error) {
+      console.error('Fehler beim Senden der Unfall-Meldung:', error)
+      setEmailStatus('error')
+      setErrorMessage('Netzwerkfehler - Bitte versuchen Sie es erneut')
+      setIsSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
     setFormData({
       unfalltyp: 'mitarbeiter',
       datum: new Date().toISOString().split('T')[0],
@@ -76,6 +109,9 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       gastKontakt: ''
     })
     setActiveTab('mitarbeiter')
+    setIsSubmitting(false)
+    setEmailStatus('idle')
+    setErrorMessage('')
   }
 
   const handleClose = () => {
@@ -178,6 +214,40 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               </button>
             </div>
           </div>
+          
+          {/* Status Messages */}
+          {emailStatus === 'sending' && (
+            <div className="mx-6 mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">🚨 Unfall-Meldung wird gesendet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'success' && (
+            <div className="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-green-600 text-xl">✅</span>
+                <span className="text-green-800 font-medium">E-Mail erfolgreich gesendet! Meldung wird verarbeitet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'error' && (
+            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <span className="text-red-600 text-xl">❌</span>
+                <div className="flex-1">
+                  <div className="text-red-800 font-medium mb-2">Fehler beim Senden der E-Mail</div>
+                  <div className="text-red-700 text-sm">{errorMessage}</div>
+                  <div className="text-red-600 text-xs mt-2">
+                    💡 <strong>Tipp:</strong> Überprüfen Sie die Netlify-Logs für detaillierte Fehlerinformationen.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -437,14 +507,34 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
             <div className="flex space-x-3 pt-4">
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                disabled={isSubmitting}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2 ${
+                  isSubmitting 
+                    ? 'bg-red-400 text-white cursor-not-allowed' 
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
               >
-                Unfall melden
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Wird gesendet...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🚨</span>
+                    <span>Unfall melden</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                disabled={isSubmitting}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
+                  isSubmitting 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                }`}
               >
                 Abbrechen
               </button>
