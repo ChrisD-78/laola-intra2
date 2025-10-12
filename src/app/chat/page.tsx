@@ -140,6 +140,50 @@ export default function Chat() {
     loadMessages()
   }, [currentUser, selectedRecipient, selectedGroup])
 
+  // Real-time polling for new messages (every 3 seconds)
+  useEffect(() => {
+    if (!currentUser) return
+    if (!selectedRecipient && !selectedGroup) return
+    
+    const pollMessages = async () => {
+      try {
+        let dbMessages: ChatMessageRecord[] = []
+        
+        if (selectedGroup) {
+          dbMessages = await getGroupMessages(selectedGroup)
+        } else if (selectedRecipient) {
+          dbMessages = await getDirectMessages(currentUser, selectedRecipient)
+        }
+        
+        // Convert DB messages to local Message format
+        const localMessages: Message[] = dbMessages.map(msg => ({
+          id: msg.id as string,
+          sender: msg.sender_id,
+          recipient: msg.recipient_id || undefined,
+          groupId: msg.group_id || undefined,
+          content: msg.content,
+          timestamp: msg.created_at || new Date().toISOString(),
+          isRead: msg.is_read,
+          imageUrl: msg.image_url || undefined,
+          imageName: msg.image_name || undefined
+        }))
+        
+        // Only update if messages have changed
+        if (JSON.stringify(localMessages) !== JSON.stringify(messages)) {
+          setMessages(localMessages)
+        }
+      } catch (e) {
+        console.error('Poll messages failed', e)
+      }
+    }
+    
+    // Poll every 3 seconds
+    const interval = setInterval(pollMessages, 3000)
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval)
+  }, [currentUser, selectedRecipient, selectedGroup, messages])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (currentUser.trim()) {
