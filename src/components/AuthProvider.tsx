@@ -48,17 +48,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = (username: string, password: string): boolean => {
     console.log('AuthProvider: Login attempt:', { username, password })
     
-    // Einfache Authentifizierung (später durch Supabase ersetzt)
-    if (username === 'Christof Drost' && password === '12345') {
-      console.log('AuthProvider: Login successful!')
+    // Liste der gültigen Benutzer
+    const validUsers = [
+      { username: 'Christof Drost', password: '12345', displayName: 'Christof Drost' },
+      { username: 'Kirstin', password: 'kirstin123', displayName: 'Kirstin Kreusch' }
+    ]
+    
+    // Benutzer suchen
+    const user = validUsers.find(u => u.username === username && u.password === password)
+    
+    if (user) {
+      console.log('AuthProvider: Login successful!', user.displayName)
       
       // Lokalen State aktualisieren
       setIsLoggedIn(true)
-      setCurrentUser(username)
+      setCurrentUser(user.displayName)
       
       // localStorage aktualisieren
       localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('currentUser', username)
+      localStorage.setItem('currentUser', user.displayName)
       
       // Nach erfolgreichem Login zur Hauptseite weiterleiten
       setTimeout(() => {
