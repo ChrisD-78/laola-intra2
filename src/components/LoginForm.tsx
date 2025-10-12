@@ -105,18 +105,6 @@ const LoginForm = () => {
               </button>
             </div>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Demo-Anmeldung: Christof Drost / 12345
-            </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">
-              Debug: Versuchen Sie es mit den exakten Anmeldedaten
-            </p>
-          </div>
         </div>
       </div>
     </div>
