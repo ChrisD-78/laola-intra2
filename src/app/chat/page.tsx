@@ -38,7 +38,14 @@ export default function Chat() {
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [groups, setGroups] = useState<Group[]>([])
-  const [users, setUsers] = useState<User[]>([])
+  // Initial seed users
+  const [users, setUsers] = useState<User[]>([
+    { id: 'christof', name: 'Christof Drost', isOnline: false },
+    { id: 'max', name: 'Max Mustermann', isOnline: false },
+    { id: 'anna', name: 'Anna Schmidt', isOnline: false },
+    { id: 'tom', name: 'Tom Weber', isOnline: false },
+    { id: 'lisa', name: 'Lisa Müller', isOnline: false },
+  ])
   const [showLogin, setShowLogin] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -60,12 +67,36 @@ export default function Chat() {
           getChatUsers(),
           getChatGroups(),
         ])
-        // Merge DB users into local seed users (keep avatars/online flags from local if present)
-        const mergedUsers = dbUsers.length
-          ? dbUsers.map(u => ({ id: u.id, name: u.name, isOnline: u.is_online, avatar: u.avatar || undefined }))
-          : users
-        setUsers(mergedUsers as User[])
-        setGroups(dbGroups.map(g => ({ id: g.id as string, name: g.name, members: [], createdBy: g.created_by, createdAt: g.created_at || new Date().toISOString(), description: g.description || undefined })))
+        // Merge DB users with local seed users
+        if (dbUsers.length > 0) {
+          // Use DB users but merge with local seed users
+          const seedUserIds = users.map(u => u.id)
+          const dbUsersMapped = dbUsers.map(u => ({ 
+            id: u.id, 
+            name: u.name, 
+            isOnline: u.is_online, 
+            avatar: u.avatar || undefined 
+          }))
+          
+          // Add seed users that aren't in DB yet
+          const mergedUsers = [...dbUsersMapped]
+          users.forEach(seedUser => {
+            if (!dbUsersMapped.find(u => u.id === seedUser.id)) {
+              mergedUsers.push(seedUser)
+            }
+          })
+          
+          setUsers(mergedUsers as User[])
+        }
+        // Groups loaded from DB
+        setGroups(dbGroups.map(g => ({ 
+          id: g.id as string, 
+          name: g.name, 
+          members: [], 
+          createdBy: g.created_by, 
+          createdAt: g.created_at || new Date().toISOString(), 
+          description: g.description || undefined 
+        })))
       } catch (e) {
         console.error('Load chat users/groups failed', e)
       }
