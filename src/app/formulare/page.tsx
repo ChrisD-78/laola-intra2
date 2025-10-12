@@ -232,10 +232,10 @@ export default function Formulare() {
               <span className="text-4xl">🏥</span>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-              Arbeitsunfall melden
+              Unfall melden
             </h3>
             <p className="text-sm text-gray-600 text-center mb-4">
-              Melden Sie Arbeitsunfälle und Vorfälle
+              Melden Sie Unfälle und Vorfälle
             </p>
             <button 
               onClick={() => setOpenForm('arbeitsunfall')}
