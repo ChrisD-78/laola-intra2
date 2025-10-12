@@ -271,13 +271,13 @@ export interface FormSubmissionRecord {
 }
 
 export async function getFormSubmissions(): Promise<FormSubmissionRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/form-submissions')
+  if (!response.ok) throw new Error('Failed to fetch form submissions')
+  return response.json()
 }
 
 export async function createFormSubmission(submission: Omit<FormSubmissionRecord, 'id' | 'submitted_at' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return insertFormSubmission(submission)
 }
 
 // =====================
@@ -363,44 +363,68 @@ export interface ChatMessageRecord {
   created_at?: string
 }
 
-export async function upsertChatUser(userId: string, name: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+export async function upsertChatUser(userId: string, name: string, avatar?: string) {
+  const response = await fetch('/api/chat/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: userId, name, avatar })
+  })
+  if (!response.ok) throw new Error('Failed to upsert chat user')
+  return response.json()
 }
 
 export async function getChatUsers() {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/chat/users')
+  if (!response.ok) throw new Error('Failed to fetch chat users')
+  return response.json()
 }
 
 export async function getChatGroups() {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/chat/groups')
+  if (!response.ok) throw new Error('Failed to fetch chat groups')
+  return response.json()
 }
 
 export async function createChatGroup(name: string, description: string, createdBy: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/chat/groups', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, description, created_by: createdBy })
+  })
+  if (!response.ok) throw new Error('Failed to create chat group')
+  return response.json()
 }
 
 export async function getDirectMessages(user1: string, user2: string) {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch(`/api/chat/messages?user1=${user1}&user2=${user2}`)
+  if (!response.ok) throw new Error('Failed to fetch direct messages')
+  return response.json()
 }
 
 export async function getGroupMessages(groupId: string) {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch(`/api/chat/messages?groupId=${groupId}`)
+  if (!response.ok) throw new Error('Failed to fetch group messages')
+  return response.json()
 }
 
 export async function sendChatMessage(message: Omit<ChatMessageRecord, 'id' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/chat/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(message)
+  })
+  if (!response.ok) throw new Error('Failed to send message')
+  return response.json()
 }
 
 export async function updateChatMessageStatus(messageId: string, isRead: boolean) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/chat/messages', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messageId, isRead })
+  })
+  if (!response.ok) throw new Error('Failed to update message status')
+  return response.json()
 }
 
 // =====================
@@ -485,18 +509,37 @@ export interface AccidentRecord {
 }
 
 export async function insertAccident(accident: Omit<AccidentRecord, 'id' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  // Accidents can be stored as form submissions
+  return insertFormSubmission({
+    type: 'Unfall',
+    title: `Unfall: ${accident.verletzte_person}`,
+    description: accident.beschreibung,
+    status: 'Eingegangen',
+    form_data: accident as unknown as Record<string, unknown>,
+    submitted_by: accident.meldende_person
+  })
 }
 
 export async function insertFormSubmission(submission: Omit<FormSubmissionRecord, 'id' | 'submitted_at' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/form-submissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(submission)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create form submission:', error)
+    throw new Error('Failed to create form submission')
+  }
+  return response.json()
 }
 
 export async function deleteFormSubmissionById(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/form-submissions?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete form submission')
+  return response.json()
 }
 
 // =====================
