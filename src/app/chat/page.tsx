@@ -37,6 +37,7 @@ export default function Chat() {
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [allMessages, setAllMessages] = useState<Message[]>([]) // All messages from all users for unread counts
   const [groups, setGroups] = useState<Group[]>([])
   // Initial seed users
   const [users, setUsers] = useState<User[]>([
@@ -183,6 +184,53 @@ export default function Chat() {
     // Cleanup on unmount
     return () => clearInterval(interval)
   }, [currentUser, selectedRecipient, selectedGroup, messages])
+
+  // Poll all messages from all users for unread counts (every 5 seconds)
+  useEffect(() => {
+    if (!currentUser) return
+    
+    const pollAllMessages = async () => {
+      try {
+        const allUserMessages: Message[] = []
+        
+        // Get messages from all users
+        for (const user of users) {
+          if (user.id === currentUser) continue
+          
+          try {
+            const dbMessages = await getDirectMessages(currentUser, user.id)
+            const localMessages: Message[] = dbMessages.map(msg => ({
+              id: msg.id as string,
+              sender: msg.sender_id,
+              recipient: msg.recipient_id || undefined,
+              groupId: msg.group_id || undefined,
+              content: msg.content,
+              timestamp: msg.created_at || new Date().toISOString(),
+              isRead: msg.is_read,
+              imageUrl: msg.image_url || undefined,
+              imageName: msg.image_name || undefined
+            }))
+            allUserMessages.push(...localMessages)
+          } catch (e) {
+            // Ignore errors for individual users
+          }
+        }
+        
+        setAllMessages(allUserMessages)
+      } catch (e) {
+        console.error('Poll all messages failed', e)
+      }
+    }
+    
+    // Initial load
+    pollAllMessages()
+    
+    // Poll every 5 seconds
+    const interval = setInterval(pollAllMessages, 5000)
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval)
+  }, [currentUser, users])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -337,7 +385,7 @@ export default function Chat() {
   }
 
   const getUnreadCount = (userId: string) => {
-    return messages.filter(msg => 
+    return allMessages.filter(msg => 
       msg.sender === userId && 
       msg.recipient === currentUser && 
       !msg.isRead
