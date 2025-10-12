@@ -401,59 +401,65 @@ export default function Chat() {
   }
 
   const markAsRead = async (userId: string) => {
-    // Update local messages
+    // FIRST: Get unread messages BEFORE updating state
+    const unreadMessages = allMessages.filter(msg => 
+      msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+    )
+    
+    // SECOND: Update database
+    try {
+      for (const msg of unreadMessages) {
+        await updateChatMessageStatus(msg.id, true)
+      }
+      console.log(`✅ Marked ${unreadMessages.length} messages as read in database`)
+    } catch (e) {
+      console.error('❌ Mark as read failed:', e)
+      return // Don't update local state if DB update fails
+    }
+    
+    // THIRD: Update local state only after successful DB update
     setMessages(prev => prev.map(msg => 
       msg.sender === userId && msg.recipient === currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
     
-    // Update allMessages (for unread counts)
     setAllMessages(prev => prev.map(msg => 
       msg.sender === userId && msg.recipient === currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
-    
-    // Update in Supabase
-    try {
-      const unreadMessages = messages.filter(msg => 
-        msg.sender === userId && msg.recipient === currentUser && !msg.isRead
-      )
-      for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id, true)
-      }
-    } catch (e) {
-      console.error('Mark as read failed', e)
-    }
   }
 
   const markGroupAsRead = async (groupId: string) => {
-    // Update local messages
+    // FIRST: Get unread messages BEFORE updating state
+    const unreadMessages = allMessages.filter(msg => 
+      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+    )
+    
+    // SECOND: Update database
+    try {
+      for (const msg of unreadMessages) {
+        await updateChatMessageStatus(msg.id, true)
+      }
+      console.log(`✅ Marked ${unreadMessages.length} group messages as read in database`)
+    } catch (e) {
+      console.error('❌ Mark group as read failed:', e)
+      return // Don't update local state if DB update fails
+    }
+    
+    // THIRD: Update local state only after successful DB update
     setMessages(prev => prev.map(msg => 
       msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
     
-    // Update allMessages (for unread counts)
     setAllMessages(prev => prev.map(msg => 
       msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
-    
-    // Update in Supabase
-    try {
-      const unreadMessages = messages.filter(msg => 
-        msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
-      )
-      for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id, true)
-      }
-    } catch (e) {
-      console.error('Mark group as read failed', e)
-    }
   }
 
   const formatTime = (timestamp: string) => {
