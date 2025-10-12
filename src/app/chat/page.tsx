@@ -401,7 +401,15 @@ export default function Chat() {
   }
 
   const markAsRead = async (userId: string) => {
+    // Update local messages
     setMessages(prev => prev.map(msg => 
+      msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+        ? { ...msg, isRead: true }
+        : msg
+    ))
+    
+    // Update allMessages (for unread counts)
+    setAllMessages(prev => prev.map(msg => 
       msg.sender === userId && msg.recipient === currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
@@ -421,7 +429,15 @@ export default function Chat() {
   }
 
   const markGroupAsRead = async (groupId: string) => {
+    // Update local messages
     setMessages(prev => prev.map(msg => 
+      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+        ? { ...msg, isRead: true }
+        : msg
+    ))
+    
+    // Update allMessages (for unread counts)
+    setAllMessages(prev => prev.map(msg => 
       msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
