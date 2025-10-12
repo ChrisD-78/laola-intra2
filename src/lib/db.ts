@@ -164,33 +164,32 @@ export interface CompletedTrainingRecord {
 // Keeping placeholder functions
 
 export async function getTrainings(): Promise<TrainingRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/trainings')
+  if (!response.ok) throw new Error('Failed to fetch trainings')
+  return response.json()
 }
 
 export async function createTraining(training: Omit<TrainingRecord, 'id' | 'created_at' | 'updated_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return insertTraining(training)
 }
 
 export async function deleteTraining(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return deleteTrainingById(id)
 }
 
 export async function markTrainingComplete(trainingId: string, completedBy: string, notes?: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return insertCompletedTraining(trainingId, completedBy, notes)
 }
 
 export async function getCompletedTrainings(): Promise<CompletedTrainingRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/trainings/completed')
+  if (!response.ok) throw new Error('Failed to fetch completed trainings')
+  return response.json()
 }
 
 export async function hasCompletedTraining(trainingId: string, userId: string): Promise<boolean> {
-  // TODO: Implement when needed
-  return false
+  const completed = await getCompletedTrainings()
+  return completed.some(c => c.training_id === trainingId && c.completed_by === userId)
 }
 
 // =====================
@@ -296,28 +295,57 @@ export interface ExternalProofRecord {
 }
 
 export async function uploadProofPdf(file: File): Promise<{ path: string; publicUrl: string }> {
-  // TODO: Implement file upload to storage solution
-  throw new Error('Not implemented')
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/proof', {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to upload proof PDF:', error)
+    throw new Error('Failed to upload proof PDF')
+  }
+
+  const result = await response.json()
+  return {
+    path: result.path,
+    publicUrl: result.publicUrl
+  }
 }
 
 export async function getProofs(): Promise<ExternalProofRecord[]> {
-  // TODO: Implement when needed
-  return []
+  const response = await fetch('/api/proofs')
+  if (!response.ok) throw new Error('Failed to fetch proofs')
+  return response.json()
 }
 
 export async function createProof(proof: Omit<ExternalProofRecord, 'id' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  return insertExternalProof(proof)
 }
 
 export async function deleteProof(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/proofs?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete proof')
+  return response.json()
 }
 
 export async function insertExternalProof(proof: Omit<ExternalProofRecord, 'id' | 'created_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/proofs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(proof)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create proof:', error)
+    throw new Error('Failed to create proof')
+  }
+  return response.json()
 }
 
 // =====================
@@ -379,23 +407,57 @@ export async function updateChatMessageStatus(messageId: string, isRead: boolean
 // Trainings Additional
 // =====================
 export async function insertTraining(training: Omit<TrainingRecord, 'id' | 'created_at' | 'updated_at'>) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/trainings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(training)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create training:', error)
+    throw new Error('Failed to create training')
+  }
+  return response.json()
 }
 
 export async function deleteTrainingById(id: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/trainings?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete training')
+  return response.json()
 }
 
 export async function insertCompletedTraining(trainingId: string, completedBy: string, notes?: string) {
-  // TODO: Implement when needed
-  throw new Error('Not implemented')
+  const response = await fetch('/api/trainings/completed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ training_id: trainingId, completed_by: completedBy, notes })
+  })
+  if (!response.ok) throw new Error('Failed to mark training as completed')
+  return response.json()
 }
 
 export async function uploadTrainingFile(file: File): Promise<{ path: string; publicUrl: string }> {
-  // TODO: Implement file upload
-  throw new Error('Not implemented')
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/training', {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to upload training file:', error)
+    throw new Error('Failed to upload training file')
+  }
+
+  const result = await response.json()
+  return {
+    path: result.path,
+    publicUrl: result.publicUrl
+  }
 }
 
 // =====================
