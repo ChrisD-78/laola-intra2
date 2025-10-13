@@ -51,7 +51,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Liste der gültigen Benutzer
     const validUsers = [
       { username: 'Christof Drost', password: '12345', displayName: 'Christof Drost' },
-      { username: 'Kirstin', password: 'kirstin123', displayName: 'Kirstin Kreusch' }
+      { username: 'Kirstin', password: 'kirstin123', displayName: 'Kirstin Kreusch' },
+      { username: 'Julia', password: 'julia112', displayName: 'Julia Wodonis' },
+      { username: 'Lisa', password: 'lisa331', displayName: 'Lisa Schnagl' },
+      { username: 'Jonas', password: 'Jonas554', displayName: 'Jonas Jooss' },
+      { username: 'Dennis', password: 'Dennis812', displayName: 'Dennis Wilkens' }
     ]
     
     // Benutzer suchen

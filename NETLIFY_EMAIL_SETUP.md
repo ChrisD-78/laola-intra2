@@ -67,7 +67,7 @@
    - Senden Sie ein Test-Feedback
 
 2. **E-Mail überprüfen**
-   - Überprüfen Sie Ihr E-Mail-Postfach (christof.drost@gmail.com)
+   - Überprüfen Sie Ihr E-Mail-Postfach (christof.drost@landau.de)
    - Schauen Sie auch im Spam-Ordner nach
 
 ## Troubleshooting

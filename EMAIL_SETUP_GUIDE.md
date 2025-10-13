@@ -42,7 +42,7 @@ Das Feedback-Formular sendet keine E-Mails, weil die E-Mail-Konfiguration auf Ne
 
 #### Variable 1: EMAIL_USER
 - **Key:** `EMAIL_USER`
-- **Value:** Ihre Gmail-Adresse (z.B. `christof.drost@gmail.com`)
+- **Value:** Ihre Gmail-Adresse (z.B. `christof.drost@gmail.com`) - WICHTIG: Dies ist die Absender-Adresse!
 - **Scopes:** Alle Scopes auswählen (Production, Deploy Previews, Branch deploys)
 - Klicken Sie auf **"Create variable"**
 
@@ -76,7 +76,7 @@ Nach dem Deployment (ca. 3-5 Minuten):
 3. Klicken Sie auf **"Feedback geben"**
 4. Füllen Sie das Formular aus
 5. Klicken Sie auf **"Feedback senden"**
-6. ✅ Sie sollten eine E-Mail an `christof.drost@gmail.com` erhalten!
+6. ✅ Sie sollten eine E-Mail an `christof.drost@landau.de` erhalten!
 
 ---
 
@@ -113,9 +113,9 @@ Nach dem Deployment (ca. 3-5 Minuten):
    - Gmail erlaubt ~500 E-Mails pro Tag
    - Bei Überschreitung: 24h Sperre
 
-3. **Alternative E-Mail-Adressen ändern:**
-   - In `src/lib/emailService.ts` Zeile 188
-   - Ändern Sie `to: 'christof.drost@gmail.com'` auf eine andere Adresse
+3. **Empfänger-Adresse:**
+   - Aktuell konfiguriert: `christof.drost@landau.de`
+   - Zum Ändern: `src/lib/emailService.ts` Zeile 188 und 457
 
 ---
 

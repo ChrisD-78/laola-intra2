@@ -185,7 +185,7 @@ Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@gmail.com',
+    to: 'christof.drost@landau.de',
     subject: `[Laola Intranet] Neues Feedback: ${feedbackData.titel} - ${feedbackData.kategorie}`,
     html,
     text
@@ -454,7 +454,7 @@ Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@gmail.com',
+    to: 'christof.drost@landau.de',
     subject: `🚨 [ARBEITSUNFALL] ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter' : 'Gast'}: ${accidentData.verletztePerson} - ${accidentData.schweregrad}`,
     html,
     text
