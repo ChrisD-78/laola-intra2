@@ -171,6 +171,8 @@ const WiederkehrendeAufgabenForm = ({ onAddRecurringTask }: WiederkehrendeAufgab
                   id="startTime"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
+                  min="05:00"
+                  max="23:59"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
