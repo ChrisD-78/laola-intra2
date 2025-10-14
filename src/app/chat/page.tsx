@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord } from '@/lib/db'
 
 interface Message {
@@ -32,22 +33,22 @@ interface Group {
 }
 
 export default function Chat() {
-  const [currentUser, setCurrentUser] = useState<string>('')
+  const { currentUser: authUser } = useAuth()
   const [selectedRecipient, setSelectedRecipient] = useState<string>('')
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [allMessages, setAllMessages] = useState<Message[]>([]) // All messages from all users for unread counts
   const [groups, setGroups] = useState<Group[]>([])
-  // Initial seed users
+  // Initial seed users - alle registrierten Benutzer
   const [users, setUsers] = useState<User[]>([
-    { id: 'christof', name: 'Christof Drost', isOnline: false },
-    { id: 'max', name: 'Max Mustermann', isOnline: false },
-    { id: 'anna', name: 'Anna Schmidt', isOnline: false },
-    { id: 'tom', name: 'Tom Weber', isOnline: false },
-    { id: 'lisa', name: 'Lisa Müller', isOnline: false },
+    { id: 'Christof Drost', name: 'Christof Drost', isOnline: false },
+    { id: 'Kirstin Kreusch', name: 'Kirstin Kreusch', isOnline: false },
+    { id: 'Julia Wodonis', name: 'Julia Wodonis', isOnline: false },
+    { id: 'Lisa Schnagl', name: 'Lisa Schnagl', isOnline: false },
+    { id: 'Jonas Jooss', name: 'Jonas Jooss', isOnline: false },
+    { id: 'Dennis Wilkens', name: 'Dennis Wilkens', isOnline: false },
   ])
-  const [showLogin, setShowLogin] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
@@ -105,9 +106,29 @@ export default function Chat() {
     load()
   }, [])
 
+  // Auto-login mit dem aktuell angemeldeten Benutzer
+  useEffect(() => {
+    if (authUser) {
+      // Upsert user in Supabase (online)
+      const user = users.find(u => u.id === authUser)
+      upsertChatUser({ 
+        id: authUser, 
+        name: user?.name || authUser, 
+        is_online: true, 
+        avatar: user?.avatar || null 
+      }).catch(() => {})
+      
+      // Set profile data
+      if (user) {
+        setProfileName(user.name)
+        setProfileAvatar(user.avatar || null)
+      }
+    }
+  }, [authUser])
+
   // Load messages when recipient or group changes
   useEffect(() => {
-    if (!currentUser) return
+    if (!authUser) return
     
     const loadMessages = async () => {
       try {
@@ -116,7 +137,7 @@ export default function Chat() {
         if (selectedGroup) {
           dbMessages = await getGroupMessages(selectedGroup)
         } else if (selectedRecipient) {
-          dbMessages = await getDirectMessages(currentUser, selectedRecipient)
+          dbMessages = await getDirectMessages(authUser, selectedRecipient)
         }
         
         // Convert DB messages to local Message format
@@ -139,11 +160,11 @@ export default function Chat() {
     }
     
     loadMessages()
-  }, [currentUser, selectedRecipient, selectedGroup])
+  }, [authUser, selectedRecipient, selectedGroup])
 
   // Real-time polling for new messages (every 3 seconds)
   useEffect(() => {
-    if (!currentUser) return
+    if (!authUser) return
     if (!selectedRecipient && !selectedGroup) return
     
     const pollMessages = async () => {
@@ -153,7 +174,7 @@ export default function Chat() {
         if (selectedGroup) {
           dbMessages = await getGroupMessages(selectedGroup)
         } else if (selectedRecipient) {
-          dbMessages = await getDirectMessages(currentUser, selectedRecipient)
+          dbMessages = await getDirectMessages(authUser, selectedRecipient)
         }
         
         // Convert DB messages to local Message format
@@ -183,11 +204,11 @@ export default function Chat() {
     
     // Cleanup on unmount
     return () => clearInterval(interval)
-  }, [currentUser, selectedRecipient, selectedGroup, messages])
+  }, [authUser, selectedRecipient, selectedGroup, messages])
 
   // Poll all messages from all users for unread counts (every 5 seconds)
   useEffect(() => {
-    if (!currentUser) return
+    if (!authUser) return
     
     const pollAllMessages = async () => {
       try {
@@ -195,10 +216,10 @@ export default function Chat() {
         
         // Get messages from all users
         for (const user of users) {
-          if (user.id === currentUser) continue
+          if (user.id === authUser) continue
           
           try {
-            const dbMessages = await getDirectMessages(currentUser, user.id)
+            const dbMessages = await getDirectMessages(authUser, user.id)
             const localMessages: Message[] = dbMessages.map(msg => ({
               id: msg.id as string,
               sender: msg.sender_id,
@@ -230,39 +251,17 @@ export default function Chat() {
     
     // Cleanup on unmount
     return () => clearInterval(interval)
-  }, [currentUser, users])
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (currentUser.trim()) {
-      // upsert user in Supabase (online)
-      const user = users.find(u => u.id === currentUser)
-      upsertChatUser({ id: currentUser, name: user?.name || currentUser, is_online: true, avatar: user?.avatar || null }).catch(() => {})
-      setShowLogin(false)
-      // Load user profile data
-      if (user) {
-        setProfileName(user.name)
-        setProfileAvatar(user.avatar || null)
-      }
-    }
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('currentChatUser')
-    setCurrentUser('')
-    setShowLogin(true)
-    setSelectedRecipient('')
-    setSelectedGroup('')
-  }
+  }, [authUser, users])
 
   const createGroup = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newGroupName.trim() || selectedGroupMembers.length === 0) return
+    if (!authUser) return
 
     ;(async () => {
       try {
-        const groupId = await createChatGroup({ name: newGroupName.trim(), description: newGroupDescription.trim() || null, created_by: currentUser }, [...selectedGroupMembers, currentUser])
-        setGroups(prev => [{ id: groupId, name: newGroupName.trim(), members: [...selectedGroupMembers, currentUser], createdBy: currentUser, createdAt: new Date().toISOString(), description: newGroupDescription.trim() || undefined }, ...prev])
+        const groupId = await createChatGroup({ name: newGroupName.trim(), description: newGroupDescription.trim() || null, created_by: authUser }, [...selectedGroupMembers, authUser])
+        setGroups(prev => [{ id: groupId, name: newGroupName.trim(), members: [...selectedGroupMembers, authUser], createdBy: authUser, createdAt: new Date().toISOString(), description: newGroupDescription.trim() || undefined }, ...prev])
         setNewGroupName('')
         setNewGroupDescription('')
         setSelectedGroupMembers([])
@@ -301,10 +300,10 @@ export default function Chat() {
 
   const saveProfile = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!profileName.trim()) return
+    if (!profileName.trim() || !authUser) return
 
     setUsers(prev => prev.map(user => 
-      user.id === currentUser 
+      user.id === authUser 
         ? { ...user, name: profileName.trim(), avatar: profileAvatar || undefined }
         : user
     ))
@@ -331,10 +330,11 @@ export default function Chat() {
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault()
     if ((!newMessage.trim() && !selectedImage) || (!selectedRecipient && !selectedGroup)) return
+    if (!authUser) return
 
     const message: Message = {
       id: Date.now().toString(),
-      sender: currentUser,
+      sender: authUser,
       recipient: selectedRecipient || undefined,
       groupId: selectedGroup || undefined,
       content: newMessage.trim(),
@@ -351,7 +351,7 @@ export default function Chat() {
 
     // Persist in Supabase
     sendChatMessage({
-      sender_id: currentUser,
+      sender_id: authUser,
       recipient_id: selectedRecipient || null,
       group_id: selectedGroup || null,
       content: message.content,
@@ -364,9 +364,10 @@ export default function Chat() {
   }
 
   const getMessagesForUser = (userId: string) => {
+    if (!authUser) return []
     return messages.filter(msg => 
-      (msg.sender === currentUser && msg.recipient === userId) ||
-      (msg.sender === userId && msg.recipient === currentUser)
+      (msg.sender === authUser && msg.recipient === userId) ||
+      (msg.sender === userId && msg.recipient === authUser)
     ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
   }
 
@@ -385,25 +386,28 @@ export default function Chat() {
   }
 
   const getUnreadCount = (userId: string) => {
+    if (!authUser) return 0
     return allMessages.filter(msg => 
       msg.sender === userId && 
-      msg.recipient === currentUser && 
+      msg.recipient === authUser && 
       !msg.isRead
     ).length
   }
 
   const getGroupUnreadCount = (groupId: string) => {
+    if (!authUser) return 0
     return messages.filter(msg => 
       msg.groupId === groupId && 
-      msg.sender !== currentUser && 
+      msg.sender !== authUser && 
       !msg.isRead
     ).length
   }
 
   const markAsRead = async (userId: string) => {
+    if (!authUser) return
     // FIRST: Get unread messages BEFORE updating state
     const unreadMessages = allMessages.filter(msg => 
-      msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+      msg.sender === userId && msg.recipient === authUser && !msg.isRead
     )
     
     // SECOND: Update database
@@ -419,22 +423,23 @@ export default function Chat() {
     
     // THIRD: Update local state only after successful DB update
     setMessages(prev => prev.map(msg => 
-      msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+      msg.sender === userId && msg.recipient === authUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
     
     setAllMessages(prev => prev.map(msg => 
-      msg.sender === userId && msg.recipient === currentUser && !msg.isRead
+      msg.sender === userId && msg.recipient === authUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
   }
 
   const markGroupAsRead = async (groupId: string) => {
+    if (!authUser) return
     // FIRST: Get unread messages BEFORE updating state
     const unreadMessages = allMessages.filter(msg => 
-      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
     )
     
     // SECOND: Update database
@@ -450,13 +455,13 @@ export default function Chat() {
     
     // THIRD: Update local state only after successful DB update
     setMessages(prev => prev.map(msg => 
-      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
     
     setAllMessages(prev => prev.map(msg => 
-      msg.groupId === groupId && msg.sender !== currentUser && !msg.isRead
+      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg
     ))
@@ -487,45 +492,24 @@ export default function Chat() {
     return user?.name.split(' ').map(n => n[0]).join('') || 'U'
   }
 
-  if (showLogin) {
+  // Wenn nicht angemeldet, Hinweis anzeigen
+  if (!authUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-2xl">💬</span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Chat Anmeldung</h1>
-            <p className="text-gray-600 mt-2">Bitte wählen Sie Ihren Benutzernamen</p>
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-2xl">💬</span>
           </div>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Benutzername
-              </label>
-              <select
-                value={currentUser}
-                onChange={(e) => setCurrentUser(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Benutzer auswählen</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Anmelden
-            </button>
-          </form>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Chat</h1>
+          <p className="text-gray-600 mb-4">
+            Bitte melden Sie sich zuerst am Intranet an, um den Chat nutzen zu können.
+          </p>
+          <a
+            href="/login"
+            className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Zur Anmeldung
+          </a>
         </div>
       </div>
     )
@@ -543,7 +527,7 @@ export default function Chat() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-                <p className="text-gray-600">Angemeldet als: {users.find(u => u.id === currentUser)?.name}</p>
+                <p className="text-gray-600">Angemeldet als: {authUser}</p>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -553,12 +537,6 @@ export default function Chat() {
                 title="Profil bearbeiten"
               >
                 ⚙️ Profil
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Abmelden
               </button>
             </div>
           </div>
@@ -597,7 +575,7 @@ export default function Chat() {
             <div className="divide-y divide-gray-200">
               {activeTab === 'direct' ? (
                 <>
-                  {users.filter(user => user.id !== currentUser).map(user => {
+                  {users.filter(user => user.id !== authUser).map(user => {
                     const unreadCount = getUnreadCount(user.id)
                     const lastMessage = getMessagesForUser(user.id).slice(-1)[0]
                     
@@ -609,7 +587,7 @@ export default function Chat() {
                           setSelectedGroup('')
                           markAsRead(user.id)
                           // Load direct messages from DB
-                          getDirectMessages(currentUser, user.id).then(dbMsgs => {
+                          getDirectMessages(authUser, user.id).then(dbMsgs => {
                             const mapped: Message[] = dbMsgs.map((m: ChatMessageRecord) => ({
                               id: m.id as string,
                               sender: m.sender_id,
@@ -660,7 +638,7 @@ export default function Chat() {
                             </div>
                             {lastMessage && (
                               <p className="text-xs text-gray-500 truncate">
-                                {lastMessage.sender === currentUser ? 'Sie: ' : ''}
+                                {lastMessage.sender === authUser ? 'Sie: ' : ''}
                                 {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
                               </p>
                             )}
@@ -686,7 +664,7 @@ export default function Chat() {
                       </div>
                     </div>
                   </button>
-                  {groups.filter(group => group.members.includes(currentUser)).map(group => {
+                  {groups.filter(group => group.members.includes(authUser)).map(group => {
                     const unreadCount = getGroupUnreadCount(group.id)
                     const lastMessage = getMessagesForGroup(group.id).slice(-1)[0]
                     
@@ -737,7 +715,7 @@ export default function Chat() {
                             </p>
                             {lastMessage && (
                               <p className="text-xs text-gray-500 truncate">
-                                {lastMessage.sender === currentUser ? 'Sie: ' : `${users.find(u => u.id === lastMessage.sender)?.name}: `}
+                                {lastMessage.sender === authUser ? 'Sie: ' : `${users.find(u => u.id === lastMessage.sender)?.name}: `}
                                 {lastMessage.imageUrl ? '📷 Bild' : lastMessage.content}
                               </p>
                             )}
@@ -808,16 +786,16 @@ export default function Chat() {
                     {getCurrentMessages().map(message => (
                       <div
                         key={message.id}
-                        className={`flex ${message.sender === currentUser ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.sender === authUser ? 'justify-end' : 'justify-start'}`}
                       >
                         <div className={`max-w-xs sm:max-w-sm lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.sender === currentUser
+                          message.sender === authUser
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-200 text-gray-900'
                         }`}>
-                          {selectedGroup && message.sender !== currentUser && (
+                          {selectedGroup && message.sender !== authUser && (
                             <p className={`text-xs font-medium mb-1 ${
-                              message.sender === currentUser ? 'text-blue-100' : 'text-gray-600'
+                              message.sender === authUser ? 'text-blue-100' : 'text-gray-600'
                             }`}>
                               {users.find(u => u.id === message.sender)?.name}
                             </p>
@@ -833,7 +811,7 @@ export default function Chat() {
                               />
                               {message.imageName && (
                                 <p className={`text-xs mt-1 ${
-                                  message.sender === currentUser ? 'text-blue-100' : 'text-gray-500'
+                                  message.sender === authUser ? 'text-blue-100' : 'text-gray-500'
                                 }`}>
                                   {message.imageName}
                                 </p>
@@ -844,7 +822,7 @@ export default function Chat() {
                             <p className="text-sm">{message.content}</p>
                           )}
                           <p className={`text-xs mt-1 ${
-                            message.sender === currentUser ? 'text-blue-100' : 'text-gray-500'
+                            message.sender === authUser ? 'text-blue-100' : 'text-gray-500'
                           }`}>
                             {formatTime(message.timestamp)}
                           </p>
@@ -964,7 +942,7 @@ export default function Chat() {
                           />
                         ) : (
                           <span className="text-2xl text-gray-400">
-                            {getUserInitials(currentUser)}
+                            {authUser && getUserInitials(authUser)}
                           </span>
                         )}
                       </div>
@@ -1075,7 +1053,7 @@ export default function Chat() {
                       Mitglieder auswählen
                     </label>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {users.filter(user => user.id !== currentUser).map(user => (
+                      {users.filter(user => user.id !== authUser).map(user => (
                         <label key={user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
                           <input
                             type="checkbox"
