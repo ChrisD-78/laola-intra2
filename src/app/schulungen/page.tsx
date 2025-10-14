@@ -147,11 +147,16 @@ export default function Schulungen() {
     loadProofs()
   }, [])
 
+  // Dynamische Berechnung der Anzahl pro Kategorie
+  const getCategoryCount = (categoryName: string) => {
+    return schulungen.filter(s => s.category === categoryName).length
+  }
+
   const categories = [
-    { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: 3 },
-    { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: 2 },
-    { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: 5 },
-    { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: 2 }
+    { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: getCategoryCount('Unterweisungen') },
+    { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: getCategoryCount('Schulungen') },
+    { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: getCategoryCount('Gastronomie') },
+    { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: getCategoryCount('Kursverlaufspläne') }
   ]
 
   const handleDeleteSchulung = async (schulungId: string) => {
