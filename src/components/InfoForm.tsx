@@ -57,7 +57,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
       <button
         onClick={() => {
           const pass = prompt('Bitte Passwort eingeben:')
-          if (pass === 'bl') {
+          if (pass === 'bl' || pass === 'staho') {
             setIsOpen(true)
           } else if (pass !== null) {
             alert('Falsches Passwort')
