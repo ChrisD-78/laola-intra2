@@ -58,6 +58,16 @@ export const createFeedbackEmail = (feedbackData: {
     minute: '2-digit'
   })
 
+  // Bestimme E-Mail-Empfänger basierend auf Kategorie
+  const getEmailRecipient = (kategorie: string): string => {
+    switch (kategorie) {
+      case 'Stunden Korrektur':
+        return 'kirstin.kreusch@landau.de'
+      default:
+        return 'christof.drost@landau.de'
+    }
+  }
+
   const priorityColor = {
     'Niedrig': '#10B981',
     'Mittel': '#F59E0B', 
@@ -185,7 +195,7 @@ Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@landau.de',
+    to: getEmailRecipient(feedbackData.kategorie),
     subject: `[Laola Intranet] Neues Feedback: ${feedbackData.titel} - ${feedbackData.kategorie}`,
     html,
     text
