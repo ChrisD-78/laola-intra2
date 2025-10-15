@@ -144,6 +144,13 @@ export interface TrainingRecord {
   title: string
   description: string
   category: string
+  duration?: string
+  status?: string
+  date?: string
+  instructor?: string
+  thumbnail?: string
+  pdf_url?: string
+  video_url?: string
   file_name?: string
   file_size_mb?: number
   file_type?: string
@@ -155,6 +162,14 @@ export interface TrainingRecord {
 export interface CompletedTrainingRecord {
   id?: string
   training_id: string
+  training_title?: string
+  participant_name?: string
+  participant_surname?: string
+  completed_date?: string
+  score?: number
+  category?: string
+  instructor?: string
+  duration?: string
   completed_by: string
   completed_at?: string
   notes?: string
@@ -177,8 +192,8 @@ export async function deleteTraining(id: string) {
   return deleteTrainingById(id)
 }
 
-export async function markTrainingComplete(trainingId: string, completedBy: string, notes?: string) {
-  return insertCompletedTraining(trainingId, completedBy, notes)
+export async function markTrainingComplete(data: Omit<CompletedTrainingRecord, 'id' | 'completed_at'>) {
+  return insertCompletedTraining(data)
 }
 
 export async function getCompletedTrainings(): Promise<CompletedTrainingRecord[]> {
@@ -452,11 +467,11 @@ export async function deleteTrainingById(id: string) {
   return response.json()
 }
 
-export async function insertCompletedTraining(trainingId: string, completedBy: string, notes?: string) {
+export async function insertCompletedTraining(data: Omit<CompletedTrainingRecord, 'id' | 'completed_at'>) {
   const response = await fetch('/api/trainings/completed', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ training_id: trainingId, completed_by: completedBy, notes })
+    body: JSON.stringify(data)
   })
   if (!response.ok) throw new Error('Failed to mark training as completed')
   return response.json()

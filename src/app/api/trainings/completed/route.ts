@@ -28,13 +28,29 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { training_id, completed_by, notes } = body
+    const { 
+      training_id, 
+      training_title,
+      participant_name,
+      participant_surname,
+      completed_date,
+      score,
+      category,
+      instructor,
+      duration,
+      completed_by, 
+      notes 
+    } = body
 
     const result = await sql`
       INSERT INTO completed_trainings (
-        training_id, completed_by, notes
+        training_id, training_title, participant_name, participant_surname,
+        completed_date, score, category, instructor, duration, completed_by, notes
       ) VALUES (
-        ${training_id}, ${completed_by}, ${notes || null}
+        ${training_id}, ${training_title || null}, ${participant_name || null}, 
+        ${participant_surname || null}, ${completed_date || null}, ${score || null},
+        ${category || null}, ${instructor || null}, ${duration || null},
+        ${completed_by || 'System'}, ${notes || null}
       )
       RETURNING *
     `

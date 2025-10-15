@@ -776,7 +776,8 @@ export default function Schulungen() {
             score: 100, // Default score for completion
             category: schulung.category,
             instructor: schulung.instructor,
-            duration: schulung.duration
+            duration: schulung.duration,
+            completed_by: `${participantName} ${participantSurname}`
           })
           
           // Update local state

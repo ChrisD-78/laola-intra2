@@ -27,15 +27,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Request body:', body)
     
-    const { title, description, category, file_name, file_size_mb, file_type, file_url } = body
+    const { 
+      title, 
+      description, 
+      category, 
+      duration, 
+      status, 
+      date, 
+      instructor, 
+      thumbnail, 
+      pdf_url, 
+      video_url,
+      file_name, 
+      file_size_mb, 
+      file_type, 
+      file_url 
+    } = body
 
     console.log('Inserting training into database...')
     const result = await sql`
       INSERT INTO trainings (
-        title, description, category, file_name, file_size_mb, file_type, file_url
+        title, description, category, duration, status, date, instructor, thumbnail,
+        pdf_url, video_url, file_name, file_size_mb, file_type, file_url
       ) VALUES (
-        ${title}, ${description}, ${category}, ${file_name || null}, 
-        ${file_size_mb || null}, ${file_type || null}, ${file_url || null}
+        ${title}, ${description}, ${category}, ${duration || null}, ${status || 'Verfügbar'}, 
+        ${date || null}, ${instructor || null}, ${thumbnail || '📚'}, ${pdf_url || null}, 
+        ${video_url || null}, ${file_name || null}, ${file_size_mb || null}, 
+        ${file_type || null}, ${file_url || null}
       )
       RETURNING *
     `
