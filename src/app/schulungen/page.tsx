@@ -911,7 +911,7 @@ export default function Schulungen() {
                   {/* Materialien anzeigen */}
                   {currentStep === 2 && (
                     <div className="mt-6 space-y-4">
-                      {schulung.pdfUrl && (
+                      {schulung.pdfUrl ? (
                         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">📄</span>
@@ -931,9 +931,13 @@ export default function Schulungen() {
                             Öffnen
                           </button>
                         </div>
+                      ) : (
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-sm text-gray-600">Keine PDF-Unterlagen verfügbar</p>
+                        </div>
                       )}
 
-                      {schulung.videoUrl && (
+                      {schulung.videoUrl ? (
                         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">🎥</span>
@@ -952,6 +956,10 @@ export default function Schulungen() {
                           >
                             Abspielen
                           </button>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-sm text-gray-600">Kein Video verfügbar</p>
                         </div>
                       )}
                     </div>
