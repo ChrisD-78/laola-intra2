@@ -470,12 +470,20 @@ export default function Schulungen() {
             <span className="text-sm text-gray-500">📅 {schulung.date}</span>
             <div className="flex space-x-2">
               {schulung.pdfUrl && (
-                <button className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="PDF anzeigen">
+                <button 
+                  onClick={() => window.open(schulung.pdfUrl, '_blank')}
+                  className="p-2 text-gray-400 hover:text-red-600 transition-colors" 
+                  title="PDF anzeigen"
+                >
                   📄
                 </button>
               )}
               {schulung.videoUrl && (
-                <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Video ansehen">
+                <button 
+                  onClick={() => window.open(schulung.videoUrl, '_blank')}
+                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors" 
+                  title="Video ansehen"
+                >
                   🎥
                 </button>
               )}
@@ -1100,7 +1108,10 @@ export default function Schulungen() {
                         <p className="text-sm text-gray-600">Schulungsunterlagen</p>
             </div>
           </div>
-                    <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <button 
+                      onClick={() => window.open(schulung.pdfUrl, '_blank')}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
                       Öffnen
                     </button>
                   </div>
@@ -1115,7 +1126,10 @@ export default function Schulungen() {
                         <p className="text-sm text-gray-600">Video-Tutorial</p>
                 </div>
               </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button 
+                      onClick={() => window.open(schulung.videoUrl, '_blank')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                       Abspielen
                 </button>
                   </div>
