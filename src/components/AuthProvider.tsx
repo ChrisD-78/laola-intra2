@@ -55,7 +55,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       { username: 'Julia', password: 'julia112', displayName: 'Julia Wodonis' },
       { username: 'Lisa', password: 'lisa331', displayName: 'Lisa Schnagl' },
       { username: 'Jonas', password: 'Jonas554', displayName: 'Jonas Jooss' },
-      { username: 'Dennis', password: 'Dennis812', displayName: 'Dennis Wilkens' }
+      { username: 'Dennis', password: 'Dennis812', displayName: 'Dennis Wilkens' },
+      { username: 'Lea', password: 'lea331', displayName: 'Lea Hofmann' }
     ]
     
     // Benutzer suchen

@@ -48,6 +48,7 @@ export default function Chat() {
     { id: 'Lisa Schnagl', name: 'Lisa Schnagl', isOnline: false },
     { id: 'Jonas Jooss', name: 'Jonas Jooss', isOnline: false },
     { id: 'Dennis Wilkens', name: 'Dennis Wilkens', isOnline: false },
+    { id: 'Lea Hofmann', name: 'Lea Hofmann', isOnline: false },
   ])
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
