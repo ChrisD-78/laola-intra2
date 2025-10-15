@@ -477,9 +477,12 @@ export async function insertCompletedTraining(data: Omit<CompletedTrainingRecord
   return response.json()
 }
 
-export async function uploadTrainingFile(file: File): Promise<{ path: string; publicUrl: string }> {
+export async function uploadTrainingFile(file: File, fileType?: string): Promise<{ path: string; publicUrl: string }> {
   const formData = new FormData()
   formData.append('file', file)
+  if (fileType) {
+    formData.append('fileType', fileType)
+  }
 
   const response = await fetch('/api/upload/training', {
     method: 'POST',
