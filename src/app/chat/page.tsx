@@ -50,6 +50,7 @@ export default function Chat() {
     { id: 'Dennis Wilkens', name: 'Dennis Wilkens', isOnline: false },
     { id: 'Lea Hofmann', name: 'Lea Hofmann', isOnline: false },
     { id: 'Team LAOLA', name: 'Team LAOLA', isOnline: false },
+    { id: 'Verwaltung Stadtholding Landau', name: 'Verwaltung Stadtholding Landau', isOnline: false },
   ])
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)

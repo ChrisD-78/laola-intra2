@@ -57,7 +57,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       { username: 'Jonas', password: 'Jonas554', displayName: 'Jonas Jooss' },
       { username: 'Dennis', password: 'Dennis812', displayName: 'Dennis Wilkens' },
       { username: 'Lea', password: 'lea331', displayName: 'Lea Hofmann' },
-      { username: 'laola', password: 'laola123', displayName: 'Team LAOLA' }
+      { username: 'laola', password: 'laola123', displayName: 'Team LAOLA' },
+      { username: 'staho', password: 'staho123', displayName: 'Verwaltung Stadtholding Landau' }
     ]
     
     // Benutzer suchen
