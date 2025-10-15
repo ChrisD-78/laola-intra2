@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import WassermessungForm from '@/components/WassermessungForm'
 import RutschenkontrolleForm from '@/components/RutschenkontrolleForm'
-import TechnikkontrolleForm from '@/components/TechnikkontrolleForm'
+import StoermeldungForm from '@/components/StoermeldungForm'
 import KassenabrechnungForm from '@/components/KassenabrechnungForm'
 import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
@@ -119,8 +119,8 @@ export default function Formulare() {
         return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l, Chlor-Gesamt: ${data.chlorWertGesamt} mg/l, Chlor-Gebunden: ${data.chlorWertGebunden} mg/l, Redox: ${data.redox} mV`
       case 'rutschenkontrolle':
         return `Sicherheit: ${data.sicherheitscheck}, Funktion: ${data.funktionspruefung}`
-      case 'technikkontrolle':
-        return `Anlage: ${data.anlage}, Funktion: ${data.funktionspruefung}`
+      case 'stoermeldung':
+        return `Anlage: ${data.anlage}, Störungstyp: ${data.stoerungstyp}, Priorität: ${data.prioritaet}`
       case 'kassenabrechnung':
         return `Umsatz: €${data.tagesumsatz}, Kassenbestand: €${data.kassenbestand}`
       case 'arbeitsunfall':
@@ -204,7 +204,7 @@ export default function Formulare() {
     switch (type) {
       case 'wassermessung': return 'Wassermessung'
       case 'rutschenkontrolle': return 'Rutschenkontrolle'
-      case 'technikkontrolle': return 'Technikkontrolle'
+      case 'stoermeldung': return 'Störmeldung'
       case 'kassenabrechnung': return 'Kassenabrechnung'
       case 'arbeitsunfall': return 'Arbeitsunfall'
       case 'feedback': return 'Feedback'
@@ -283,17 +283,17 @@ export default function Formulare() {
 
           <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
-              <span className="text-4xl">⚙️</span>
+              <span className="text-4xl">🚨</span>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-              Technikkontrolle
+              Störmeldung Melden
             </h3>
             <p className="text-sm text-gray-600 text-center mb-4">
-              Überprüfen Sie technische Anlagen und Geräte
+              Melden Sie technische Störungen und Defekte
             </p>
             <button 
-              onClick={() => setOpenForm('technikkontrolle')}
-              className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              onClick={() => setOpenForm('stoermeldung')}
+              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Formular öffnen
             </button>
@@ -409,7 +409,7 @@ export default function Formulare() {
                 <option value="">Alle Formulare</option>
                 <option value="wassermessung">Wassermessung</option>
                 <option value="rutschenkontrolle">Rutschenkontrolle</option>
-                <option value="technikkontrolle">Technikkontrolle</option>
+                <option value="stoermeldung">Störmeldung</option>
                 <option value="kassenabrechnung">Kassenabrechnung</option>
                 <option value="arbeitsunfall">Arbeitsunfall</option>
                 <option value="feedback">Feedback</option>
@@ -455,7 +455,7 @@ export default function Formulare() {
                       <div className={`w-8 h-8 rounded flex items-center justify-center mr-3 ${
                         submission.type === 'wassermessung' ? 'bg-blue-100' :
                         submission.type === 'rutschenkontrolle' ? 'bg-green-100' :
-                        submission.type === 'technikkontrolle' ? 'bg-orange-100' :
+                        submission.type === 'stoermeldung' ? 'bg-orange-100' :
                         submission.type === 'kassenabrechnung' ? 'bg-indigo-100' :
                         submission.type === 'arbeitsunfall' ? 'bg-red-100' :
                         'bg-purple-100'
@@ -463,14 +463,14 @@ export default function Formulare() {
                         <span className={`text-sm ${
                           submission.type === 'wassermessung' ? 'text-blue-600' :
                           submission.type === 'rutschenkontrolle' ? 'text-green-600' :
-                          submission.type === 'technikkontrolle' ? 'text-orange-600' :
+                          submission.type === 'stoermeldung' ? 'text-orange-600' :
                           submission.type === 'kassenabrechnung' ? 'text-indigo-600' :
                           submission.type === 'arbeitsunfall' ? 'text-red-600' :
                           'text-purple-600'
                         }`}>
                           {submission.type === 'wassermessung' ? '💧' :
                            submission.type === 'rutschenkontrolle' ? '🎢' :
-                           submission.type === 'technikkontrolle' ? '⚙️' :
+                           submission.type === 'stoermeldung' ? '🚨' :
                            submission.type === 'kassenabrechnung' ? '💰' :
                            submission.type === 'arbeitsunfall' ? '🏥' :
                            '📝'}
@@ -550,7 +550,7 @@ export default function Formulare() {
                   <div className={`w-10 h-10 rounded flex items-center justify-center ${
                     selectedSubmission.type === 'wassermessung' ? 'bg-blue-100' :
                     selectedSubmission.type === 'rutschenkontrolle' ? 'bg-green-100' :
-                    selectedSubmission.type === 'technikkontrolle' ? 'bg-orange-100' :
+                    selectedSubmission.type === 'stoermeldung' ? 'bg-orange-100' :
                     selectedSubmission.type === 'kassenabrechnung' ? 'bg-indigo-100' :
                     selectedSubmission.type === 'arbeitsunfall' ? 'bg-red-100' :
                     'bg-purple-100'
@@ -558,14 +558,14 @@ export default function Formulare() {
                     <span className={`text-lg ${
                       selectedSubmission.type === 'wassermessung' ? 'text-blue-600' :
                       selectedSubmission.type === 'rutschenkontrolle' ? 'text-green-600' :
-                      selectedSubmission.type === 'technikkontrolle' ? 'text-orange-600' :
+                      selectedSubmission.type === 'stoermeldung' ? 'text-orange-600' :
                       selectedSubmission.type === 'kassenabrechnung' ? 'text-indigo-600' :
                       selectedSubmission.type === 'arbeitsunfall' ? 'text-red-600' :
                       'text-purple-600'
                     }`}>
                       {selectedSubmission.type === 'wassermessung' ? '💧' :
                        selectedSubmission.type === 'rutschenkontrolle' ? '🎢' :
-                       selectedSubmission.type === 'technikkontrolle' ? '⚙️' :
+                       selectedSubmission.type === 'stoermeldung' ? '🚨' :
                        selectedSubmission.type === 'kassenabrechnung' ? '💰' :
                        selectedSubmission.type === 'arbeitsunfall' ? '🏥' :
                        '📝'}
@@ -690,10 +690,10 @@ export default function Formulare() {
         onSubmit={(data) => handleFormSubmit('rutschenkontrolle', data)}
       />
       
-      <TechnikkontrolleForm
-        isOpen={openForm === 'technikkontrolle'}
+      <StoermeldungForm
+        isOpen={openForm === 'stoermeldung'}
         onClose={() => setOpenForm(null)}
-        onSubmit={(data) => handleFormSubmit('technikkontrolle', data)}
+        onSubmit={(data) => handleFormSubmit('stoermeldung', data)}
       />
       
       <KassenabrechnungForm
