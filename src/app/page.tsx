@@ -178,7 +178,7 @@ export default function Dashboard() {
         </a>
 
         <a
-          href="https://staho.netlify.app"
+          href="https://pretix.eu/stadtholding/WFeier2025/"
           target="_blank"
           rel="noopener noreferrer"
           className="block w-full bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
