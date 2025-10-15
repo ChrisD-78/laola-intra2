@@ -120,7 +120,7 @@ export default function Formulare() {
       case 'rutschenkontrolle':
         return `Sicherheit: ${data.sicherheitscheck}, Funktion: ${data.funktionspruefung}`
       case 'stoermeldung':
-        return `Anlage: ${data.anlage}, Störungstyp: ${data.stoerungstyp}, Priorität: ${data.prioritaet}`
+        return `Störungstyp: ${data.stoerungstyp}, Meldende Person: ${data.meldendePerson}`
       case 'kassenabrechnung':
         return `Umsatz: €${data.tagesumsatz}, Kassenbestand: €${data.kassenbestand}`
       case 'arbeitsunfall':

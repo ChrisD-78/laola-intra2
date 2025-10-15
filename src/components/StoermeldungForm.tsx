@@ -9,26 +9,20 @@ interface StoermeldungFormProps {
 }
 
 interface StoermeldungData {
-  anlage: string
   datum: string
   zeit: string
   stoerungstyp: string
-  prioritaet: string
   beschreibung: string
   meldendePerson: string
-  telefon: string
 }
 
 const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) => {
   const [formData, setFormData] = useState<StoermeldungData>({
-    anlage: '',
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
     stoerungstyp: '',
-    prioritaet: '',
     beschreibung: '',
-    meldendePerson: 'Christof Drost',
-    telefon: ''
+    meldendePerson: 'Christof Drost'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,14 +31,11 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
     onClose()
     // Reset form
     setFormData({
-      anlage: '',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       stoerungstyp: '',
-      prioritaet: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost',
-      telefon: ''
+      meldendePerson: 'Christof Drost'
     })
   }
 
@@ -52,14 +43,11 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
     onClose()
     // Reset form
     setFormData({
-      anlage: '',
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       stoerungstyp: '',
-      prioritaet: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost',
-      telefon: ''
+      meldendePerson: 'Christof Drost'
     })
   }
 
@@ -97,33 +85,6 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="anlage" className="block text-sm font-medium text-gray-700 mb-2">
-                  Betroffene Anlage/Gerät *
-                </label>
-                <select
-                  id="anlage"
-                  value={formData.anlage}
-                  onChange={(e) => setFormData({...formData, anlage: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  required
-                >
-                  <option value="">Anlage/Gerät auswählen</option>
-                  <option value="Filteranlage Hauptbecken">Filteranlage Hauptbecken</option>
-                  <option value="Filteranlage Kinderbecken">Filteranlage Kinderbecken</option>
-                  <option value="Heizungsanlage">Heizungsanlage</option>
-                  <option value="Lüftungsanlage">Lüftungsanlage</option>
-                  <option value="Pumpenanlage">Pumpenanlage</option>
-                  <option value="Beleuchtungsanlage">Beleuchtungsanlage</option>
-                  <option value="Alarmanlage">Alarmanlage</option>
-                  <option value="Brandschutzanlage">Brandschutzanlage</option>
-                  <option value="Kassenanlage">Kassenanlage</option>
-                  <option value="Computer/IT">Computer/IT</option>
-                  <option value="Telefonanlage">Telefonanlage</option>
-                  <option value="Sonstiges">Sonstiges</option>
-                </select>
-              </div>
-              
               <div>
                 <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
                   Datum *
@@ -175,25 +136,6 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
               </div>
               
               <div>
-                <label htmlFor="prioritaet" className="block text-sm font-medium text-gray-700 mb-2">
-                  Priorität *
-                </label>
-                <select
-                  id="prioritaet"
-                  value={formData.prioritaet}
-                  onChange={(e) => setFormData({...formData, prioritaet: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  required
-                >
-                  <option value="">Priorität auswählen</option>
-                  <option value="Niedrig">🟢 Niedrig</option>
-                  <option value="Mittel">🟡 Mittel</option>
-                  <option value="Hoch">🟠 Hoch</option>
-                  <option value="Kritisch">🔴 Kritisch</option>
-                </select>
-              </div>
-              
-              <div>
                 <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-700 mb-2">
                   Meldende Person *
                 </label>
@@ -207,19 +149,6 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
                 />
               </div>
               
-              <div>
-                <label htmlFor="telefon" className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefon für Rückfragen (optional)
-                </label>
-                <input
-                  type="tel"
-                  id="telefon"
-                  value={formData.telefon}
-                  onChange={(e) => setFormData({...formData, telefon: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="z.B. 06341 12345"
-                />
-              </div>
             </div>
             
             <div>
