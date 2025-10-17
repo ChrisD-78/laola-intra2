@@ -216,7 +216,7 @@ export default function Formulare() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Formulare</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-gray-800">
           Füllen Sie wichtige Formulare aus und verwalten Sie Ihre Einreichungen
         </p>
       </div>
@@ -234,7 +234,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Unfall melden
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Melden Sie Unfälle und Vorfälle
             </p>
             <button 
@@ -252,7 +252,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Wassermessung
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Dokumentieren Sie Wasserwerte und Messungen
             </p>
             <button 
@@ -270,7 +270,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Rutschenkontrolle
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Kontrollieren Sie die Sicherheit der Rutsche
             </p>
             <button 
@@ -288,7 +288,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Störmeldung Melden
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Melden Sie technische Störungen und Defekte
             </p>
             <button 
@@ -306,7 +306,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Feedback geben
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Teilen Sie Ihr Feedback mit uns
             </p>
             <button 
@@ -324,7 +324,7 @@ export default function Formulare() {
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
               Kassenabrechnung
             </h3>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-800 text-center mb-4">
               Führen Sie die tägliche Kassenabrechnung durch
             </p>
             <button 
@@ -367,7 +367,7 @@ export default function Formulare() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{submission.title}</h3>
-                    <p className="text-sm text-gray-600">{submission.description}</p>
+                    <p className="text-sm text-gray-800">{submission.description}</p>
                     <div className="flex items-center space-x-4 mt-2">
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-800' :
@@ -483,7 +483,7 @@ export default function Formulare() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{submission.title}</div>
-                    <div className="text-sm text-gray-500">{submission.description}</div>
+                    <div className="text-sm text-gray-800">{submission.description}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -497,7 +497,7 @@ export default function Formulare() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {submission.submittedBy}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {submission.submittedAt}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -573,7 +573,7 @@ export default function Formulare() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{selectedSubmission.title}</h3>
-                    <p className="text-sm text-gray-600">{getFormTypeLabel(selectedSubmission.type)}</p>
+                    <p className="text-sm text-gray-800">{getFormTypeLabel(selectedSubmission.type)}</p>
                   </div>
                 </div>
                 <button
@@ -629,7 +629,7 @@ export default function Formulare() {
               {/* Description */}
               <div className="mt-6">
                 <h4 className="text-lg font-medium text-gray-900 mb-2">Beschreibung</h4>
-                <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-900 bg-gray-50 p-4 rounded-lg">
                   {selectedSubmission.description}
                 </p>
               </div>
@@ -649,13 +649,13 @@ export default function Formulare() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Formular löschen</h3>
-                  <p className="text-sm text-gray-600">Diese Aktion kann nicht rückgängig gemacht werden</p>
+                  <p className="text-sm text-gray-800">Diese Aktion kann nicht rückgängig gemacht werden</p>
                 </div>
               </div>
               
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <p className="text-sm font-medium text-gray-900">{showDeleteConfirm.title}</p>
-                <p className="text-sm text-gray-600 mt-1">{showDeleteConfirm.description}</p>
+                <p className="text-sm text-gray-800 mt-1">{showDeleteConfirm.description}</p>
               </div>
 
               <div className="flex space-x-3">

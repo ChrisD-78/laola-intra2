@@ -86,7 +86,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
                   Datum *
                 </label>
                 <input
@@ -100,7 +100,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
               </div>
               
               <div>
-                <label htmlFor="zeit" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-2">
                   Uhrzeit der Störung *
                 </label>
                 <input
@@ -114,7 +114,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
               </div>
               
               <div>
-                <label htmlFor="stoerungstyp" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="stoerungstyp" className="block text-sm font-medium text-gray-900 mb-2">
                   Störungstyp *
                 </label>
                 <select
@@ -136,7 +136,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
               </div>
               
               <div>
-                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-900 mb-2">
                   Meldende Person *
                 </label>
                 <input
@@ -152,7 +152,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
             </div>
             
             <div>
-              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-900 mb-2">
                 Detaillierte Beschreibung der Störung *
               </label>
               <textarea

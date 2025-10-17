@@ -155,7 +155,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="kategorie" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="kategorie" className="block text-sm font-medium text-gray-900 mb-2">
                   Kategorie *
                 </label>
                 <select
@@ -177,7 +177,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
               </div>
               
               <div>
-                <label htmlFor="prioritaet" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prioritaet" className="block text-sm font-medium text-gray-900 mb-2">
                   Priorität
                 </label>
                 <select
@@ -195,7 +195,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
               </div>
               
               <div>
-                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-900 mb-2">
                   Ihr Name *
                 </label>
                 <input
@@ -210,7 +210,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
             </div>
             
             <div>
-              <label htmlFor="titel" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="titel" className="block text-sm font-medium text-gray-900 mb-2">
                 Titel *
               </label>
               <input
@@ -225,7 +225,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
             </div>
             
             <div>
-              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-900 mb-2">
                 Beschreibung *
               </label>
               <textarea
@@ -240,7 +240,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
             </div>
             
             <div>
-              <label htmlFor="vorschlag" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="vorschlag" className="block text-sm font-medium text-gray-900 mb-2">
                 Lösungsvorschlag / Verbesserungsvorschlag
               </label>
               <textarea
@@ -254,7 +254,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
             </div>
             
             <div>
-              <label htmlFor="kontakt" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="kontakt" className="block text-sm font-medium text-gray-900 mb-2">
                 Kontakt (optional)
               </label>
               <input

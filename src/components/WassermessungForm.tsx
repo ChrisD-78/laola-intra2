@@ -110,7 +110,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="becken" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="becken" className="block text-sm font-medium text-gray-900 mb-2">
                   Becken *
                 </label>
                 <select
@@ -137,7 +137,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
                   Datum *
                 </label>
                 <input
@@ -151,7 +151,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="zeit" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-2">
                   Zeit *
                 </label>
                 <input
@@ -165,7 +165,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-900 mb-2">
                   Durchgeführt von *
                 </label>
                 <input
@@ -179,7 +179,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="phWert" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="phWert" className="block text-sm font-medium text-gray-900 mb-2">
                   pH-Wert *
                 </label>
                 <input
@@ -197,7 +197,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="chlorWert" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="chlorWert" className="block text-sm font-medium text-gray-900 mb-2">
                   Chlor-Wert (mg/l) *
                 </label>
                 <input
@@ -215,7 +215,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="chlorWertGesamt" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="chlorWertGesamt" className="block text-sm font-medium text-gray-900 mb-2">
                   Chlor-Wert-Gesamt (mg/l) *
                 </label>
                 <input
@@ -233,7 +233,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="chlorWertGebunden" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="chlorWertGebunden" className="block text-sm font-medium text-gray-900 mb-2">
                   Chlor-Wert-Gebunden (mg/l) *
                 </label>
                 <input
@@ -251,7 +251,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="redox" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="redox" className="block text-sm font-medium text-gray-900 mb-2">
                   Redox (mV) *
                 </label>
                 <input
@@ -269,7 +269,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
               </div>
               
               <div>
-                <label htmlFor="temperatur" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="temperatur" className="block text-sm font-medium text-gray-900 mb-2">
                   Wassertemperatur (°C) *
                 </label>
                 <input
@@ -288,7 +288,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
             </div>
             
             <div>
-              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-900 mb-2">
                 Bemerkungen
               </label>
               <textarea

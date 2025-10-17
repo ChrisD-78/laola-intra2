@@ -98,7 +98,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
                   Datum *
                 </label>
                 <input
@@ -112,7 +112,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
               </div>
               
               <div>
-                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-900 mb-2">
                   Durchgeführt von *
                 </label>
                 <input
@@ -130,7 +130,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Kassenbestand</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="kassenbestand" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="kassenbestand" className="block text-sm font-medium text-gray-900 mb-2">
                     Tatsächlicher Kassenbestand (€) *
                   </label>
                   <input
@@ -147,7 +147,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
                 </div>
                 
                 <div>
-                  <label htmlFor="tagesumsatz" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="tagesumsatz" className="block text-sm font-medium text-gray-900 mb-2">
                     Erwarteter Tagesumsatz (€) *
                   </label>
                   <input
@@ -169,7 +169,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Zahlungsarten</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="bargeld" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="bargeld" className="block text-sm font-medium text-gray-900 mb-2">
                     Bargeld (€) *
                   </label>
                   <input
@@ -186,7 +186,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
                 </div>
                 
                 <div>
-                  <label htmlFor="kartenzahlung" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="kartenzahlung" className="block text-sm font-medium text-gray-900 mb-2">
                     Kartenzahlung (€) *
                   </label>
                   <input
@@ -205,7 +205,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
             </div>
             
             <div>
-              <label htmlFor="differenz" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="differenz" className="block text-sm font-medium text-gray-900 mb-2">
                 Differenz (€)
               </label>
               <input
@@ -220,7 +220,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
             </div>
             
             <div>
-              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-900 mb-2">
                 Bemerkungen
               </label>
               <textarea

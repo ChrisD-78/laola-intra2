@@ -253,7 +253,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
                   Datum des Unfalls *
                 </label>
                 <input
@@ -267,7 +267,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               </div>
               
               <div>
-                <label htmlFor="zeit" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-2">
                   Uhrzeit des Unfalls *
                 </label>
                 <input
@@ -281,7 +281,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               </div>
               
               <div>
-                <label htmlFor="verletztePerson" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="verletztePerson" className="block text-sm font-medium text-gray-900 mb-2">
                   Verletzte Person *
                 </label>
                 <input
@@ -299,7 +299,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               {activeTab === 'mitarbeiter' && (
                 <>
                   <div className="md:col-span-2">
-                    <label htmlFor="unfallhergang" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="unfallhergang" className="block text-sm font-medium text-gray-900 mb-2">
                       Unfallhergang *
                     </label>
                     <textarea
@@ -319,7 +319,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               {activeTab === 'gast' && (
                 <>
                   <div>
-                    <label htmlFor="gastAlter" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="gastAlter" className="block text-sm font-medium text-gray-900 mb-2">
                       Alter des Gastes (optional)
                     </label>
                     <input
@@ -333,7 +333,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
                   </div>
                   
                   <div>
-                    <label htmlFor="gastKontakt" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="gastKontakt" className="block text-sm font-medium text-gray-900 mb-2">
                       Kontakt (Telefon/E-Mail)
                     </label>
                     <input
@@ -350,7 +350,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div>
-                  <label htmlFor="unfallort" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="unfallort" className="block text-sm font-medium text-gray-900 mb-2">
                     Unfallort *
                   </label>
                   <input
@@ -367,7 +367,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div>
-                  <label htmlFor="unfallart" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="unfallart" className="block text-sm font-medium text-gray-900 mb-2">
                     Art des Unfalls *
                   </label>
                   <input
@@ -384,7 +384,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div>
-                  <label htmlFor="verletzungsart" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="verletzungsart" className="block text-sm font-medium text-gray-900 mb-2">
                     Art der Verletzung *
                   </label>
                   <input
@@ -401,7 +401,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div>
-                  <label htmlFor="schweregrad" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="schweregrad" className="block text-sm font-medium text-gray-900 mb-2">
                     Schweregrad *
                   </label>
                   <input
@@ -418,7 +418,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div>
-                  <label htmlFor="ersteHilfe" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="ersteHilfe" className="block text-sm font-medium text-gray-900 mb-2">
                     Erste Hilfe geleistet *
                   </label>
                   <input
@@ -435,7 +435,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               
               {activeTab === 'mitarbeiter' && (
                 <div className="md:col-span-2">
-                  <label htmlFor="arztKontakt" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="arztKontakt" className="block text-sm font-medium text-gray-900 mb-2">
                     Arztkontakt *
                   </label>
                   <div className="flex items-center gap-3">
@@ -460,7 +460,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               )}
               
               <div>
-                <label htmlFor="zeugen" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zeugen" className="block text-sm font-medium text-gray-900 mb-2">
                   Zeugen
                 </label>
                 <input
@@ -474,7 +474,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
               </div>
               
               <div>
-                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="meldendePerson" className="block text-sm font-medium text-gray-900 mb-2">
                   Meldende Person *
                 </label>
                 <input
@@ -489,7 +489,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
             </div>
             
             <div>
-              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-900 mb-2">
                 Detaillierte Beschreibung des Unfalls *
               </label>
               <textarea

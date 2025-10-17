@@ -94,7 +94,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
                   Datum *
                 </label>
                 <input
@@ -108,7 +108,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
               </div>
               
               <div>
-                <label htmlFor="zeit" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-2">
                   Zeit *
                 </label>
                 <input
@@ -122,7 +122,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
               </div>
               
               <div>
-                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-900 mb-2">
                   Durchgeführt von *
                 </label>
                 <input
@@ -138,7 +138,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="sicherheitscheck" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="sicherheitscheck" className="block text-sm font-medium text-gray-900 mb-2">
                   Sicherheitscheck *
                 </label>
                 <select
@@ -156,7 +156,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
               </div>
               
               <div>
-                <label htmlFor="funktionspruefung" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="funktionspruefung" className="block text-sm font-medium text-gray-900 mb-2">
                   Funktionsprüfung *
                 </label>
                 <select
@@ -174,7 +174,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
               </div>
               
               <div>
-                <label htmlFor="reinigung" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="reinigung" className="block text-sm font-medium text-gray-900 mb-2">
                   Reinigung *
                 </label>
                 <select
@@ -193,7 +193,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
             </div>
             
             <div>
-              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-900 mb-2">
                 Bemerkungen
               </label>
               <textarea
