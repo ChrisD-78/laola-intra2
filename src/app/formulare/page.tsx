@@ -28,6 +28,10 @@ export default function Formulare() {
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null)
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<FormSubmission | null>(null)
+  
+  // Filter states
+  const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterType, setFilterType] = useState<string>('')
 
   // Load submissions from Supabase
   useEffect(() => {
@@ -211,6 +215,13 @@ export default function Formulare() {
       default: return type
     }
   }
+
+  // Filter submissions based on selected filters
+  const filteredSubmissions = submissions.filter((submission) => {
+    const matchesStatus = !filterStatus || submission.status === filterStatus
+    const matchesType = !filterType || submission.type === filterType
+    return matchesStatus && matchesType
+  })
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
@@ -399,13 +410,21 @@ export default function Formulare() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Alle Formulareinreichungen</h2>
             <div className="flex space-x-2">
-              <select className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select 
+                value={filterStatus} 
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
                 <option value="">Alle Status</option>
                 <option value="Eingegangen">Eingegangen</option>
                 <option value="In Bearbeitung">In Bearbeitung</option>
                 <option value="Abgeschlossen">Abgeschlossen</option>
               </select>
-              <select className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select 
+                value={filterType} 
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
                 <option value="">Alle Formulare</option>
                 <option value="wassermessung">Wassermessung</option>
                 <option value="rutschenkontrolle">Rutschenkontrolle</option>
@@ -448,7 +467,13 @@ export default function Formulare() {
                     Lade Formulare...
                   </td>
                 </tr>
-              ) : submissions.map((submission) => (
+              ) : filteredSubmissions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    Keine Formulare gefunden, die den Filterkriterien entsprechen.
+                  </td>
+                </tr>
+              ) : filteredSubmissions.map((submission) => (
                 <tr key={submission.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
