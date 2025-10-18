@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
+import { useChatNotifications } from '@/contexts/ChatNotificationContext'
 import { useState } from 'react'
 
 const Sidebar = () => {
   const pathname = usePathname()
   const { currentUser, logout } = useAuth()
+  const { unreadCount } = useChatNotifications()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navItems = [
@@ -77,12 +79,15 @@ const Sidebar = () => {
         <ul className="space-y-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href
+            const isChatLink = item.href === '/chat'
+            const showBadge = isChatLink && unreadCount > 0
+            
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
                     isActive
                       ? 'bg-blue-800/60 text-white border-r-2 border-blue-400 shadow-lg backdrop-blur-sm'
                       : 'text-white hover:bg-blue-800/40 hover:text-white hover:shadow-md backdrop-blur-sm'
@@ -90,6 +95,11 @@ const Sidebar = () => {
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span className="font-medium">{item.label}</span>
+                  {showBadge && (
+                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 shadow-lg animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             )

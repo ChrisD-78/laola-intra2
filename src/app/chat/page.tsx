@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { useChatNotifications } from '@/contexts/ChatNotificationContext'
 import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord } from '@/lib/db'
 
 interface Message {
@@ -34,6 +35,7 @@ interface Group {
 
 export default function Chat() {
   const { currentUser: authUser } = useAuth()
+  const { refreshUnreadCount } = useChatNotifications()
   const [selectedRecipient, setSelectedRecipient] = useState<string>('')
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
@@ -436,6 +438,9 @@ export default function Chat() {
         ? { ...msg, isRead: true }
         : msg
     ))
+    
+    // FOURTH: Refresh unread count in sidebar
+    refreshUnreadCount()
   }
 
   const markGroupAsRead = async (groupId: string) => {
@@ -468,6 +473,9 @@ export default function Chat() {
         ? { ...msg, isRead: true }
         : msg
     ))
+    
+    // FOURTH: Refresh unread count in sidebar
+    refreshUnreadCount()
   }
 
   const formatTime = (timestamp: string) => {
