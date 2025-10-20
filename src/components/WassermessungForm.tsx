@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 
 interface WassermessungFormProps {
   isOpen: boolean
@@ -23,6 +24,7 @@ interface WassermessungData {
 }
 
 const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps) => {
+  const { currentUser } = useAuth()
   const [formData, setFormData] = useState<WassermessungData>({
     becken: '',
     phWert: '',
@@ -34,7 +36,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
     bemerkungen: '',
-    durchgefuehrtVon: 'Christof Drost'
+    durchgefuehrtVon: currentUser || 'Unbekannt'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,7 +55,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 
@@ -71,7 +73,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit }: WassermessungFormProps
       datum: new Date().toISOString().split('T')[0],
       zeit: new Date().toTimeString().slice(0, 5),
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 

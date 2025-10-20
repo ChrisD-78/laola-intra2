@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 
 interface KassenabrechnungFormProps {
   isOpen: boolean
@@ -20,6 +21,7 @@ interface KassenabrechnungData {
 }
 
 const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFormProps) => {
+  const { currentUser } = useAuth()
   const [formData, setFormData] = useState<KassenabrechnungData>({
     datum: new Date().toISOString().split('T')[0],
     kassenbestand: '',
@@ -28,7 +30,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
     kartenzahlung: '',
     differenz: '',
     bemerkungen: '',
-    durchgefuehrtVon: 'Christof Drost'
+    durchgefuehrtVon: currentUser || 'Unbekannt'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,7 +46,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
       kartenzahlung: '',
       differenz: '',
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 
@@ -59,7 +61,7 @@ const KassenabrechnungForm = ({ isOpen, onClose, onSubmit }: KassenabrechnungFor
       kartenzahlung: '',
       differenz: '',
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 

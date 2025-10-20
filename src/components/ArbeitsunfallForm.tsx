@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 import { sendEmail, createAccidentEmail } from '../lib/emailService'
 
 interface ArbeitsunfallFormProps {
@@ -31,6 +32,7 @@ interface ArbeitsunfallData {
 }
 
 const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps) => {
+  const { currentUser } = useAuth()
   const [activeTab, setActiveTab] = useState<'mitarbeiter' | 'gast'>('mitarbeiter')
   const [showCodesModal, setShowCodesModal] = useState<boolean>(false)
   const [copiedKey, setCopiedKey] = useState<'freibad' | 'laola' | null>(null)
@@ -51,7 +53,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
     arztKontakt: '',
     zeugen: '',
     beschreibung: '',
-    meldendePerson: 'Christof Drost',
+    meldendePerson: currentUser || 'Unbekannt',
     unfallhergang: '',
     gastAlter: '',
     gastKontakt: ''
@@ -103,7 +105,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       arztKontakt: '',
       zeugen: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost',
+      meldendePerson: currentUser || 'Unbekannt',
       unfallhergang: '',
       gastAlter: '',
       gastKontakt: ''
@@ -130,7 +132,7 @@ const ArbeitsunfallForm = ({ isOpen, onClose, onSubmit }: ArbeitsunfallFormProps
       arztKontakt: '',
       zeugen: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost',
+      meldendePerson: currentUser || 'Unbekannt',
       gastAlter: '',
       gastKontakt: ''
     })

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 
 interface StoermeldungFormProps {
   isOpen: boolean
@@ -17,12 +18,13 @@ interface StoermeldungData {
 }
 
 const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) => {
+  const { currentUser } = useAuth()
   const [formData, setFormData] = useState<StoermeldungData>({
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
     stoerungstyp: '',
     beschreibung: '',
-    meldendePerson: 'Christof Drost'
+    meldendePerson: currentUser || 'Unbekannt'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,7 +37,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
       zeit: new Date().toTimeString().slice(0, 5),
       stoerungstyp: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost'
+      meldendePerson: currentUser || 'Unbekannt'
     })
   }
 
@@ -47,7 +49,7 @@ const StoermeldungForm = ({ isOpen, onClose, onSubmit }: StoermeldungFormProps) 
       zeit: new Date().toTimeString().slice(0, 5),
       stoerungstyp: '',
       beschreibung: '',
-      meldendePerson: 'Christof Drost'
+      meldendePerson: currentUser || 'Unbekannt'
     })
   }
 

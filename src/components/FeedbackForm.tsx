@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 import { sendEmail, createFeedbackEmail } from '../lib/emailService'
 
 interface FeedbackFormProps {
@@ -20,13 +21,14 @@ interface FeedbackData {
 }
 
 const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
+  const { currentUser } = useAuth()
   const [formData, setFormData] = useState<FeedbackData>({
     kategorie: '',
     prioritaet: '',
     titel: '',
     beschreibung: '',
     vorschlag: '',
-    meldendePerson: 'Christof Drost',
+    meldendePerson: currentUser || 'Unbekannt',
     kontakt: ''
   })
   
@@ -73,7 +75,7 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
       titel: '',
       beschreibung: '',
       vorschlag: '',
-      meldendePerson: 'Christof Drost',
+      meldendePerson: currentUser || 'Unbekannt',
       kontakt: ''
     })
     setIsSubmitting(false)

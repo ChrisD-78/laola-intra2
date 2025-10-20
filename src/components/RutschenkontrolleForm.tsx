@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/components/AuthProvider'
 
 interface RutschenkontrolleFormProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ interface RutschenkontrolleData {
 }
 
 const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleFormProps) => {
+  const { currentUser } = useAuth()
   const [formData, setFormData] = useState<RutschenkontrolleData>({
     datum: new Date().toISOString().split('T')[0],
     zeit: new Date().toTimeString().slice(0, 5),
@@ -26,7 +28,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
     funktionspruefung: '',
     reinigung: '',
     bemerkungen: '',
-    durchgefuehrtVon: 'Christof Drost'
+    durchgefuehrtVon: currentUser || 'Unbekannt'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +43,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
       funktionspruefung: '',
       reinigung: '',
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 
@@ -55,7 +57,7 @@ const RutschenkontrolleForm = ({ isOpen, onClose, onSubmit }: RutschenkontrolleF
       funktionspruefung: '',
       reinigung: '',
       bemerkungen: '',
-      durchgefuehrtVon: 'Christof Drost'
+      durchgefuehrtVon: currentUser || 'Unbekannt'
     })
   }
 
