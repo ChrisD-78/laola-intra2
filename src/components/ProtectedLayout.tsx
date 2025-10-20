@@ -34,7 +34,7 @@ const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
 
   // Wenn angemeldet, Sidebar, Navigation und Hauptinhalt anzeigen
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar />
       <div className="lg:ml-64">
         <Navigation />
