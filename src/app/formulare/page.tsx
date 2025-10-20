@@ -227,7 +227,7 @@ export default function Formulare() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Formulare</h1>
-        <p className="mt-2 text-gray-800">
+        <p className="mt-2 text-base text-gray-900">
           Füllen Sie wichtige Formulare aus und verwalten Sie Ihre Einreichungen
         </p>
       </div>
@@ -237,20 +237,20 @@ export default function Formulare() {
         <div className="p-4 lg:p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Verfügbare Formulare</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 p-4 lg:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 p-4 lg:p-6">
           <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <span className="text-4xl">🏥</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Unfall melden
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Melden Sie Unfälle und Vorfälle
             </p>
             <button 
               onClick={() => setOpenForm('arbeitsunfall')}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -260,15 +260,15 @@ export default function Formulare() {
             <div className="text-center mb-4">
               <span className="text-4xl">💧</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Wassermessung
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Dokumentieren Sie Wasserwerte und Messungen
             </p>
             <button 
               onClick={() => setOpenForm('wassermessung')}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -278,15 +278,15 @@ export default function Formulare() {
             <div className="text-center mb-4">
               <span className="text-4xl">🎢</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Rutschenkontrolle
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Kontrollieren Sie die Sicherheit der Rutsche
             </p>
             <button 
               onClick={() => setOpenForm('rutschenkontrolle')}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -296,15 +296,15 @@ export default function Formulare() {
             <div className="text-center mb-4">
               <span className="text-4xl">🚨</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Störmeldung Melden
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Melden Sie technische Störungen und Defekte
             </p>
             <button 
               onClick={() => setOpenForm('stoermeldung')}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -314,15 +314,15 @@ export default function Formulare() {
             <div className="text-center mb-4">
               <span className="text-4xl">📝</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Feedback geben
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Teilen Sie Ihr Feedback mit uns
             </p>
             <button 
               onClick={() => setOpenForm('feedback')}
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -332,15 +332,15 @@ export default function Formulare() {
             <div className="text-center mb-4">
               <span className="text-4xl">💰</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
               Kassenabrechnung
             </h3>
-            <p className="text-sm text-gray-800 text-center mb-4">
+            <p className="text-sm text-gray-900 text-center mb-4">
               Führen Sie die tägliche Kassenabrechnung durch
             </p>
             <button 
               onClick={() => setOpenForm('kassenabrechnung')}
-              className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -350,19 +350,19 @@ export default function Formulare() {
 
       {/* Recent Submissions */}
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Ihre letzten Einreichungen</h2>
+        <div className="p-4 lg:p-6 border-b border-gray-200">
+          <h2 className="text-base lg:text-lg font-semibold text-gray-900">Ihre letzten Einreichungen</h2>
         </div>
         <div className="divide-y divide-gray-200">
           {loading ? (
-            <div className="p-6 text-center">
-              <div className="text-gray-500">Lade Formulare...</div>
+            <div className="p-4 lg:p-6 text-center">
+              <div className="text-base text-gray-900">Lade Formulare...</div>
             </div>
           ) : submissions.slice(0, 3).map((submission) => (
-            <div key={submission.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className={`w-10 h-12 rounded flex items-center justify-center ${
+            <div key={submission.id} className="p-4 lg:p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
+                  <div className={`w-10 h-12 rounded flex items-center justify-center flex-shrink-0 ${
                     submission.status === 'Abgeschlossen' ? 'bg-green-100' :
                     submission.status === 'In Bearbeitung' ? 'bg-yellow-100' :
                     'bg-blue-100'
@@ -376,24 +376,24 @@ export default function Formulare() {
                        submission.status === 'In Bearbeitung' ? '⏳' : '📝'}
                     </span>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{submission.title}</h3>
-                    <p className="text-sm text-gray-800">{submission.description}</p>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-800' :
-                        submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-gray-900 break-words">{submission.title}</h3>
+                    <p className="text-sm text-gray-900 mt-1 break-words">{submission.description}</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-900' :
+                        submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-900' :
+                        'bg-blue-100 text-blue-900'
                       }`}>
                         {submission.status}
                       </span>
-                      <span className="text-xs text-gray-500">Eingereicht: {submission.submittedAt}</span>
+                      <span className="text-xs text-gray-900">📅 {submission.submittedAt}</span>
                     </div>
                   </div>
                 </div>
                 <button 
                   onClick={() => handleViewSubmission(submission)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="self-start p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                   title="Formular anzeigen"
                 >
                   👁️
@@ -438,24 +438,24 @@ export default function Formulare() {
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Formular
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Titel
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden sm:table-cell px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Eingereicht von
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden md:table-cell px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Datum
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                   Aktionen
                 </th>
               </tr>
@@ -463,19 +463,19 @@ export default function Formulare() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 lg:px-6 py-4 text-center text-base text-gray-900">
                     Lade Formulare...
                   </td>
                 </tr>
               ) : filteredSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 lg:px-6 py-4 text-center text-base text-gray-900">
                     Keine Formulare gefunden, die den Filterkriterien entsprechen.
                   </td>
                 </tr>
               ) : filteredSubmissions.map((submission) => (
                 <tr key={submission.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={`w-8 h-8 rounded flex items-center justify-center mr-3 ${
                         submission.type === 'wassermessung' ? 'bg-blue-100' :
@@ -506,23 +506,23 @@ export default function Formulare() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{submission.title}</div>
-                    <div className="text-sm text-gray-800">{submission.description}</div>
+                  <td className="px-3 lg:px-6 py-4">
+                    <div className="text-sm font-semibold text-gray-900 break-words">{submission.title}</div>
+                    <div className="text-xs text-gray-900 mt-1 break-words">{submission.description}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-800' :
-                      submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${
+                      submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-900' :
+                      submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-900' :
+                      'bg-blue-100 text-blue-900'
                     }`}>
                       {submission.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="hidden sm:table-cell px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {submission.submittedBy}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="hidden md:table-cell px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {submission.submittedAt}
                   </td>
                   <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
