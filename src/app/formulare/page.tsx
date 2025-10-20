@@ -406,14 +406,14 @@ export default function Formulare() {
 
       {/* Detailed Table View */}
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Alle Formulareinreichungen</h2>
-            <div className="flex space-x-2">
+        <div className="p-4 lg:p-6 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Alle Formulareinreichungen</h2>
+            <div className="flex flex-col sm:flex-row gap-2">
               <select 
                 value={filterStatus} 
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Alle Status</option>
                 <option value="Eingegangen">Eingegangen</option>
@@ -423,7 +423,7 @@ export default function Formulare() {
               <select 
                 value={filterType} 
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Alle Formulare</option>
                 <option value="wassermessung">Wassermessung</option>
@@ -525,35 +525,31 @@ export default function Formulare() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {submission.submittedAt}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                       <button 
                         onClick={() => handleViewSubmission(submission)}
-                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        className="text-blue-600 hover:text-blue-900 transition-colors text-xs sm:text-sm px-2 py-1 hover:bg-blue-50 rounded"
                         title="Formular anzeigen"
                       >
-                        👁️ Anzeigen
+                        <span className="inline sm:hidden">👁️</span>
+                        <span className="hidden sm:inline">👁️ Anzeigen</span>
                       </button>
                       <button
                         onClick={() => handleDownloadPdf(submission)}
-                        className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                        className="text-indigo-600 hover:text-indigo-900 transition-colors text-xs sm:text-sm px-2 py-1 hover:bg-indigo-50 rounded"
                         title="Als PDF herunterladen"
                       >
-                        ⬇️ PDF
-                      </button>
-                      <button 
-                        onClick={() => handleViewSubmission(submission)}
-                        className="text-green-600 hover:text-green-900 transition-colors"
-                        title="Detaillierte Ansicht"
-                      >
-                        📄 Details
+                        <span className="inline sm:hidden">⬇️</span>
+                        <span className="hidden sm:inline">⬇️ PDF</span>
                       </button>
                       <button 
                         onClick={() => handleDeleteSubmission(submission)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
+                        className="text-red-600 hover:text-red-900 transition-colors text-xs sm:text-sm px-2 py-1 hover:bg-red-50 rounded"
                         title="Formular löschen"
                       >
-                        🗑️ Löschen
+                        <span className="inline sm:hidden">🗑️</span>
+                        <span className="hidden sm:inline">🗑️ Löschen</span>
                       </button>
                     </div>
                   </td>

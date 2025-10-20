@@ -342,58 +342,58 @@ export default function Dokumente() {
         </div>
         <div className="divide-y divide-gray-200">
           {documents.map((document) => (
-            <div key={document.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-12 bg-gray-100 rounded flex items-center justify-center">
+            <div key={document.id} className="p-4 lg:p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
+                  <div className="w-10 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                     <span className="text-gray-600 text-lg">{getFileIcon(document.fileType)}</span>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{document.title}</h3>
-                    <p className="text-sm text-gray-600">{document.description}</p>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <span className={`text-xs ${getCategoryColor(document.category)} px-2 py-1 rounded-full`}>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 break-words">{document.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1 break-words">{document.description}</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <span className={`text-xs ${getCategoryColor(document.category)} px-2 py-1 rounded-full whitespace-nowrap`}>
                         {document.category}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(document.uploadedAt)}
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        📅 {formatDate(document.uploadedAt)}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {document.fileSize ? Number(document.fileSize).toFixed(1) : '0.0'} MB
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        💾 {document.fileSize ? Number(document.fileSize).toFixed(1) : '0.0'} MB
                       </span>
                       {document.tags.length > 0 && (
-                        <span className="text-xs text-gray-500">
-                          Tags: {document.tags.slice(0, 2).join(', ')}
+                        <span className="text-xs text-gray-500 truncate max-w-full">
+                          🏷️ {document.tags.slice(0, 2).join(', ')}
                           {document.tags.length > 2 && '...'}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex sm:flex-col gap-2 sm:gap-1 flex-shrink-0">
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => viewDocument(document)}
                     title="Dokument anzeigen"
                   >
                     👁️
                   </button>
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => downloadDocument(document)}
                     title="Dokument herunterladen"
                   >
                     📥
                   </button>
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => startEditDocument(document)}
                     title="Dokument bearbeiten"
                   >
                     ✏️
                   </button>
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => deleteDocument(document.id)}
                     title="Dokument löschen"
                   >

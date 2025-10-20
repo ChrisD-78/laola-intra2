@@ -89,46 +89,46 @@ export default function Aufgaben() {
         </div>
         <div className="divide-y divide-gray-200">
           {tasks.map((task) => (
-            <div key={task.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 ${getPriorityColor(task.priority)} rounded-full`}></div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{task.title}</h3>
-                    <p className="text-sm text-gray-600">{task.description}</p>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <span className={`text-xs ${getPriorityBgColor(task.priority)} px-2 py-1 rounded-full`}>
+            <div key={task.id} className="p-4 lg:p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
+                  <div className={`w-3 h-3 ${getPriorityColor(task.priority)} rounded-full mt-1 flex-shrink-0`}></div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 break-words">{task.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1 break-words">{task.description}</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <span className={`text-xs ${getPriorityBgColor(task.priority)} px-2 py-1 rounded-full whitespace-nowrap`}>
                         {task.priority}
                       </span>
-                      <span className={`text-xs ${getStatusColor(task.status)} px-2 py-1 rounded-full`}>
+                      <span className={`text-xs ${getStatusColor(task.status)} px-2 py-1 rounded-full whitespace-nowrap`}>
                         {task.status}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Fällig: {new Date(task.dueDate).toLocaleDateString('de-DE')}
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        📅 {new Date(task.dueDate).toLocaleDateString('de-DE')}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Zugewiesen: {task.assignedTo}
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        👤 {task.assignedTo}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex sm:flex-col gap-2 sm:gap-1 flex-shrink-0">
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => updateTaskStatus(task.id, 'In Bearbeitung')}
                     title="Als 'In Bearbeitung' markieren"
                   >
                     🔄
                   </button>
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => updateTaskStatus(task.id, 'Abgeschlossen')}
                     title="Als 'Abgeschlossen' markieren"
                   >
                     ✅
                   </button>
                   <button 
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     onClick={() => deleteTask(task.id)}
                     title="Aufgabe löschen"
                   >
