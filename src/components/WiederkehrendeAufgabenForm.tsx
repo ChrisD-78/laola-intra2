@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface WiederkehrendeAufgabenFormProps {
   onAddRecurringTask: (task: {
@@ -32,7 +32,13 @@ const WiederkehrendeAufgabenForm = ({ onAddRecurringTask, initialData, isEditing
   const [startTime, setStartTime] = useState(initialData?.startTime || '')
   const [assignedTo, setAssignedTo] = useState(initialData?.assignedTo || '')
   const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
-  const [isOpen, setIsOpen] = useState(!isEditing)
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    if (isEditing && initialData) {
+      setIsOpen(true)
+    }
+  }, [isEditing, initialData])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
