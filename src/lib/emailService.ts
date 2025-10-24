@@ -134,7 +134,7 @@ export const createFeedbackEmail = (feedbackData: {
   const getEmailRecipient = (kategorie: string): string => {
     switch (kategorie) {
       case 'Stunden Korrektur':
-        return 'kirstin.kreusch@landau.de'
+        return 'christof.drost@landau.de'
       default:
         return 'christof.drost@landau.de'
     }
@@ -298,14 +298,14 @@ export const createFormSubmissionEmail = (formData: {
       case 'stoermeldung':
       case 'kassenabrechnung':
       case 'feedback':
-        return ['kirstin.kreusch@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
+        return ['christof.drost@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
       case 'stundenkorrektur':
-        return ['kirstin.kreusch@landau.de'] // Nur an Kirstin
+        return ['christof.drost@landau.de'] // Nur an Christof
       case 'arbeitsunfall':
       case 'unfall':
-        return ['christof.drost@gmail.com', 'kirstin.kreusch@landau.de'] // Alternative E-Mail-Adresse
+        return ['christof.drost@gmail.com', 'christof.drost@landau.de'] // Alternative E-Mail-Adresse
       default:
-        return ['kirstin.kreusch@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
+        return ['christof.drost@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
     }
   }
 
