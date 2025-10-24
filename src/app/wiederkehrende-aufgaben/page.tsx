@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import WiederkehrendeAufgabenForm from '@/components/WiederkehrendeAufgabenForm'
-import { getRecurringTasks, createRecurringTask, updateRecurringTask, deleteRecurringTask, RecurringTaskRecord } from '@/lib/db'
+import { getRecurringTasks, createRecurringTask, updateRecurringTask, deleteRecurringTask, markRecurringTaskCompleted, getRecurringTaskCompletions, RecurringTaskRecord, RecurringTaskCompletionRecord } from '@/lib/db'
 
 interface RecurringTask {
   id: string
@@ -19,6 +19,10 @@ interface RecurringTask {
 
 export default function WiederkehrendeAufgaben() {
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([])
+  const [editingTask, setEditingTask] = useState<RecurringTask | null>(null)
+  const [completingTask, setCompletingTask] = useState<RecurringTask | null>(null)
+  const [completionNotes, setCompletionNotes] = useState('')
+  const [taskCompletions, setTaskCompletions] = useState<Record<string, RecurringTaskCompletionRecord[]>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -116,6 +120,87 @@ export default function WiederkehrendeAufgaben() {
       console.error('Delete recurring task failed', e)
       setRecurringTasks(prev)
       alert('Aufgabe konnte nicht gelöscht werden.')
+    }
+  }
+
+  const editTask = (task: RecurringTask) => {
+    setEditingTask(task)
+  }
+
+  const saveEditedTask = async (taskData: {
+    title: string
+    description: string
+    frequency: string
+    priority: string
+    startTime: string
+    assignedTo: string
+    isActive: boolean
+  }) => {
+    if (!editingTask) return
+
+    const prev = recurringTasks
+    setRecurringTasks(prev.map(task => 
+      task.id === editingTask.id 
+        ? { ...task, ...taskData }
+        : task
+    ))
+
+    try {
+      await updateRecurringTask(editingTask.id, {
+        title: taskData.title,
+        description: taskData.description,
+        frequency: taskData.frequency,
+        priority: taskData.priority,
+        start_time: taskData.startTime,
+        assigned_to: taskData.assignedTo,
+        is_active: taskData.isActive
+      })
+      setEditingTask(null)
+    } catch (e) {
+      console.error('Update recurring task failed', e)
+      setRecurringTasks(prev)
+      alert('Aufgabe konnte nicht aktualisiert werden.')
+    }
+  }
+
+  const markTaskCompleted = async (task: RecurringTask) => {
+    try {
+      await markRecurringTaskCompleted(task.id, 'Current User', completionNotes)
+      
+      // Reload tasks to get updated next_due date
+      const data = await getRecurringTasks()
+      const mapped: RecurringTask[] = data.map((t: RecurringTaskRecord) => ({
+        id: t.id as string,
+        title: t.title,
+        description: t.description,
+        frequency: t.frequency,
+        priority: t.priority,
+        startTime: t.start_time,
+        assignedTo: t.assigned_to,
+        isActive: t.is_active,
+        nextDue: t.next_due,
+        createdAt: (t.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0]
+      }))
+      setRecurringTasks(mapped)
+      
+      setCompletingTask(null)
+      setCompletionNotes('')
+      alert('Aufgabe wurde als erledigt markiert!')
+    } catch (e) {
+      console.error('Mark task completed failed', e)
+      alert('Aufgabe konnte nicht als erledigt markiert werden.')
+    }
+  }
+
+  const loadTaskCompletions = async (taskId: string) => {
+    try {
+      const completions = await getRecurringTaskCompletions(taskId)
+      setTaskCompletions(prev => ({
+        ...prev,
+        [taskId]: completions
+      }))
+    } catch (e) {
+      console.error('Load task completions failed', e)
     }
   }
 
@@ -365,10 +450,25 @@ export default function WiederkehrendeAufgaben() {
                           {task.isActive ? '⏸️' : '▶️'}
                         </button>
                         <button 
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          onClick={() => editTask(task)}
                           title="Bearbeiten"
                         >
                           ✏️
+                        </button>
+                        <button 
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          onClick={() => setCompletingTask(task)}
+                          title="Als erledigt markieren"
+                        >
+                          ✅
+                        </button>
+                        <button 
+                          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          onClick={() => loadTaskCompletions(task.id)}
+                          title="Erledigungshistorie anzeigen"
+                        >
+                          📊
                         </button>
                         <button 
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -386,6 +486,153 @@ export default function WiederkehrendeAufgaben() {
           </div>
         </div>
       </div>
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Aufgabe bearbeiten
+                </h3>
+                <button
+                  onClick={() => setEditingTask(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <WiederkehrendeAufgabenForm 
+                onAddRecurringTask={saveEditedTask}
+                initialData={editingTask}
+                isEditing={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Task Modal */}
+      {completingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Aufgabe als erledigt markieren
+                </h3>
+                <button
+                  onClick={() => {
+                    setCompletingTask(null)
+                    setCompletionNotes('')
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">{completingTask.title}</h4>
+                <p className="text-gray-600 text-sm">{completingTask.description}</p>
+              </div>
+              
+              <div>
+                <label htmlFor="completionNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Notizen (optional)
+                </label>
+                <textarea
+                  id="completionNotes"
+                  value={completionNotes}
+                  onChange={(e) => setCompletionNotes(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Zusätzliche Notizen zur Erledigung..."
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => markTaskCompleted(completingTask)}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  Als erledigt markieren
+                </button>
+                <button
+                  onClick={() => {
+                    setCompletingTask(null)
+                    setCompletionNotes('')
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completions History Modal */}
+      {Object.keys(taskCompletions).length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Erledigungshistorie
+                </h3>
+                <button
+                  onClick={() => setTaskCompletions({})}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {Object.entries(taskCompletions).map(([taskId, completions]) => {
+                const task = recurringTasks.find(t => t.id === taskId)
+                return (
+                  <div key={taskId} className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">{task?.title}</h4>
+                    {completions.length === 0 ? (
+                      <p className="text-gray-500 text-sm">Noch keine Erledigungen</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {completions.map((completion) => (
+                          <div key={completion.id} className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  Erledigt von: {completion.completed_by}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(completion.completed_at || '').toLocaleString('de-DE')}
+                                </p>
+                                {completion.notes && (
+                                  <p className="text-sm text-gray-600 mt-1">{completion.notes}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

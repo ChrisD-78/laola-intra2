@@ -64,6 +64,16 @@ export interface RecurringTaskRecord {
   created_at?: string
 }
 
+export interface RecurringTaskCompletionRecord {
+  id?: string
+  recurring_task_id: string
+  completed_by: string
+  completed_at?: string
+  notes?: string
+  next_due_date: string
+  created_at?: string
+}
+
 export async function getRecurringTasks(): Promise<RecurringTaskRecord[]> {
   const response = await fetch('/api/recurring-tasks')
   if (!response.ok) throw new Error('Failed to fetch recurring tasks')
@@ -99,6 +109,26 @@ export async function deleteRecurringTask(id: string) {
     method: 'DELETE'
   })
   if (!response.ok) throw new Error('Failed to delete recurring task')
+  return response.json()
+}
+
+// =====================
+// Recurring Task Completions
+// =====================
+
+export async function getRecurringTaskCompletions(taskId: string): Promise<RecurringTaskCompletionRecord[]> {
+  const response = await fetch(`/api/recurring-tasks/${taskId}/completions`)
+  if (!response.ok) throw new Error('Failed to fetch task completions')
+  return response.json()
+}
+
+export async function markRecurringTaskCompleted(taskId: string, completedBy: string, notes?: string) {
+  const response = await fetch(`/api/recurring-tasks/${taskId}/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ completedBy, notes })
+  })
+  if (!response.ok) throw new Error('Failed to mark task as completed')
   return response.json()
 }
 

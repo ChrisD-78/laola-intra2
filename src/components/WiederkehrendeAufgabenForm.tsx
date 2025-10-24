@@ -12,16 +12,27 @@ interface WiederkehrendeAufgabenFormProps {
     assignedTo: string
     isActive: boolean
   }) => void
+  initialData?: {
+    title: string
+    description: string
+    frequency: string
+    priority: string
+    startTime: string
+    assignedTo: string
+    isActive: boolean
+  }
+  isEditing?: boolean
 }
 
-const WiederkehrendeAufgabenForm = ({ onAddRecurringTask }: WiederkehrendeAufgabenFormProps) => {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [frequency, setFrequency] = useState('Täglich')
-  const [priority, setPriority] = useState('Mittel')
-  const [startTime, setStartTime] = useState('')
-  const [assignedTo, setAssignedTo] = useState('')
-  const [isOpen, setIsOpen] = useState(false)
+const WiederkehrendeAufgabenForm = ({ onAddRecurringTask, initialData, isEditing = false }: WiederkehrendeAufgabenFormProps) => {
+  const [title, setTitle] = useState(initialData?.title || '')
+  const [description, setDescription] = useState(initialData?.description || '')
+  const [frequency, setFrequency] = useState(initialData?.frequency || 'Täglich')
+  const [priority, setPriority] = useState(initialData?.priority || 'Mittel')
+  const [startTime, setStartTime] = useState(initialData?.startTime || '')
+  const [assignedTo, setAssignedTo] = useState(initialData?.assignedTo || '')
+  const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
+  const [isOpen, setIsOpen] = useState(!isEditing)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +44,7 @@ const WiederkehrendeAufgabenForm = ({ onAddRecurringTask }: WiederkehrendeAufgab
         priority,
         startTime,
         assignedTo: assignedTo.trim(),
-        isActive: true
+        isActive
       })
       setTitle('')
       setDescription('')
@@ -192,6 +203,20 @@ const WiederkehrendeAufgabenForm = ({ onAddRecurringTask }: WiederkehrendeAufgab
                   required
                 />
               </div>
+              
+              <div className="md:col-span-2">
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Aufgabe ist aktiv
+                  </span>
+                </label>
+              </div>
             </div>
             
             {/* Buttons */}
@@ -200,7 +225,7 @@ const WiederkehrendeAufgabenForm = ({ onAddRecurringTask }: WiederkehrendeAufgab
                 type="submit"
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
-                Wiederkehrende Aufgabe erstellen
+                {isEditing ? 'Änderungen speichern' : 'Wiederkehrende Aufgabe erstellen'}
               </button>
               <button
                 type="button"
