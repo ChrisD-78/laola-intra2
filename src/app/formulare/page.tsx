@@ -7,6 +7,7 @@ import StoermeldungForm from '@/components/StoermeldungForm'
 import KassenabrechnungForm from '@/components/KassenabrechnungForm'
 import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
+import StundenkorrekturForm from '@/components/StundenkorrekturForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById } from '@/lib/db'
 
 interface FormSubmission {
@@ -131,6 +132,8 @@ export default function Formulare() {
         return `Unfallort: ${data.unfallort}, Verletzte Person: ${data.verletztePerson}, Schweregrad: ${data.schweregrad}`
       case 'feedback':
         return `Kategorie: ${data.kategorie}, Bereich: ${data.betroffenerBereich}, Priorität: ${data.prioritaet}`
+      case 'stundenkorrektur':
+        return `Name: ${data.name}, Datum: ${data.datum}, Zeit: ${data.uhrzeitVon} - ${data.uhrzeitBis}, Grund: ${data.grund}`
       default:
         return 'Formular eingereicht'
     }
@@ -323,6 +326,24 @@ export default function Formulare() {
             <button 
               onClick={() => setOpenForm('feedback')}
               className="w-full px-4 py-2.5 text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">⏰</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Stundenkorrektur
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Korrektur von Arbeitszeiten beantragen
+            </p>
+            <button 
+              onClick={() => setOpenForm('stundenkorrektur')}
+              className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -733,6 +754,12 @@ export default function Formulare() {
         isOpen={openForm === 'feedback'}
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('feedback', data)}
+      />
+      
+      <StundenkorrekturForm
+        isOpen={openForm === 'stundenkorrektur'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('stundenkorrektur', data)}
       />
     </div>
   )

@@ -299,6 +299,8 @@ export const createFormSubmissionEmail = (formData: {
       case 'kassenabrechnung':
       case 'feedback':
         return ['kirstin.kreusch@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
+      case 'stundenkorrektur':
+        return ['kirstin.kreusch@landau.de'] // Nur an Kirstin
       case 'arbeitsunfall':
       case 'unfall':
         return ['christof.drost@gmail.com', 'kirstin.kreusch@landau.de'] // Alternative E-Mail-Adresse
@@ -317,6 +319,7 @@ export const createFormSubmissionEmail = (formData: {
       case 'arbeitsunfall': return '🚨 Arbeitsunfall'
       case 'unfall': return '🚨 Unfall'
       case 'feedback': return '📝 Feedback'
+      case 'stundenkorrektur': return '⏰ Stundenkorrektur'
       default: return `📋 ${type}`
     }
   }
@@ -331,6 +334,7 @@ export const createFormSubmissionEmail = (formData: {
       case 'arbeitsunfall': return '#DC2626'
       case 'unfall': return '#DC2626'
       case 'feedback': return '#6366F1'
+      case 'stundenkorrektur': return '#7C3AED'
       default: return '#6B7280'
     }
   }

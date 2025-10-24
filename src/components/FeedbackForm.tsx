@@ -173,7 +173,6 @@ const FeedbackForm = ({ isOpen, onClose, onSubmit }: FeedbackFormProps) => {
                   <option value="Lob">Lob</option>
                   <option value="Beschwerde">Beschwerde</option>
                   <option value="Ideen">Ideen</option>
-                  <option value="Stunden Korrektur">Stunden Korrektur</option>
                   <option value="Sonstiges">Sonstiges</option>
                 </select>
               </div>
