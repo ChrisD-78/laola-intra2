@@ -41,6 +41,46 @@ export const sendEmail = async (emailData: EmailData): Promise<{ success: boolea
   }
 }
 
+// E-Mail an mehrere Empfänger senden
+export const sendEmailToMultiple = async (emailData: Omit<EmailData, 'to'> & { to: string[] }): Promise<{ success: boolean; error?: string }> => {
+  try {
+    console.log('📧 E-Mails werden an mehrere Empfänger gesendet...')
+    console.log('An:', emailData.to.join(', '))
+    console.log('Betreff:', emailData.subject)
+    
+    // E-Mails an alle Empfänger senden
+    const emailPromises = emailData.to.map(recipient => 
+      sendEmail({
+        ...emailData,
+        to: recipient
+      })
+    )
+    
+    const results = await Promise.all(emailPromises)
+    
+    // Prüfen ob alle E-Mails erfolgreich gesendet wurden
+    const allSuccessful = results.every(result => result.success)
+    
+    if (allSuccessful) {
+      console.log('✅ Alle E-Mails erfolgreich gesendet!')
+      return { success: true }
+    } else {
+      const failedCount = results.filter(result => !result.success).length
+      console.error(`❌ ${failedCount} von ${results.length} E-Mails fehlgeschlagen`)
+      return { 
+        success: false, 
+        error: `${failedCount} von ${results.length} E-Mails konnten nicht gesendet werden`
+      }
+    }
+  } catch (error) {
+    console.error('❌ Fehler beim Senden der E-Mails:', error)
+    return { 
+      success: false, 
+      error: 'Netzwerkfehler - Bitte versuchen Sie es erneut'
+    }
+  }
+}
+
 export const createFeedbackEmail = (feedbackData: {
   kategorie: string
   prioritaet: string
@@ -197,6 +237,199 @@ Diese E-Mail wurde automatisch generiert.
   return {
     to: getEmailRecipient(feedbackData.kategorie),
     subject: `[Laola Intranet] Neues Feedback: ${feedbackData.titel} - ${feedbackData.kategorie}`,
+    html,
+    text
+  }
+}
+
+// Generische E-Mail-Funktion für alle Formular-Einträge
+export const createFormSubmissionEmail = (formData: {
+  type: string
+  title: string
+  description?: string
+  submittedBy: string
+  formData: Record<string, unknown>
+}) => {
+  const currentDate = new Date().toLocaleString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  // E-Mail-Empfänger basierend auf Formular-Typ
+  const getEmailRecipients = (type: string): string[] => {
+    switch (type.toLowerCase()) {
+      case 'wassermessung':
+      case 'rutschenkontrolle':
+      case 'stoermeldung':
+      case 'kassenabrechnung':
+      case 'feedback':
+        return ['kirstin.kreusch@landau.de', 'christof.drost@landau.de']
+      case 'arbeitsunfall':
+      case 'unfall':
+        return ['christof.drost@landau.de', 'kirstin.kreusch@landau.de']
+      default:
+        return ['kirstin.kreusch@landau.de', 'christof.drost@landau.de']
+    }
+  }
+
+  // Formular-Typ Labels
+  const getFormTypeLabel = (type: string): string => {
+    switch (type.toLowerCase()) {
+      case 'wassermessung': return '💧 Wassermessung'
+      case 'rutschenkontrolle': return '🎢 Rutschenkontrolle'
+      case 'stoermeldung': return '⚠️ Störmeldung'
+      case 'kassenabrechnung': return '💰 Kassenabrechnung'
+      case 'arbeitsunfall': return '🚨 Arbeitsunfall'
+      case 'unfall': return '🚨 Unfall'
+      case 'feedback': return '📝 Feedback'
+      default: return `📋 ${type}`
+    }
+  }
+
+  // Formular-spezifische Farbe
+  const getFormTypeColor = (type: string): string => {
+    switch (type.toLowerCase()) {
+      case 'wassermessung': return '#3B82F6'
+      case 'rutschenkontrolle': return '#10B981'
+      case 'stoermeldung': return '#F59E0B'
+      case 'kassenabrechnung': return '#8B5CF6'
+      case 'arbeitsunfall': return '#DC2626'
+      case 'unfall': return '#DC2626'
+      case 'feedback': return '#6366F1'
+      default: return '#6B7280'
+    }
+  }
+
+  const recipients = getEmailRecipients(formData.type)
+  const formTypeLabel = getFormTypeLabel(formData.type)
+  const formTypeColor = getFormTypeColor(formData.type)
+
+  // Formular-Daten in lesbare Form bringen
+  const formatFormData = (data: Record<string, unknown>): string => {
+    return Object.entries(data)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => {
+        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+        return `<div class="field">
+          <span class="field-label">${label}</span>
+          <div class="field-value">${String(value).replace(/\n/g, '<br>')}</div>
+        </div>`
+      }).join('')
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Neuer Formular-Eintrag - Laola Intranet</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, ${formTypeColor} 0%, ${formTypeColor}dd 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: bold; }
+        .content { padding: 30px; }
+        .field { margin-bottom: 20px; }
+        .field-label { font-weight: bold; color: #374151; margin-bottom: 5px; display: block; }
+        .field-value { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid ${formTypeColor}; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+        .highlight { background: #fef3c7; padding: 15px; border-radius: 6px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+        .type-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; color: white; font-size: 13px; font-weight: bold; background-color: ${formTypeColor}; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${formTypeLabel} eingegangen</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Laola Intranet System</p>
+        </div>
+        
+        <div class="content">
+          <div class="highlight">
+            <strong>📋 Neue Formular-Eintragung:</strong><br>
+            Ein neuer Eintrag wurde über das Laola Intranet System eingereicht.
+          </div>
+
+          <div class="field">
+            <span class="field-label">📋 Formular-Typ</span>
+            <div class="field-value">
+              <span class="type-badge">${formTypeLabel}</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">👤 Eingereicht von</span>
+            <div class="field-value">${formData.submittedBy}</div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">📌 Titel</span>
+            <div class="field-value"><strong>${formData.title}</strong></div>
+          </div>
+
+          ${formData.description ? `
+          <div class="field">
+            <span class="field-label">📝 Beschreibung</span>
+            <div class="field-value">${formData.description.replace(/\n/g, '<br>')}</div>
+          </div>
+          ` : ''}
+
+          <div class="field">
+            <span class="field-label">📊 Formular-Daten</span>
+            <div class="field-value">
+              ${formatFormData(formData.formData)}
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">🕒 Eingegangen am</span>
+            <div class="field-value">${currentDate}</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Laola Intranet System</strong></p>
+          <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf diese E-Mail.</p>
+          <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
+            System generiert am ${new Date().toISOString()}
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+Neuer Formular-Eintrag - Laola Intranet System
+=============================================
+
+Formular-Typ: ${formTypeLabel}
+Eingereicht von: ${formData.submittedBy}
+Titel: ${formData.title}
+
+${formData.description ? `Beschreibung:
+${formData.description}
+
+` : ''}Formular-Daten:
+${Object.entries(formData.formData)
+  .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+  .map(([key, value]) => `${key}: ${value}`)
+  .join('\n')}
+
+Eingegangen am: ${currentDate}
+
+---
+Laola Intranet System
+Diese E-Mail wurde automatisch generiert.
+  `
+
+  return {
+    to: recipients,
+    subject: `[Laola Intranet] ${formTypeLabel}: ${formData.title}`,
     html,
     text
   }
