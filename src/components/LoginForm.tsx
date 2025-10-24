@@ -41,24 +41,24 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="mx-auto h-20 w-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border border-white/30">
             <span className="text-white text-3xl">🏊‍♂️</span>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+          <h2 className="mt-6 text-3xl font-bold text-white">
             LA OLA Intranet
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-white/80">
             Melden Sie sich an, um auf das Mitarbeiter-Portal zuzugreifen
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-lg rounded-lg">
+        <div className="bg-white/10 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-2xl border border-white/20">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-sm font-medium text-white">
                 Benutzername
               </label>
               <input
@@ -68,13 +68,13 @@ const LoginForm = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl shadow-lg placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
                 placeholder="Ihr vollständiger Name"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-white">
                 Passwort
               </label>
               <input
@@ -84,14 +84,14 @@ const LoginForm = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl shadow-lg placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
                 placeholder="Ihr Passwort"
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-xl p-3">
+                <p className="text-sm text-red-100">{error}</p>
               </div>
             )}
 
@@ -99,7 +99,7 @@ const LoginForm = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-3 px-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl shadow-lg text-sm font-medium text-white hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-xl"
               >
                 {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
               </button>
