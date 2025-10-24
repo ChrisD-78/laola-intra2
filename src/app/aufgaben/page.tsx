@@ -1,10 +1,31 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import AufgabenForm from '@/components/AufgabenForm'
 import { useTasks } from '@/contexts/TaskContext'
 
 export default function Aufgaben() {
   const { tasks, addTask, updateTaskStatus, deleteTask } = useTasks()
+  const searchParams = useSearchParams()
+  const [filteredTasks, setFilteredTasks] = useState(tasks)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+
+  // Get status filter from URL
+  useEffect(() => {
+    const status = searchParams.get('status')
+    setStatusFilter(status)
+  }, [searchParams])
+
+  // Filter tasks based on status
+  useEffect(() => {
+    if (statusFilter) {
+      const filtered = tasks.filter(task => task.status === statusFilter)
+      setFilteredTasks(filtered)
+    } else {
+      setFilteredTasks(tasks)
+    }
+  }, [tasks, statusFilter])
 
   const addNewTask = (taskData: {
     title: string
@@ -112,7 +133,7 @@ export default function Aufgaben() {
             <div className="ml-3">
               <p className="text-sm font-medium text-red-800">Überfällig</p>
               <p className="text-2xl font-bold text-red-900">
-                {tasks.filter(task => isOverdue(task.dueDate, task.status)).length}
+                {filteredTasks.filter(task => isOverdue(task.dueDate, task.status)).length}
               </p>
             </div>
           </div>
@@ -126,7 +147,7 @@ export default function Aufgaben() {
             <div className="ml-3">
               <p className="text-sm font-medium text-orange-800">Heute fällig</p>
               <p className="text-2xl font-bold text-orange-900">
-                {tasks.filter(task => {
+                {filteredTasks.filter(task => {
                   const due = new Date(task.dueDate)
                   const now = new Date()
                   const diffTime = due.getTime() - now.getTime()
@@ -146,7 +167,7 @@ export default function Aufgaben() {
             <div className="ml-3">
               <p className="text-sm font-medium text-blue-800">Offen</p>
               <p className="text-2xl font-bold text-blue-900">
-                {tasks.filter(task => task.status === 'Offen').length}
+                {filteredTasks.filter(task => task.status === 'Offen').length}
               </p>
             </div>
           </div>
@@ -160,7 +181,7 @@ export default function Aufgaben() {
             <div className="ml-3">
               <p className="text-sm font-medium text-green-800">Erledigt</p>
               <p className="text-2xl font-bold text-green-900">
-                {tasks.filter(task => task.status === 'Abgeschlossen').length}
+                {filteredTasks.filter(task => task.status === 'Abgeschlossen').length}
               </p>
             </div>
           </div>
@@ -181,18 +202,47 @@ export default function Aufgaben() {
       {/* Tasks List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Alle Aufgaben</h2>
-          <p className="text-gray-600 mt-1">Übersicht aller Aufgaben mit Fälligkeitsstatus</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {statusFilter ? `Aufgaben: ${statusFilter}` : 'Alle Aufgaben'}
+              </h2>
+              <p className="text-gray-600 mt-1">
+                {statusFilter 
+                  ? `Gefilterte Ansicht: ${statusFilter} (${filteredTasks.length} Aufgaben)`
+                  : 'Übersicht aller Aufgaben mit Fälligkeitsstatus'
+                }
+              </p>
+            </div>
+            {statusFilter && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">Filter:</span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  {statusFilter}
+                </span>
+                <a 
+                  href="/aufgaben"
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Alle anzeigen
+                </a>
+              </div>
+            )}
+          </div>
         </div>
         <div className="divide-y divide-gray-100">
-          {tasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <div className="p-8 text-center">
               <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Keine Aufgaben</h3>
-              <p className="text-gray-600">Erstellen Sie Ihre erste Aufgabe, um zu beginnen.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {statusFilter ? `Keine Aufgaben mit Status "${statusFilter}"` : 'Keine Aufgaben'}
+              </h3>
+              <p className="text-gray-600">
+                {statusFilter ? 'Versuchen Sie einen anderen Filter oder erstellen Sie eine neue Aufgabe.' : 'Erstellen Sie Ihre erste Aufgabe, um zu beginnen.'}
+              </p>
             </div>
           ) : (
-            tasks.map((task) => {
+            filteredTasks.map((task) => {
               const dueStatus = getDueDateStatus(task.dueDate, task.status)
               const isTaskOverdue = isOverdue(task.dueDate, task.status)
               

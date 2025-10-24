@@ -197,53 +197,65 @@ export default function Dashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <Link 
+          href="/aufgaben?status=Offen"
+          className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group"
+        >
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
               <span className="text-2xl">📋</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Offene Aufgaben</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.open}</p>
+              <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Offene Aufgaben</p>
+              <p className="text-3xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{taskStats.open}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <Link 
+          href="/aufgaben?status=In Bearbeitung"
+          className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group"
+        >
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
               <span className="text-2xl">🔄</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">In Bearbeitung</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.inProgress}</p>
+              <p className="text-sm font-medium text-gray-600 group-hover:text-green-600 transition-colors">In Bearbeitung</p>
+              <p className="text-3xl font-bold text-gray-900 group-hover:text-green-700 transition-colors">{taskStats.inProgress}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <Link 
+          href="/aufgaben?status=Abgeschlossen"
+          className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group"
+        >
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
               <span className="text-2xl">📄</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Abgeschlossen</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.completed}</p>
+              <p className="text-sm font-medium text-gray-600 group-hover:text-yellow-600 transition-colors">Abgeschlossen</p>
+              <p className="text-3xl font-bold text-gray-900 group-hover:text-yellow-700 transition-colors">{taskStats.completed}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <Link 
+          href="/aufgaben"
+          className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group"
+        >
           <div className="flex items-center">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
               <span className="text-2xl">🎓</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Gesamt Aufgaben</p>
-              <p className="text-3xl font-bold text-gray-900">{taskStats.total}</p>
+              <p className="text-sm font-medium text-gray-600 group-hover:text-purple-600 transition-colors">Gesamt Aufgaben</p>
+              <p className="text-3xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">{taskStats.total}</p>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Aktuelle Informationen */}
