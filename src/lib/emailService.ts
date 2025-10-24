@@ -42,41 +42,73 @@ export const sendEmail = async (emailData: EmailData): Promise<{ success: boolea
 }
 
 // E-Mail an mehrere Empfänger senden
-export const sendEmailToMultiple = async (emailData: Omit<EmailData, 'to'> & { to: string[] }): Promise<{ success: boolean; error?: string }> => {
+export const sendEmailToMultiple = async (emailData: Omit<EmailData, 'to'> & { to: string[] }): Promise<{ success: boolean; error?: string; details?: any }> => {
   try {
     console.log('📧 E-Mails werden an mehrere Empfänger gesendet...')
     console.log('An:', emailData.to.join(', '))
     console.log('Betreff:', emailData.subject)
     
-    // E-Mails an alle Empfänger senden
-    const emailPromises = emailData.to.map(recipient => 
-      sendEmail({
-        ...emailData,
-        to: recipient
-      })
-    )
+    const results = []
+    const errors = []
     
-    const results = await Promise.all(emailPromises)
+    // E-Mails sequenziell senden für bessere Fehlerbehandlung
+    for (const recipient of emailData.to) {
+      console.log(`📧 Sende E-Mail an: ${recipient}`)
+      
+      try {
+        const result = await sendEmail({
+          ...emailData,
+          to: recipient
+        })
+        
+        results.push({ recipient, ...result })
+        
+        if (result.success) {
+          console.log(`✅ E-Mail an ${recipient} erfolgreich gesendet`)
+        } else {
+          console.error(`❌ E-Mail an ${recipient} fehlgeschlagen:`, result.error)
+          errors.push({ recipient, error: result.error })
+        }
+      } catch (error) {
+        console.error(`❌ Fehler beim Senden an ${recipient}:`, error)
+        errors.push({ recipient, error: error instanceof Error ? error.message : 'Unbekannter Fehler' })
+        results.push({ recipient, success: false, error: error instanceof Error ? error.message : 'Unbekannter Fehler' })
+      }
+    }
     
-    // Prüfen ob alle E-Mails erfolgreich gesendet wurden
-    const allSuccessful = results.every(result => result.success)
+    const successfulCount = results.filter(result => result.success).length
+    const failedCount = results.filter(result => !result.success).length
     
-    if (allSuccessful) {
-      console.log('✅ Alle E-Mails erfolgreich gesendet!')
-      return { success: true }
+    console.log(`📊 E-Mail-Status: ${successfulCount} erfolgreich, ${failedCount} fehlgeschlagen`)
+    
+    if (successfulCount > 0) {
+      console.log('✅ Mindestens eine E-Mail wurde erfolgreich gesendet')
+      return { 
+        success: true, 
+        details: {
+          successful: successfulCount,
+          failed: failedCount,
+          errors: errors
+        }
+      }
     } else {
-      const failedCount = results.filter(result => !result.success).length
-      console.error(`❌ ${failedCount} von ${results.length} E-Mails fehlgeschlagen`)
+      console.error('❌ Alle E-Mails fehlgeschlagen')
       return { 
         success: false, 
-        error: `${failedCount} von ${results.length} E-Mails konnten nicht gesendet werden`
+        error: 'Alle E-Mails konnten nicht gesendet werden',
+        details: {
+          successful: successfulCount,
+          failed: failedCount,
+          errors: errors
+        }
       }
     }
   } catch (error) {
     console.error('❌ Fehler beim Senden der E-Mails:', error)
     return { 
       success: false, 
-      error: 'Netzwerkfehler - Bitte versuchen Sie es erneut'
+      error: 'Netzwerkfehler - Bitte versuchen Sie es erneut',
+      details: { error: error instanceof Error ? error.message : 'Unbekannter Fehler' }
     }
   }
 }
@@ -266,12 +298,12 @@ export const createFormSubmissionEmail = (formData: {
       case 'stoermeldung':
       case 'kassenabrechnung':
       case 'feedback':
-        return ['kirstin.kreusch@landau.de', 'christof.drost@landau.de']
+        return ['kirstin.kreusch@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
       case 'arbeitsunfall':
       case 'unfall':
-        return ['christof.drost@landau.de', 'kirstin.kreusch@landau.de']
+        return ['christof.drost@gmail.com', 'kirstin.kreusch@landau.de'] // Alternative E-Mail-Adresse
       default:
-        return ['kirstin.kreusch@landau.de', 'christof.drost@landau.de']
+        return ['kirstin.kreusch@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
     }
   }
 

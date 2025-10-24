@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     console.log('📧 E-Mail-Versand gestartet')
     console.log('📧 EMAIL_USER gesetzt:', !!emailUser)
     console.log('📧 EMAIL_PASS gesetzt:', !!emailPass)
+    console.log('📧 EMAIL_USER Wert:', emailUser ? `${emailUser.substring(0, 3)}***@${emailUser.split('@')[1]}` : 'NICHT GESETZT')
     console.log('📧 An:', to)
     console.log('📧 Betreff:', subject)
 

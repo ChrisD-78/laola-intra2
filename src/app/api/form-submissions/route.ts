@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
     // E-Mail-Benachrichtigung senden
     try {
       console.log('📧 Sende E-Mail-Benachrichtigung für Formular-Eintrag:', submission.id)
+      console.log('📧 Formular-Typ:', submission.type)
+      console.log('📧 Titel:', submission.title)
       
       const emailData = createFormSubmissionEmail({
         type: submission.type,
@@ -51,12 +53,25 @@ export async function POST(request: NextRequest) {
         formData: submission.form_data
       })
 
+      console.log('📧 E-Mail-Empfänger:', emailData.to)
+      console.log('📧 E-Mail-Betreff:', emailData.subject)
+
       const emailResult = await sendEmailToMultiple(emailData)
       
       if (emailResult.success) {
         console.log('✅ E-Mail-Benachrichtigung erfolgreich gesendet')
+        if (emailResult.details) {
+          console.log('📊 E-Mail-Details:', {
+            erfolgreich: emailResult.details.successful,
+            fehlgeschlagen: emailResult.details.failed,
+            fehler: emailResult.details.errors
+          })
+        }
       } else {
         console.error('❌ E-Mail-Benachrichtigung fehlgeschlagen:', emailResult.error)
+        if (emailResult.details) {
+          console.error('📊 E-Mail-Fehler-Details:', emailResult.details)
+        }
         // E-Mail-Fehler nicht an Client weiterleiten, da Formular-Eintrag erfolgreich war
       }
     } catch (emailError) {
