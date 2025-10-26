@@ -187,18 +187,13 @@ export default function Dokumente() {
   }
 
   const startEditDocument = (doc: Document) => {
-    const pass = prompt('Bitte Passwort eingeben:')
-    if (pass === 'bl') {
-      setSelectedDocument(doc)
-      setEditTitle(doc.title)
-      setEditDescription(doc.description)
-      setEditCategory(doc.category)
-      setEditTags(doc.tags.join(', '))
-      setIsEditMode(true)
-      setIsViewerOpen(true)
-    } else if (pass !== null) {
-      alert('Falsches Passwort')
-    }
+    setSelectedDocument(doc)
+    setEditTitle(doc.title)
+    setEditDescription(doc.description)
+    setEditCategory(doc.category)
+    setEditTags(doc.tags.join(', '))
+    setIsEditMode(true)
+    setIsViewerOpen(true)
   }
 
   const saveEditDocument = async () => {

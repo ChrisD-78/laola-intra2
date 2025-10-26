@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import PasswordModal from './PasswordModal'
 
 interface DokumentUploadFormProps {
   onUploadDocument: (document: {
@@ -20,6 +21,7 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,19 +101,23 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => {
-          const pass = prompt('Bitte Passwort eingeben:')
-          if (pass === 'bl') {
-            setIsOpen(true)
-          } else if (pass !== null) {
-            alert('Falsches Passwort')
-          }
-        }}
-        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        📤 Dokument hochladen
-      </button>
+      <>
+        <button
+          onClick={() => setShowPasswordModal(true)}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          📤 Dokument hochladen
+        </button>
+        
+        <PasswordModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => setIsOpen(true)}
+          title="Dokument hochladen"
+          message="Bitte geben Sie das Passwort ein, um ein Dokument hochzuladen."
+          validPasswords={['bl']}
+        />
+      </>
     )
   }
 

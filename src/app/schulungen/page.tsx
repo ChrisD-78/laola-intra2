@@ -1164,28 +1164,14 @@ export default function Schulungen() {
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button 
-              onClick={() => {
-                const pass = prompt('Bitte Passwort eingeben:')
-                if (pass === 'bl') {
-                  setShowCreateForm(true)
-                } else if (pass !== null) {
-                  alert('Falsches Passwort')
-                }
-              }}
+              onClick={() => setShowCreateForm(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
             >
               <span>➕</span>
               <span>Neue Schulung</span>
             </button>
             <button 
-              onClick={() => {
-                const pass = prompt('Bitte Passwort eingeben:')
-                if (pass === 'team') {
-                  setActiveTab('overview')
-                } else if (pass !== null) {
-                  alert('Falsches Passwort')
-                }
-              }}
+              onClick={() => setActiveTab('overview')}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
             >
               <span>📊</span>
@@ -1206,16 +1192,7 @@ export default function Schulungen() {
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.id === 'overview') {
-                    const pass = prompt('Bitte Passwort eingeben:')
-                    if (pass === 'team') {
-                      setActiveTab('overview')
-                    } else if (pass !== null) {
-                      alert('Falsches Passwort')
-                    }
-                  } else {
-                    setActiveTab(tab.id as 'available' | 'overview')
-                  }
+                  setActiveTab(tab.id as 'available' | 'overview')
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id

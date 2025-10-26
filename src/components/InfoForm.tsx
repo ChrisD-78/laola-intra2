@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import PasswordModal from './PasswordModal'
 
 interface InfoFormProps {
   onAddInfo: (title: string, content: string, pdfFile?: File) => void
@@ -11,6 +12,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
   const [content, setContent] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,19 +56,23 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => {
-          const pass = prompt('Bitte Passwort eingeben:')
-          if (pass === 'bl' || pass === 'staho') {
-            setIsOpen(true)
-          } else if (pass !== null) {
-            alert('Falsches Passwort')
-          }
-        }}
-        className="px-4 py-2 bg-blue-700 hover:bg-blue-800 border-2 border-dashed border-blue-600 rounded-lg text-white text-sm font-medium transition-colors"
-      >
-        ➕ Neue Information
-      </button>
+      <>
+        <button
+          onClick={() => setShowPasswordModal(true)}
+          className="px-4 py-2 bg-blue-700 hover:bg-blue-800 border-2 border-dashed border-blue-600 rounded-lg text-white text-sm font-medium transition-colors"
+        >
+          ➕ Neue Information
+        </button>
+        
+        <PasswordModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => setIsOpen(true)}
+          title="Neue Information erstellen"
+          message="Bitte geben Sie das Passwort ein, um eine neue Information zu erstellen."
+          validPasswords={['bl', 'staho']}
+        />
+      </>
     )
   }
 

@@ -85,19 +85,14 @@ export default function Dashboard() {
   }
 
   const removeInfo = async (id: string) => {
-    const pass = prompt('Bitte Passwort eingeben:')
-    if (pass === 'bl') {
-      const prev = currentInfos
-      setCurrentInfos(prev.filter(info => info.id !== id))
-      try {
-        await deleteDashboardInfo(id)
-      } catch (e) {
-        console.error('Delete dashboard info failed', e)
-        setCurrentInfos(prev)
-        alert('Information konnte nicht gelöscht werden.')
-      }
-    } else if (pass !== null) {
-      alert('Falsches Passwort')
+    const prev = currentInfos
+    setCurrentInfos(prev.filter(info => info.id !== id))
+    try {
+      await deleteDashboardInfo(id)
+    } catch (e) {
+      console.error('Delete dashboard info failed', e)
+      setCurrentInfos(prev)
+      alert('Information konnte nicht gelöscht werden.')
     }
   }
 
