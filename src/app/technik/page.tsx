@@ -836,10 +836,10 @@ export default function TechnikPage() {
               {selectedInspection.bild_url && (
                 <div className="flex flex-col items-center">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Bild/Dokument</h4>
-                  <div className="w-full max-w-2xl border border-gray-300 rounded-lg overflow-hidden shadow-md bg-white">
+                  <div className="w-full max-w-lg border border-gray-300 rounded-lg overflow-hidden shadow-md bg-white">
                     <iframe
                       src={selectedInspection.bild_url}
-                      className="w-full h-[350px]"
+                      className="w-full h-[175px]"
                       title="Bild PDF"
                     />
                   </div>
