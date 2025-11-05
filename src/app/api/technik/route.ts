@@ -37,6 +37,18 @@ export async function POST(request: NextRequest) {
       status
     } = body
 
+    // Check if ID already exists
+    const existingId = await sql`
+      SELECT id_nr FROM technik_inspections WHERE id_nr = ${id_nr}
+    `
+
+    if (existingId.length > 0) {
+      return NextResponse.json({ 
+        error: 'ID-Nr. already exists',
+        message: 'Diese ID-Nr. wird bereits verwendet. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut.' 
+      }, { status: 409 })
+    }
+
     const result = await sql`
       INSERT INTO technik_inspections (
         rubrik,

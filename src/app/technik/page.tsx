@@ -58,6 +58,27 @@ export default function TechnikPage() {
     fetchInspections()
   }, [])
 
+  // Fetch next available ID when rubrik changes
+  useEffect(() => {
+    const fetchNextId = async () => {
+      if (formData.rubrik) {
+        try {
+          const response = await fetch(`/api/technik/next-id?rubrik=${encodeURIComponent(formData.rubrik)}`)
+          if (response.ok) {
+            const data = await response.json()
+            setFormData(prev => ({ ...prev, id_nr: data.nextId }))
+          }
+        } catch (error) {
+          console.error('Failed to fetch next ID:', error)
+        }
+      }
+    }
+
+    if (showAddForm) {
+      fetchNextId()
+    }
+  }, [formData.rubrik, showAddForm])
+
   const fetchInspections = async () => {
     try {
       const response = await fetch('/api/technik')
@@ -171,9 +192,21 @@ export default function TechnikPage() {
         })
         setBildFile(null)
         setBerichtFile(null)
+      } else if (response.status === 409) {
+        const errorData = await response.json()
+        alert(errorData.message || 'Diese ID-Nr. wird bereits verwendet. Bitte laden Sie die Seite neu.')
+        // Fetch new ID
+        const idResponse = await fetch(`/api/technik/next-id?rubrik=${encodeURIComponent(formData.rubrik)}`)
+        if (idResponse.ok) {
+          const idData = await idResponse.json()
+          setFormData(prev => ({ ...prev, id_nr: idData.nextId }))
+        }
+      } else {
+        alert('Fehler beim Erstellen der Prüfung. Bitte versuchen Sie es erneut.')
       }
     } catch (error) {
       console.error('Failed to add inspection:', error)
+      alert('Fehler beim Erstellen der Prüfung. Bitte versuchen Sie es erneut.')
     } finally {
       setUploading(false)
     }
@@ -422,16 +455,23 @@ export default function TechnikPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ID-Nr.*
+                    ID-Nr.* (automatisch generiert)
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.id_nr}
-                    onChange={(e) => setFormData({...formData, id_nr: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. R-001"
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                    placeholder="Wird automatisch generiert..."
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Format: {formData.rubrik === 'Messgeräte' ? 'MES-XXX' : 
+                             formData.rubrik === 'Wartungen' ? 'WAR-XXX' : 
+                             formData.rubrik === 'Prüfungen' ? 'PRÜ-XXX' : 
+                             formData.rubrik === 'Elektrische Prüfungen' ? 'ELE-XXX' : 
+                             formData.rubrik === 'Lüftungen' ? 'LÜF-XXX' : 'XXX-XXX'}
+                  </p>
                 </div>
                 
                 <div>
