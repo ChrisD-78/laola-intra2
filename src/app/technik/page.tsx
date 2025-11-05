@@ -146,6 +146,10 @@ export default function TechnikPage() {
   })
 
   const overdueCount = inspections.filter(i => calculateStatus(i.naechste_pruefung, i.status) === 'Überfällig').length
+  const openCount = inspections.filter(i => {
+    const status = calculateStatus(i.naechste_pruefung, i.status)
+    return status !== 'Überfällig' && i.status !== 'Erledigt'
+  }).length
   const completedCount = inspections.filter(i => i.status === 'Erledigt').length
   const totalCount = inspections.length
 
@@ -155,6 +159,18 @@ export default function TechnikPage() {
       status: 'Alle',
       searchText: ''
     })
+  }
+
+  const handleFilterByStatus = (status: string) => {
+    setFilters({
+      rubrik: 'Alle',
+      status: status,
+      searchText: ''
+    })
+    // Scroll to table
+    setTimeout(() => {
+      document.getElementById('inspections-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
   }
 
   const handleAddInspection = async (e: React.FormEvent) => {
@@ -311,9 +327,12 @@ export default function TechnikPage() {
         </p>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+      {/* Dashboard Statistics - Clickable Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+          onClick={() => handleFilterByStatus('Überfällig')}
+          className="bg-red-50 border border-red-200 rounded-xl p-4 hover:shadow-lg hover:bg-red-100 transition-all duration-200 cursor-pointer text-left"
+        >
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
               <span className="text-xl">🚨</span>
@@ -323,9 +342,29 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-red-900">{overdueCount}</p>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-red-600 mt-2">Klicken zum Filtern</p>
+        </button>
 
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+        <button
+          onClick={() => handleFilterByStatus('Offen')}
+          className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 hover:shadow-lg hover:bg-yellow-100 transition-all duration-200 cursor-pointer text-left"
+        >
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <span className="text-xl">📋</span>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-yellow-800">Offen</p>
+              <p className="text-2xl font-bold text-yellow-900">{openCount}</p>
+            </div>
+          </div>
+          <p className="text-xs text-yellow-600 mt-2">Klicken zum Filtern</p>
+        </button>
+
+        <button
+          onClick={() => handleFilterByStatus('Erledigt')}
+          className="bg-green-50 border border-green-200 rounded-xl p-4 hover:shadow-lg hover:bg-green-100 transition-all duration-200 cursor-pointer text-left"
+        >
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <span className="text-xl">✅</span>
@@ -335,9 +374,13 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-green-900">{completedCount}</p>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-green-600 mt-2">Klicken zum Filtern</p>
+        </button>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <button
+          onClick={() => handleResetFilters()}
+          className="bg-blue-50 border border-blue-200 rounded-xl p-4 hover:shadow-lg hover:bg-blue-100 transition-all duration-200 cursor-pointer text-left"
+        >
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
               <span className="text-xl">📊</span>
@@ -347,7 +390,8 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-blue-900">{totalCount}</p>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-blue-600 mt-2">Klicken für Alle</p>
+        </button>
       </div>
 
       {/* Add Button */}
@@ -367,7 +411,7 @@ export default function TechnikPage() {
       </div>
 
       {/* Inspections Table */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+      <div id="inspections-table" className="bg-white rounded-2xl shadow-lg border border-gray-100 scroll-mt-4">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900">Prüfungsübersicht</h2>
           <p className="text-gray-600 mt-1">Alle technischen Prüfungen im Überblick</p>
