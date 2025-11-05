@@ -671,10 +671,12 @@ export interface TechnikInspectionRecord {
   name: string
   standort: string
   bild_url?: string
+  bild_name?: string
   letzte_pruefung: string
   interval: string
   naechste_pruefung: string
-  bericht?: string
+  bericht_url?: string
+  bericht_name?: string
   bemerkungen?: string
   in_betrieb: boolean
   kontaktdaten?: string

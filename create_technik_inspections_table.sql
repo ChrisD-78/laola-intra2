@@ -8,15 +8,17 @@
 -- Technik Inspections Table
 CREATE TABLE IF NOT EXISTS technik_inspections (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  rubrik VARCHAR(100) NOT NULL,                  -- Category (e.g., Rutsche, Technikraum)
-  id_nr VARCHAR(100) NOT NULL,                   -- ID Number (e.g., R-001)
+  rubrik VARCHAR(100) NOT NULL,                  -- Category: Messgeräte, Wartungen, Prüfungen, Elektrische Prüfungen, Lüftungen
+  id_nr VARCHAR(100) NOT NULL,                   -- ID Number (e.g., M-001)
   name VARCHAR(255) NOT NULL,                    -- Name/Description of equipment
   standort VARCHAR(255) NOT NULL,                -- Location
-  bild_url TEXT,                                 -- Image URL
+  bild_url TEXT,                                 -- Image PDF URL
+  bild_name VARCHAR(255),                        -- Image PDF filename
   letzte_pruefung VARCHAR(100) NOT NULL,         -- Last inspection date
   interval VARCHAR(50) NOT NULL,                 -- Inspection interval (Täglich, Wöchentlich, etc.)
   naechste_pruefung VARCHAR(100) NOT NULL,       -- Next inspection date
-  bericht TEXT,                                  -- Inspection report
+  bericht_url TEXT,                              -- Inspection report PDF URL
+  bericht_name VARCHAR(255),                     -- Report PDF filename
   bemerkungen TEXT,                              -- Additional notes
   in_betrieb BOOLEAN DEFAULT true,               -- In/Out of operation
   kontaktdaten TEXT,                             -- Contact information

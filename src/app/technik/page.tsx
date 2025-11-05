@@ -10,10 +10,12 @@ interface TechnikInspection {
   name: string
   standort: string
   bild_url?: string
+  bild_name?: string
   letzte_pruefung: string
   interval: string
   naechste_pruefung: string
-  bericht?: string
+  bericht_url?: string
+  bericht_name?: string
   bemerkungen?: string
   in_betrieb: boolean
   kontaktdaten?: string
@@ -32,19 +34,25 @@ export default function TechnikPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    rubrik: '',
+    rubrik: 'Messgeräte',
     id_nr: '',
     name: '',
     standort: '',
     bild_url: '',
+    bild_name: '',
     letzte_pruefung: '',
     interval: 'Jährlich',
     naechste_pruefung: '',
-    bericht: '',
+    bericht_url: '',
+    bericht_name: '',
     bemerkungen: '',
     in_betrieb: true,
     kontaktdaten: ''
   })
+
+  const [bildFile, setBildFile] = useState<File | null>(null)
+  const [berichtFile, setBerichtFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     fetchInspections()
@@ -86,13 +94,57 @@ export default function TechnikPage() {
 
   const handleAddInspection = async (e: React.FormEvent) => {
     e.preventDefault()
+    setUploading(true)
     
     try {
+      let bildUrl = ''
+      let bildName = ''
+      let berichtUrl = ''
+      let berichtName = ''
+
+      // Upload Bild PDF
+      if (bildFile) {
+        const bildFormData = new FormData()
+        bildFormData.append('file', bildFile)
+        
+        const bildResponse = await fetch('/api/upload/pdf', {
+          method: 'POST',
+          body: bildFormData
+        })
+        
+        if (bildResponse.ok) {
+          const bildData = await bildResponse.json()
+          bildUrl = bildData.publicUrl
+          bildName = bildData.name
+        }
+      }
+
+      // Upload Bericht PDF
+      if (berichtFile) {
+        const berichtFormData = new FormData()
+        berichtFormData.append('file', berichtFile)
+        
+        const berichtResponse = await fetch('/api/upload/pdf', {
+          method: 'POST',
+          body: berichtFormData
+        })
+        
+        if (berichtResponse.ok) {
+          const berichtData = await berichtResponse.json()
+          berichtUrl = berichtData.publicUrl
+          berichtName = berichtData.name
+        }
+      }
+
       const response = await fetch('/api/technik', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          bild_url: bildUrl || formData.bild_url,
+          bild_name: bildName || formData.bild_name,
+          bericht_url: berichtUrl || formData.bericht_url,
+          bericht_name: berichtName || formData.bericht_name,
           status: 'Offen'
         })
       })
@@ -102,22 +154,28 @@ export default function TechnikPage() {
         setShowAddForm(false)
         // Reset form
         setFormData({
-          rubrik: '',
+          rubrik: 'Messgeräte',
           id_nr: '',
           name: '',
           standort: '',
           bild_url: '',
+          bild_name: '',
           letzte_pruefung: '',
           interval: 'Jährlich',
           naechste_pruefung: '',
-          bericht: '',
+          bericht_url: '',
+          bericht_name: '',
           bemerkungen: '',
           in_betrieb: true,
           kontaktdaten: ''
         })
+        setBildFile(null)
+        setBerichtFile(null)
       }
     } catch (error) {
       console.error('Failed to add inspection:', error)
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -348,14 +406,18 @@ export default function TechnikPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rubrik*
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.rubrik}
                     onChange={(e) => setFormData({...formData, rubrik: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. Rutsche, Technikraum"
-                  />
+                  >
+                    <option value="Messgeräte">Messgeräte</option>
+                    <option value="Wartungen">Wartungen</option>
+                    <option value="Prüfungen">Prüfungen</option>
+                    <option value="Elektrische Prüfungen">Elektrische Prüfungen</option>
+                    <option value="Lüftungen">Lüftungen</option>
+                  </select>
                 </div>
                 
                 <div>
@@ -447,18 +509,40 @@ export default function TechnikPage() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Bild-URL
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.bild_url}
-                    onChange={(e) => setFormData({...formData, bild_url: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="URL zum Bild"
-                  />
-                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bild (PDF)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setBildFile(e.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                {bildFile && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Ausgewählt: {bildFile.name}
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bericht (PDF)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setBerichtFile(e.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                {berichtFile && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Ausgewählt: {berichtFile.name}
+                  </p>
+                )}
               </div>
               
               <div>
@@ -471,19 +555,6 @@ export default function TechnikPage() {
                   onChange={(e) => setFormData({...formData, kontaktdaten: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Kontaktdaten für Rückfragen"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bericht
-                </label>
-                <textarea
-                  value={formData.bericht}
-                  onChange={(e) => setFormData({...formData, bericht: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Prüfungsbericht"
                 />
               </div>
               
@@ -517,14 +588,16 @@ export default function TechnikPage() {
                   type="button"
                   onClick={() => setShowAddForm(false)}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={uploading}
                 >
                   Abbrechen
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  disabled={uploading}
                 >
-                  Prüfung anlegen
+                  {uploading ? 'Wird hochgeladen...' : 'Prüfung anlegen'}
                 </button>
               </div>
             </form>
@@ -549,14 +622,30 @@ export default function TechnikPage() {
             </div>
             
             <div className="p-6 space-y-6">
-              {/* Image */}
+              {/* Bild PDF - Zentral oben mittig */}
               {selectedInspection.bild_url && (
-                <div className="flex justify-center">
-                  <img
-                    src={selectedInspection.bild_url}
-                    alt={selectedInspection.name}
-                    className="max-h-64 rounded-lg shadow-md object-cover"
-                  />
+                <div className="flex flex-col items-center">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Bild/Dokument</h4>
+                  <div className="w-full max-w-3xl border border-gray-300 rounded-lg overflow-hidden shadow-lg bg-white">
+                    <iframe
+                      src={selectedInspection.bild_url}
+                      className="w-full h-[500px]"
+                      title="Bild PDF"
+                    />
+                  </div>
+                  {selectedInspection.bild_name && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      📄 {selectedInspection.bild_name}
+                    </p>
+                  )}
+                  <a
+                    href={selectedInspection.bild_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    PDF in neuem Tab öffnen →
+                  </a>
                 </div>
               )}
               
@@ -620,12 +709,29 @@ export default function TechnikPage() {
                 </div>
               )}
               
-              {selectedInspection.bericht && (
+              {selectedInspection.bericht_url && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Bericht</label>
-                  <p className="mt-1 text-gray-900 bg-gray-50 p-4 rounded-lg">
-                    {selectedInspection.bericht}
-                  </p>
+                  <label className="text-sm font-medium text-gray-500 block mb-2">Bericht</label>
+                  <div className="border border-gray-300 rounded-lg overflow-hidden shadow-md bg-white">
+                    <iframe
+                      src={selectedInspection.bericht_url}
+                      className="w-full h-[400px]"
+                      title="Bericht PDF"
+                    />
+                  </div>
+                  {selectedInspection.bericht_name && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      📄 {selectedInspection.bericht_name}
+                    </p>
+                  )}
+                  <a
+                    href={selectedInspection.bericht_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    PDF in neuem Tab öffnen →
+                  </a>
                 </div>
               )}
               
