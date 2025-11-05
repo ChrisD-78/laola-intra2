@@ -54,6 +54,13 @@ export default function TechnikPage() {
   const [berichtFile, setBerichtFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
 
+  // Filter state
+  const [filters, setFilters] = useState({
+    rubrik: 'Alle',
+    status: 'Alle',
+    searchText: ''
+  })
+
   useEffect(() => {
     fetchInspections()
   }, [])
@@ -109,9 +116,46 @@ export default function TechnikPage() {
     return nextDate < now
   }
 
+  // Apply filters
+  const filteredInspections = inspections.filter(inspection => {
+    // Filter by rubrik
+    if (filters.rubrik !== 'Alle' && inspection.rubrik !== filters.rubrik) {
+      return false
+    }
+
+    // Filter by status
+    const currentStatus = calculateStatus(inspection.naechste_pruefung, inspection.status)
+    if (filters.status !== 'Alle') {
+      if (filters.status === 'Überfällig' && currentStatus !== 'Überfällig') return false
+      if (filters.status === 'Erledigt' && inspection.status !== 'Erledigt') return false
+      if (filters.status === 'Offen' && (currentStatus === 'Überfällig' || inspection.status === 'Erledigt')) return false
+    }
+
+    // Filter by search text (ID-Nr, Name, Standort)
+    if (filters.searchText) {
+      const searchLower = filters.searchText.toLowerCase()
+      const matchesSearch = 
+        inspection.id_nr.toLowerCase().includes(searchLower) ||
+        inspection.name.toLowerCase().includes(searchLower) ||
+        inspection.standort.toLowerCase().includes(searchLower)
+      
+      if (!matchesSearch) return false
+    }
+
+    return true
+  })
+
   const overdueCount = inspections.filter(i => calculateStatus(i.naechste_pruefung, i.status) === 'Überfällig').length
   const completedCount = inspections.filter(i => i.status === 'Erledigt').length
   const totalCount = inspections.length
+
+  const handleResetFilters = () => {
+    setFilters({
+      rubrik: 'Alle',
+      status: 'Alle',
+      searchText: ''
+    })
+  }
 
   const handleAddInspection = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -327,6 +371,95 @@ export default function TechnikPage() {
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900">Prüfungsübersicht</h2>
           <p className="text-gray-600 mt-1">Alle technischen Prüfungen im Überblick</p>
+          
+          {/* Filters */}
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Rubrik Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Rubrik
+                </label>
+                <select
+                  value={filters.rubrik}
+                  onChange={(e) => setFilters({...filters, rubrik: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Alle">Alle Rubriken</option>
+                  <option value="Messgeräte">Messgeräte</option>
+                  <option value="Wartungen">Wartungen</option>
+                  <option value="Prüfungen">Prüfungen</option>
+                  <option value="Elektrische Prüfungen">Elektrische Prüfungen</option>
+                  <option value="Lüftungen">Lüftungen</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({...filters, status: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Alle">Alle Status</option>
+                  <option value="Überfällig">Überfällig</option>
+                  <option value="Offen">Offen</option>
+                  <option value="Erledigt">Erledigt</option>
+                </select>
+              </div>
+
+              {/* Search Filter */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Suche (ID-Nr., Name, Standort)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={filters.searchText}
+                    onChange={(e) => setFilters({...filters, searchText: e.target.value})}
+                    placeholder="Suchen..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  />
+                  {filters.searchText && (
+                    <button
+                      onClick={() => setFilters({...filters, searchText: ''})}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Info & Reset */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {filteredInspections.length === inspections.length ? (
+                  <span>Zeige alle {inspections.length} Prüfungen</span>
+                ) : (
+                  <span>
+                    Zeige {filteredInspections.length} von {inspections.length} Prüfungen
+                    {filters.rubrik !== 'Alle' && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">Rubrik: {filters.rubrik}</span>}
+                    {filters.status !== 'Alle' && <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs">Status: {filters.status}</span>}
+                    {filters.searchText && <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">Suche: "{filters.searchText}"</span>}
+                  </span>
+                )}
+              </div>
+              {(filters.rubrik !== 'Alle' || filters.status !== 'Alle' || filters.searchText) && (
+                <button
+                  onClick={handleResetFilters}
+                  className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Filter zurücksetzen
+                </button>
+              )}
+            </div>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -360,20 +493,30 @@ export default function TechnikPage() {
                     Lade Prüfungen...
                   </td>
                 </tr>
-              ) : inspections.length === 0 ? (
+              ) : filteredInspections.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center">
-                    <div className="text-4xl mb-4">🔧</div>
+                    <div className="text-4xl mb-4">🔍</div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Keine Prüfungen vorhanden
+                      {inspections.length === 0 ? 'Keine Prüfungen vorhanden' : 'Keine Prüfungen gefunden'}
                     </h3>
                     <p className="text-gray-600">
-                      Erstellen Sie Ihre erste technische Prüfung
+                      {inspections.length === 0 
+                        ? 'Erstellen Sie Ihre erste technische Prüfung'
+                        : 'Versuchen Sie es mit anderen Filtereinstellungen'}
                     </p>
+                    {(filters.rubrik !== 'Alle' || filters.status !== 'Alle' || filters.searchText) && (
+                      <button
+                        onClick={handleResetFilters}
+                        className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Filter zurücksetzen
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
-                inspections.map((inspection) => {
+                filteredInspections.map((inspection) => {
                   const status = calculateStatus(inspection.naechste_pruefung, inspection.status)
                   const overdue = isOverdue(inspection.naechste_pruefung) && status !== 'Erledigt'
                   
