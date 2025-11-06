@@ -734,7 +734,7 @@ Diese E-Mail wurde automatisch generiert.
 
   return {
     to: 'christof.drost@landau.de, kirstin.kreusch@landau.de',
-    subject: `🚨 [ARBEITSUNFALL] ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter' : 'Gast'}: ${accidentData.verletztePerson} - ${accidentData.schweregrad}`,
+    subject: `🚨 [Unfallmeldung] ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter' : 'Gast'}: ${accidentData.verletztePerson} - ${accidentData.schweregrad}`,
     html,
     text
   }
