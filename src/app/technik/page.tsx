@@ -162,15 +162,24 @@ export default function TechnikPage() {
   }
 
   const handleFilterByStatus = (status: string) => {
-    setFilters({
-      rubrik: 'Alle',
-      status: status,
-      searchText: ''
-    })
-    // Scroll to table
-    setTimeout(() => {
-      document.getElementById('inspections-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 100)
+    // Toggle-Funktion: Wenn der gleiche Status nochmal geklickt wird, Filter zurücksetzen
+    if (filters.status === status) {
+      setFilters({
+        rubrik: 'Alle',
+        status: 'Alle',
+        searchText: ''
+      })
+    } else {
+      setFilters({
+        rubrik: 'Alle',
+        status: status,
+        searchText: ''
+      })
+      // Scroll to table nur wenn Filter aktiviert wird
+      setTimeout(() => {
+        document.getElementById('inspections-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
   }
 
   const handleAddInspection = async (e: React.FormEvent) => {
@@ -327,11 +336,16 @@ export default function TechnikPage() {
         </p>
       </div>
 
-      {/* Dashboard Statistics - Clickable Cards */}
+      {/* Dashboard Statistics - Clickable Cards with Toggle */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Überfällig */}
         <button
           onClick={() => handleFilterByStatus('Überfällig')}
-          className="bg-red-50 border border-red-200 rounded-xl p-4 hover:shadow-lg hover:bg-red-100 transition-all duration-200 cursor-pointer text-left"
+          className={`bg-red-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg text-left ${
+            filters.status === 'Überfällig'
+              ? 'border-red-500 ring-2 ring-red-300 shadow-lg'
+              : 'border-red-200 hover:border-red-400'
+          }`}
         >
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
@@ -342,12 +356,21 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-red-900">{overdueCount}</p>
             </div>
           </div>
-          <p className="text-xs text-red-600 mt-2">Klicken zum Filtern</p>
+          {filters.status === 'Überfällig' ? (
+            <div className="mt-2 text-xs text-red-700 font-medium">✓ Aktiver Filter</div>
+          ) : (
+            <p className="text-xs text-red-600 mt-2">Klicken zum Filtern</p>
+          )}
         </button>
 
+        {/* Offen */}
         <button
           onClick={() => handleFilterByStatus('Offen')}
-          className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 hover:shadow-lg hover:bg-yellow-100 transition-all duration-200 cursor-pointer text-left"
+          className={`bg-yellow-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg text-left ${
+            filters.status === 'Offen'
+              ? 'border-yellow-500 ring-2 ring-yellow-300 shadow-lg'
+              : 'border-yellow-200 hover:border-yellow-400'
+          }`}
         >
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -358,12 +381,21 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-yellow-900">{openCount}</p>
             </div>
           </div>
-          <p className="text-xs text-yellow-600 mt-2">Klicken zum Filtern</p>
+          {filters.status === 'Offen' ? (
+            <div className="mt-2 text-xs text-yellow-700 font-medium">✓ Aktiver Filter</div>
+          ) : (
+            <p className="text-xs text-yellow-600 mt-2">Klicken zum Filtern</p>
+          )}
         </button>
 
+        {/* Erledigt */}
         <button
           onClick={() => handleFilterByStatus('Erledigt')}
-          className="bg-green-50 border border-green-200 rounded-xl p-4 hover:shadow-lg hover:bg-green-100 transition-all duration-200 cursor-pointer text-left"
+          className={`bg-green-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg text-left ${
+            filters.status === 'Erledigt'
+              ? 'border-green-500 ring-2 ring-green-300 shadow-lg'
+              : 'border-green-200 hover:border-green-400'
+          }`}
         >
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -374,12 +406,21 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-green-900">{completedCount}</p>
             </div>
           </div>
-          <p className="text-xs text-green-600 mt-2">Klicken zum Filtern</p>
+          {filters.status === 'Erledigt' ? (
+            <div className="mt-2 text-xs text-green-700 font-medium">✓ Aktiver Filter</div>
+          ) : (
+            <p className="text-xs text-green-600 mt-2">Klicken zum Filtern</p>
+          )}
         </button>
 
+        {/* Gesamtanzahl / Alle */}
         <button
           onClick={() => handleResetFilters()}
-          className="bg-blue-50 border border-blue-200 rounded-xl p-4 hover:shadow-lg hover:bg-blue-100 transition-all duration-200 cursor-pointer text-left"
+          className={`bg-blue-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg text-left ${
+            filters.status === 'Alle' && filters.rubrik === 'Alle'
+              ? 'border-blue-500 ring-2 ring-blue-300 shadow-lg'
+              : 'border-blue-200 hover:border-blue-400'
+          }`}
         >
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -390,7 +431,11 @@ export default function TechnikPage() {
               <p className="text-2xl font-bold text-blue-900">{totalCount}</p>
             </div>
           </div>
-          <p className="text-xs text-blue-600 mt-2">Klicken für Alle</p>
+          {filters.status === 'Alle' && filters.rubrik === 'Alle' ? (
+            <div className="mt-2 text-xs text-blue-700 font-medium">✓ Alle angezeigt</div>
+          ) : (
+            <p className="text-xs text-blue-600 mt-2">Klicken für Alle</p>
+          )}
         </button>
       </div>
 
