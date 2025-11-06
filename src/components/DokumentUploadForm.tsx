@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import PasswordModal from './PasswordModal'
+import { useAuth } from '@/components/AuthProvider'
 
 interface DokumentUploadFormProps {
   onUploadDocument: (document: {
@@ -14,6 +15,7 @@ interface DokumentUploadFormProps {
 }
 
 const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
+  const { isAdmin } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('Sicherheit')
@@ -99,24 +101,37 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
     return '📎'
   }
 
+  const handleButtonClick = () => {
+    // Admin-Benutzer überspringen die Passwort-Abfrage
+    if (isAdmin) {
+      setIsOpen(true)
+    } else {
+      setShowPasswordModal(true)
+    }
+  }
+
   if (!isOpen) {
     return (
       <>
         <button
-          onClick={() => setShowPasswordModal(true)}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={handleButtonClick}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           📤 Dokument hochladen
+          {isAdmin && <span className="text-xs bg-purple-500/50 px-2 py-0.5 rounded-full">Admin</span>}
         </button>
         
-        <PasswordModal
-          isOpen={showPasswordModal}
-          onClose={() => setShowPasswordModal(false)}
-          onSuccess={() => setIsOpen(true)}
-          title="Dokument hochladen"
-          message="Bitte geben Sie das Passwort ein, um ein Dokument hochzuladen."
-          validPasswords={['bl']}
-        />
+        {/* Nur für Nicht-Admins: Passwort-Modal */}
+        {!isAdmin && (
+          <PasswordModal
+            isOpen={showPasswordModal}
+            onClose={() => setShowPasswordModal(false)}
+            onSuccess={() => setIsOpen(true)}
+            title="Dokument hochladen"
+            message="Bitte geben Sie das Passwort ein, um ein Dokument hochzuladen."
+            validPasswords={['bl']}
+          />
+        )}
       </>
     )
   }

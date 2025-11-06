@@ -2,12 +2,14 @@
 
 import { useState, useRef } from 'react'
 import PasswordModal from './PasswordModal'
+import { useAuth } from '@/components/AuthProvider'
 
 interface InfoFormProps {
   onAddInfo: (title: string, content: string, pdfFile?: File) => void
 }
 
 const InfoForm = ({ onAddInfo }: InfoFormProps) => {
+  const { isAdmin } = useAuth()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -54,24 +56,37 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
     }
   }
 
+  const handleButtonClick = () => {
+    // Admin-Benutzer überspringen die Passwort-Abfrage
+    if (isAdmin) {
+      setIsOpen(true)
+    } else {
+      setShowPasswordModal(true)
+    }
+  }
+
   if (!isOpen) {
     return (
       <>
         <button
-          onClick={() => setShowPasswordModal(true)}
-          className="px-4 py-2 bg-blue-700 hover:bg-blue-800 border-2 border-dashed border-blue-600 rounded-lg text-white text-sm font-medium transition-colors"
+          onClick={handleButtonClick}
+          className="px-4 py-2 bg-blue-700 hover:bg-blue-800 border-2 border-dashed border-blue-600 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
         >
           ➕ Neue Information
+          {isAdmin && <span className="text-xs bg-purple-500/50 px-2 py-0.5 rounded-full">Admin</span>}
         </button>
         
-        <PasswordModal
-          isOpen={showPasswordModal}
-          onClose={() => setShowPasswordModal(false)}
-          onSuccess={() => setIsOpen(true)}
-          title="Neue Information erstellen"
-          message="Bitte geben Sie das Passwort ein, um eine neue Information zu erstellen."
-          validPasswords={['bl', 'staho']}
-        />
+        {/* Nur für Nicht-Admins: Passwort-Modal */}
+        {!isAdmin && (
+          <PasswordModal
+            isOpen={showPasswordModal}
+            onClose={() => setShowPasswordModal(false)}
+            onSuccess={() => setIsOpen(true)}
+            title="Neue Information erstellen"
+            message="Bitte geben Sie das Passwort ein, um eine neue Information zu erstellen."
+            validPasswords={['bl', 'staho']}
+          />
+        )}
       </>
     )
   }
