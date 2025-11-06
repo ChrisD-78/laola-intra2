@@ -9,6 +9,7 @@ import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
 import StundenkorrekturForm from '@/components/StundenkorrekturForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById } from '@/lib/db'
+import { useAuth } from '@/components/AuthProvider'
 
 interface FormSubmission {
   id: string
@@ -22,6 +23,7 @@ interface FormSubmission {
 }
 
 export default function Formulare() {
+  const { isAdmin } = useAuth()
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -186,8 +188,8 @@ export default function Formulare() {
 
   const confirmDelete = async () => {
     if (showDeleteConfirm) {
-      const pass = prompt('Bitte Passwort eingeben:')
-      if (pass === 'bl') {
+      // Admin-Benutzer überspringen die Passwort-Abfrage
+      if (isAdmin) {
         try {
           await deleteFormSubmissionById(showDeleteConfirm.id)
           setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
@@ -196,8 +198,21 @@ export default function Formulare() {
           console.error('Error deleting submission:', error)
           alert('Fehler beim Löschen des Formulars.')
         }
-      } else if (pass !== null) {
-        alert('Falsches Passwort')
+      } else {
+        // Nicht-Admins müssen Passwort eingeben
+        const pass = prompt('Bitte Passwort eingeben:')
+        if (pass === 'bl') {
+          try {
+            await deleteFormSubmissionById(showDeleteConfirm.id)
+            setSubmissions(submissions.filter(sub => sub.id !== showDeleteConfirm.id))
+            setShowDeleteConfirm(null)
+          } catch (error) {
+            console.error('Error deleting submission:', error)
+            alert('Fehler beim Löschen des Formulars.')
+          }
+        } else if (pass !== null) {
+          alert('Falsches Passwort')
+        }
       }
     }
   }
@@ -689,16 +704,37 @@ export default function Formulare() {
                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                   <span className="text-red-600 text-lg">⚠️</span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Formular löschen</h3>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Formular löschen</h3>
+                    {isAdmin && (
+                      <span className="text-xs bg-purple-500/50 text-white px-2 py-0.5 rounded-full">Admin</span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-800">Diese Aktion kann nicht rückgängig gemacht werden</p>
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
                 <p className="text-sm font-medium text-gray-900">{showDeleteConfirm.title}</p>
                 <p className="text-sm text-gray-800 mt-1">{showDeleteConfirm.description}</p>
               </div>
+
+              {!isAdmin && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                  <p className="text-xs text-yellow-800">
+                    ⚠️ Sie benötigen ein Passwort zum Löschen
+                  </p>
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="bg-purple-50 border-l-4 border-purple-400 p-3 mb-4">
+                  <p className="text-xs text-purple-800">
+                    👑 Admin: Keine Passwort-Eingabe erforderlich
+                  </p>
+                </div>
+              )}
 
               <div className="flex space-x-3">
                 <button
