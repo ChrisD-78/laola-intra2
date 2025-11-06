@@ -10,6 +10,7 @@ export default function Aufgaben() {
   const searchParams = useSearchParams()
   const [filteredTasks, setFilteredTasks] = useState(tasks)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<'all' | 'overdue' | 'today' | 'open' | 'completed'>('all')
 
   // Get status filter from URL
   useEffect(() => {
@@ -17,15 +18,44 @@ export default function Aufgaben() {
     setStatusFilter(status)
   }, [searchParams])
 
-  // Filter tasks based on status
+  // Filter tasks based on active filter
   useEffect(() => {
+    let filtered = tasks
+
     if (statusFilter) {
-      const filtered = tasks.filter(task => task.status === statusFilter)
-      setFilteredTasks(filtered)
+      filtered = tasks.filter(task => task.status === statusFilter)
     } else {
-      setFilteredTasks(tasks)
+      // Apply filter based on activeFilter
+      switch (activeFilter) {
+        case 'overdue':
+          filtered = tasks.filter(task => isOverdue(task.dueDate, task.status))
+          break
+        case 'today':
+          filtered = tasks.filter(task => {
+            const due = new Date(task.dueDate)
+            const now = new Date()
+            const diffTime = due.getTime() - now.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            return diffDays === 0 && task.status !== 'Abgeschlossen'
+          })
+          break
+        case 'open':
+          filtered = tasks.filter(task => task.status === 'Offen')
+          break
+        case 'completed':
+          filtered = tasks.filter(task => task.status === 'Abgeschlossen')
+          break
+        default:
+          filtered = tasks
+      }
     }
-  }, [tasks, statusFilter])
+
+    setFilteredTasks(filtered)
+  }, [tasks, statusFilter, activeFilter])
+
+  const handleFilterClick = (filter: 'all' | 'overdue' | 'today' | 'open' | 'completed') => {
+    setActiveFilter(filter)
+  }
 
   const addNewTask = (taskData: {
     title: string
@@ -123,31 +153,50 @@ export default function Aufgaben() {
         </p>
       </div>
 
-      {/* Dashboard Statistics */}
+      {/* Dashboard Statistics - Clickable Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+        {/* Überfällig */}
+        <button
+          onClick={() => handleFilterClick('overdue')}
+          className={`bg-red-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+            activeFilter === 'overdue' 
+              ? 'border-red-500 ring-2 ring-red-300 shadow-lg' 
+              : 'border-red-200 hover:border-red-400'
+          }`}
+        >
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
               <span className="text-xl">🚨</span>
             </div>
-            <div className="ml-3">
+            <div className="ml-3 text-left">
               <p className="text-sm font-medium text-red-800">Überfällig</p>
               <p className="text-2xl font-bold text-red-900">
-                {filteredTasks.filter(task => isOverdue(task.dueDate, task.status)).length}
+                {tasks.filter(task => isOverdue(task.dueDate, task.status)).length}
               </p>
             </div>
           </div>
-        </div>
+          {activeFilter === 'overdue' && (
+            <div className="mt-2 text-xs text-red-700 font-medium">✓ Aktiver Filter</div>
+          )}
+        </button>
 
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+        {/* Heute fällig */}
+        <button
+          onClick={() => handleFilterClick('today')}
+          className={`bg-orange-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+            activeFilter === 'today' 
+              ? 'border-orange-500 ring-2 ring-orange-300 shadow-lg' 
+              : 'border-orange-200 hover:border-orange-400'
+          }`}
+        >
           <div className="flex items-center">
             <div className="p-2 bg-orange-100 rounded-lg">
               <span className="text-xl">⚠️</span>
             </div>
-            <div className="ml-3">
+            <div className="ml-3 text-left">
               <p className="text-sm font-medium text-orange-800">Heute fällig</p>
               <p className="text-2xl font-bold text-orange-900">
-                {filteredTasks.filter(task => {
+                {tasks.filter(task => {
                   const due = new Date(task.dueDate)
                   const now = new Date()
                   const diffTime = due.getTime() - now.getTime()
@@ -157,35 +206,60 @@ export default function Aufgaben() {
               </p>
             </div>
           </div>
-        </div>
+          {activeFilter === 'today' && (
+            <div className="mt-2 text-xs text-orange-700 font-medium">✓ Aktiver Filter</div>
+          )}
+        </button>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        {/* Offen */}
+        <button
+          onClick={() => handleFilterClick('open')}
+          className={`bg-blue-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+            activeFilter === 'open' 
+              ? 'border-blue-500 ring-2 ring-blue-300 shadow-lg' 
+              : 'border-blue-200 hover:border-blue-400'
+          }`}
+        >
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
               <span className="text-xl">📋</span>
             </div>
-            <div className="ml-3">
+            <div className="ml-3 text-left">
               <p className="text-sm font-medium text-blue-800">Offen</p>
               <p className="text-2xl font-bold text-blue-900">
-                {filteredTasks.filter(task => task.status === 'Offen').length}
+                {tasks.filter(task => task.status === 'Offen').length}
               </p>
             </div>
           </div>
-        </div>
+          {activeFilter === 'open' && (
+            <div className="mt-2 text-xs text-blue-700 font-medium">✓ Aktiver Filter</div>
+          )}
+        </button>
 
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+        {/* Erledigt */}
+        <button
+          onClick={() => handleFilterClick('completed')}
+          className={`bg-green-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+            activeFilter === 'completed' 
+              ? 'border-green-500 ring-2 ring-green-300 shadow-lg' 
+              : 'border-green-200 hover:border-green-400'
+          }`}
+        >
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <span className="text-xl">✅</span>
             </div>
-            <div className="ml-3">
+            <div className="ml-3 text-left">
               <p className="text-sm font-medium text-green-800">Erledigt</p>
               <p className="text-2xl font-bold text-green-900">
-                {filteredTasks.filter(task => task.status === 'Abgeschlossen').length}
+                {tasks.filter(task => task.status === 'Abgeschlossen').length}
               </p>
             </div>
           </div>
-        </div>
+          {activeFilter === 'completed' && (
+            <div className="mt-2 text-xs text-green-700 font-medium">✓ Aktiver Filter</div>
+          )}
+        </button>
       </div>
 
       {/* Filters and Search */}
@@ -202,30 +276,36 @@ export default function Aufgaben() {
       {/* Tasks List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {statusFilter ? `Aufgaben: ${statusFilter}` : 'Alle Aufgaben'}
+                {activeFilter === 'overdue' && '🚨 Überfällige Aufgaben'}
+                {activeFilter === 'today' && '⚠️ Heute fällige Aufgaben'}
+                {activeFilter === 'open' && '📋 Offene Aufgaben'}
+                {activeFilter === 'completed' && '✅ Erledigte Aufgaben'}
+                {activeFilter === 'all' && !statusFilter && 'Alle Aufgaben'}
+                {statusFilter && `Aufgaben: ${statusFilter}`}
               </h2>
               <p className="text-gray-600 mt-1">
-                {statusFilter 
-                  ? `Gefilterte Ansicht: ${statusFilter} (${filteredTasks.length} Aufgaben)`
-                  : 'Übersicht aller Aufgaben mit Fälligkeitsstatus'
-                }
+                {filteredTasks.length} {filteredTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} angezeigt
               </p>
             </div>
-            {statusFilter && (
+            {(activeFilter !== 'all' || statusFilter) && (
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">Filter:</span>
+                <span className="text-sm text-gray-500">Aktiver Filter:</span>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  {statusFilter}
+                  {activeFilter === 'overdue' && 'Überfällig'}
+                  {activeFilter === 'today' && 'Heute fällig'}
+                  {activeFilter === 'open' && 'Offen'}
+                  {activeFilter === 'completed' && 'Erledigt'}
+                  {statusFilter && statusFilter}
                 </span>
-                <a 
-                  href="/aufgaben"
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                <button
+                  onClick={() => handleFilterClick('all')}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
                 >
                   Alle anzeigen
-                </a>
+                </button>
               </div>
             )}
           </div>
