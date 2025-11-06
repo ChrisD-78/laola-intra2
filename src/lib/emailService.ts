@@ -134,9 +134,9 @@ export const createFeedbackEmail = (feedbackData: {
   const getEmailRecipient = (kategorie: string): string => {
     switch (kategorie) {
       case 'Stunden Korrektur':
-        return 'christof.drost@landau.de'
+        return 'christof.drost@landau.de, kirstin.kreusch@landau.de'
       default:
-        return 'christof.drost@landau.de'
+        return 'christof.drost@landau.de, kirstin.kreusch@landau.de'
     }
   }
 
@@ -298,14 +298,14 @@ export const createFormSubmissionEmail = (formData: {
       case 'stoermeldung':
       case 'kassenabrechnung':
       case 'feedback':
-        return ['christof.drost@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
+        return ['christof.drost@landau.de', 'christof.drost@gmail.com', 'kirstin.kreusch@landau.de']
       case 'stundenkorrektur':
-        return ['christof.drost@landau.de'] // Nur an Christof
+        return ['christof.drost@landau.de', 'kirstin.kreusch@landau.de']
       case 'arbeitsunfall':
       case 'unfall':
-        return ['christof.drost@gmail.com', 'christof.drost@landau.de'] // Alternative E-Mail-Adresse
+        return ['christof.drost@gmail.com', 'christof.drost@landau.de', 'kirstin.kreusch@landau.de']
       default:
-        return ['christof.drost@landau.de', 'christof.drost@gmail.com'] // Alternative E-Mail-Adresse
+        return ['christof.drost@landau.de', 'christof.drost@gmail.com', 'kirstin.kreusch@landau.de']
     }
   }
 
@@ -733,7 +733,7 @@ Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@landau.de',
+    to: 'christof.drost@landau.de, kirstin.kreusch@landau.de',
     subject: `🚨 [ARBEITSUNFALL] ${accidentData.unfalltyp === 'mitarbeiter' ? 'Mitarbeiter' : 'Gast'}: ${accidentData.verletztePerson} - ${accidentData.schweregrad}`,
     html,
     text
@@ -888,7 +888,7 @@ Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@landau.de',
+    to: 'christof.drost@landau.de, kirstin.kreusch@landau.de',
     subject: `⏰ [STUNDENKORREKTUR] ${correctionData.name} - ${new Date(correctionData.datum).toLocaleDateString('de-DE')}`,
     html,
     text
