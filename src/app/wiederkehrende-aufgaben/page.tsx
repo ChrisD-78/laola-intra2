@@ -93,7 +93,12 @@ export default function WiederkehrendeAufgaben() {
   }, [recurringTasks, activeFilter])
 
   const handleFilterClick = (filter: 'all' | 'overdue' | 'today' | 'week' | 'active') => {
-    setActiveFilter(filter)
+    // Toggle-Funktion: Wenn der gleiche Filter nochmal geklickt wird, zurück zu 'all'
+    if (activeFilter === filter && filter !== 'all') {
+      setActiveFilter('all')
+    } else {
+      setActiveFilter(filter)
+    }
   }
 
   const addNewRecurringTask = async (taskData: {

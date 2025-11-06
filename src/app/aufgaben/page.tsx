@@ -54,7 +54,12 @@ export default function Aufgaben() {
   }, [tasks, statusFilter, activeFilter])
 
   const handleFilterClick = (filter: 'all' | 'overdue' | 'today' | 'open' | 'completed') => {
-    setActiveFilter(filter)
+    // Toggle-Funktion: Wenn der gleiche Filter nochmal geklickt wird, zurück zu 'all'
+    if (activeFilter === filter && filter !== 'all') {
+      setActiveFilter('all')
+    } else {
+      setActiveFilter(filter)
+    }
   }
 
   const addNewTask = (taskData: {
