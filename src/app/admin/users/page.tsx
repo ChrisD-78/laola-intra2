@@ -1,0 +1,380 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/components/AuthProvider'
+import { useRouter } from 'next/navigation'
+import ProtectedLayout from '@/components/ProtectedLayout'
+
+interface User {
+  id: string
+  username: string
+  display_name: string
+  is_admin: boolean
+  is_active: boolean
+  created_at: string
+  last_login?: string
+  created_by?: string
+}
+
+export default function AdminUsersPage() {
+  const { isLoggedIn, isAdmin, currentUser } = useAuth()
+  const router = useRouter()
+  
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Neuer Benutzer Formular
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    displayName: '',
+    isAdmin: false
+  })
+  const [formLoading, setFormLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formSuccess, setFormSuccess] = useState<string | null>(null)
+
+  // Prüfe Admin-Rechte
+  useEffect(() => {
+    if (isLoggedIn && !isAdmin) {
+      router.push('/')
+    }
+  }, [isLoggedIn, isAdmin, router])
+
+  // Lade Benutzer
+  useEffect(() => {
+    if (isLoggedIn && isAdmin) {
+      loadUsers()
+    }
+  }, [isLoggedIn, isAdmin])
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch('/api/users')
+      const data = await response.json()
+      
+      if (data.success) {
+        setUsers(data.users)
+      } else {
+        setError(data.error || 'Fehler beim Laden der Benutzer')
+      }
+    } catch (err) {
+      console.error('Failed to load users:', err)
+      setError('Netzwerkfehler beim Laden der Benutzer')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormLoading(true)
+    setFormError(null)
+    setFormSuccess(null)
+
+    try {
+      const response = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          displayName: formData.displayName,
+          isAdmin: formData.isAdmin,
+          createdBy: currentUser
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setFormSuccess(`Benutzer "${data.user.displayName}" wurde erfolgreich erstellt!`)
+        setFormData({
+          username: '',
+          password: '',
+          displayName: '',
+          isAdmin: false
+        })
+        
+        // Aktualisiere Benutzerliste
+        loadUsers()
+        
+        // Schließe Formular nach 2 Sekunden
+        setTimeout(() => {
+          setShowCreateForm(false)
+          setFormSuccess(null)
+        }, 2000)
+      } else {
+        setFormError(data.error || 'Fehler beim Erstellen des Benutzers')
+      }
+    } catch (err) {
+      console.error('Failed to create user:', err)
+      setFormError('Netzwerkfehler - Bitte versuchen Sie es erneut')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleString('de-DE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  // Zeige nichts an, wenn nicht eingeloggt oder kein Admin
+  if (!isLoggedIn || !isAdmin) {
+    return null
+  }
+
+  return (
+    <ProtectedLayout>
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">👥 Benutzerverwaltung</h1>
+            <p className="text-gray-600">Verwalten Sie Benutzer und erstellen Sie neue Konten</p>
+          </div>
+
+          {/* Erstelle neuen Benutzer Button */}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+            >
+              {showCreateForm ? '❌ Abbrechen' : '➕ Neuen Benutzer erstellen'}
+            </button>
+          </div>
+
+          {/* Formular zum Erstellen neuer Benutzer */}
+          {showCreateForm && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">➕ Neuen Benutzer erstellen</h2>
+              
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Benutzername *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="z.B. max.mustermann"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anzeigename *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.displayName}
+                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="z.B. Max Mustermann"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Passwort * (mind. 5 Zeichen)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={5}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Mindestens 5 Zeichen"
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isAdmin"
+                    checked={formData.isAdmin}
+                    onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
+                    Administrator-Rechte gewähren
+                  </label>
+                </div>
+
+                {formError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <p className="text-red-700">{formError}</p>
+                  </div>
+                )}
+
+                {formSuccess && (
+                  <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                    <p className="text-green-700">{formSuccess}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {formLoading ? 'Wird erstellt...' : 'Benutzer erstellen'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateForm(false)}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Benutzerliste */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Alle Benutzer ({users.length})</h2>
+            </div>
+
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-gray-600">Lade Benutzer...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <p className="text-red-600">{error}</p>
+                <button
+                  onClick={loadUsers}
+                  className="mt-4 text-blue-600 hover:underline"
+                >
+                  Erneut versuchen
+                </button>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                Keine Benutzer gefunden
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Benutzer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rolle
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Letzter Login
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Erstellt am
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Erstellt von
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.display_name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {user.username}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user.is_admin ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              👑 Admin
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              👤 Benutzer
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user.is_active ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              ✅ Aktiv
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              ❌ Deaktiviert
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(user.last_login || '')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(user.created_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {user.created_by || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Info-Box */}
+          <div className="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Administratoren</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>Folgende Benutzer haben Administrator-Rechte:</p>
+                  <ul className="list-disc list-inside mt-1">
+                    <li>Christof Drost</li>
+                    <li>Kirstin Kreusch</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ProtectedLayout>
+  )
+}
+

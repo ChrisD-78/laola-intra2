@@ -16,8 +16,8 @@ const LoginForm = () => {
     setIsLoading(true)
 
     try {
-      // Verwende die login-Funktion aus dem AuthProvider
-      const success = login(username, password)
+      // Verwende die login-Funktion aus dem AuthProvider (jetzt async)
+      const success = await login(username, password)
       
       if (success) {
         // Login erfolgreich - Formular zurücksetzen

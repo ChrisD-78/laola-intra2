@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 interface AuthContextType {
   isLoggedIn: boolean
   currentUser: string | null
-  login: (username: string, password: string) => boolean
+  isAdmin: boolean
+  login: (username: string, password: string) => Promise<boolean>
   logout: () => void
 }
 
@@ -27,62 +28,65 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentUser, setCurrentUser] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     // Prüfe den Anmeldestatus beim Laden der Seite
     const loginStatus = localStorage.getItem('isLoggedIn')
     const user = localStorage.getItem('currentUser')
+    const adminStatus = localStorage.getItem('isAdmin')
     
-    console.log('AuthProvider: Checking login status:', { loginStatus, user })
+    console.log('AuthProvider: Checking login status:', { loginStatus, user, adminStatus })
     
     if (loginStatus === 'true' && user) {
       setIsLoggedIn(true)
       setCurrentUser(user)
-      console.log('AuthProvider: User is logged in:', user)
+      setIsAdmin(adminStatus === 'true')
+      console.log('AuthProvider: User is logged in:', user, 'Admin:', adminStatus === 'true')
     } else {
       console.log('AuthProvider: User is not logged in')
     }
   }, [])
 
-  const login = (username: string, password: string): boolean => {
-    console.log('AuthProvider: Login attempt:', { username, password })
+  const login = async (username: string, password: string): Promise<boolean> => {
+    console.log('AuthProvider: Login attempt:', { username })
     
-    // Liste der gültigen Benutzer
-    const validUsers = [
-      { username: 'Christof Drost', password: '12345', displayName: 'Christof Drost' },
-      { username: 'Kirstin', password: 'kirstin123', displayName: 'Kirstin Kreusch' },
-      { username: 'Julia', password: 'julia112', displayName: 'Julia Wodonis' },
-      { username: 'Lisa', password: 'lisa331', displayName: 'Lisa Schnagl' },
-      { username: 'Jonas', password: 'Jonas554', displayName: 'Jonas Jooss' },
-      { username: 'Dennis', password: 'Dennis812', displayName: 'Dennis Wilkens' },
-      { username: 'Lea', password: 'lea331', displayName: 'Lea Hofmann' },
-      { username: 'laola', password: 'laola123', displayName: 'Team LAOLA' },
-      { username: 'staho', password: 'staho123', displayName: 'Verwaltung Stadtholding Landau' }
-    ]
-    
-    // Benutzer suchen
-    const user = validUsers.find(u => u.username === username && u.password === password)
-    
-    if (user) {
-      console.log('AuthProvider: Login successful!', user.displayName)
-      
-      // Lokalen State aktualisieren
-      setIsLoggedIn(true)
-      setCurrentUser(user.displayName)
-      
-      // localStorage aktualisieren
-      localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('currentUser', user.displayName)
-      
-      // Nach erfolgreichem Login zur Hauptseite weiterleiten
-      setTimeout(() => {
-        router.push('/')
-      }, 100)
-      
-      return true
-    } else {
-      console.log('AuthProvider: Login failed - invalid credentials')
+    try {
+      // API-Call zur Datenbank-Authentifizierung
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.user) {
+        console.log('AuthProvider: Login successful!', data.user.displayName)
+        
+        // Lokalen State aktualisieren
+        setIsLoggedIn(true)
+        setCurrentUser(data.user.displayName)
+        setIsAdmin(data.user.isAdmin || false)
+        
+        // localStorage aktualisieren
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('currentUser', data.user.displayName)
+        localStorage.setItem('isAdmin', data.user.isAdmin ? 'true' : 'false')
+        
+        // Nach erfolgreichem Login zur Hauptseite weiterleiten
+        setTimeout(() => {
+          router.push('/')
+        }, 100)
+        
+        return true
+      } else {
+        console.log('AuthProvider: Login failed -', data.error)
+        return false
+      }
+    } catch (error) {
+      console.error('AuthProvider: Login error:', error)
       return false
     }
   }
@@ -93,10 +97,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Lokalen State zurücksetzen
     setIsLoggedIn(false)
     setCurrentUser(null)
+    setIsAdmin(false)
     
     // localStorage löschen
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('isAdmin')
     
     // Zur Login-Seite weiterleiten
     router.push('/login')
@@ -105,6 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value = {
     isLoggedIn,
     currentUser,
+    isAdmin,
     login,
     logout
   }

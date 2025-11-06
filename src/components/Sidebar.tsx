@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 const Sidebar = () => {
   const pathname = usePathname()
-  const { currentUser, logout } = useAuth()
+  const { currentUser, logout, isAdmin } = useAuth()
   const { unreadCount } = useChatNotifications()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -21,6 +21,10 @@ const Sidebar = () => {
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
     { href: '/technik', label: 'Technik', icon: '🔧' },
     { href: '/chat', label: 'Chat', icon: '💬' },
+  ]
+
+  const adminNavItems = [
+    { href: '/admin/users', label: 'Benutzerverwaltung', icon: '👥' },
   ]
 
   return (
@@ -76,7 +80,7 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href
@@ -105,6 +109,38 @@ const Sidebar = () => {
               </li>
             )
           })}
+
+          {/* Admin Section */}
+          {isAdmin && (
+            <>
+              <li className="pt-4 pb-2">
+                <div className="px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                  Administration
+                </div>
+              </li>
+              {adminNavItems.map((item) => {
+                const isActive = pathname === item.href
+                
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                        isActive
+                          ? 'bg-purple-700/60 text-white border-r-2 border-purple-400 shadow-lg backdrop-blur-sm'
+                          : 'text-white hover:bg-purple-700/40 hover:text-white hover:shadow-md backdrop-blur-sm'
+                      }`}
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="font-medium">{item.label}</span>
+                      <span className="ml-auto text-xs bg-purple-500/50 px-2 py-0.5 rounded-full">Admin</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </>
+          )}
         </ul>
       </nav>
 
