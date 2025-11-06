@@ -19,6 +19,8 @@ interface RecurringTask {
 
 export default function WiederkehrendeAufgaben() {
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([])
+  const [filteredTasks, setFilteredTasks] = useState<RecurringTask[]>([])
+  const [activeFilter, setActiveFilter] = useState<'all' | 'overdue' | 'today' | 'week' | 'active'>('all')
   const [editingTask, setEditingTask] = useState<RecurringTask | null>(null)
   const [completingTask, setCompletingTask] = useState<RecurringTask | null>(null)
   const [completionNotes, setCompletionNotes] = useState('')
@@ -47,6 +49,52 @@ export default function WiederkehrendeAufgaben() {
     }
     load()
   }, [])
+
+  // Filter tasks based on active filter
+  useEffect(() => {
+    let filtered = recurringTasks
+
+    switch (activeFilter) {
+      case 'overdue':
+        filtered = recurringTasks.filter(task => {
+          const date = new Date(task.nextDue)
+          const now = new Date()
+          const diffTime = date.getTime() - now.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          return diffDays < 0 && task.isActive
+        })
+        break
+      case 'today':
+        filtered = recurringTasks.filter(task => {
+          const date = new Date(task.nextDue)
+          const now = new Date()
+          const diffTime = date.getTime() - now.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          return diffDays === 0 && task.isActive
+        })
+        break
+      case 'week':
+        filtered = recurringTasks.filter(task => {
+          const date = new Date(task.nextDue)
+          const now = new Date()
+          const diffTime = date.getTime() - now.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          return diffDays > 0 && diffDays <= 7 && task.isActive
+        })
+        break
+      case 'active':
+        filtered = recurringTasks.filter(task => task.isActive)
+        break
+      default:
+        filtered = recurringTasks
+    }
+
+    setFilteredTasks(filtered)
+  }, [recurringTasks, activeFilter])
+
+  const handleFilterClick = (filter: 'all' | 'overdue' | 'today' | 'week' | 'active') => {
+    setActiveFilter(filter)
+  }
 
   const addNewRecurringTask = async (taskData: {
     title: string
@@ -291,14 +339,22 @@ export default function WiederkehrendeAufgaben() {
 
       {/* Recurring Tasks List */}
       <div className="space-y-4">
-        {/* Summary Cards */}
+        {/* Summary Cards - Clickable Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          {/* Überfällig */}
+          <button
+            onClick={() => handleFilterClick('overdue')}
+            className={`bg-red-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+              activeFilter === 'overdue' 
+                ? 'border-red-500 ring-2 ring-red-300 shadow-lg' 
+                : 'border-red-200 hover:border-red-400'
+            }`}
+          >
             <div className="flex items-center">
               <div className="p-2 bg-red-100 rounded-lg">
                 <span className="text-xl">🚨</span>
               </div>
-              <div className="ml-3">
+              <div className="ml-3 text-left">
                 <p className="text-sm font-medium text-red-800">Überfällig</p>
                 <p className="text-2xl font-bold text-red-900">
                   {recurringTasks.filter(task => {
@@ -311,14 +367,25 @@ export default function WiederkehrendeAufgaben() {
                 </p>
               </div>
             </div>
-          </div>
+            {activeFilter === 'overdue' && (
+              <div className="mt-2 text-xs text-red-700 font-medium">✓ Aktiver Filter</div>
+            )}
+          </button>
 
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+          {/* Heute fällig */}
+          <button
+            onClick={() => handleFilterClick('today')}
+            className={`bg-orange-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+              activeFilter === 'today' 
+                ? 'border-orange-500 ring-2 ring-orange-300 shadow-lg' 
+                : 'border-orange-200 hover:border-orange-400'
+            }`}
+          >
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <span className="text-xl">⚠️</span>
               </div>
-              <div className="ml-3">
+              <div className="ml-3 text-left">
                 <p className="text-sm font-medium text-orange-800">Heute fällig</p>
                 <p className="text-2xl font-bold text-orange-900">
                   {recurringTasks.filter(task => {
@@ -331,14 +398,25 @@ export default function WiederkehrendeAufgaben() {
                 </p>
               </div>
             </div>
-          </div>
+            {activeFilter === 'today' && (
+              <div className="mt-2 text-xs text-orange-700 font-medium">✓ Aktiver Filter</div>
+            )}
+          </button>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          {/* Diese Woche */}
+          <button
+            onClick={() => handleFilterClick('week')}
+            className={`bg-blue-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+              activeFilter === 'week' 
+                ? 'border-blue-500 ring-2 ring-blue-300 shadow-lg' 
+                : 'border-blue-200 hover:border-blue-400'
+            }`}
+          >
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <span className="text-xl">📅</span>
               </div>
-              <div className="ml-3">
+              <div className="ml-3 text-left">
                 <p className="text-sm font-medium text-blue-800">Diese Woche</p>
                 <p className="text-2xl font-bold text-blue-900">
                   {recurringTasks.filter(task => {
@@ -351,38 +429,95 @@ export default function WiederkehrendeAufgaben() {
                 </p>
               </div>
             </div>
-          </div>
+            {activeFilter === 'week' && (
+              <div className="mt-2 text-xs text-blue-700 font-medium">✓ Aktiver Filter</div>
+            )}
+          </button>
 
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          {/* Aktiv */}
+          <button
+            onClick={() => handleFilterClick('active')}
+            className={`bg-green-50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${
+              activeFilter === 'active' 
+                ? 'border-green-500 ring-2 ring-green-300 shadow-lg' 
+                : 'border-green-200 hover:border-green-400'
+            }`}
+          >
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <span className="text-xl">✅</span>
               </div>
-              <div className="ml-3">
+              <div className="ml-3 text-left">
                 <p className="text-sm font-medium text-green-800">Aktiv</p>
                 <p className="text-2xl font-bold text-green-900">
                   {recurringTasks.filter(task => task.isActive).length}
                 </p>
               </div>
             </div>
-          </div>
+            {activeFilter === 'active' && (
+              <div className="mt-2 text-xs text-green-700 font-medium">✓ Aktiver Filter</div>
+            )}
+          </button>
         </div>
 
         {/* Tasks List */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="p-6 border-b border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900">Wiederkehrende Aufgaben</h2>
-            <p className="text-gray-600 mt-1">Übersicht aller wiederkehrenden Aufgaben mit Fälligkeitsstatus</p>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {activeFilter === 'overdue' && '🚨 Überfällige Aufgaben'}
+                  {activeFilter === 'today' && '⚠️ Heute fällige Aufgaben'}
+                  {activeFilter === 'week' && '📅 Diese Woche fällig'}
+                  {activeFilter === 'active' && '✅ Aktive Aufgaben'}
+                  {activeFilter === 'all' && 'Wiederkehrende Aufgaben'}
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  {filteredTasks.length} {filteredTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} angezeigt
+                </p>
+              </div>
+              {activeFilter !== 'all' && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">Aktiver Filter:</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {activeFilter === 'overdue' && 'Überfällig'}
+                    {activeFilter === 'today' && 'Heute fällig'}
+                    {activeFilter === 'week' && 'Diese Woche'}
+                    {activeFilter === 'active' && 'Aktiv'}
+                  </span>
+                  <button
+                    onClick={() => handleFilterClick('all')}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                  >
+                    Alle anzeigen
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="divide-y divide-gray-100">
-            {recurringTasks.length === 0 ? (
+            {filteredTasks.length === 0 ? (
               <div className="p-8 text-center">
                 <div className="text-4xl mb-4">📋</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Keine wiederkehrenden Aufgaben</h3>
-                <p className="text-gray-600">Erstellen Sie Ihre erste wiederkehrende Aufgabe, um zu beginnen.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {activeFilter === 'all' ? 'Keine wiederkehrenden Aufgaben' : 'Keine Aufgaben in dieser Kategorie'}
+                </h3>
+                <p className="text-gray-600">
+                  {activeFilter === 'all' 
+                    ? 'Erstellen Sie Ihre erste wiederkehrende Aufgabe, um zu beginnen.' 
+                    : 'Versuchen Sie einen anderen Filter oder zeigen Sie alle Aufgaben an.'}
+                </p>
+                {activeFilter !== 'all' && (
+                  <button
+                    onClick={() => handleFilterClick('all')}
+                    className="mt-4 text-blue-600 hover:text-blue-800 underline font-medium"
+                  >
+                    Alle Aufgaben anzeigen
+                  </button>
+                )}
               </div>
             ) : (
-              recurringTasks.map((task) => {
+              filteredTasks.map((task) => {
                 const dueStatus = getDueDateStatus(task.nextDue)
                 return (
                   <div key={task.id} className="p-6 hover:bg-gray-50 transition-all duration-200">
