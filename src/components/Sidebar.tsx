@@ -113,8 +113,8 @@ const Sidebar = () => {
           {/* Admin Section */}
           {isAdmin && (
             <>
-              <li className="pt-4 pb-2">
-                <div className="px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">
+              <li className="pt-4 pb-1">
+                <div className="px-4 text-[10px] font-semibold text-blue-300 uppercase tracking-wider">
                   Administration
                 </div>
               </li>
@@ -126,15 +126,15 @@ const Sidebar = () => {
                     <Link
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 ${
                         isActive
                           ? 'bg-purple-700/60 text-white border-r-2 border-purple-400 shadow-lg backdrop-blur-sm'
                           : 'text-white hover:bg-purple-700/40 hover:text-white hover:shadow-md backdrop-blur-sm'
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
-                      <span className="ml-auto text-xs bg-purple-500/50 px-2 py-0.5 rounded-full">Admin</span>
+                      <span className="text-base">{item.icon}</span>
+                      <span className="text-sm font-medium flex-1 min-w-0 truncate">{item.label}</span>
+                      <span className="text-[10px] bg-purple-500/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Admin</span>
                     </Link>
                   </li>
                 )
