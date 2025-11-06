@@ -13,12 +13,21 @@ export async function GET() {
         username,
         display_name,
         is_admin,
+        role,
         is_active,
         created_at,
         last_login,
         created_by
       FROM users
-      ORDER BY is_admin DESC, display_name ASC
+      ORDER BY 
+        CASE role
+          WHEN 'Admin' THEN 1
+          WHEN 'Verwaltung' THEN 2
+          WHEN 'Technik' THEN 3
+          WHEN 'Benutzer' THEN 4
+          ELSE 5
+        END,
+        display_name ASC
     `
 
     return NextResponse.json({

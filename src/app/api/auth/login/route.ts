@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
         password,
         display_name,
         is_admin,
+        role,
         is_active
       FROM users
       WHERE username = ${username}
@@ -68,7 +69,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         displayName: user.display_name,
-        isAdmin: user.is_admin
+        isAdmin: user.is_admin,
+        role: user.role || 'Benutzer'
       }
     })
 

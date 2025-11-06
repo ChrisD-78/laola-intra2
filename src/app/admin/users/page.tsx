@@ -10,6 +10,7 @@ interface User {
   username: string
   display_name: string
   is_admin: boolean
+  role: string
   is_active: boolean
   created_at: string
   last_login?: string
@@ -30,7 +31,7 @@ export default function AdminUsersPage() {
     username: '',
     password: '',
     displayName: '',
-    isAdmin: false
+    role: 'Benutzer'
   })
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -85,7 +86,7 @@ export default function AdminUsersPage() {
           username: formData.username,
           password: formData.password,
           displayName: formData.displayName,
-          isAdmin: formData.isAdmin,
+          role: formData.role,
           createdBy: currentUser
         })
       })
@@ -98,7 +99,7 @@ export default function AdminUsersPage() {
           username: '',
           password: '',
           displayName: '',
-          isAdmin: false
+          role: 'Benutzer'
         })
         
         // Aktualisiere Benutzerliste
@@ -205,17 +206,24 @@ export default function AdminUsersPage() {
                   />
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isAdmin"
-                    checked={formData.isAdmin}
-                    onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
-                    Administrator-Rechte gewähren
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rolle *
                   </label>
+                  <select
+                    required
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="Benutzer">Benutzer</option>
+                    <option value="Technik">Technik</option>
+                    <option value="Verwaltung">Verwaltung</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Admin: Voller Zugriff auf alle Bereiche | Andere: Standard-Rechte
+                  </p>
                 </div>
 
                 {formError && (
@@ -314,9 +322,17 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {user.is_admin ? (
+                          {user.role === 'Admin' ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               👑 Admin
+                            </span>
+                          ) : user.role === 'Verwaltung' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              📋 Verwaltung
+                            </span>
+                          ) : user.role === 'Technik' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              🔧 Technik
                             </span>
                           ) : (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -352,7 +368,7 @@ export default function AdminUsersPage() {
             )}
           </div>
 
-          {/* Info-Box */}
+          {/* Info-Box - Rollen-Erklärung */}
           <div className="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -360,14 +376,30 @@ export default function AdminUsersPage() {
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">Administratoren</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>Folgende Benutzer haben Administrator-Rechte:</p>
-                  <ul className="list-disc list-inside mt-1">
-                    <li>Christof Drost</li>
-                    <li>Kirstin Kreusch</li>
-                  </ul>
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-blue-800 mb-3">Benutzer-Rollen im System</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-700">
+                  <div>
+                    <p className="font-semibold">👑 Admin</p>
+                    <p className="text-xs mt-1">Voller Zugriff auf alle Bereiche, kann Benutzer verwalten</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">📋 Verwaltung</p>
+                    <p className="text-xs mt-1">Standard-Rechte für Verwaltungspersonal</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">🔧 Technik</p>
+                    <p className="text-xs mt-1">Standard-Rechte für technisches Personal</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">👤 Benutzer</p>
+                    <p className="text-xs mt-1">Standard-Rechte für alle anderen Mitarbeiter</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-xs text-blue-600">
+                    <strong>Administratoren:</strong> Christof Drost, Kirstin Kreusch
+                  </p>
                 </div>
               </div>
             </div>

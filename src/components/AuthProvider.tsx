@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoggedIn: boolean
   currentUser: string | null
   isAdmin: boolean
+  userRole: string | null
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
 }
@@ -29,6 +30,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentUser, setCurrentUser] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -36,14 +38,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const loginStatus = localStorage.getItem('isLoggedIn')
     const user = localStorage.getItem('currentUser')
     const adminStatus = localStorage.getItem('isAdmin')
+    const role = localStorage.getItem('userRole')
     
-    console.log('AuthProvider: Checking login status:', { loginStatus, user, adminStatus })
+    console.log('AuthProvider: Checking login status:', { loginStatus, user, adminStatus, role })
     
     if (loginStatus === 'true' && user) {
       setIsLoggedIn(true)
       setCurrentUser(user)
       setIsAdmin(adminStatus === 'true')
-      console.log('AuthProvider: User is logged in:', user, 'Admin:', adminStatus === 'true')
+      setUserRole(role)
+      console.log('AuthProvider: User is logged in:', user, 'Admin:', adminStatus === 'true', 'Role:', role)
     } else {
       console.log('AuthProvider: User is not logged in')
     }
@@ -63,17 +67,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const data = await response.json()
 
       if (data.success && data.user) {
-        console.log('AuthProvider: Login successful!', data.user.displayName)
+        console.log('AuthProvider: Login successful!', data.user.displayName, 'Role:', data.user.role)
         
         // Lokalen State aktualisieren
         setIsLoggedIn(true)
         setCurrentUser(data.user.displayName)
         setIsAdmin(data.user.isAdmin || false)
+        setUserRole(data.user.role || 'Benutzer')
         
         // localStorage aktualisieren
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('currentUser', data.user.displayName)
         localStorage.setItem('isAdmin', data.user.isAdmin ? 'true' : 'false')
+        localStorage.setItem('userRole', data.user.role || 'Benutzer')
         
         // Nach erfolgreichem Login zur Hauptseite weiterleiten
         setTimeout(() => {
@@ -98,11 +104,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoggedIn(false)
     setCurrentUser(null)
     setIsAdmin(false)
+    setUserRole(null)
     
     // localStorage löschen
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('currentUser')
     localStorage.removeItem('isAdmin')
+    localStorage.removeItem('userRole')
     
     // Zur Login-Seite weiterleiten
     router.push('/login')
@@ -112,6 +120,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoggedIn,
     currentUser,
     isAdmin,
+    userRole,
     login,
     logout
   }
