@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Neon Datenbank-Verbindung
+    const sql = neon(process.env.DATABASE_URL!)
 
     // Benutzer aus Datenbank abrufen
     const result = await sql`
@@ -26,14 +29,14 @@ export async function POST(request: NextRequest) {
       LIMIT 1
     `
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Ungültige Anmeldedaten' },
         { status: 401 }
       )
     }
 
-    const user = result.rows[0]
+    const user = result[0]
 
     // Prüfe ob Benutzer aktiv ist
     if (!user.is_active) {

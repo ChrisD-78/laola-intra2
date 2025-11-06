@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { NextResponse } from 'next/server'
+import { neon } from '@neondatabase/serverless'
 
 // GET - Alle Benutzer abrufen (nur für Admins)
 export async function GET() {
   try {
+    // Neon Datenbank-Verbindung
+    const sql = neon(process.env.DATABASE_URL!)
+    
     const result = await sql`
       SELECT 
         id,
@@ -20,7 +23,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      users: result.rows
+      users: result
     })
 
   } catch (error) {

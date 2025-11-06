@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 
 // POST - Neuen Benutzer erstellen (nur für Admins)
 export async function POST(request: NextRequest) {
@@ -21,12 +21,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Neon Datenbank-Verbindung
+    const sql = neon(process.env.DATABASE_URL!)
+
     // Prüfe ob Benutzername bereits existiert
     const existingUser = await sql`
       SELECT id FROM users WHERE username = ${username}
     `
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser.length > 0) {
       return NextResponse.json(
         { success: false, error: 'Benutzername existiert bereits' },
         { status: 409 }
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
       RETURNING id, username, display_name, is_admin, is_active, created_at
     `
 
-    const newUser = result.rows[0]
+    const newUser = result[0]
 
     console.log('✅ Neuer Benutzer erstellt:', newUser.username)
 
