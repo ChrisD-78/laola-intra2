@@ -739,3 +739,158 @@ Diese E-Mail wurde automatisch generiert.
     text
   }
 }
+
+export const createHoursCorrectionEmail = (correctionData: {
+  name: string
+  datum: string
+  uhrzeitVon: string
+  uhrzeitBis: string
+  grund: string
+}) => {
+  const currentDate = new Date().toLocaleString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>⏰ Stundenkorrektur - Laola Intranet</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 26px; font-weight: bold; }
+        .alert-box { background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 20px; margin: 20px 30px; border-radius: 6px; }
+        .content { padding: 30px; }
+        .field { margin-bottom: 20px; }
+        .field-label { font-weight: bold; color: #374151; margin-bottom: 5px; display: block; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .field-value { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid #7C3AED; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+        .section { margin: 25px 0; padding: 20px; background: #F9FAFB; border-radius: 6px; }
+        .section-title { font-size: 16px; font-weight: bold; color: #1F2937; margin-bottom: 15px; border-bottom: 2px solid #7C3AED; padding-bottom: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>⏰ STUNDENKORREKTUR</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">LA OLA Freizeitbad - Stundenanpassung</p>
+        </div>
+        
+        <div class="alert-box">
+          <strong style="color: #92400E; font-size: 16px;">📋 Neue Stundenkorrektur eingegangen</strong><br>
+          <p style="margin: 10px 0 0 0;">
+            Eine Stundenkorrektur wurde über das LA OLA Intranet System eingereicht.<br>
+            Bitte überprüfen Sie die Angaben und nehmen Sie die Korrektur vor.
+          </p>
+        </div>
+
+        <div class="content">
+          <!-- Mitarbeiter -->
+          <div class="section">
+            <div class="section-title">👤 Mitarbeiter</div>
+            <div class="field">
+              <span class="field-label">Name</span>
+              <div class="field-value"><strong>${correctionData.name}</strong></div>
+            </div>
+          </div>
+
+          <!-- Zeitpunkt -->
+          <div class="section">
+            <div class="section-title">📅 Datum und Zeitraum</div>
+            <div class="field">
+              <span class="field-label">Datum</span>
+              <div class="field-value">${new Date(correctionData.datum).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Uhrzeit von</span>
+              <div class="field-value">${correctionData.uhrzeitVon} Uhr</div>
+            </div>
+            <div class="field">
+              <span class="field-label">Uhrzeit bis</span>
+              <div class="field-value">${correctionData.uhrzeitBis} Uhr</div>
+            </div>
+          </div>
+
+          <!-- Grund -->
+          <div class="section">
+            <div class="section-title">📝 Grund der Korrektur</div>
+            <div class="field-value" style="white-space: pre-wrap;">${correctionData.grund}</div>
+          </div>
+
+          <!-- Eingangsdatum -->
+          <div class="section">
+            <div class="section-title">🕒 Antrag</div>
+            <div class="field">
+              <span class="field-label">Eingereicht von</span>
+              <div class="field-value"><strong>${correctionData.name}</strong></div>
+            </div>
+            <div class="field">
+              <span class="field-label">Eingegangen am</span>
+              <div class="field-value">${currentDate}</div>
+            </div>
+          </div>
+
+          <div style="background: #EDE9FE; padding: 15px; border-radius: 6px; border-left: 4px solid #7C3AED; margin-top: 25px;">
+            <strong style="color: #5B21B6;">⏰ Nächste Schritte:</strong>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #6B21A8;">
+              <li>Stundenkorrektur im Zeiterfassungssystem durchführen</li>
+              <li>Mitarbeiter über Bestätigung informieren</li>
+              <li>Ggf. Dokumentation anpassen</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>LA OLA Intranet System</strong></p>
+          <p>Diese E-Mail wurde automatisch generiert. Bei Rückfragen kontaktieren Sie bitte ${correctionData.name}.</p>
+          <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
+            System generiert am ${new Date().toISOString()}
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+⏰ STUNDENKORREKTUR - LA OLA Freizeitbad
+========================================
+
+📋 Neue Stundenkorrektur eingegangen
+
+Eine Stundenkorrektur wurde über das LA OLA Intranet System eingereicht.
+
+MITARBEITER:
+Name: ${correctionData.name}
+
+DATUM UND ZEITRAUM:
+Datum: ${new Date(correctionData.datum).toLocaleDateString('de-DE')}
+Uhrzeit von: ${correctionData.uhrzeitVon} Uhr
+Uhrzeit bis: ${correctionData.uhrzeitBis} Uhr
+
+GRUND DER KORREKTUR:
+${correctionData.grund}
+
+EINGEREICHT VON: ${correctionData.name}
+EINGEGANGEN AM: ${currentDate}
+
+---
+LA OLA Intranet System
+Diese E-Mail wurde automatisch generiert.
+  `
+
+  return {
+    to: 'christof.drost@landau.de',
+    subject: `⏰ [STUNDENKORREKTUR] ${correctionData.name} - ${new Date(correctionData.datum).toLocaleDateString('de-DE')}`,
+    html,
+    text
+  }
+}

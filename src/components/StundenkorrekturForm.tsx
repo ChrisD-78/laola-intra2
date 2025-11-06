@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { sendEmail, createHoursCorrectionEmail } from '../lib/emailService'
 
 interface StundenkorrekturFormProps {
   isOpen: boolean
@@ -19,6 +20,10 @@ interface StundenkorrekturData {
 
 const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFormProps) => {
   const { currentUser } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
+  
   const [formData, setFormData] = useState<StundenkorrekturData>({
     name: currentUser || '',
     datum: new Date().toISOString().split('T')[0],
@@ -27,11 +32,39 @@ const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFor
     grund: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
-    onClose()
-    // Reset form
+    setIsSubmitting(true)
+    setEmailStatus('sending')
+    
+    try {
+      // E-Mail erstellen und versenden
+      const emailData = createHoursCorrectionEmail(formData)
+      const result = await sendEmail(emailData)
+      
+      if (result.success) {
+        setEmailStatus('success')
+        setErrorMessage('')
+        // Kurz warten, damit der Benutzer die Erfolgsmeldung sieht
+        setTimeout(() => {
+          onSubmit(formData)
+          onClose()
+          resetForm()
+        }, 1500)
+      } else {
+        setEmailStatus('error')
+        setErrorMessage(result.error || 'Unbekannter Fehler beim E-Mail-Versand')
+        setIsSubmitting(false)
+      }
+    } catch (error) {
+      console.error('Fehler beim Senden der Stundenkorrektur:', error)
+      setEmailStatus('error')
+      setErrorMessage('Netzwerkfehler - Bitte versuchen Sie es erneut')
+      setIsSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
     setFormData({
       name: currentUser || '',
       datum: new Date().toISOString().split('T')[0],
@@ -39,18 +72,16 @@ const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFor
       uhrzeitBis: '',
       grund: ''
     })
+    setIsSubmitting(false)
+    setEmailStatus('idle')
+    setErrorMessage('')
   }
 
   const handleClose = () => {
-    onClose()
-    // Reset form
-    setFormData({
-      name: currentUser || '',
-      datum: new Date().toISOString().split('T')[0],
-      uhrzeitVon: '',
-      uhrzeitBis: '',
-      grund: ''
-    })
+    if (!isSubmitting) {
+      onClose()
+      resetForm()
+    }
   }
 
   if (!isOpen) return null
@@ -77,6 +108,40 @@ const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFor
               </button>
             </div>
           </div>
+
+          {/* Status Messages */}
+          {emailStatus === 'sending' && (
+            <div className="mx-6 mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">⏰ Stundenkorrektur wird gesendet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'success' && (
+            <div className="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-green-600 text-xl">✅</span>
+                <span className="text-green-800 font-medium">E-Mail erfolgreich gesendet! Antrag wird bearbeitet...</span>
+              </div>
+            </div>
+          )}
+          
+          {emailStatus === 'error' && (
+            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <span className="text-red-600 text-xl">❌</span>
+                <div className="flex-1">
+                  <div className="text-red-800 font-medium mb-2">Fehler beim Senden der E-Mail</div>
+                  <div className="text-red-700 text-sm">{errorMessage}</div>
+                  <div className="text-red-600 text-xs mt-2">
+                    💡 <strong>Tipp:</strong> Überprüfen Sie die Netlify-Logs für detaillierte Fehlerinformationen.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -160,15 +225,34 @@ const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFor
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  isSubmitting 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                }`}
               >
                 Abbrechen
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
+                disabled={isSubmitting}
+                className={`px-6 py-2 rounded-lg transition-all duration-200 font-medium flex items-center space-x-2 ${
+                  isSubmitting 
+                    ? 'bg-purple-400 text-white cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700'
+                }`}
               >
-                ⏰ Stundenkorrektur senden
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Wird gesendet...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⏰ Stundenkorrektur senden</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
