@@ -507,6 +507,14 @@ export async function insertCompletedTraining(data: Omit<CompletedTrainingRecord
   return response.json()
 }
 
+export async function deleteCompletedTraining(id: string) {
+  const response = await fetch(`/api/trainings/completed?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete completed training')
+  return response.json()
+}
+
 export async function uploadTrainingFile(file: File, fileType?: string): Promise<{ path: string; publicUrl: string }> {
   const formData = new FormData()
   formData.append('file', file)

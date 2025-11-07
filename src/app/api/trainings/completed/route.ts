@@ -64,3 +64,25 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// DELETE completed training
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    await sql`DELETE FROM completed_trainings WHERE id = ${id}`
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Failed to delete completed training:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete completed training' },
+      { status: 500 }
+    )
+  }
+}

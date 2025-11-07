@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs } from '@/lib/db'
+import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof } from '@/lib/db'
+import { useAuth } from '@/components/AuthProvider'
 
 interface Schulung {
   id: string
@@ -31,6 +32,7 @@ interface CompletedSchulung {
 }
 
 export default function Schulungen() {
+  const { isAdmin } = useAuth()
   const [activeTab, setActiveTab] = useState<'available' | 'overview'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
@@ -38,6 +40,8 @@ export default function Schulungen() {
   const [showSchulungViewer, setShowSchulungViewer] = useState<Schulung | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [showProofForm, setShowProofForm] = useState(false)
+  const [showDeleteCompletedConfirm, setShowDeleteCompletedConfirm] = useState<CompletedSchulung | null>(null)
+  const [showDeleteProofConfirm, setShowDeleteProofConfirm] = useState<{ id: string; bezeichnung: string } | null>(null)
   const [schulungsnachweise, setSchulungsnachweise] = useState<Array<{
     id: string
     bezeichnung: string
@@ -160,18 +164,89 @@ export default function Schulungen() {
   ]
 
   const handleDeleteSchulung = async (schulungId: string) => {
-    const pass = prompt('Bitte Passwort eingeben:')
-    if (pass === 'bl') {
+    // Admin-Benutzer überspringen die Passwort-Abfrage
+    if (isAdmin) {
       try {
         await deleteTrainingById(schulungId)
-      setSchulungen(schulungen.filter(s => s.id !== schulungId))
-      setShowDeleteConfirm(null)
+        setSchulungen(schulungen.filter(s => s.id !== schulungId))
+        setShowDeleteConfirm(null)
       } catch (error) {
         console.error('Error deleting training:', error)
         alert('Fehler beim Löschen der Schulung.')
       }
-    } else if (pass !== null) {
-      alert('Falsches Passwort')
+    } else {
+      // Nicht-Admins müssen Passwort eingeben
+      const pass = prompt('Bitte Passwort eingeben:')
+      if (pass === 'bl') {
+        try {
+          await deleteTrainingById(schulungId)
+          setSchulungen(schulungen.filter(s => s.id !== schulungId))
+          setShowDeleteConfirm(null)
+        } catch (error) {
+          console.error('Error deleting training:', error)
+          alert('Fehler beim Löschen der Schulung.')
+        }
+      } else if (pass !== null) {
+        alert('Falsches Passwort')
+      }
+    }
+  }
+
+  const handleDeleteCompletedTraining = async (completedId: string) => {
+    // Admin-Benutzer überspringen die Passwort-Abfrage
+    if (isAdmin) {
+      try {
+        await deleteCompletedTraining(completedId)
+        setCompletedSchulungen(prev => prev.filter(c => c.id !== completedId))
+        setShowDeleteCompletedConfirm(null)
+      } catch (error) {
+        console.error('Error deleting completed training:', error)
+        alert('Fehler beim Löschen der abgeschlossenen Schulung.')
+      }
+    } else {
+      // Nicht-Admins müssen Passwort eingeben
+      const pass = prompt('Bitte Passwort eingeben:')
+      if (pass === 'bl') {
+        try {
+          await deleteCompletedTraining(completedId)
+          setCompletedSchulungen(prev => prev.filter(c => c.id !== completedId))
+          setShowDeleteCompletedConfirm(null)
+        } catch (error) {
+          console.error('Error deleting completed training:', error)
+          alert('Fehler beim Löschen der abgeschlossenen Schulung.')
+        }
+      } else if (pass !== null) {
+        alert('Falsches Passwort')
+      }
+    }
+  }
+
+  const handleDeleteProof = async (proofId: string) => {
+    // Admin-Benutzer überspringen die Passwort-Abfrage
+    if (isAdmin) {
+      try {
+        await deleteProof(proofId)
+        setSchulungsnachweise(prev => prev.filter(p => p.id !== proofId))
+        setShowDeleteProofConfirm(null)
+      } catch (error) {
+        console.error('Error deleting proof:', error)
+        alert('Fehler beim Löschen des externen Nachweises.')
+      }
+    } else {
+      // Nicht-Admins müssen Passwort eingeben
+      const pass = prompt('Bitte Passwort eingeben:')
+      if (pass === 'bl') {
+        try {
+          await deleteProof(proofId)
+          setSchulungsnachweise(prev => prev.filter(p => p.id !== proofId))
+          setShowDeleteProofConfirm(null)
+        } catch (error) {
+          console.error('Error deleting proof:', error)
+          alert('Fehler beim Löschen des externen Nachweises.')
+        }
+      } else if (pass !== null) {
+        alert('Falsches Passwort')
+      }
     }
   }
 
@@ -1408,6 +1483,11 @@ export default function Schulungen() {
                             </div>
                           </div>
                         </th>
+                        {isAdmin && (
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Aktionen
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1442,6 +1522,17 @@ export default function Schulungen() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {completed.completedDate}
                           </td>
+                          {isAdmin && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <button
+                                onClick={() => setShowDeleteCompletedConfirm(completed)}
+                                className="text-red-600 hover:text-red-900 transition-colors"
+                                title="Schulung löschen"
+                              >
+                                🗑️
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1536,12 +1627,15 @@ export default function Schulungen() {
                           </div>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schulungsnachweis (PDF)</th>
+                        {isAdmin && (
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {getFilteredProofs().length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-6 text-center text-sm text-gray-500">Keine Nachweise vorhanden</td>
+                          <td colSpan={isAdmin ? 6 : 5} className="px-6 py-6 text-center text-sm text-gray-500">Keine Nachweise vorhanden</td>
                         </tr>
                       ) : (
                         getFilteredProofs().map(item => (
@@ -1562,6 +1656,17 @@ export default function Schulungen() {
                                 <span className="text-gray-500">-</span>
                               )}
                             </td>
+                            {isAdmin && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <button
+                                  onClick={() => setShowDeleteProofConfirm({ id: item.id, bezeichnung: item.bezeichnung })}
+                                  className="text-red-600 hover:text-red-900 transition-colors"
+                                  title="Nachweis löschen"
+                                >
+                                  🗑️
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}
@@ -1594,6 +1699,13 @@ export default function Schulungen() {
                 <p className="text-gray-700">
                   Möchten Sie die Schulung <strong>&quot;{showDeleteConfirm.title}&quot;</strong> wirklich löschen?
                 </p>
+                {isAdmin && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Admin
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-4">
@@ -1605,6 +1717,100 @@ export default function Schulungen() {
                 </button>
                 <button
                   onClick={() => handleDeleteSchulung(showDeleteConfirm.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Completed Training Confirmation Modal */}
+      {showDeleteCompletedConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-red-600 text-2xl">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Abgeschlossene Schulung löschen</h3>
+                  <p className="text-sm text-gray-600">Diese Aktion kann nicht rückgängig gemacht werden</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  Möchten Sie die abgeschlossene Schulung <strong>&quot;{showDeleteCompletedConfirm.schulungTitle}&quot;</strong> für <strong>{showDeleteCompletedConfirm.participantName} {showDeleteCompletedConfirm.participantSurname}</strong> wirklich löschen?
+                </p>
+                {isAdmin && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Admin
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowDeleteCompletedConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => handleDeleteCompletedTraining(showDeleteCompletedConfirm.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Proof Confirmation Modal */}
+      {showDeleteProofConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-red-600 text-2xl">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Externen Nachweis löschen</h3>
+                  <p className="text-sm text-gray-600">Diese Aktion kann nicht rückgängig gemacht werden</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  Möchten Sie den externen Nachweis <strong>&quot;{showDeleteProofConfirm.bezeichnung}&quot;</strong> wirklich löschen?
+                </p>
+                {isAdmin && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Admin
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowDeleteProofConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => handleDeleteProof(showDeleteProofConfirm.id)}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Löschen
