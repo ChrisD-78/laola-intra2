@@ -19,7 +19,7 @@ interface Schulung {
 
 interface CompletedSchulung {
   id: string
-  schulungId: string
+  schulungId: string | null
   schulungTitle: string
   participantName: string
   participantSurname: string
@@ -107,7 +107,7 @@ export default function Schulungen() {
         const data = await getCompletedTrainings()
         const mapped: CompletedSchulung[] = data.map((training) => ({
           id: training.id,
-          schulungId: training.training_id,
+          schulungId: training.training_id ?? null,
           schulungTitle: training.training_title,
           participantName: training.participant_name,
           participantSurname: training.participant_surname,
@@ -382,7 +382,10 @@ export default function Schulungen() {
   }
 
   const getFilteredOverviewSchulungen = () => {
-    const filtered = completedSchulungen.filter(completed => {
+    // Nur interne Schulungen (mit Schulungs-ID) in der Übersicht anzeigen
+    const internalCompletions = completedSchulungen.filter(completed => !!completed.schulungId)
+
+    const filtered = internalCompletions.filter(completed => {
       const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
       const matchesParticipant = !overviewFilters.instructor || 
         `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
@@ -767,7 +770,7 @@ export default function Schulungen() {
         setIsCompleted(true)
         // Save completed training to Supabase
         try {
-          await insertCompletedTraining({
+          insertCompletedTraining({
             training_id: schulung.id,
             training_title: schulung.title,
             participant_name: participantName,
@@ -793,7 +796,7 @@ export default function Schulungen() {
             instructor: schulung.instructor,
             duration: schulung.duration
           }
-          setCompletedSchulungen([newCompletedTraining, ...completedSchulungen])
+          setCompletedSchulungen(prev => [newCompletedTraining, ...prev])
         } catch (error) {
           console.error('Error saving completed training:', error)
         }
@@ -1303,7 +1306,7 @@ export default function Schulungen() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {getFilteredOverviewSchulungen().length} von {completedSchulungen.length} abgelegte Schulungen
+                      {getFilteredOverviewSchulungen().length} von {completedSchulungen.filter(c => !!c.schulungId).length} abgelegte Schulungen
                     </h3>
                     <p className="text-sm text-gray-600">
                       {overviewFilters.category || overviewFilters.instructor || overviewFilters.title || overviewFilters.instructorName || overviewFilters.dateFrom || overviewFilters.dateTo ? 'Gefilterte Ergebnisse' : 'Alle abgelegten Schulungen'}
