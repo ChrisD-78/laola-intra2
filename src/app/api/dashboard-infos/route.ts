@@ -27,14 +27,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Request body:', body)
     
-    const { title, content, timestamp, pdf_name, pdf_url } = body
+    const { title, content, timestamp, pdf_name, pdf_url, is_popup } = body
     
     console.log('Inserting into database...')
     const result = await sql`
       INSERT INTO dashboard_infos (
-        title, content, timestamp, pdf_name, pdf_url
+        title, content, timestamp, pdf_name, pdf_url, is_popup
       ) VALUES (
-        ${title}, ${content}, ${timestamp}, ${pdf_name || null}, ${pdf_url || null}
+        ${title}, ${content}, ${timestamp}, ${pdf_name || null}, ${pdf_url || null}, ${is_popup || false}
       )
       RETURNING *
     `

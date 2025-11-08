@@ -5,7 +5,7 @@ import PasswordModal from './PasswordModal'
 import { useAuth } from '@/components/AuthProvider'
 
 interface InfoFormProps {
-  onAddInfo: (title: string, content: string, pdfFile?: File) => void
+  onAddInfo: (title: string, content: string, pdfFile?: File, isPopup?: boolean) => void
 }
 
 const InfoForm = ({ onAddInfo }: InfoFormProps) => {
@@ -15,15 +15,17 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [isPopup, setIsPopup] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (title.trim() && content.trim()) {
-      onAddInfo(title.trim(), content.trim(), selectedFile || undefined)
+      onAddInfo(title.trim(), content.trim(), selectedFile || undefined, isPopup)
       setTitle('')
       setContent('')
       setSelectedFile(null)
+      setIsPopup(false)
       setIsOpen(false)
     }
   }
@@ -32,6 +34,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
     setTitle('')
     setContent('')
     setSelectedFile(null)
+    setIsPopup(false)
     setIsOpen(false)
   }
 
@@ -206,6 +209,27 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                        accept=".pdf"
                        className="hidden"
                      />
+                   </div>
+
+                   {/* Popup Checkbox */}
+                   <div className="border-t border-gray-200 pt-4">
+                     <div className="flex items-start space-x-3">
+                       <input
+                         type="checkbox"
+                         id="isPopup"
+                         checked={isPopup}
+                         onChange={(e) => setIsPopup(e.target.checked)}
+                         className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                       />
+                       <div className="flex-1">
+                         <label htmlFor="isPopup" className="block text-sm font-medium text-gray-900 cursor-pointer">
+                           Als Popup beim Login anzeigen
+                         </label>
+                         <p className="text-xs text-gray-500 mt-1">
+                           Diese Information wird automatisch als Popup-Fenster angezeigt, wenn Benutzer die Seite öffnen
+                         </p>
+                       </div>
+                     </div>
                    </div>
             
             {/* Buttons */}

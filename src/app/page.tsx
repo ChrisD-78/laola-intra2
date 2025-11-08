@@ -6,6 +6,7 @@ import Link from 'next/link'
 import DailyMotivation from "@/components/DailyMotivation"
 import InfoForm from "@/components/InfoForm"
 import { useTasks } from "@/contexts/TaskContext"
+import DashboardInfoPopup from "@/components/DashboardInfoPopup"
 
 interface InfoItem {
   id: string
@@ -15,6 +16,7 @@ interface InfoItem {
   pdfFile?: File
   pdfFileName?: string
   pdfUrl?: string
+  isPopup?: boolean
 }
 
 export default function Dashboard() {
@@ -23,20 +25,33 @@ export default function Dashboard() {
   const recentTasks = getTasksByStatus('Offen').slice(0, 3)
   
   const [currentInfos, setCurrentInfos] = useState<InfoItem[]>([])
+  const [popupInfo, setPopupInfo] = useState<InfoItem | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await getDashboardInfos()
-      const mapped: InfoItem[] = data.map((r: DashboardInfoRecord) => ({
-        id: r.id as string,
-        title: r.title,
-        content: r.content,
-        timestamp: r.timestamp,
-        pdfFileName: r.pdf_name || undefined,
-        pdfUrl: r.pdf_url || undefined
-      }))
+        const mapped: InfoItem[] = data.map((r: DashboardInfoRecord) => ({
+          id: r.id as string,
+          title: r.title,
+          content: r.content,
+          timestamp: r.timestamp,
+          pdfFileName: r.pdf_name || undefined,
+          pdfUrl: r.pdf_url || undefined,
+          isPopup: r.is_popup || false
+        }))
         setCurrentInfos(mapped)
+
+        // Prüfe auf Popup-Informationen
+        const popupInfos = mapped.filter(info => info.isPopup)
+        if (popupInfos.length > 0) {
+          // Zeige die neueste Popup-Info, die noch nicht dismissed wurde
+          const dismissedPopups = JSON.parse(localStorage.getItem('dismissedPopups') || '[]')
+          const unDismissedPopup = popupInfos.find(info => !dismissedPopups.includes(info.id))
+          if (unDismissedPopup) {
+            setPopupInfo(unDismissedPopup)
+          }
+        }
       } catch (e) {
         console.error('Load dashboard infos failed', e)
       }
@@ -44,7 +59,7 @@ export default function Dashboard() {
     load()
   }, [])
 
-  const addNewInfo = async (title: string, content: string, pdfFile?: File) => {
+  const addNewInfo = async (title: string, content: string, pdfFile?: File, isPopup?: boolean) => {
     const optimistic: InfoItem = {
       id: `tmp_${Date.now()}`,
       title,
@@ -65,7 +80,8 @@ export default function Dashboard() {
         content,
         timestamp: new Date().toLocaleString('de-DE'),
         pdf_name: pdfFile?.name,
-        pdf_url: publicUrl
+        pdf_url: publicUrl,
+        is_popup: isPopup || false
       })
       const fresh = await getDashboardInfos()
       const mapped: InfoItem[] = fresh.map((r: DashboardInfoRecord) => ({
@@ -273,9 +289,16 @@ export default function Dashboard() {
             <div key={info.id} className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
               <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg mt-2 flex-shrink-0"></div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">
-                  {info.title}
-                </h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm font-semibold text-blue-900">
+                    {info.title}
+                  </h3>
+                  {info.isPopup && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      📢 Popup
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-blue-800 mb-2">
                   {info.content}
                 </p>
@@ -346,6 +369,14 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Popup für wichtige Informationen */}
+      {popupInfo && (
+        <DashboardInfoPopup
+          info={popupInfo}
+          onClose={() => setPopupInfo(null)}
+        />
+      )}
     </div>
   )
 }

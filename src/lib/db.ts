@@ -247,6 +247,7 @@ export interface DashboardInfoRecord {
   timestamp: string
   pdf_name?: string
   pdf_url?: string
+  is_popup?: boolean
   created_at?: string
 }
 
