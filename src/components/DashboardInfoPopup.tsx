@@ -22,6 +22,19 @@ export default function DashboardInfoPopup({ info, onClose }: DashboardInfoPopup
     setTimeout(() => setIsVisible(true), 100)
   }, [])
 
+  const formatDate = (dateString: string): string => {
+    // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
+    try {
+      const date = new Date(dateString)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}.${month}.${year}`
+    } catch (e) {
+      return dateString
+    }
+  }
+
   const handleClose = () => {
     setIsVisible(false)
     setTimeout(onClose, 300) // Warte auf Animation
@@ -74,7 +87,7 @@ export default function DashboardInfoPopup({ info, onClose }: DashboardInfoPopup
                       {info.title}
                     </h2>
                     <p className="text-sm text-white/80 mt-1">
-                      {info.timestamp}
+                      {formatDate(info.timestamp)}
                     </p>
                   </div>
                 </div>

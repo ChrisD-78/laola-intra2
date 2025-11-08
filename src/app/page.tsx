@@ -27,6 +27,19 @@ export default function Dashboard() {
   const [currentInfos, setCurrentInfos] = useState<InfoItem[]>([])
   const [popupInfo, setPopupInfo] = useState<InfoItem | null>(null)
 
+  const formatDate = (dateString: string): string => {
+    // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
+    try {
+      const date = new Date(dateString)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}.${month}.${year}`
+    } catch (e) {
+      return dateString
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -304,7 +317,7 @@ export default function Dashboard() {
                 </p>
                 <div className="flex items-center space-x-4">
                   <span className="text-xs text-blue-600 font-medium">
-                    {info.timestamp}
+                    {formatDate(info.timestamp)}
                   </span>
                   {info.pdfFileName && (
                     <span className="text-xs text-blue-600 font-medium">
