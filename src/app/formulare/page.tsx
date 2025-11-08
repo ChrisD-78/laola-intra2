@@ -141,6 +141,15 @@ export default function Formulare() {
     }
   }
 
+  const formatDate = (dateString: string): string => {
+    // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}.${month}.${year}`
+  }
+
   const handleViewSubmission = (submission: FormSubmission) => {
     setSelectedSubmission(submission)
     setShowSubmissionModal(true)
@@ -169,7 +178,7 @@ export default function Formulare() {
       </style>
     </head><body>
       <h1>${title}</h1>
-      <div class=\"meta\">Status: ${submission.status} • Eingereicht: ${submission.submittedAt} • Von: ${submission.submittedBy}</div>
+      <div class=\"meta\">Status: ${submission.status} • Eingereicht: ${formatDate(submission.submittedAt)} • Von: ${submission.submittedBy}</div>
       <div style=\"margin:12px 0 20px 0;color:#374151;\">${submission.description}</div>
       <table>
         <thead><tr><td style=\"padding:8px;border:1px solid #e5e7eb;\">Feld</td><td style=\"padding:8px;border:1px solid #e5e7eb;\">Wert</td></tr></thead>
@@ -423,7 +432,7 @@ export default function Formulare() {
                       }`}>
                         {submission.status}
                       </span>
-                      <span className="text-xs text-gray-900">📅 {submission.submittedAt}</span>
+                      <span className="text-xs text-gray-900">📅 {formatDate(submission.submittedAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -559,7 +568,7 @@ export default function Formulare() {
                     {submission.submittedBy}
                   </td>
                   <td className="hidden md:table-cell px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {submission.submittedAt}
+                    {formatDate(submission.submittedAt)}
                   </td>
                   <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
@@ -662,7 +671,7 @@ export default function Formulare() {
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm font-medium text-gray-700">Datum</p>
-                  <p className="text-sm text-gray-900 mt-1">{selectedSubmission.submittedAt}</p>
+                  <p className="text-sm text-gray-900 mt-1">{formatDate(selectedSubmission.submittedAt)}</p>
                 </div>
               </div>
 
