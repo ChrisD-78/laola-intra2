@@ -123,7 +123,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-900 mb-2">
                 Überschrift *
               </label>
               <input
@@ -131,7 +131,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400"
                 placeholder="z.B. Neue Sicherheitsrichtlinien"
                 required
                 autoFocus
@@ -139,7 +139,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
             </div>
             
                    <div>
-                     <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+                     <label htmlFor="content" className="block text-sm font-medium text-gray-900 mb-2">
                        Inhalt *
                      </label>
                      <textarea
@@ -147,14 +147,14 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                        value={content}
                        onChange={(e) => setContent(e.target.value)}
                        rows={4}
-                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400"
                        placeholder="Beschreibung der Information..."
                        required
                      />
                    </div>
                    
                    <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                     <label className="block text-sm font-medium text-gray-900 mb-2">
                        PDF-Dokument anhängen (optional)
                      </label>
                      
@@ -166,7 +166,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                              <p className="text-sm font-medium text-gray-900">
                                PDF-Datei auswählen
                              </p>
-                             <p className="text-xs text-gray-500">
+                             <p className="text-xs text-gray-600">
                                Nur PDF-Dateien erlaubt
                              </p>
                            </div>
@@ -186,7 +186,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                              <span className="text-xl">📄</span>
                              <div>
                                <p className="font-medium text-gray-900 text-sm">{selectedFile.name}</p>
-                               <p className="text-xs text-gray-500">
+                               <p className="text-xs text-gray-600">
                                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                                </p>
                              </div>
@@ -225,7 +225,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
                          <label htmlFor="isPopup" className="block text-sm font-medium text-gray-900 cursor-pointer">
                            Als Popup beim Login anzeigen
                          </label>
-                         <p className="text-xs text-gray-500 mt-1">
+                         <p className="text-xs text-gray-700 mt-1">
                            Diese Information wird automatisch als Popup-Fenster angezeigt, wenn Benutzer die Seite öffnen
                          </p>
                        </div>
@@ -243,7 +243,7 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 transition-colors font-medium"
               >
                 Abbrechen
               </button>
