@@ -29,8 +29,31 @@ export default function Dashboard() {
 
   const formatDate = (dateString: string): string => {
     // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
+    if (!dateString) return ''
+    
+    // Spezielle Werte direkt zurückgeben
+    if (dateString === 'gerade eben' || dateString === 'Heute' || dateString === 'Gestern') {
+      return dateString
+    }
+    
     try {
+      // Wenn das Datum bereits im deutschen Format ist (z.B. "08.11.2025, 14:30:45")
+      if (dateString.includes(',')) {
+        // Extrahiere nur den Datumsteil vor dem Komma
+        return dateString.split(',')[0].trim()
+      }
+      
+      // Wenn es bereits im Format TT.MM.JJJJ ist (ohne Komma)
+      if (dateString.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
+        return dateString
+      }
+      
+      // Ansonsten versuche es zu parsen
       const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        // Falls das Parsen fehlschlägt, gebe den Original-String zurück
+        return dateString
+      }
       const day = String(date.getDate()).padStart(2, '0')
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const year = date.getFullYear()
