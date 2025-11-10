@@ -5,6 +5,17 @@
 -- Führen Sie dieses Script NACH database_quiz_system.sql aus
 -- =====================================================
 
+-- WICHTIG: Zuerst alle alten Quizze löschen
+DELETE FROM quiz_results;
+DELETE FROM quiz_questions;
+DELETE FROM quizzes;
+
+-- Success message für Löschung
+DO $$
+BEGIN
+  RAISE NOTICE 'Alte Quiz-Daten wurden gelöscht';
+END $$;
+
 -- Quiz 1: Ultrafiltration
 DO $$
 DECLARE
