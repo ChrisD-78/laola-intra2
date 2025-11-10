@@ -1687,7 +1687,7 @@ export default function Schulungen() {
           )}
 
           {activeTab === 'quiz' && (
-            <QuizOverview />
+            <QuizOverview onBack={() => setActiveTab('available')} />
           )}
 
         </div>

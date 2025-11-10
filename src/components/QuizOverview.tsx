@@ -16,9 +16,22 @@ interface Quiz {
   avg_score: number
 }
 
-export default function QuizOverview() {
+interface QuizOverviewProps {
+  onBack?: () => void
+}
+
+interface GlobalLeaderboardEntry {
+  user_name: string
+  total_score: number
+  total_questions: number
+  percentage: number
+  total_attempts: number
+}
+
+export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const { currentUser } = useAuth()
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<GlobalLeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [showQuizPlayer, setShowQuizPlayer] = useState(false)
@@ -27,6 +40,7 @@ export default function QuizOverview() {
 
   useEffect(() => {
     loadQuizzes()
+    loadGlobalLeaderboard()
   }, [])
 
   const loadQuizzes = async () => {
@@ -41,6 +55,16 @@ export default function QuizOverview() {
     }
   }
 
+  const loadGlobalLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/quiz/leaderboard/global')
+      const data = await response.json()
+      setGlobalLeaderboard(data)
+    } catch (error) {
+      console.error('Failed to load global leaderboard:', error)
+    }
+  }
+
   const handleStartQuiz = (quiz: Quiz) => {
     setSelectedQuiz(quiz)
     setShowQuizPlayer(true)
@@ -51,6 +75,7 @@ export default function QuizOverview() {
     setQuizResult({ score, total, percentage })
     setShowQuizPlayer(false)
     loadQuizzes() // Reload to update stats
+    loadGlobalLeaderboard() // Reload global leaderboard
   }
 
   const handleShowLeaderboard = (quiz: Quiz) => {
@@ -68,13 +93,159 @@ export default function QuizOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
-        <h2 className="text-3xl font-bold mb-2">🎯 Quiz-Bereich</h2>
-        <p className="text-white/90">
-          Teste dein Wissen und sammle Punkte! Vergleiche dich mit deinen Kollegen in der Rangliste.
-        </p>
+      {/* Header mit Zurück-Button */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white relative">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="absolute top-4 left-4 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors font-medium text-white flex items-center gap-2"
+          >
+            ← Zurück
+          </button>
+        )}
+        <div className={onBack ? 'ml-32' : ''}>
+          <h2 className="text-3xl font-bold mb-2">🎯 Quiz-Bereich</h2>
+          <p className="text-white/90">
+            Teste dein Wissen und sammle Punkte! Vergleiche dich mit deinen Kollegen in der Rangliste.
+          </p>
+        </div>
       </div>
+
+      {/* Globale Rangliste mit Siegertreppe */}
+      {globalLeaderboard.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white">
+            <h3 className="text-2xl font-bold mb-1">🏆 Hall of Fame</h3>
+            <p className="text-white/90">Die besten Quiz-Teilnehmer im Überblick</p>
+          </div>
+
+          {/* Siegertreppe - Top 3 */}
+          {globalLeaderboard.length >= 3 && (
+            <div className="p-6 bg-gradient-to-b from-yellow-50 to-white">
+              <div className="flex justify-center items-end gap-4 max-w-2xl mx-auto">
+                {/* Platz 2 - Links */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-3xl sm:text-4xl mb-2 shadow-lg ring-4 ring-gray-200">
+                    🥈
+                  </div>
+                  <div className="text-center mb-2">
+                    <p className="font-bold text-gray-900 text-sm sm:text-base">{globalLeaderboard[1].user_name}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-700">{globalLeaderboard[1].total_score}/{globalLeaderboard[1].total_questions}</p>
+                    <p className="text-xs text-gray-500">{globalLeaderboard[1].percentage.toFixed(0)}%</p>
+                  </div>
+                  <div className="w-full bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-xl h-24 sm:h-32 flex items-center justify-center shadow-lg">
+                    <span className="text-4xl sm:text-5xl font-bold text-white">2</span>
+                  </div>
+                </div>
+
+                {/* Platz 1 - Mitte (höher) */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 flex items-center justify-center text-4xl sm:text-5xl mb-2 shadow-2xl ring-4 ring-yellow-300 animate-pulse">
+                    🥇
+                  </div>
+                  <div className="text-center mb-2">
+                    <p className="font-bold text-gray-900 text-base sm:text-lg">{globalLeaderboard[0].user_name}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{globalLeaderboard[0].total_score}/{globalLeaderboard[0].total_questions}</p>
+                    <p className="text-xs text-gray-500">{globalLeaderboard[0].percentage.toFixed(0)}%</p>
+                    <span className="inline-block mt-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
+                      👑 Champion
+                    </span>
+                  </div>
+                  <div className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-xl h-32 sm:h-40 flex items-center justify-center shadow-2xl">
+                    <span className="text-5xl sm:text-6xl font-bold text-white">1</span>
+                  </div>
+                </div>
+
+                {/* Platz 3 - Rechts */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-3xl sm:text-4xl mb-2 shadow-lg ring-4 ring-orange-200">
+                    🥉
+                  </div>
+                  <div className="text-center mb-2">
+                    <p className="font-bold text-gray-900 text-sm sm:text-base">{globalLeaderboard[2].user_name}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-orange-600">{globalLeaderboard[2].total_score}/{globalLeaderboard[2].total_questions}</p>
+                    <p className="text-xs text-gray-500">{globalLeaderboard[2].percentage.toFixed(0)}%</p>
+                  </div>
+                  <div className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-xl h-20 sm:h-28 flex items-center justify-center shadow-lg">
+                    <span className="text-4xl sm:text-5xl font-bold text-white">3</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Vollständige Rangliste */}
+          {globalLeaderboard.length > 0 && (
+            <div className="p-6 border-t border-gray-200">
+              <h4 className="font-semibold text-gray-900 mb-4">📊 Alle Teilnehmer</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rang</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Punkte</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prozent</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versuche</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {globalLeaderboard.map((entry, index) => {
+                      const rank = index + 1
+                      const getMedalIcon = (r: number) => {
+                        switch (r) {
+                          case 1: return '🥇'
+                          case 2: return '🥈'
+                          case 3: return '🥉'
+                          default: return r
+                        }
+                      }
+                      const getRankColor = (r: number) => {
+                        switch (r) {
+                          case 1: return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+                          case 2: return 'bg-gradient-to-r from-gray-300 to-gray-500 text-white'
+                          case 3: return 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
+                          default: return 'bg-gray-100 text-gray-700'
+                        }
+                      }
+
+                      return (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm ${getRankColor(rank)}`}>
+                              {rank <= 3 ? getMedalIcon(rank) : rank}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{entry.user_name}</div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="text-sm font-bold text-gray-900">
+                              {entry.total_score} / {entry.total_questions}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              entry.percentage >= 70
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {entry.percentage.toFixed(0)}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {entry.total_attempts}x
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quiz Result Popup */}
       {quizResult && (
@@ -106,7 +277,9 @@ export default function QuizOverview() {
       )}
 
       {/* Available Quizzes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-4">📝 Verfügbare Quizze</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quizzes.map((quiz) => (
           <div key={quiz.id} className="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow overflow-hidden">
             {/* Quiz Header */}
@@ -166,15 +339,16 @@ export default function QuizOverview() {
             </div>
           </div>
         ))}
-      </div>
-
-      {quizzes.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎯</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Quizze verfügbar</h3>
-          <p className="text-gray-600">Quizze werden in Kürze hinzugefügt.</p>
         </div>
-      )}
+
+        {quizzes.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🎯</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Quizze verfügbar</h3>
+            <p className="text-gray-600">Quizze werden in Kürze hinzugefügt.</p>
+          </div>
+        )}
+      </div>
 
       {/* Quiz Player Modal */}
       {showQuizPlayer && selectedQuiz && (
