@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
+import QuizOverview from '@/components/QuizOverview'
 
 interface Schulung {
   id: string
@@ -33,7 +34,7 @@ interface CompletedSchulung {
 
 export default function Schulungen() {
   const { isAdmin } = useAuth()
-  const [activeTab, setActiveTab] = useState<'available' | 'overview'>('available')
+  const [activeTab, setActiveTab] = useState<'available' | 'overview' | 'quiz'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
@@ -1265,12 +1266,13 @@ export default function Schulungen() {
           <nav className="flex space-x-8 px-6">
             {[
               { id: 'available', label: 'Verfügbare Schulungen', count: schulungen.length },
-              { id: 'overview', label: 'Schulungsübersicht', count: null }
+              { id: 'overview', label: 'Schulungsübersicht', count: null },
+              { id: 'quiz', label: '🎯 Quiz', count: null }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id as 'available' | 'overview')
+                  setActiveTab(tab.id as 'available' | 'overview' | 'quiz')
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
@@ -1675,6 +1677,10 @@ export default function Schulungen() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'quiz' && (
+            <QuizOverview />
           )}
 
         </div>
