@@ -64,8 +64,10 @@ Das Script erstellt:
 ```
 
 Das Script fügt ein:
-- ✅ Quiz 1: "DIN 19643 Allgemein" (21 Fragen)
-- ✅ Quiz 2: "Ultrafiltration" (1 Frage)
+- ✅ Quiz 1: "Ultrafiltration" (12 Fragen)
+- ✅ Quiz 2: "Wasserkreislauf im Schwimmbadbetrieb" (12 Fragen)
+- ✅ Quiz 3: "DIN 19643 Allgemein" (21 Fragen)
+- **Gesamt: 45 Fragen in 3 Quizzen**
 
 ### 2️⃣ Code deployen
 
@@ -131,7 +133,32 @@ Die Änderungen sind bereits gepusht. Warten Sie auf das Netlify-Deployment:
 
 ## 🎯 Vorhandene Quizze
 
-### 1. DIN 19643 Allgemein (21 Fragen)
+### 1. Ultrafiltration (12 Fragen)
+**Themen:**
+- Grundprinzip der Ultrafiltration
+- Größenbereiche und Abtrennung
+- Entfernung von Mikroorganismen
+- Cross-Flow Filtrationsrichtung
+- Transmembrandruck (TMP)
+- Permeatfluss (Flux)
+- Membranreinigung
+- Vergleich mit konventioneller Filtration
+- Hygiene-Sicherheit nach DIN 19643
+
+### 2. Wasserkreislauf im Schwimmbadbetrieb (12 Fragen)
+**Themen:**
+- Reihenfolge im Wasserkreislauf
+- Funktion des Ausgleichsbehälters
+- Überlaufrinnen-System
+- Umwälzpumpe
+- Filtration
+- Einströmdüsen
+- Umwälzzeit (4h für Schwimmerbecken)
+- Frischwasserzufuhr
+- Rückspülung
+- Hauptziele des Kreislaufs
+
+### 3. DIN 19643 Allgemein (21 Fragen)
 **Themen:**
 - pH-Wert Management
 - Chlor-Werte und Desinfektion
@@ -140,18 +167,6 @@ Die Änderungen sind bereits gepusht. Warten Sie auf das Netlify-Deployment:
 - Trübung
 - Filtration
 - Allgemeine Beckenwasser-Hygiene
-
-**Fragen-Beispiele:**
-- pH-Wert Überschreitung
-- Chlor-Desinfektion
-- Gebundenes Chlor
-- Redoxpotenzial
-- Aktivkohlefiltration
-- u.v.m.
-
-### 2. Ultrafiltration (1 Frage)
-**Themen:**
-- Grundprinzip der Ultrafiltration
 
 ---
 
@@ -382,19 +397,35 @@ Mögliche Features:
 
 ## 📝 Vorhandene Quiz-Inhalte
 
-### Quiz 1: DIN 19643 Allgemein
-**21 Fragen zu:**
-- pH-Wert Regulierung
-- Chlor-Management
-- Redoxpotenzial
-- Organische Belastung (TOC)
-- Trübung
-- Filtration
-- Hygiene-Standards
+### Quiz 1: Ultrafiltration (12 Fragen)
+**Inhalte:**
+- Grundprinzip und Membran-Technologie
+- Größenbereiche (0,01–0,1 µm)
+- Entfernung von Bakterien und Mikroorganismen
+- Cross-Flow Filtration
+- Transmembrandruck und Membranreinigung
+- Permeatfluss und Betrieb
+- Hygiene-Sicherheit
 
-### Quiz 2: Ultrafiltration
-**1 Frage zu:**
-- Grundprinzip der Ultrafiltration
+### Quiz 2: Wasserkreislauf im Schwimmbadbetrieb (12 Fragen)
+**Inhalte:**
+- Aufbau und Reihenfolge des Kreislaufs
+- Ausgleichsbehälter, Pumpen, Filter
+- Überlaufrinnen und Einströmdüsen
+- Umwälzzeit (4 Stunden)
+- Frischwasserzufuhr
+- Rückspülung und Wartung
+- Hygienische Anforderungen
+
+### Quiz 3: DIN 19643 Allgemein (21 Fragen)
+**Inhalte:**
+- pH-Wert Regulierung
+- Chlor-Management (frei & gebunden)
+- Redoxpotenzial (750-780 mV)
+- TOC-Belastung
+- Trübung (< 0,5 NTU)
+- Aktivkohlefiltration
+- Hygiene-Standards
 
 ---
 
