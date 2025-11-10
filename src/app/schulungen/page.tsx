@@ -161,7 +161,8 @@ export default function Schulungen() {
     { name: 'Unterweisungen', icon: '📋', color: 'bg-red-100 text-red-800', count: getCategoryCount('Unterweisungen') },
     { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: getCategoryCount('Schulungen') },
     { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: getCategoryCount('Gastronomie') },
-    { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: getCategoryCount('Kursverlaufspläne') }
+    { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: getCategoryCount('Kursverlaufspläne') },
+    { name: 'Quiz', icon: '🎯', color: 'bg-yellow-100 text-yellow-800', count: 3, isSpecial: true }
   ]
 
   const handleDeleteSchulung = async (schulungId: string) => {
@@ -252,7 +253,12 @@ export default function Schulungen() {
   }
 
   const handleCategoryFilter = (categoryName: string) => {
-    setSelectedCategory(categoryName)
+    // Spezialbehandlung für Quiz-Kachel
+    if (categoryName === 'Quiz') {
+      setActiveTab('quiz')
+    } else {
+      setSelectedCategory(categoryName)
+    }
   }
 
   const handleClearFilter = () => {
@@ -1266,8 +1272,7 @@ export default function Schulungen() {
           <nav className="flex space-x-8 px-6">
             {[
               { id: 'available', label: 'Verfügbare Schulungen', count: schulungen.length },
-              { id: 'overview', label: 'Schulungsübersicht', count: null },
-              { id: 'quiz', label: '🎯 Quiz', count: null }
+              { id: 'overview', label: 'Schulungsübersicht', count: null }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1295,13 +1300,15 @@ export default function Schulungen() {
           {activeTab === 'available' && (
             <div className="space-y-6">
               {/* Kategorien */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 {categories.map((category) => (
                   <div key={category.name} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="text-center">
                       <span className="text-3xl mb-2 block">{category.icon}</span>
                       <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{category.count} Schulungen</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {category.name === 'Quiz' ? `${category.count} Quizze` : `${category.count} Schulungen`}
+                      </p>
                       <button 
                         onClick={() => handleCategoryFilter(category.name)}
                         className={`mt-3 px-3 py-1 rounded-full text-xs font-medium ${category.color} hover:opacity-80 transition-opacity`}
@@ -1446,7 +1453,7 @@ export default function Schulungen() {
                               className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                             >
                               <option value="">Alle</option>
-                              {categories.map(category => (
+                              {categories.filter(c => c.name !== 'Quiz').map(category => (
                                 <option key={category.name} value={category.name}>{category.name}</option>
                               ))}
                             </select>
