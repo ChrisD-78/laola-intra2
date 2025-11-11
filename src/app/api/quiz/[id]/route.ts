@@ -4,11 +4,11 @@ import { neon } from '@neondatabase/serverless'
 // GET quiz with questions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const { id } = params
+    const { id } = await params
 
     // Get quiz details
     const quiz = await sql`

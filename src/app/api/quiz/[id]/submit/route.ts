@@ -4,11 +4,11 @@ import { neon } from '@neondatabase/serverless'
 // POST submit quiz results
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { user_name, answers, time_taken_seconds } = body
 

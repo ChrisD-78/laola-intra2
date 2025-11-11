@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
@@ -11,7 +11,7 @@ export async function PUT(
 
   try {
     const { title, content, is_popup } = await request.json()
-    const { id } = params
+    const { id } = await params
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 })
