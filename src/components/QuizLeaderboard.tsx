@@ -22,16 +22,23 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadLeaderboard()
+    if (quizId) {
+      loadLeaderboard()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizId])
 
   const loadLeaderboard = async () => {
     try {
       const response = await fetch(`/api/quiz/${quizId}/leaderboard`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard')
+      }
       const data = await response.json()
-      setLeaderboard(data)
+      setLeaderboard(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to load leaderboard:', error)
+      setLeaderboard([])
     } finally {
       setLoading(false)
     }

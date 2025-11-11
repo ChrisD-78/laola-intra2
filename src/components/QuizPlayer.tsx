@@ -38,18 +38,30 @@ export default function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerPr
   const [startTime] = useState(Date.now())
 
   useEffect(() => {
-    loadQuiz()
+    if (quizId) {
+      loadQuiz()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizId])
 
   const loadQuiz = async () => {
     try {
       const response = await fetch(`/api/quiz/${quizId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch quiz')
+      }
       const data = await response.json()
-      setQuiz(data.quiz)
-      setQuestions(data.questions)
-      setSelectedAnswers(new Array(data.questions.length).fill(''))
+      if (data.quiz && data.questions) {
+        setQuiz(data.quiz)
+        setQuestions(data.questions)
+        setSelectedAnswers(new Array(data.questions.length).fill(''))
+      } else {
+        throw new Error('Invalid quiz data')
+      }
     } catch (error) {
       console.error('Failed to load quiz:', error)
+      alert('Quiz konnte nicht geladen werden. Bitte versuchen Sie es erneut.')
+      onClose()
     } finally {
       setLoading(false)
     }
@@ -87,15 +99,26 @@ export default function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerPr
         })
       })
 
+      if (!response.ok) {
+        throw new Error('Failed to submit quiz')
+      }
+
       const data = await response.json()
       
-      if (data.success) {
+      if (data.success && data.result) {
         setShowResult(true)
-        onComplete(data.result.score, data.result.total, data.result.percentage)
+        // Safely call onComplete with validated data
+        onComplete(
+          data.result.score || 0,
+          data.result.total || questions.length,
+          data.result.percentage || 0
+        )
+      } else {
+        throw new Error('Invalid response data')
       }
     } catch (error) {
       console.error('Failed to submit quiz:', error)
-      alert('Fehler beim Speichern der Ergebnisse')
+      alert('Fehler beim Speichern der Ergebnisse. Bitte versuchen Sie es erneut.')
     }
   }
 

@@ -39,17 +39,34 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const [quizResult, setQuizResult] = useState<{ score: number; total: number; percentage: number } | null>(null)
 
   useEffect(() => {
-    loadQuizzes()
-    loadGlobalLeaderboard()
+    let mounted = true
+    
+    const loadData = async () => {
+      if (mounted) {
+        await loadQuizzes()
+        await loadGlobalLeaderboard()
+      }
+    }
+    
+    loadData()
+    
+    return () => {
+      mounted = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadQuizzes = async () => {
     try {
       const response = await fetch('/api/quiz')
+      if (!response.ok) {
+        throw new Error('Failed to fetch quizzes')
+      }
       const data = await response.json()
-      setQuizzes(data)
+      setQuizzes(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to load quizzes:', error)
+      setQuizzes([])
     } finally {
       setLoading(false)
     }
@@ -58,10 +75,14 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const loadGlobalLeaderboard = async () => {
     try {
       const response = await fetch('/api/quiz/leaderboard/global')
+      if (!response.ok) {
+        throw new Error('Failed to fetch global leaderboard')
+      }
       const data = await response.json()
-      setGlobalLeaderboard(data)
+      setGlobalLeaderboard(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to load global leaderboard:', error)
+      setGlobalLeaderboard([])
     }
   }
 
@@ -120,7 +141,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
           </div>
 
           {/* Siegertreppe - Top 3 */}
-          {globalLeaderboard.length >= 3 && (
+          {globalLeaderboard && globalLeaderboard.length >= 3 && globalLeaderboard[0] && globalLeaderboard[1] && globalLeaderboard[2] && (
             <div className="p-6 bg-gradient-to-b from-yellow-50 to-white">
               <div className="flex justify-center items-end gap-4 max-w-2xl mx-auto">
                 {/* Platz 2 - Links */}
