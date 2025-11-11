@@ -342,21 +342,21 @@ export default function Schulungen() {
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bezeichnung der Schulung *</label>
-              <input type="text" value={bezeichnung} onChange={(e)=>setBezeichnung(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <input type="text" value={bezeichnung} onChange={(e)=>setBezeichnung(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Vorname *</label>
-                <input type="text" value={vorname} onChange={(e)=>setVorname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={vorname} onChange={(e)=>setVorname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Nachname *</label>
-                <input type="text" value={nachname} onChange={(e)=>setNachname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={nachname} onChange={(e)=>setNachname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Datum *</label>
-              <input type="date" value={datum} onChange={(e)=>setDatum(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <input type="date" value={datum} onChange={(e)=>setDatum(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Schulungsnachweis (PDF optional)</label>
@@ -932,7 +932,7 @@ export default function Schulungen() {
                       required
                       value={participantName}
                       onChange={(e) => setParticipantName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                       placeholder="Ihr Vorname"
                     />
                   </div>
@@ -946,7 +946,7 @@ export default function Schulungen() {
                       required
                       value={participantSurname}
                       onChange={(e) => setParticipantSurname(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                       placeholder="Ihr Nachname"
                     />
                   </div>
