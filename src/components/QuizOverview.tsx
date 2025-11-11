@@ -331,12 +331,19 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Durchschnitt:</span>
                     <span className="font-semibold text-gray-900">
-                      {quiz.avg_score ? quiz.avg_score.toFixed(0) : 0}%
+                      {(() => {
+                        try {
+                          const score = Number(quiz.avg_score || 0)
+                          return isNaN(score) ? '0' : score.toFixed(0)
+                        } catch {
+                          return '0'
+                        }
+                      })()}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-1">
                     <span className="text-gray-600">Teilnahmen:</span>
-                    <span className="font-semibold text-gray-900">{quiz.total_attempts}</span>
+                    <span className="font-semibold text-gray-900">{quiz.total_attempts || 0}</span>
                   </div>
                 </div>
               )}

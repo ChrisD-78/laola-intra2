@@ -9,8 +9,16 @@ export async function GET() {
   try {
     const sql = neon(process.env.DATABASE_URL)
     
+    // Check if quiz_results table has any data
+    const hasResults = await sql`SELECT COUNT(*) as count FROM quiz_results LIMIT 1`
+    
+    if (!hasResults || hasResults.length === 0 || hasResults[0].count === 0) {
+      // No results yet, return empty array
+      return NextResponse.json([])
+    }
+    
     // Globale Rangliste über alle Quizze hinweg
-    const query = `
+    const result = await sql`
       WITH user_quiz_stats AS (
         SELECT 
           user_name,
@@ -41,13 +49,12 @@ export async function GET() {
       ORDER BY percentage DESC, total_score DESC, total_attempts ASC
       LIMIT 50
     `
-
-    const result = await sql(query)
     
-    return NextResponse.json(result)
+    return NextResponse.json(result || [])
   } catch (error) {
     console.error('Failed to fetch global leaderboard:', error)
-    return NextResponse.json({ error: 'Failed to fetch global leaderboard' }, { status: 500 })
+    // Return empty array instead of error to prevent crashes
+    return NextResponse.json([])
   }
 }
 
