@@ -40,17 +40,26 @@ export async function GET() {
       )
       SELECT 
         user_name,
-        total_score,
-        total_questions,
-        ROUND((total_score::decimal / NULLIF(total_questions, 0)) * 100, 2) as percentage,
-        total_attempts
+        COALESCE(total_score, 0) as total_score,
+        COALESCE(total_questions, 0) as total_questions,
+        COALESCE(ROUND((total_score::decimal / NULLIF(total_questions, 0)) * 100, 2), 0) as percentage,
+        COALESCE(total_attempts, 0) as total_attempts
       FROM user_totals
       WHERE total_questions > 0
       ORDER BY percentage DESC, total_score DESC, total_attempts ASC
       LIMIT 50
     `
     
-    return NextResponse.json(result || [])
+    // Ensure all numeric fields are actually numbers
+    const sanitizedResult = (result || []).map(entry => ({
+      ...entry,
+      total_score: Number(entry.total_score || 0),
+      total_questions: Number(entry.total_questions || 0),
+      percentage: Number(entry.percentage || 0),
+      total_attempts: Number(entry.total_attempts || 0)
+    }))
+    
+    return NextResponse.json(sanitizedResult)
   } catch (error) {
     console.error('Failed to fetch global leaderboard:', error)
     // Return empty array instead of error to prevent crashes

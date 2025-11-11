@@ -38,6 +38,16 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const [showLeaderboard, setShowLeaderboard] = useState<Quiz | null>(null)
   const [quizResult, setQuizResult] = useState<{ score: number; total: number; percentage: number } | null>(null)
 
+  // Helper function to safely format percentage
+  const formatPercentage = (value: any): string => {
+    try {
+      const num = Number(value || 0)
+      return isNaN(num) ? '0' : num.toFixed(0)
+    } catch {
+      return '0'
+    }
+  }
+
   useEffect(() => {
     let mounted = true
     
@@ -152,7 +162,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                   <div className="text-center mb-2">
                     <p className="font-bold text-gray-900 text-sm sm:text-base">{globalLeaderboard[1].user_name}</p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-700">{globalLeaderboard[1].total_score}/{globalLeaderboard[1].total_questions}</p>
-                    <p className="text-xs text-gray-500">{globalLeaderboard[1].percentage.toFixed(0)}%</p>
+                    <p className="text-xs text-gray-500">{formatPercentage(globalLeaderboard[1].percentage)}%</p>
                   </div>
                   <div className="w-full bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-xl h-24 sm:h-32 flex items-center justify-center shadow-lg">
                     <span className="text-4xl sm:text-5xl font-bold text-white">2</span>
@@ -167,7 +177,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                   <div className="text-center mb-2">
                     <p className="font-bold text-gray-900 text-base sm:text-lg">{globalLeaderboard[0].user_name}</p>
                     <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{globalLeaderboard[0].total_score}/{globalLeaderboard[0].total_questions}</p>
-                    <p className="text-xs text-gray-500">{globalLeaderboard[0].percentage.toFixed(0)}%</p>
+                    <p className="text-xs text-gray-500">{formatPercentage(globalLeaderboard[0].percentage)}%</p>
                     <span className="inline-block mt-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
                       👑 Champion
                     </span>
@@ -185,7 +195,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                   <div className="text-center mb-2">
                     <p className="font-bold text-gray-900 text-sm sm:text-base">{globalLeaderboard[2].user_name}</p>
                     <p className="text-xl sm:text-2xl font-bold text-orange-600">{globalLeaderboard[2].total_score}/{globalLeaderboard[2].total_questions}</p>
-                    <p className="text-xs text-gray-500">{globalLeaderboard[2].percentage.toFixed(0)}%</p>
+                    <p className="text-xs text-gray-500">{formatPercentage(globalLeaderboard[2].percentage)}%</p>
                   </div>
                   <div className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-xl h-20 sm:h-28 flex items-center justify-center shadow-lg">
                     <span className="text-4xl sm:text-5xl font-bold text-white">3</span>
@@ -251,7 +261,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {entry.percentage.toFixed(0)}%
+                              {formatPercentage(entry.percentage)}%
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
@@ -284,7 +294,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
             </p>
             <div className="text-3xl font-bold mb-4">
               <span className={quizResult.percentage >= 70 ? 'text-green-600' : 'text-red-600'}>
-                {quizResult.percentage.toFixed(0)}%
+                {formatPercentage(quizResult.percentage)}%
               </span>
             </div>
             <button
