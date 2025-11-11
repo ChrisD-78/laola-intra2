@@ -7,6 +7,7 @@ import DailyMotivation from "@/components/DailyMotivation"
 import InfoForm from "@/components/InfoForm"
 import { useTasks } from "@/contexts/TaskContext"
 import DashboardInfoPopup from "@/components/DashboardInfoPopup"
+import { useAuth } from "@/components/AuthProvider"
 
 interface InfoItem {
   id: string
@@ -21,11 +22,14 @@ interface InfoItem {
 
 export default function Dashboard() {
   const { getTaskStats, getTasksByStatus } = useTasks()
+  const { isAdmin } = useAuth()
   const taskStats = getTaskStats()
   const recentTasks = getTasksByStatus('Offen').slice(0, 3)
   
   const [currentInfos, setCurrentInfos] = useState<InfoItem[]>([])
   const [popupInfo, setPopupInfo] = useState<InfoItem | null>(null)
+  const [editingInfo, setEditingInfo] = useState<InfoItem | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const formatDate = (dateString: string): string => {
     // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
@@ -145,6 +149,53 @@ export default function Dashboard() {
       console.error('Delete dashboard info failed', e)
       setCurrentInfos(prev)
       alert('Information konnte nicht gelöscht werden.')
+    }
+  }
+
+  const handleEditClick = (info: InfoItem) => {
+    setEditingInfo(info)
+    setShowEditModal(true)
+  }
+
+  const updateInfo = async (id: string, title: string, content: string, isPopup?: boolean) => {
+    const prev = currentInfos
+    // Optimistic update
+    setCurrentInfos(prevInfos => 
+      prevInfos.map(info => 
+        info.id === id 
+          ? { ...info, title, content, isPopup: isPopup || false }
+          : info
+      )
+    )
+    try {
+      const response = await fetch(`/api/dashboard-infos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, is_popup: isPopup || false })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Update failed')
+      }
+      
+      // Reload fresh data
+      const fresh = await getDashboardInfos()
+      const mapped: InfoItem[] = fresh.map((r: DashboardInfoRecord) => ({
+        id: r.id as string,
+        title: r.title,
+        content: r.content,
+        timestamp: r.timestamp,
+        pdfFileName: r.pdf_name || undefined,
+        pdfUrl: r.pdf_url || undefined,
+        isPopup: r.is_popup || false
+      }))
+      setCurrentInfos(mapped)
+      setShowEditModal(false)
+      setEditingInfo(null)
+    } catch (e) {
+      console.error('Update dashboard info failed', e)
+      setCurrentInfos(prev)
+      alert('Information konnte nicht aktualisiert werden.')
     }
   }
 
@@ -359,6 +410,15 @@ export default function Dashboard() {
                     📄
                   </button>
                 )}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleEditClick(info)}
+                    className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                    title="Information bearbeiten"
+                  >
+                    ✏️
+                  </button>
+                )}
                 <button
                   onClick={() => removeInfo(info.id)}
                   className="text-blue-400 hover:text-blue-600 transition-colors p-1"
@@ -413,6 +473,144 @@ export default function Dashboard() {
           onClose={() => setPopupInfo(null)}
         />
       )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Information bearbeiten</h3>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2">
+                    👑 Admin
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingInfo(null)
+                  }}
+                  className="text-white hover:text-gray-200 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <EditForm
+              info={editingInfo}
+              onSave={updateInfo}
+              onCancel={() => {
+                setShowEditModal(false)
+                setEditingInfo(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+// Edit Form Component
+function EditForm({ 
+  info, 
+  onSave, 
+  onCancel 
+}: { 
+  info: InfoItem
+  onSave: (id: string, title: string, content: string, isPopup?: boolean) => void
+  onCancel: () => void
+}) {
+  const [title, setTitle] = useState(info.title)
+  const [content, setContent] = useState(info.content)
+  const [isPopup, setIsPopup] = useState(info.isPopup || false)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim() || !content.trim()) {
+      alert('Bitte alle Felder ausfüllen')
+      return
+    }
+    onSave(info.id, title, content, isPopup)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      {/* Titel */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Titel
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+          placeholder="Titel der Information"
+          required
+        />
+      </div>
+
+      {/* Inhalt */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Inhalt
+        </label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+          rows={4}
+          placeholder="Beschreibung der Information"
+          required
+        />
+      </div>
+
+      {/* Popup Checkbox */}
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="edit-is-popup"
+          checked={isPopup}
+          onChange={(e) => setIsPopup(e.target.checked)}
+          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+        <label htmlFor="edit-is-popup" className="text-sm text-gray-700">
+          Als Popup anzeigen (wird beim nächsten Login als Hinweis angezeigt)
+        </label>
+      </div>
+
+      {/* PDF Info (nicht editierbar) */}
+      {info.pdfFileName && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-xs text-gray-600 mb-1">Angehängte PDF:</p>
+          <span className="text-sm text-gray-900 font-medium">
+            📄 {info.pdfFileName}
+          </span>
+          <p className="text-xs text-gray-500 mt-1">
+            Hinweis: PDF kann nicht bearbeitet werden
+          </p>
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Abbrechen
+        </button>
+        <button
+          type="submit"
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          💾 Speichern
+        </button>
+      </div>
+    </form>
   )
 }
