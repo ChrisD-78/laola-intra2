@@ -11,7 +11,11 @@ const Sidebar = () => {
   const { currentUser, logout, isAdmin } = useAuth()
   const { unreadCount } = useChatNotifications()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showAIAgentPopup, setShowAIAgentPopup] = useState(false)
+
+  const handleAIAgentClick = () => {
+    window.open('https://cdagent.netlify.app', '_blank', 'noopener,noreferrer')
+    setIsMobileMenuOpen(false)
+  }
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: '🏠' },
@@ -111,6 +115,20 @@ const Sidebar = () => {
             )
           })}
 
+          {/* AI-Agent Button (nur für Admins, oben in der Navigation) */}
+          {isAdmin && (
+            <li>
+              <button
+                onClick={handleAIAgentClick}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-white hover:bg-gradient-to-r hover:from-purple-700/50 hover:to-blue-700/50 hover:text-white hover:shadow-md backdrop-blur-sm relative group"
+              >
+                <span className="text-lg">🤖</span>
+                <span className="font-medium">AI-Agent</span>
+                <span className="absolute top-2 right-2 text-[10px] bg-purple-500/60 px-1.5 py-0.5 rounded-full whitespace-nowrap">Admin</span>
+              </button>
+            </li>
+          )}
+
           {/* Admin Section */}
           {isAdmin && (
             <>
@@ -140,21 +158,6 @@ const Sidebar = () => {
                   </li>
                 )
               })}
-              
-              {/* AI-Agent Button */}
-              <li>
-                <button
-                  onClick={() => {
-                    setShowAIAgentPopup(true)
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="w-full flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 text-white hover:bg-purple-700/40 hover:text-white hover:shadow-md backdrop-blur-sm"
-                >
-                  <span className="text-base">🤖</span>
-                  <span className="text-sm font-medium flex-1 min-w-0 truncate text-left">AI-Agent</span>
-                  <span className="text-[10px] bg-purple-500/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Admin</span>
-                </button>
-              </li>
             </>
           )}
         </ul>
@@ -171,63 +174,6 @@ const Sidebar = () => {
         </button>
       </div>
       </div>
-
-      {/* AI-Agent Popup */}
-      {showAIAgentPopup && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowAIAgentPopup(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Popup Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">🤖</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">AI-Agent</h2>
-                  <p className="text-sm text-white/80">E-Mail Assistent</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAIAgentPopup(false)}
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all duration-200"
-                title="Schließen"
-              >
-                <span className="text-2xl">✕</span>
-              </button>
-            </div>
-
-            {/* iframe Container */}
-            <div className="flex-1 overflow-hidden bg-gray-50">
-              <iframe
-                src="https://cdagent.netlify.app"
-                className="w-full h-full border-0"
-                title="AI-Agent"
-                allow="clipboard-read; clipboard-write"
-              />
-            </div>
-
-            {/* Footer with Info */}
-            <div className="p-3 bg-gray-100 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>🔒</span>
-                <span>Nur für Administratoren</span>
-              </div>
-              <button
-                onClick={() => setShowAIAgentPopup(false)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
-              >
-                Schließen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
