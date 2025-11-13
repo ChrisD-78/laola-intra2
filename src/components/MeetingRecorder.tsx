@@ -116,24 +116,52 @@ export default function MeetingRecorder() {
     setError('')
 
     try {
+      console.log('Preparing audio for transcription...')
+      console.log('Audio blob size:', audioBlob.size, 'bytes')
+      
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
 
+      console.log('Sending to API...')
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData
       })
 
+      console.log('Response received:', response.status)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Transkription fehlgeschlagen')
+        const errorData = await response.json().catch(() => ({ error: 'Unbekannter Server-Fehler' }))
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error || errorData.details || 'Transkription fehlgeschlagen')
       }
 
       const data = await response.json()
+      console.log('Protocol received successfully')
+      
+      if (!data.protocol) {
+        throw new Error('Keine Protokolldaten vom Server erhalten')
+      }
+      
       setProtocol(data.protocol)
     } catch (err) {
-      console.error('Fehler bei der Verarbeitung:', err)
-      setError(err instanceof Error ? err.message : 'Fehler bei der Verarbeitung der Aufnahme')
+      console.error('=== Client-side error ===')
+      console.error('Error details:', err)
+      
+      let errorMsg = 'Fehler bei der Verarbeitung der Aufnahme'
+      
+      if (err instanceof Error) {
+        errorMsg = err.message
+        
+        // User-friendly error messages
+        if (errorMsg.includes('Failed to fetch')) {
+          errorMsg = 'Netzwerkfehler: Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
+        } else if (errorMsg.includes('API-Schlüssel')) {
+          errorMsg = 'OpenAI nicht konfiguriert. Bitte kontaktieren Sie Ihren Administrator.'
+        }
+      }
+      
+      setError(errorMsg)
     } finally {
       setIsProcessing(false)
     }

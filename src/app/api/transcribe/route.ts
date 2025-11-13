@@ -2,21 +2,39 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
 export async function POST(request: Request) {
+  console.log('=== Transcription API called ===')
+  
   try {
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key not configured')
       return NextResponse.json(
-        { error: 'OpenAI API-Schlüssel nicht konfiguriert. Bitte OPENAI_API_KEY in .env.local setzen.' },
+        { error: 'OpenAI API-Schlüssel nicht konfiguriert. Bitte OPENAI_API_KEY in Netlify Environment Variables setzen.' },
         { status: 500 }
       )
     }
 
+    console.log('OpenAI API key found, parsing form data...')
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File
 
     if (!audioFile) {
+      console.error('No audio file in request')
       return NextResponse.json({ error: 'Keine Audio-Datei erhalten' }, { status: 400 })
     }
+
+    console.log('Audio file received:', {
+      name: audioFile.name,
+      size: audioFile.size,
+      type: audioFile.type
+    })
+
+    // Convert File to format OpenAI expects
+    const audioBuffer = await audioFile.arrayBuffer()
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/webm' })
+    const audioFileForOpenAI = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+
+    console.log('Audio file converted for OpenAI')
 
     // Initialize OpenAI
     const openai = new OpenAI({
@@ -24,15 +42,15 @@ export async function POST(request: Request) {
     })
 
     // Step 1: Transcribe audio using Whisper
-    console.log('Transkribiere Audio mit Whisper...')
+    console.log('Starting Whisper transcription...')
     const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file: audioFileForOpenAI,
       model: 'whisper-1',
       language: 'de',
       response_format: 'text'
     })
 
-    console.log('Transkription abgeschlossen:', transcription.substring(0, 100) + '...')
+    console.log('Transcription completed, length:', transcription.length)
 
     // Step 2: Format transcription into structured protocol using GPT-4
     console.log('Formatiere Protokoll mit GPT-4...')
@@ -87,17 +105,31 @@ Wichtig:
     return NextResponse.json({ protocol })
 
   } catch (error) {
-    console.error('Fehler bei der Transkription:', error)
+    console.error('=== ERROR in transcription API ===')
+    console.error('Error details:', error)
+    
+    let errorMessage = 'Unbekannter Fehler bei der Verarbeitung'
     
     if (error instanceof Error) {
-      return NextResponse.json(
-        { error: `Fehler bei der Verarbeitung: ${error.message}` },
-        { status: 500 }
-      )
+      errorMessage = error.message
+      console.error('Error message:', errorMessage)
+      console.error('Error stack:', error.stack)
+      
+      // Check for specific OpenAI errors
+      if (errorMessage.includes('API key')) {
+        errorMessage = 'OpenAI API-Schlüssel ungültig. Bitte überprüfen Sie Ihre Konfiguration.'
+      } else if (errorMessage.includes('quota') || errorMessage.includes('insufficient_quota')) {
+        errorMessage = 'OpenAI API-Guthaben aufgebraucht. Bitte Credits aufladen.'
+      } else if (errorMessage.includes('timeout')) {
+        errorMessage = 'Zeitüberschreitung bei der Verarbeitung. Bitte versuchen Sie es mit einer kürzeren Aufnahme.'
+      }
     }
     
     return NextResponse.json(
-      { error: 'Unbekannter Fehler bei der Verarbeitung' },
+      { 
+        error: `Fehler bei der Verarbeitung: ${errorMessage}`,
+        details: error instanceof Error ? error.message : 'Unbekannt'
+      },
       { status: 500 }
     )
   }
