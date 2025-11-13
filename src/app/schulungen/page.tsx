@@ -72,6 +72,7 @@ export default function Schulungen() {
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'title' | 'category'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [loading, setLoading] = useState(true)
+  const [quizCount, setQuizCount] = useState(0)
 
   // Load trainings from Supabase
   const [schulungen, setSchulungen] = useState<Schulung[]>([])
@@ -152,6 +153,22 @@ export default function Schulungen() {
     loadProofs()
   }, [])
 
+  // Load quiz count from API
+  useEffect(() => {
+    const loadQuizCount = async () => {
+      try {
+        const response = await fetch('/api/quiz')
+        if (response.ok) {
+          const quizzes = await response.json()
+          setQuizCount(quizzes.length)
+        }
+      } catch (error) {
+        console.error('Error loading quiz count:', error)
+      }
+    }
+    loadQuizCount()
+  }, [])
+
   // Dynamische Berechnung der Anzahl pro Kategorie
   const getCategoryCount = (categoryName: string) => {
     return schulungen.filter(s => s.category === categoryName).length
@@ -162,7 +179,7 @@ export default function Schulungen() {
     { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: getCategoryCount('Schulungen') },
     { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: getCategoryCount('Gastronomie') },
     { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: getCategoryCount('Kursverlaufspläne') },
-    { name: 'Quiz', icon: '🎯', color: 'bg-yellow-100 text-yellow-800', count: 3, isSpecial: true }
+    { name: 'Quiz', icon: '🎯', color: 'bg-yellow-100 text-yellow-800', count: quizCount, isSpecial: true }
   ]
 
   const handleDeleteSchulung = async (schulungId: string) => {
