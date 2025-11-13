@@ -104,10 +104,10 @@ const Sidebar = () => {
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1">{item.label}</span>
                   {showBadge && (
-                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 shadow-lg animate-pulse">
-                      {unreadCount}
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300">
+                      {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </Link>
