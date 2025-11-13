@@ -30,7 +30,6 @@ const Sidebar = () => {
 
   const adminNavItems = [
     { href: '/admin/users', label: 'Benutzerverwaltung', icon: '👥' },
-    { href: '/meeting-protokoll', label: 'Meeting-Protokoll', icon: '🎙️' },
   ]
 
   return (
