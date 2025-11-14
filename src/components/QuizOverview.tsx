@@ -29,7 +29,7 @@ interface GlobalLeaderboardEntry {
 }
 
 export default function QuizOverview({ onBack }: QuizOverviewProps) {
-  const { currentUser } = useAuth()
+  const { currentUser, isAdmin } = useAuth()
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [globalLeaderboard, setGlobalLeaderboard] = useState<GlobalLeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +37,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const [showQuizPlayer, setShowQuizPlayer] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState<Quiz | null>(null)
   const [quizResult, setQuizResult] = useState<{ score: number; total: number; percentage: number } | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ userName: string; userDisplayName: string } | null>(null)
 
   // Helper function to safely format percentage
   const formatPercentage = (value: any): string => {
@@ -111,6 +112,27 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
 
   const handleShowLeaderboard = (quiz: Quiz) => {
     setShowLeaderboard(quiz)
+  }
+
+  const handleDeleteUserResults = async (userName: string) => {
+    try {
+      const response = await fetch(`/api/quiz/results/${encodeURIComponent(userName)}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete quiz results')
+      }
+      
+      // Reload leaderboard after deletion
+      await loadGlobalLeaderboard()
+      await loadQuizzes()
+      setShowDeleteConfirm(null)
+      alert(`Alle Quiz-Ergebnisse von ${userName} wurden erfolgreich gelöscht.`)
+    } catch (error) {
+      console.error('Failed to delete quiz results:', error)
+      alert('Fehler beim Löschen der Quiz-Ergebnisse.')
+    }
   }
 
   if (loading) {
@@ -218,6 +240,9 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Punkte</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prozent</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versuche</th>
+                      {isAdmin && (
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -267,6 +292,17 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                             {entry.total_attempts}x
                           </td>
+                          {isAdmin && (
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <button
+                                onClick={() => setShowDeleteConfirm({ userName: entry.user_name, userDisplayName: entry.user_name })}
+                                className="px-3 py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center gap-1"
+                                title="Alle Quiz-Ergebnisse dieses Benutzers löschen"
+                              >
+                                🗑️ Löschen
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       )
                     })}
@@ -275,6 +311,39 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Quiz-Ergebnisse löschen?</h3>
+              <p className="text-gray-600">
+                Möchten Sie wirklich <strong>alle Quiz-Ergebnisse</strong> von{' '}
+                <strong className="text-red-600">{showDeleteConfirm.userDisplayName}</strong> löschen?
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => handleDeleteUserResults(showDeleteConfirm.userName)}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                🗑️ Löschen
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
