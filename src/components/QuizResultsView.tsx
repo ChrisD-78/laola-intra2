@@ -327,19 +327,40 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                             Diese <strong>{wrongCount} Frage(n)</strong> aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
                           </p>
                           {/* Schnellübersicht: Welche Fragen wurden falsch beantwortet */}
-                          {wrongAnswers.length > 0 && (
+                          {wrongAnswers.length > 0 ? (
                             <div className="bg-white rounded-lg p-3 border border-red-300">
-                              <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern:</p>
+                              <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern der falsch beantworteten Fragen:</p>
                               <div className="flex flex-wrap gap-2">
-                                {wrongAnswers.map((answer: any) => (
-                                  <span
-                                    key={answer.question_id}
-                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
-                                  >
-                                    {answer.question_order}
-                                  </span>
-                                ))}
+                                {wrongAnswers
+                                  .filter((answer: any) => {
+                                    // Zusätzliche Validierung: Nur Fragen anzeigen, die wirklich falsch sind
+                                    const isReallyWrong = answer.is_correct === false || 
+                                                         answer.is_correct === 'false' ||
+                                                         answer.is_correct === 0 ||
+                                                         (answer.user_answer !== answer.correct_answer && answer.user_answer !== '')
+                                    return isReallyWrong
+                                  })
+                                  .map((answer: any) => (
+                                    <span
+                                      key={answer.question_id}
+                                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
+                                      title={`Frage ${answer.question_order}: ${answer.user_answer || 'Keine Antwort'} (richtig: ${answer.correct_answer})`}
+                                    >
+                                      {answer.question_order}
+                                    </span>
+                                  ))}
                               </div>
+                              {wrongAnswers.length === 0 && wrongCount > 0 && (
+                                <p className="text-xs text-red-600 mt-2">
+                                  ⚠️ Die falsch beantworteten Fragen konnten nicht identifiziert werden. Erwartet: {wrongCount} Frage(n)
+                                </p>
+                              )}
+                            </div>
+                          ) : wrongCount > 0 && (
+                            <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-300">
+                              <p className="text-xs text-yellow-800">
+                                ⚠️ Es wurden {wrongCount} falsch beantwortete Frage(n) erwartet, aber die Details konnten nicht geladen werden.
+                              </p>
                             </div>
                           )}
                         </div>
