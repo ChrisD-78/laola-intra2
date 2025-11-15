@@ -304,35 +304,68 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                     const allAnswers = selectedResult.answers || []
                     const wrongAnswersFromAPI = selectedResult.wrong_answers || []
                     
-                    // Filtere die falsch beantworteten Fragen direkt aus allen Antworten
-                    // Dies ist eine zusätzliche Sicherheit, falls die API-Filterung nicht funktioniert
-                    const wrongAnswers = allAnswers.filter((answer: any) => {
-                      // Prüfe is_correct Wert - muss explizit true sein
-                      const isCorrectValue = answer.is_correct === true || 
-                                            answer.is_correct === 'true' || 
-                                            answer.is_correct === 1 ||
-                                            String(answer.is_correct).toLowerCase() === 'true'
+                    // Identifiziere falsch beantwortete Fragen
+                    // Wir wissen: score = Anzahl richtiger Antworten, wrongCount = total - score
+                    // Wir müssen die wrongCount Fragen finden, die falsch sind
+                    
+                    // Sortiere alle Antworten nach question_order
+                    const sortedAnswers = [...allAnswers].sort((a: any, b: any) => a.question_order - b.question_order)
+                    
+                    // Finde Fragen, die definitiv falsch sind (explizit is_correct === false oder Antworten stimmen nicht überein)
+                    const definitelyWrong = sortedAnswers.filter((answer: any) => {
+                      // Explizit als falsch markiert
+                      if (answer.is_correct === false || 
+                          answer.is_correct === 'false' || 
+                          answer.is_correct === 0) {
+                        return true
+                      }
                       
-                      // Prüfe direkten Vergleich der Antworten
-                      const answersMatch = answer.user_answer === answer.correct_answer && 
-                                          answer.user_answer !== '' && 
-                                          answer.user_answer !== null &&
-                                          answer.user_answer !== undefined
+                      // Antworten stimmen nicht überein (und es wurde eine Antwort gegeben)
+                      if (answer.user_answer && 
+                          answer.correct_answer && 
+                          answer.user_answer !== answer.correct_answer) {
+                        return true
+                      }
                       
-                      // Eine Frage ist NUR dann richtig, wenn BEIDE Bedingungen erfüllt sind:
-                      // 1. is_correct ist true UND
-                      // 2. Die Antworten stimmen überein
-                      const isCorrect = isCorrectValue && answersMatch
+                      // Keine Antwort gegeben
+                      if (!answer.user_answer || answer.user_answer === '') {
+                        return true
+                      }
                       
-                      // Eine Frage ist falsch, wenn sie NICHT richtig ist
-                      return !isCorrect
+                      return false
                     })
                     
-                    // Zusätzliche Sicherheit: Begrenze auf die erwartete Anzahl
-                    // Sortiere nach question_order und nehme nur die ersten wrongCount
-                    const finalWrongAnswers = wrongAnswers
-                      .sort((a: any, b: any) => a.question_order - b.question_order)
-                      .slice(0, wrongCount)
+                    // Wenn wir genau wrongCount falsche Fragen haben, verwende diese
+                    // Wenn wir mehr haben, nimm die ersten wrongCount (priorisiere explizit falsche)
+                    // Wenn wir weniger haben, müssen wir weitere finden
+                    let finalWrongAnswers: any[] = []
+                    
+                    if (definitelyWrong.length >= wrongCount) {
+                      // Sortiere: explizit falsche zuerst, dann nach question_order
+                      finalWrongAnswers = definitelyWrong
+                        .sort((a: any, b: any) => {
+                          const aExplicit = a.is_correct === false || a.is_correct === 'false'
+                          const bExplicit = b.is_correct === false || b.is_correct === 'false'
+                          if (aExplicit && !bExplicit) return -1
+                          if (!aExplicit && bExplicit) return 1
+                          return a.question_order - b.question_order
+                        })
+                        .slice(0, wrongCount)
+                    } else {
+                      // Wenn wir weniger haben, füge die hinzu, die wahrscheinlich falsch sind
+                      // (nicht explizit richtig markiert)
+                      const probablyWrong = sortedAnswers.filter((answer: any) => {
+                        const isInDefinitelyWrong = definitelyWrong.some((w: any) => w.question_id === answer.question_id)
+                        const isExplicitlyCorrect = answer.is_correct === true || 
+                                                   answer.is_correct === 'true' || 
+                                                   answer.is_correct === 1
+                        return !isInDefinitelyWrong && !isExplicitlyCorrect
+                      })
+                      
+                      finalWrongAnswers = [...definitelyWrong, ...probablyWrong]
+                        .sort((a: any, b: any) => a.question_order - b.question_order)
+                        .slice(0, wrongCount)
+                    }
                     
                     // Debug logging
                     console.log('Selected Result Debug:', {
