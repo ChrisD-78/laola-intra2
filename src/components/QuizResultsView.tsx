@@ -301,19 +301,40 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                   {(() => {
                     // Berechne falsch beantwortete Fragen korrekt
                     const wrongCount = (selectedResult.total_questions || 0) - (selectedResult.score || 0)
-                    const wrongAnswers = selectedResult.wrong_answers || []
+                    const allAnswers = selectedResult.answers || []
+                    const wrongAnswersFromAPI = selectedResult.wrong_answers || []
+                    
+                    // Filtere die falsch beantworteten Fragen direkt aus allen Antworten
+                    // Dies ist eine zusätzliche Sicherheit, falls die API-Filterung nicht funktioniert
+                    const wrongAnswers = allAnswers.filter((answer: any) => {
+                      // Prüfe is_correct Wert
+                      const isCorrectValue = answer.is_correct === true || 
+                                            answer.is_correct === 'true' || 
+                                            answer.is_correct === 1
+                      
+                      // Prüfe direkten Vergleich der Antworten
+                      const answersMatch = answer.user_answer === answer.correct_answer && answer.user_answer !== ''
+                      
+                      // Eine Frage ist falsch, wenn:
+                      // 1. is_correct explizit false ist ODER
+                      // 2. Die Antworten nicht übereinstimmen
+                      return !isCorrectValue || !answersMatch
+                    })
                     
                     // Debug logging
                     console.log('Selected Result Debug:', {
                       score: selectedResult.score,
                       total_questions: selectedResult.total_questions,
                       wrong_count_calculated: wrongCount,
-                      wrong_answers_length: wrongAnswers.length,
-                      wrong_answers: wrongAnswers.map((a: any) => ({
+                      all_answers_length: allAnswers.length,
+                      wrong_answers_from_api_length: wrongAnswersFromAPI.length,
+                      wrong_answers_filtered_length: wrongAnswers.length,
+                      wrong_answers_filtered: wrongAnswers.map((a: any) => ({
                         question_order: a.question_order,
                         is_correct: a.is_correct,
                         user_answer: a.user_answer,
-                        correct_answer: a.correct_answer
+                        correct_answer: a.correct_answer,
+                        answers_match: a.user_answer === a.correct_answer
                       }))
                     })
                     
