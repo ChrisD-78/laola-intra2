@@ -201,9 +201,9 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                           </div>
                           <div className="text-right">
                             <div className={`text-lg font-bold ${
-                              result.percentage >= 70 ? 'text-green-600' : 'text-red-600'
+                              Number(result.percentage || 0) >= 70 ? 'text-green-600' : 'text-red-600'
                             }`}>
-                              {result.score} / {result.total_questions} ({result.percentage.toFixed(0)}%)
+                              {result.score} / {result.total_questions} ({Number(result.percentage || 0).toFixed(0)}%)
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
                               {result.wrong_answers.length} falsch
@@ -232,9 +232,9 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                       </div>
                       <div className="text-right">
                         <div className={`text-3xl font-bold ${
-                          selectedResult.percentage >= 70 ? 'text-green-600' : 'text-red-600'
+                          Number(selectedResult.percentage || 0) >= 70 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {selectedResult.percentage.toFixed(0)}%
+                          {Number(selectedResult.percentage || 0).toFixed(0)}%
                         </div>
                         <div className="text-sm text-gray-600">
                           {selectedResult.score} / {selectedResult.total_questions} richtig
@@ -250,11 +250,11 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                     {/* Status-Badges */}
                     <div className="flex gap-2 flex-wrap">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedResult.percentage >= 70
+                        Number(selectedResult.percentage || 0) >= 70
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {selectedResult.percentage >= 70 ? '✅ Bestanden' : '❌ Nicht bestanden'}
+                        {Number(selectedResult.percentage || 0) >= 70 ? '✅ Bestanden' : '❌ Nicht bestanden'}
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                         ✓ {selectedResult.correct_answers.length} richtig

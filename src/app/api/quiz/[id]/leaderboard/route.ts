@@ -25,7 +25,16 @@ export async function GET(
       LIMIT 50
     `
 
-    return NextResponse.json(leaderboard)
+    // Ensure all numeric fields are actually numbers
+    const sanitizedLeaderboard = (leaderboard || []).map((entry: any) => ({
+      ...entry,
+      best_score: Number(entry.best_score || 0),
+      best_percentage: Number(entry.best_percentage || 0),
+      attempts: Number(entry.attempts || 0),
+      fastest_time: entry.fastest_time ? Number(entry.fastest_time) : null
+    }))
+
+    return NextResponse.json(sanitizedLeaderboard)
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error)
     return NextResponse.json(

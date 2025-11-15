@@ -123,7 +123,7 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
             <div className="text-center">
               <p className="font-bold text-gray-900 text-sm">{leaderboard[1].user_name}</p>
               <p className="text-2xl font-bold text-gray-700">{leaderboard[1].best_score}/{totalQuestions}</p>
-              <p className="text-xs text-gray-500">{leaderboard[1].best_percentage.toFixed(0)}%</p>
+              <p className="text-xs text-gray-500">{Number(leaderboard[1].best_percentage || 0).toFixed(0)}%</p>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
             <div className="text-center">
               <p className="font-bold text-gray-900">{leaderboard[0].user_name}</p>
               <p className="text-3xl font-bold text-yellow-600">{leaderboard[0].best_score}/{totalQuestions}</p>
-              <p className="text-xs text-gray-500">{leaderboard[0].best_percentage.toFixed(0)}%</p>
+              <p className="text-xs text-gray-500">{Number(leaderboard[0].best_percentage || 0).toFixed(0)}%</p>
               <span className="inline-block mt-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
                 👑 Champion
               </span>
@@ -150,7 +150,7 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
             <div className="text-center">
               <p className="font-bold text-gray-900 text-sm">{leaderboard[2].user_name}</p>
               <p className="text-2xl font-bold text-orange-600">{leaderboard[2].best_score}/{totalQuestions}</p>
-              <p className="text-xs text-gray-500">{leaderboard[2].best_percentage.toFixed(0)}%</p>
+              <p className="text-xs text-gray-500">{Number(leaderboard[2].best_percentage || 0).toFixed(0)}%</p>
             </div>
           </div>
         </div>
@@ -186,7 +186,8 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
               ) : (
                 leaderboard.map((entry, index) => {
                   const rank = index + 1
-                  const isPassed = entry.best_percentage >= 70
+                  const bestPercentage = Number(entry.best_percentage || 0)
+                  const isPassed = bestPercentage >= 70
 
                   return (
                     <tr key={index} className="hover:bg-gray-50">
@@ -209,7 +210,7 @@ export default function QuizLeaderboard({ quizId, quizTitle, totalQuestions }: Q
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {entry.best_percentage.toFixed(0)}%
+                          {bestPercentage.toFixed(0)}%
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
