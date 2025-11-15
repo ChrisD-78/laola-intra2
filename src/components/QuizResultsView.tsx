@@ -206,7 +206,11 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                               {result.score} / {result.total_questions} ({Number(result.percentage || 0).toFixed(0)}%)
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {result.wrong_answers.length} falsch
+                              {(() => {
+                                // Berechne falsch beantwortete Fragen: total - score
+                                const wrongCount = (result.total_questions || 0) - (result.score || 0)
+                                return wrongCount > 0 ? `${wrongCount} falsch` : '0 falsch'
+                              })()}
                             </div>
                           </div>
                         </div>
