@@ -368,7 +368,16 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                         {/* Detaillierte Ansicht jeder falsch beantworteten Frage */}
                         {wrongAnswers.length > 0 ? (
                           <div className="space-y-6">
-                            {wrongAnswers.map((answer: any, index: number) => (
+                            {wrongAnswers
+                              .filter((answer: any) => {
+                                // Zusätzliche Validierung: Nur Fragen anzeigen, die wirklich falsch sind
+                                const isReallyWrong = answer.is_correct === false || 
+                                                     answer.is_correct === 'false' ||
+                                                     answer.is_correct === 0 ||
+                                                     (answer.user_answer !== answer.correct_answer && answer.user_answer !== '')
+                                return isReallyWrong
+                              })
+                              .map((answer: any, index: number) => (
                           <div
                             key={answer.question_id}
                             className="border-4 border-red-400 bg-red-50 rounded-xl p-6 shadow-lg"
