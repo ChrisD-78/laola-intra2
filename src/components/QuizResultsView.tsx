@@ -219,6 +219,14 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
               {/* Detaillierte Ansicht */}
               {selectedResult && (
                 <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
+                  {/* Quiz-Info Badge */}
+                  <div className="mb-4 pb-4 border-b border-gray-200">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg">
+                      <span className="text-lg">📝</span>
+                      <span className="font-semibold">{quizTitle}</span>
+                    </div>
+                  </div>
+
                   {/* Ergebnis-Übersicht */}
                   <div className="mb-6 pb-6 border-b border-gray-200">
                     <div className="flex items-center justify-between mb-4">
@@ -268,9 +276,14 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                   {/* Falsch beantwortete Fragen */}
                   {selectedResult.wrong_answers.length > 0 && (
                     <div className="mb-6">
-                      <h4 className="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
-                        ❌ Falsch beantwortete Fragen ({selectedResult.wrong_answers.length})
-                      </h4>
+                      <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 rounded">
+                        <h4 className="text-lg font-bold text-red-700 flex items-center gap-2">
+                          ❌ Falsch beantwortete Fragen ({selectedResult.wrong_answers.length})
+                        </h4>
+                        <p className="text-sm text-red-600 mt-1">
+                          Diese Fragen aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
+                        </p>
+                      </div>
                       <div className="space-y-4">
                         {selectedResult.wrong_answers.map((answer, index) => (
                           <div
@@ -284,7 +297,7 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                                     {answer.question_order}
                                   </span>
                                   <span className="text-sm font-medium text-gray-600">
-                                    Frage {answer.question_order}
+                                    Frage {answer.question_order} aus "{quizTitle}"
                                   </span>
                                 </div>
                                 <h5 className="font-semibold text-gray-900 mb-3">
