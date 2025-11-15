@@ -282,10 +282,14 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                         {Number(selectedResult.percentage || 0) >= 70 ? '✅ Bestanden' : '❌ Nicht bestanden'}
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✓ {selectedResult.correct_answers?.length || 0} richtig
+                        ✓ {selectedResult.score || 0} richtig
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        ✗ {selectedResult.wrong_answers?.length || 0} falsch
+                        ✗ {(() => {
+                          // Berechne falsch beantwortete Fragen: total - score
+                          const wrongCount = (selectedResult.total_questions || 0) - (selectedResult.score || 0)
+                          return wrongCount
+                        })()} falsch
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                         📊 {selectedResult.score || 0} / {selectedResult.total_questions || 0} Punkte
@@ -294,34 +298,56 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                   </div>
 
                   {/* Falsch beantwortete Fragen */}
-                  {selectedResult.wrong_answers && selectedResult.wrong_answers.length > 0 ? (
-                    <div className="mb-6">
-                      <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded-lg">
-                        <h4 className="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
-                          ❌ FALSCH BEANTWORTETE FRAGEN ({selectedResult.wrong_answers.length})
-                        </h4>
-                        <p className="text-sm text-red-700 mb-3">
-                          Diese <strong>{selectedResult.wrong_answers.length} Frage(n)</strong> aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
-                        </p>
-                        {/* Schnellübersicht: Welche Fragen wurden falsch beantwortet */}
-                        <div className="bg-white rounded-lg p-3 border border-red-300">
-                          <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedResult.wrong_answers.map((answer) => (
-                              <span
-                                key={answer.question_id}
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
-                              >
-                                {answer.question_order}
-                              </span>
-                            ))}
-                          </div>
+                  {(() => {
+                    // Berechne falsch beantwortete Fragen korrekt
+                    const wrongCount = (selectedResult.total_questions || 0) - (selectedResult.score || 0)
+                    const wrongAnswers = selectedResult.wrong_answers || []
+                    
+                    // Debug logging
+                    console.log('Selected Result Debug:', {
+                      score: selectedResult.score,
+                      total_questions: selectedResult.total_questions,
+                      wrong_count_calculated: wrongCount,
+                      wrong_answers_length: wrongAnswers.length,
+                      wrong_answers: wrongAnswers.map((a: any) => ({
+                        question_order: a.question_order,
+                        is_correct: a.is_correct,
+                        user_answer: a.user_answer,
+                        correct_answer: a.correct_answer
+                      }))
+                    })
+                    
+                    return wrongCount > 0 ? (
+                      <div className="mb-6">
+                        <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded-lg">
+                          <h4 className="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
+                            ❌ FALSCH BEANTWORTETE FRAGEN ({wrongCount})
+                          </h4>
+                          <p className="text-sm text-red-700 mb-3">
+                            Diese <strong>{wrongCount} Frage(n)</strong> aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
+                          </p>
+                          {/* Schnellübersicht: Welche Fragen wurden falsch beantwortet */}
+                          {wrongAnswers.length > 0 && (
+                            <div className="bg-white rounded-lg p-3 border border-red-300">
+                              <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {wrongAnswers.map((answer: any) => (
+                                  <span
+                                    key={answer.question_id}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
+                                  >
+                                    {answer.question_order}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      
-                      {/* Detaillierte Ansicht jeder falsch beantworteten Frage */}
-                      <div className="space-y-6">
-                        {selectedResult.wrong_answers.map((answer, index) => (
+                        
+                        {/* Detaillierte Ansicht jeder falsch beantworteten Frage */}
+                        {wrongAnswers.length > 0 ? (
+                          <div className="space-y-6">
+                            {wrongAnswers.map((answer: any, index: number) => (
                           <div
                             key={answer.question_id}
                             className="border-4 border-red-400 bg-red-50 rounded-xl p-6 shadow-lg"
@@ -425,16 +451,27 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                               </div>
                             </div>
                           </div>
-                        ))}
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                            <p className="text-yellow-800 font-semibold">
+                              ⚠️ Die falsch beantworteten Fragen konnten nicht geladen werden. Bitte versuchen Sie es erneut.
+                            </p>
+                            <p className="text-xs text-yellow-700 mt-2">
+                              Erwartet: {wrongCount} falsch beantwortete Frage(n)
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                      <p className="text-green-800 font-semibold">
-                        ✅ Alle Fragen wurden korrekt beantwortet! Keine Nachschulung erforderlich.
-                      </p>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <p className="text-green-800 font-semibold">
+                          ✅ Alle Fragen wurden korrekt beantwortet! Keine Nachschulung erforderlich.
+                        </p>
+                      </div>
+                    )
+                  })()}
 
                   {/* Richtig beantwortete Fragen (optional, kompakt) */}
                   {selectedResult.correct_answers.length > 0 && (
