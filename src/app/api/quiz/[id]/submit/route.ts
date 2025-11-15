@@ -20,18 +20,27 @@ export async function POST(
       ORDER BY question_order ASC
     `
 
-    // Calculate score
+    // Calculate score and prepare detailed answers
     let correctCount = 0
-    questions.forEach((question, index) => {
-      if (answers[index] === question.correct_answer) {
+    const detailedAnswers = questions.map((question, index) => {
+      const userAnswer = answers[index] || ''
+      const isCorrect = userAnswer === question.correct_answer
+      if (isCorrect) {
         correctCount++
+      }
+      return {
+        question_id: question.id,
+        user_answer: userAnswer,
+        correct_answer: question.correct_answer,
+        is_correct: isCorrect
       }
     })
 
     const totalQuestions = questions.length
     const percentage = (correctCount / totalQuestions) * 100
 
-    // Save result
+    // Save result with detailed answers
+    const userAnswersJson = JSON.stringify(detailedAnswers)
     const result = await sql`
       INSERT INTO quiz_results (
         quiz_id,
@@ -39,14 +48,16 @@ export async function POST(
         score,
         total_questions,
         percentage,
-        time_taken_seconds
+        time_taken_seconds,
+        user_answers
       ) VALUES (
         ${id},
         ${user_name},
         ${correctCount},
         ${totalQuestions},
         ${percentage},
-        ${time_taken_seconds || null}
+        ${time_taken_seconds || null},
+        ${userAnswersJson}::jsonb
       )
       RETURNING *
     `

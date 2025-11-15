@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import QuizPlayer from './QuizPlayer'
 import QuizLeaderboard from './QuizLeaderboard'
+import QuizResultsView from './QuizResultsView'
 
 interface Quiz {
   id: string
@@ -36,6 +37,7 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [showQuizPlayer, setShowQuizPlayer] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState<Quiz | null>(null)
+  const [showResultsView, setShowResultsView] = useState<Quiz | null>(null)
   const [quizResult, setQuizResult] = useState<{ score: number; total: number; percentage: number } | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ userName: string; userDisplayName: string } | null>(null)
 
@@ -112,6 +114,10 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
 
   const handleShowLeaderboard = (quiz: Quiz) => {
     setShowLeaderboard(quiz)
+  }
+
+  const handleShowResults = (quiz: Quiz) => {
+    setShowResultsView(quiz)
   }
 
   const handleDeleteUserResults = async (userName: string) => {
@@ -436,6 +442,13 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
                   ▶️ Quiz starten
                 </button>
                 <button
+                  onClick={() => handleShowResults(quiz)}
+                  className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  title="Ergebnisse anzeigen"
+                >
+                  📊
+                </button>
+                <button
                   onClick={() => handleShowLeaderboard(quiz)}
                   className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   title="Rangliste anzeigen"
@@ -488,6 +501,15 @@ export default function QuizOverview({ onBack }: QuizOverviewProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Results View Modal */}
+      {showResultsView && (
+        <QuizResultsView
+          quizId={showResultsView.id}
+          quizTitle={showResultsView.title}
+          onClose={() => setShowResultsView(null)}
+        />
       )}
     </div>
   )
