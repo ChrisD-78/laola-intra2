@@ -264,11 +264,14 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                       }`}>
                         {Number(selectedResult.percentage || 0) >= 70 ? '✅ Bestanden' : '❌ Nicht bestanden'}
                       </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        ✓ {selectedResult.correct_answers.length} richtig
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        ✓ {selectedResult.correct_answers?.length || 0} richtig
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        ✗ {selectedResult.wrong_answers.length} falsch
+                        ✗ {selectedResult.wrong_answers?.length || 0} falsch
+                      </span>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        📊 {selectedResult.score || 0} / {selectedResult.total_questions || 0} Punkte
                       </span>
                     </div>
                   </div>

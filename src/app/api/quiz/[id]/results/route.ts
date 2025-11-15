@@ -91,25 +91,41 @@ export async function GET(
     // Enrich results with question details
     const enrichedResults = results.map((result: any) => {
       const userAnswers = result.user_answers || []
-      const detailedAnswers = userAnswers.map((answer: any) => {
-        const question = questions.find((q: any) => q.id === answer.question_id)
-        if (!question) return null
+      
+      // Create a map of user answers by question_id for quick lookup
+      const userAnswersMap = new Map()
+      userAnswers.forEach((answer: any) => {
+        userAnswersMap.set(answer.question_id, answer)
+      })
 
+      // Process ALL questions, not just the ones in user_answers
+      // This ensures we show all questions, even if some weren't answered
+      const detailedAnswers = questions.map((question: any) => {
+        const userAnswer = userAnswersMap.get(question.id)
+        
+        // If no answer was given, treat it as incorrect
+        const userAnswerValue = userAnswer?.user_answer || ''
+        const isCorrect = userAnswerValue === question.correct_answer && userAnswerValue !== ''
+        
         return {
-          question_id: answer.question_id,
+          question_id: question.id,
           question_text: question.question_text,
           question_order: question.question_order,
           option_a: question.option_a,
           option_b: question.option_b,
           option_c: question.option_c,
           option_d: question.option_d,
-          user_answer: answer.user_answer,
-          correct_answer: answer.correct_answer,
-          is_correct: answer.is_correct,
-          user_answer_text: question[`option_${answer.user_answer?.toLowerCase()}` as keyof typeof question] || '',
-          correct_answer_text: question[`option_${answer.correct_answer?.toLowerCase()}` as keyof typeof question] || ''
+          user_answer: userAnswerValue,
+          correct_answer: question.correct_answer,
+          is_correct: isCorrect,
+          user_answer_text: userAnswerValue ? (question[`option_${userAnswerValue.toLowerCase()}` as keyof typeof question] || '') : 'Keine Antwort',
+          correct_answer_text: question[`option_${question.correct_answer.toLowerCase()}` as keyof typeof question] || ''
         }
-      }).filter((a: any) => a !== null)
+      })
+
+      // Calculate correct/wrong counts based on actual data
+      const correctCount = detailedAnswers.filter((a: any) => a.is_correct).length
+      const wrongCount = detailedAnswers.filter((a: any) => !a.is_correct).length
 
       return {
         id: result.id,
@@ -121,7 +137,15 @@ export async function GET(
         completed_at: result.completed_at,
         answers: detailedAnswers,
         wrong_answers: detailedAnswers.filter((a: any) => !a.is_correct),
-        correct_answers: detailedAnswers.filter((a: any) => a.is_correct)
+        correct_answers: detailedAnswers.filter((a: any) => a.is_correct),
+        // Debug info
+        _debug: {
+          total_questions_in_quiz: questions.length,
+          total_answers_in_result: detailedAnswers.length,
+          correct_count: correctCount,
+          wrong_count: wrongCount,
+          score_from_db: result.score
+        }
       }
     })
 
