@@ -65,6 +65,19 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
       const data = await response.json()
 
       if (data.success && data.results) {
+        // Debug: Log the results to see what we're getting
+        console.log('Quiz Results loaded:', data.results)
+        data.results.forEach((result: any, index: number) => {
+          console.log(`Result ${index}:`, {
+            user_name: result.user_name,
+            score: result.score,
+            total_questions: result.total_questions,
+            wrong_answers_count: result.wrong_answers?.length || 0,
+            correct_answers_count: result.correct_answers?.length || 0,
+            wrong_answers: result.wrong_answers
+          })
+        })
+        
         setResults(data.results)
         // Wenn nur ein Ergebnis vorhanden ist, automatisch auswählen
         if (data.results.length === 1) {
@@ -281,7 +294,7 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                   </div>
 
                   {/* Falsch beantwortete Fragen */}
-                  {selectedResult.wrong_answers.length > 0 && (
+                  {selectedResult.wrong_answers && selectedResult.wrong_answers.length > 0 ? (
                     <div className="mb-6">
                       <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded-lg">
                         <h4 className="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
@@ -414,6 +427,12 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                           </div>
                         ))}
                       </div>
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                      <p className="text-green-800 font-semibold">
+                        ✅ Alle Fragen wurden korrekt beantwortet! Keine Nachschulung erforderlich.
+                      </p>
                     </div>
                   )}
 

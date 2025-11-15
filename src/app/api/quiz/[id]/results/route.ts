@@ -138,8 +138,25 @@ export async function GET(
       })
 
       // Calculate correct/wrong counts based on actual data
-      const correctCount = detailedAnswers.filter((a: any) => a.is_correct).length
-      const wrongCount = detailedAnswers.filter((a: any) => !a.is_correct).length
+      const correctAnswers = detailedAnswers.filter((a: any) => a.is_correct === true)
+      const wrongAnswers = detailedAnswers.filter((a: any) => a.is_correct === false)
+      const correctCount = correctAnswers.length
+      const wrongCount = wrongAnswers.length
+
+      // Debug logging
+      console.log(`Result for ${result.user_name}:`, {
+        score_from_db: result.score,
+        total_questions: result.total_questions,
+        detailed_answers_count: detailedAnswers.length,
+        correct_count: correctCount,
+        wrong_count: wrongCount,
+        wrong_answers_sample: wrongAnswers.slice(0, 3).map((a: any) => ({
+          question_order: a.question_order,
+          user_answer: a.user_answer,
+          correct_answer: a.correct_answer,
+          is_correct: a.is_correct
+        }))
+      })
 
       return {
         id: result.id,
@@ -150,16 +167,8 @@ export async function GET(
         time_taken_seconds: result.time_taken_seconds ? Number(result.time_taken_seconds) : null,
         completed_at: result.completed_at,
         answers: detailedAnswers,
-        wrong_answers: detailedAnswers.filter((a: any) => !a.is_correct),
-        correct_answers: detailedAnswers.filter((a: any) => a.is_correct),
-        // Debug info
-        _debug: {
-          total_questions_in_quiz: questions.length,
-          total_answers_in_result: detailedAnswers.length,
-          correct_count: correctCount,
-          wrong_count: wrongCount,
-          score_from_db: result.score
-        }
+        wrong_answers: wrongAnswers,
+        correct_answers: correctAnswers
       }
     })
 
