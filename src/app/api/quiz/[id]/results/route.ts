@@ -145,23 +145,39 @@ export async function GET(
       })
 
       // Calculate correct/wrong counts based on actual data
-      const correctAnswers = detailedAnswers.filter((a: any) => a.is_correct === true)
-      const wrongAnswers = detailedAnswers.filter((a: any) => a.is_correct === false)
+      // Use strict boolean comparison and also verify by comparing answers
+      const correctAnswers = detailedAnswers.filter((a: any) => {
+        const isCorrectBool = a.is_correct === true || a.is_correct === 'true' || a.is_correct === 1
+        // Double-check by comparing answers
+        const answerMatches = a.user_answer === a.correct_answer && a.user_answer !== ''
+        return isCorrectBool && answerMatches
+      })
+      
+      const wrongAnswers = detailedAnswers.filter((a: any) => {
+        const isCorrectBool = a.is_correct === true || a.is_correct === 'true' || a.is_correct === 1
+        // Double-check by comparing answers
+        const answerMatches = a.user_answer === a.correct_answer && a.user_answer !== ''
+        // It's wrong if is_correct is false OR if answers don't match
+        return !isCorrectBool || !answerMatches
+      })
+      
       const correctCount = correctAnswers.length
       const wrongCount = wrongAnswers.length
 
-      // Debug logging
+      // Debug logging with more details
       console.log(`Result for ${result.user_name}:`, {
         score_from_db: result.score,
         total_questions: result.total_questions,
         detailed_answers_count: detailedAnswers.length,
         correct_count: correctCount,
         wrong_count: wrongCount,
-        wrong_answers_sample: wrongAnswers.slice(0, 3).map((a: any) => ({
+        wrong_answers_details: wrongAnswers.map((a: any) => ({
           question_order: a.question_order,
           user_answer: a.user_answer,
           correct_answer: a.correct_answer,
-          is_correct: a.is_correct
+          is_correct: a.is_correct,
+          is_correct_type: typeof a.is_correct,
+          answers_match: a.user_answer === a.correct_answer
         }))
       })
 
