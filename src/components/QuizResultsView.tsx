@@ -307,19 +307,32 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                     // Filtere die falsch beantworteten Fragen direkt aus allen Antworten
                     // Dies ist eine zusätzliche Sicherheit, falls die API-Filterung nicht funktioniert
                     const wrongAnswers = allAnswers.filter((answer: any) => {
-                      // Prüfe is_correct Wert
+                      // Prüfe is_correct Wert - muss explizit true sein
                       const isCorrectValue = answer.is_correct === true || 
                                             answer.is_correct === 'true' || 
-                                            answer.is_correct === 1
+                                            answer.is_correct === 1 ||
+                                            String(answer.is_correct).toLowerCase() === 'true'
                       
                       // Prüfe direkten Vergleich der Antworten
-                      const answersMatch = answer.user_answer === answer.correct_answer && answer.user_answer !== ''
+                      const answersMatch = answer.user_answer === answer.correct_answer && 
+                                          answer.user_answer !== '' && 
+                                          answer.user_answer !== null &&
+                                          answer.user_answer !== undefined
                       
-                      // Eine Frage ist falsch, wenn:
-                      // 1. is_correct explizit false ist ODER
-                      // 2. Die Antworten nicht übereinstimmen
-                      return !isCorrectValue || !answersMatch
+                      // Eine Frage ist NUR dann richtig, wenn BEIDE Bedingungen erfüllt sind:
+                      // 1. is_correct ist true UND
+                      // 2. Die Antworten stimmen überein
+                      const isCorrect = isCorrectValue && answersMatch
+                      
+                      // Eine Frage ist falsch, wenn sie NICHT richtig ist
+                      return !isCorrect
                     })
+                    
+                    // Zusätzliche Sicherheit: Begrenze auf die erwartete Anzahl
+                    // Sortiere nach question_order und nehme nur die ersten wrongCount
+                    const finalWrongAnswers = wrongAnswers
+                      .sort((a: any, b: any) => a.question_order - b.question_order)
+                      .slice(0, wrongCount)
                     
                     // Debug logging
                     console.log('Selected Result Debug:', {
@@ -329,7 +342,8 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                       all_answers_length: allAnswers.length,
                       wrong_answers_from_api_length: wrongAnswersFromAPI.length,
                       wrong_answers_filtered_length: wrongAnswers.length,
-                      wrong_answers_filtered: wrongAnswers.map((a: any) => ({
+                      final_wrong_answers_length: finalWrongAnswers.length,
+                      wrong_answers_filtered: finalWrongAnswers.map((a: any) => ({
                         question_order: a.question_order,
                         is_correct: a.is_correct,
                         user_answer: a.user_answer,
@@ -348,30 +362,21 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                             Diese <strong>{wrongCount} Frage(n)</strong> aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
                           </p>
                           {/* Schnellübersicht: Welche Fragen wurden falsch beantwortet */}
-                          {wrongAnswers.length > 0 ? (
+                          {finalWrongAnswers.length > 0 ? (
                             <div className="bg-white rounded-lg p-3 border border-red-300">
                               <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern der falsch beantworteten Fragen:</p>
                               <div className="flex flex-wrap gap-2">
-                                {wrongAnswers
-                                  .filter((answer: any) => {
-                                    // Zusätzliche Validierung: Nur Fragen anzeigen, die wirklich falsch sind
-                                    const isReallyWrong = answer.is_correct === false || 
-                                                         answer.is_correct === 'false' ||
-                                                         answer.is_correct === 0 ||
-                                                         (answer.user_answer !== answer.correct_answer && answer.user_answer !== '')
-                                    return isReallyWrong
-                                  })
-                                  .map((answer: any) => (
-                                    <span
-                                      key={answer.question_id}
-                                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
-                                      title={`Frage ${answer.question_order}: ${answer.user_answer || 'Keine Antwort'} (richtig: ${answer.correct_answer})`}
-                                    >
-                                      {answer.question_order}
-                                    </span>
-                                  ))}
+                                {finalWrongAnswers.map((answer: any) => (
+                                  <span
+                                    key={answer.question_id}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
+                                    title={`Frage ${answer.question_order}: ${answer.user_answer || 'Keine Antwort'} (richtig: ${answer.correct_answer})`}
+                                  >
+                                    {answer.question_order}
+                                  </span>
+                                ))}
                               </div>
-                              {wrongAnswers.length === 0 && wrongCount > 0 && (
+                              {finalWrongAnswers.length === 0 && wrongCount > 0 && (
                                 <p className="text-xs text-red-600 mt-2">
                                   ⚠️ Die falsch beantworteten Fragen konnten nicht identifiziert werden. Erwartet: {wrongCount} Frage(n)
                                 </p>
@@ -387,18 +392,9 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                         </div>
                         
                         {/* Detaillierte Ansicht jeder falsch beantworteten Frage */}
-                        {wrongAnswers.length > 0 ? (
+                        {finalWrongAnswers.length > 0 ? (
                           <div className="space-y-6">
-                            {wrongAnswers
-                              .filter((answer: any) => {
-                                // Zusätzliche Validierung: Nur Fragen anzeigen, die wirklich falsch sind
-                                const isReallyWrong = answer.is_correct === false || 
-                                                     answer.is_correct === 'false' ||
-                                                     answer.is_correct === 0 ||
-                                                     (answer.user_answer !== answer.correct_answer && answer.user_answer !== '')
-                                return isReallyWrong
-                              })
-                              .map((answer: any, index: number) => (
+                            {finalWrongAnswers.map((answer: any, index: number) => (
                           <div
                             key={answer.question_id}
                             className="border-4 border-red-400 bg-red-50 rounded-xl p-6 shadow-lg"
