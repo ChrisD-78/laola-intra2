@@ -103,9 +103,23 @@ export async function GET(
       const detailedAnswers = questions.map((question: any) => {
         const userAnswer = userAnswersMap.get(question.id)
         
-        // If no answer was given, treat it as incorrect
-        const userAnswerValue = userAnswer?.user_answer || ''
-        const isCorrect = userAnswerValue === question.correct_answer && userAnswerValue !== ''
+        // Use the stored is_correct value if available, otherwise calculate it
+        let isCorrect = false
+        let userAnswerValue = ''
+        
+        if (userAnswer) {
+          userAnswerValue = userAnswer.user_answer || ''
+          // Use stored is_correct if available, otherwise calculate
+          if (typeof userAnswer.is_correct === 'boolean') {
+            isCorrect = userAnswer.is_correct
+          } else {
+            // Fallback: calculate if not stored
+            isCorrect = userAnswerValue === question.correct_answer && userAnswerValue !== ''
+          }
+        } else {
+          // No answer given = incorrect
+          isCorrect = false
+        }
         
         return {
           question_id: question.id,
