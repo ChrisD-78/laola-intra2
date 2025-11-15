@@ -110,8 +110,15 @@ export async function GET(
         if (userAnswer) {
           userAnswerValue = userAnswer.user_answer || ''
           // Use stored is_correct if available, otherwise calculate
+          // Handle both boolean and string representations
           if (typeof userAnswer.is_correct === 'boolean') {
             isCorrect = userAnswer.is_correct
+          } else if (typeof userAnswer.is_correct === 'string') {
+            // Handle string "true"/"false"
+            isCorrect = userAnswer.is_correct === 'true' || userAnswer.is_correct === '1'
+          } else if (userAnswer.is_correct !== undefined && userAnswer.is_correct !== null) {
+            // Handle truthy/falsy values
+            isCorrect = Boolean(userAnswer.is_correct)
           } else {
             // Fallback: calculate if not stored
             isCorrect = userAnswerValue === question.correct_answer && userAnswerValue !== ''
