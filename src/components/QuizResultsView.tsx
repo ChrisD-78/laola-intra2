@@ -276,34 +276,54 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                   {/* Falsch beantwortete Fragen */}
                   {selectedResult.wrong_answers.length > 0 && (
                     <div className="mb-6">
-                      <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 rounded">
-                        <h4 className="text-lg font-bold text-red-700 flex items-center gap-2">
-                          ❌ Falsch beantwortete Fragen ({selectedResult.wrong_answers.length})
+                      <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded-lg">
+                        <h4 className="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
+                          ❌ FALSCH BEANTWORTETE FRAGEN ({selectedResult.wrong_answers.length})
                         </h4>
-                        <p className="text-sm text-red-600 mt-1">
-                          Diese Fragen aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
+                        <p className="text-sm text-red-700 mb-3">
+                          Diese <strong>{selectedResult.wrong_answers.length} Frage(n)</strong> aus dem Quiz <strong>"{quizTitle}"</strong> wurden falsch beantwortet und sollten für eine Nachschulung wiederholt werden.
                         </p>
+                        {/* Schnellübersicht: Welche Fragen wurden falsch beantwortet */}
+                        <div className="bg-white rounded-lg p-3 border border-red-300">
+                          <p className="text-xs font-semibold text-red-800 mb-2">Fragen-Nummern:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedResult.wrong_answers.map((answer) => (
+                              <span
+                                key={answer.question_id}
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm"
+                              >
+                                {answer.question_order}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-4">
+                      
+                      {/* Detaillierte Ansicht jeder falsch beantworteten Frage */}
+                      <div className="space-y-6">
                         {selectedResult.wrong_answers.map((answer, index) => (
                           <div
                             key={answer.question_id}
-                            className="border-2 border-red-200 bg-red-50 rounded-lg p-4"
+                            className="border-4 border-red-400 bg-red-50 rounded-xl p-6 shadow-lg"
                           >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold text-sm">
-                                    {answer.question_order}
+                            {/* Frage-Header - sehr prominent */}
+                            <div className="mb-4 pb-4 border-b-2 border-red-300">
+                              <div className="flex items-center gap-3 mb-3">
+                                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-600 text-white font-bold text-lg shadow-md">
+                                  {answer.question_order}
+                                </span>
+                                <div>
+                                  <span className="text-xs font-semibold text-red-700 uppercase tracking-wide">
+                                    Frage {answer.question_order} - FALSCH BEANTWORTET
                                   </span>
-                                  <span className="text-sm font-medium text-gray-600">
-                                    Frage {answer.question_order} aus "{quizTitle}"
-                                  </span>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Quiz: {quizTitle}
+                                  </p>
                                 </div>
-                                <h5 className="font-semibold text-gray-900 mb-3">
-                                  {answer.question_text}
-                                </h5>
                               </div>
+                              <h5 className="text-lg font-bold text-gray-900 mt-3 leading-relaxed">
+                                {answer.question_text}
+                              </h5>
                             </div>
 
                             {/* Antwortoptionen */}
@@ -355,15 +375,33 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                               })}
                             </div>
 
-                            {/* Erklärung */}
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="flex items-start gap-2">
-                                <span className="text-red-600 font-bold">❌ Ihre Antwort:</span>
-                                <span className="text-gray-700">{answer.user_answer_text || 'Keine Antwort'}</span>
-                              </div>
-                              <div className="flex items-start gap-2 mt-2">
-                                <span className="text-green-600 font-bold">✓ Richtige Antwort:</span>
-                                <span className="text-gray-700">{answer.correct_answer_text}</span>
+                            {/* Erklärung - sehr prominent */}
+                            <div className="bg-white rounded-lg p-4 border-2 border-gray-300 shadow-sm">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-3 bg-red-100 border-2 border-red-400 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-2xl">❌</span>
+                                    <span className="text-red-800 font-bold text-sm uppercase">Ihre Antwort (FALSCH)</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-600 text-white font-bold">
+                                      {answer.user_answer}
+                                    </span>
+                                    <span className="text-gray-900 font-semibold">{answer.user_answer_text || 'Keine Antwort'}</span>
+                                  </div>
+                                </div>
+                                <div className="p-3 bg-green-100 border-2 border-green-400 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-2xl">✓</span>
+                                    <span className="text-green-800 font-bold text-sm uppercase">Richtige Antwort</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold">
+                                      {answer.correct_answer}
+                                    </span>
+                                    <span className="text-gray-900 font-semibold">{answer.correct_answer_text}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
