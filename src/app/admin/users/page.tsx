@@ -37,6 +37,20 @@ export default function AdminUsersPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
 
+  // Passwort-Reset Modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
+
+  // Lösch-Bestätigungsdialog
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   // Prüfe Admin-Rechte
   useEffect(() => {
     if (isLoggedIn && !isAdmin) {
@@ -130,6 +144,105 @@ export default function AdminUsersPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const handleOpenPasswordModal = (user: User) => {
+    setSelectedUser(user)
+    setNewPassword('')
+    setPasswordError(null)
+    setPasswordSuccess(null)
+    setShowPasswordModal(true)
+  }
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false)
+    setSelectedUser(null)
+    setNewPassword('')
+    setPasswordError(null)
+    setPasswordSuccess(null)
+  }
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedUser) return
+
+    setPasswordLoading(true)
+    setPasswordError(null)
+    setPasswordSuccess(null)
+
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newPassword,
+          adminUser: currentUser
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setPasswordSuccess(data.message)
+        setNewPassword('')
+        
+        // Schließe Modal nach 2 Sekunden
+        setTimeout(() => {
+          handleClosePasswordModal()
+        }, 2000)
+      } else {
+        setPasswordError(data.error || 'Fehler beim Zurücksetzen des Passworts')
+      }
+    } catch (err) {
+      console.error('Failed to reset password:', err)
+      setPasswordError('Netzwerkfehler - Bitte versuchen Sie es erneut')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  const handleOpenDeleteModal = (user: User) => {
+    setUserToDelete(user)
+    setDeleteError(null)
+    setShowDeleteModal(true)
+  }
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false)
+    setUserToDelete(null)
+    setDeleteError(null)
+  }
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return
+
+    setDeleteLoading(true)
+    setDeleteError(null)
+
+    try {
+      const response = await fetch(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUser: currentUser
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Aktualisiere Benutzerliste
+        loadUsers()
+        handleCloseDeleteModal()
+      } else {
+        setDeleteError(data.error || 'Fehler beim Löschen des Benutzers')
+      }
+    } catch (err) {
+      console.error('Failed to delete user:', err)
+      setDeleteError('Netzwerkfehler - Bitte versuchen Sie es erneut')
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   // Zeige nichts an, wenn nicht eingeloggt oder kein Admin
@@ -306,6 +419,9 @@ export default function AdminUsersPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Erstellt von
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aktionen
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -360,6 +476,24 @@ export default function AdminUsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {user.created_by || '-'}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleOpenPasswordModal(user)}
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                              title="Passwort zurücksetzen"
+                            >
+                              🔑
+                            </button>
+                            <button
+                              onClick={() => handleOpenDeleteModal(user)}
+                              className="text-red-600 hover:text-red-900 font-medium"
+                              title="Benutzer löschen"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -367,6 +501,107 @@ export default function AdminUsersPage() {
               </div>
             )}
           </div>
+
+          {/* Passwort-Reset Modal */}
+          {showPasswordModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  🔑 Passwort zurücksetzen
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Neues Passwort für <strong>{selectedUser.display_name}</strong> festlegen:
+                </p>
+                
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Neues Passwort * (mind. 5 Zeichen)
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      minLength={5}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Mindestens 5 Zeichen"
+                      autoFocus
+                    />
+                  </div>
+
+                  {passwordError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                      <p className="text-red-700 text-sm">{passwordError}</p>
+                    </div>
+                  )}
+
+                  {passwordSuccess && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="text-green-700 text-sm">{passwordSuccess}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={passwordLoading}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {passwordLoading ? 'Wird gespeichert...' : 'Passwort speichern'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClosePasswordModal}
+                      className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Lösch-Bestätigungsdialog */}
+          {showDeleteModal && userToDelete && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <h2 className="text-xl font-bold text-red-600 mb-4">
+                  ⚠️ Benutzer löschen
+                </h2>
+                <p className="text-sm text-gray-700 mb-4">
+                  Möchten Sie den Benutzer <strong>{userToDelete.display_name}</strong> wirklich löschen?
+                </p>
+                <p className="text-xs text-red-600 mb-6">
+                  Diese Aktion kann nicht rückgängig gemacht werden!
+                </p>
+
+                {deleteError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
+                    <p className="text-red-700 text-sm">{deleteError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteUser}
+                    disabled={deleteLoading}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deleteLoading ? 'Wird gelöscht...' : 'Ja, löschen'}
+                  </button>
+                  <button
+                    onClick={handleCloseDeleteModal}
+                    disabled={deleteLoading}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Info-Box - Rollen-Erklärung */}
           <div className="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
