@@ -607,14 +607,16 @@ export default function WiederkehrendeAufgaben() {
                       {/* Right Side: Last completion + Action Buttons */}
                       <div className="flex items-center space-x-3 ml-4">
                         {/* Last completion (right aligned, compact) */}
-                        <div className="hidden sm:block text-xs text-gray-600 whitespace-nowrap text-right mr-2">
+                        <div className="hidden sm:block mr-2">
                           {lastCompletions[task.id] ? (
-                            <span>
-                              🕒 Zuletzt: {new Date(lastCompletions[task.id]!.completedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              {' '}• {lastCompletions[task.id]!.completedBy}
-                            </span>
+                            <div className="px-3 py-1.5 border border-blue-200 bg-blue-50 text-blue-800 rounded-lg shadow-sm text-xs whitespace-nowrap">
+                              <span className="mr-1">🕒</span>
+                              Zuletzt: {new Date(lastCompletions[task.id]!.completedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </div>
                           ) : (
-                            <span className="text-gray-400">🕒 Noch nie erledigt</span>
+                            <div className="px-3 py-1.5 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg shadow-sm text-xs whitespace-nowrap">
+                              🕒 Noch nie erledigt
+                            </div>
                           )}
                         </div>
                         {/* Action Buttons */}
