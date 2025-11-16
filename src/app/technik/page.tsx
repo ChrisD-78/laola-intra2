@@ -52,6 +52,8 @@ export default function TechnikPage() {
   const [loading, setLoading] = useState(true)
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
   const [showDetailsPopup, setShowDetailsPopup] = useState(false)
+  const [editDetailsMode, setEditDetailsMode] = useState(false)
+  const [editDetailsData, setEditDetailsData] = useState<TechnikInspection | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null)
@@ -418,6 +420,23 @@ export default function TechnikPage() {
     })
   }
 
+  const updateTechnikInspection = async (id: string, data: Partial<TechnikInspection>) => {
+    try {
+      const response = await fetch(`/api/technik/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (response.ok) {
+        return response.json()
+      }
+      throw new Error('Update failed')
+    } catch (error) {
+      console.error('Failed to update inspection:', error)
+      throw error
+    }
+  }
+
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
@@ -748,6 +767,8 @@ export default function TechnikPage() {
                           onClick={() => {
                             setSelectedInspection(inspection)
                             setShowDetailsPopup(true)
+                            setEditDetailsMode(false)
+                            setEditDetailsData(inspection)
                           }}
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
@@ -990,16 +1011,138 @@ export default function TechnikPage() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-gray-900">Prüfungsdetails</h3>
-                <button
-                  onClick={() => setShowDetailsPopup(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <span className="text-2xl">×</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditDetailsMode(prev => !prev)
+                      setEditDetailsData(selectedInspection)
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${editDetailsMode ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-gray-50 border-gray-300 text-gray-700'} `}
+                    title="Bearbeiten"
+                  >
+                    {editDetailsMode ? 'Bearbeiten beenden' : 'Bearbeiten'}
+                  </button>
+                  <button
+                    onClick={() => setShowDetailsPopup(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <span className="text-2xl">×</span>
+                  </button>
+                </div>
               </div>
             </div>
             
             <div className="p-6 space-y-6">
+              {/* Edit form inside details */}
+              {editDetailsMode && editDetailsData ? (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    try {
+                      await updateTechnikInspection(editDetailsData.id, {
+                        standort: editDetailsData.standort,
+                        letzte_pruefung: editDetailsData.letzte_pruefung,
+                        interval: editDetailsData.interval,
+                        naechste_pruefung: editDetailsData.naechste_pruefung,
+                        bemerkungen: editDetailsData.bemerkungen || '',
+                        in_betrieb: editDetailsData.in_betrieb,
+                        kontaktdaten: editDetailsData.kontaktdaten || ''
+                      })
+                      await fetchInspections()
+                      setSelectedInspection(editDetailsData)
+                      setEditDetailsMode(false)
+                      alert('Änderungen gespeichert.')
+                    } catch (error) {
+                      console.error('Update inspection failed', error)
+                      alert('Speichern fehlgeschlagen.')
+                    }
+                  }}
+                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Standort</label>
+                      <input
+                        type="text"
+                        value={editDetailsData.standort}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, standort: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Intervall</label>
+                      <input
+                        type="text"
+                        value={editDetailsData.interval}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, interval: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="z. B. Jährlich"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Letzte Prüfung</label>
+                      <input
+                        type="date"
+                        value={(editDetailsData.letzte_pruefung || '').slice(0,10)}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, letzte_pruefung: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nächste Prüfung</label>
+                      <input
+                        type="date"
+                        value={(editDetailsData.naechste_pruefung || '').slice(0,10)}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, naechste_pruefung: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Kontaktdaten</label>
+                      <input
+                        type="text"
+                        value={editDetailsData.kontaktdaten || ''}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, kontaktdaten: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bemerkungen</label>
+                      <textarea
+                        rows={3}
+                        value={editDetailsData.bemerkungen || ''}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, bemerkungen: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 md:col-span-2">
+                      <input
+                        id="edit_in_betrieb"
+                        type="checkbox"
+                        checked={editDetailsData.in_betrieb}
+                        onChange={(e) => setEditDetailsData({ ...editDetailsData, in_betrieb: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="edit_in_betrieb" className="text-sm text-gray-700">In Betrieb</label>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditDetailsMode(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Speichern
+                    </button>
+                  </div>
+                </form>
+              ) : null}
               {/* Bild PDF - Zentral oben mittig */}
               {selectedInspection.bild_url && (
                 <div className="flex flex-col items-center">
