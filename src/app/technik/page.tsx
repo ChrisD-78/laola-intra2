@@ -2,6 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+// Simple CSV parsing (no external deps)
+function parseCsv(content: string): { headers: string[]; rows: string[][] } {
+  const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0)
+  if (lines.length === 0) return { headers: [], rows: [] }
+  const sep = lines[0].includes(';') ? ';' : ','
+  const split = (line: string) => line.split(sep).map(c => c.trim().replace(/^"|"$/g, ''))
+  const headers = split(lines[0]).map(h => h.toLowerCase())
+  const rows = lines.slice(1).map(split)
+  return { headers, rows }
+}
+
+function parseGermanDate(input: string): string {
+  const v = (input || '').trim()
+  if (!v) return ''
+  // support dd.MM.yyyy or yyyy-MM-dd
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(v)) {
+    const [d, m, y] = v.split('.')
+    return new Date(Number(y), Number(m) - 1, Number(d)).toISOString()
+  }
+  const dt = new Date(v)
+  return isNaN(dt.getTime()) ? '' : dt.toISOString()
+}
 
 interface TechnikInspection {
   id: string
@@ -31,6 +53,8 @@ export default function TechnikPage() {
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
   const [showDetailsPopup, setShowDetailsPopup] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,6 +109,76 @@ export default function TechnikPage() {
       fetchNextId()
     }
   }, [formData.rubrik, showAddForm])
+
+  const importMessgeraeteCsv = async (file: File) => {
+    try {
+      setImporting(true)
+      setImportProgress(null)
+      const text = await file.text()
+      const { headers, rows } = parseCsv(text)
+      if (headers.length === 0 || rows.length === 0) {
+        alert('Die CSV enthält keine Daten (Header/Zeilen).')
+        return
+      }
+      const idx = (key: string) => headers.findIndex(h => h.includes(key))
+      const idxInventar = idx('inventar') // Inventarnr
+      const idxGeraet = idx('gerät') >= 0 ? idx('gerät') : idx('geraet')
+      const idxStandort = idx('standort')
+      const idxLetzte = idx('datum') >= 0 ? idx('datum') : idx('letzte')
+      const idxInterval = idx('intervall')
+      const idxNaechste = idx('nächste') >= 0 ? idx('nächste') : idx('naechste')
+      const idxZustaendig = idx('zuständ') >= 0 ? idx('zuständ') : idx('zustaend')
+
+      const total = rows.length
+      let done = 0
+      setImportProgress({ done, total })
+
+      for (const r of rows) {
+        const id_nr = idxInventar >= 0 ? (r[idxInventar] || '').toString() : ''
+        const name = idxGeraet >= 0 ? r[idxGeraet] : ''
+        const standort = idxStandort >= 0 ? r[idxStandort] : ''
+        const letzte_pruefung = idxLetzte >= 0 ? parseGermanDate(r[idxLetzte]) : ''
+        const interval = idxInterval >= 0 ? r[idxInterval] : 'Jährlich'
+        const naechste_pruefung = idxNaechste >= 0 ? parseGermanDate(r[idxNaechste]) : ''
+        const kontaktdaten = idxZustaendig >= 0 ? r[idxZustaendig] : ''
+
+        // Skip empty rows
+        if (!name && !id_nr) {
+          done++
+          setImportProgress({ done, total })
+          continue
+        }
+
+        await fetch('/api/technik', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rubrik: 'Messgeräte',
+            id_nr,
+            name,
+            standort,
+            letzte_pruefung,
+            interval,
+            naechste_pruefung,
+            bemerkungen: '',
+            in_betrieb: true,
+            kontaktdaten
+          })
+        })
+        done++
+        setImportProgress({ done, total })
+      }
+
+      await fetchInspections()
+      alert('Import abgeschlossen: ' + done + ' Einträge erstellt.')
+    } catch (e) {
+      console.error('CSV Import failed', e)
+      alert('Import fehlgeschlagen. Bitte CSV prüfen.')
+    } finally {
+      setImporting(false)
+      setImportProgress(null)
+    }
+  }
 
   const fetchInspections = async () => {
     try {
@@ -336,8 +430,37 @@ export default function TechnikPage() {
         </p>
       </div>
 
-      {/* Dashboard Statistics - Clickable Cards with Toggle */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Recurring Tasks List */}
+      <div className="space-y-4">
+        {/* Messgeräte CSV Import */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Messgeräte importieren (CSV)</h3>
+              <p className="text-gray-600 text-sm">Bitte Numbers/Excel als CSV (UTF‑8) mit Kopfzeile exportieren. Erkannt werden u. a.: Inventarnr, Gerät, Standort, Datum letzter Wartung, Wartungsintervall, Nächste Prüfung, Zuständigkeit.</p>
+            </div>
+            <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+              {importing ? 'Import läuft…' : 'CSV auswählen'}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) importMessgeraeteCsv(file)
+                  e.currentTarget.value = ''
+                }}
+                disabled={importing}
+              />
+            </label>
+          </div>
+          {importProgress && (
+            <div className="mt-2 text-sm text-gray-600">{importProgress.done} / {importProgress.total} importiert…</div>
+          )}
+        </div>
+        
+        {/* Summary Cards - Clickable Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Überfällig */}
         <button
           onClick={() => handleFilterByStatus('Überfällig')}
