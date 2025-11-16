@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import WiederkehrendeAufgabenForm from '@/components/WiederkehrendeAufgabenForm'
-import { getRecurringTasks, createRecurringTask, updateRecurringTask, deleteRecurringTask, markRecurringTaskCompleted, getRecurringTaskCompletions, RecurringTaskRecord, RecurringTaskCompletionRecord } from '@/lib/db'
+import { getRecurringTasks, createRecurringTask, updateRecurringTask, deleteRecurringTask, markRecurringTaskCompleted, getRecurringTaskCompletions, RecurringTaskRecord, RecurringTaskCompletionRecord, getLastRecurringTaskCompletion } from '@/lib/db'
 
 interface RecurringTask {
   id: string
@@ -25,6 +25,7 @@ export default function WiederkehrendeAufgaben() {
   const [completingTask, setCompletingTask] = useState<RecurringTask | null>(null)
   const [completionNotes, setCompletionNotes] = useState('')
   const [taskCompletions, setTaskCompletions] = useState<Record<string, RecurringTaskCompletionRecord[]>>({})
+  const [lastCompletions, setLastCompletions] = useState<Record<string, { completedAt: string; completedBy: string; notes?: string; nextDueDate?: string } | null>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -49,6 +50,29 @@ export default function WiederkehrendeAufgaben() {
     }
     load()
   }, [])
+
+  // Load last completion info for each task (once tasks loaded)
+  useEffect(() => {
+    const loadLast = async () => {
+      try {
+        const ids = recurringTasks.map(t => t.id)
+        // Avoid refetching already loaded
+        const toFetch = ids.filter(id => !(id in lastCompletions))
+        for (const id of toFetch) {
+          try {
+            const last = await getLastRecurringTaskCompletion(id)
+            setLastCompletions(prev => ({ ...prev, [id]: last }))
+          } catch (e) {
+            console.error('Load last completion failed', id, e)
+            setLastCompletions(prev => ({ ...prev, [id]: null }))
+          }
+        }
+      } catch (e) {
+        console.error('Load last completions failed', e)
+      }
+    }
+    if (recurringTasks.length > 0) loadLast()
+  }, [recurringTasks])
 
   // Filter tasks based on active filter
   useEffect(() => {
@@ -575,6 +599,17 @@ export default function WiederkehrendeAufgaben() {
                             <div className="flex items-center space-x-2 text-sm text-gray-500">
                               <span className="text-gray-400">📅</span>
                               <span>Erstellt: {new Date(task.createdAt).toLocaleDateString('de-DE')}</span>
+                            </div>
+                            {/* Last completion */}
+                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                              <span className="text-gray-400">🕒</span>
+                              {lastCompletions[task.id] ? (
+                                <span>
+                                  Zuletzt erledigt: {new Date(lastCompletions[task.id]!.completedAt).toLocaleString('de-DE')} durch {lastCompletions[task.id]!.completedBy}
+                                </span>
+                              ) : (
+                                <span>Noch nie erledigt</span>
+                              )}
                             </div>
                           </div>
                         </div>
