@@ -374,7 +374,7 @@ export default function QuizResultsView({ quizId, quizTitle, onClose }: QuizResu
                       wrong_count_calculated: wrongCount,
                       all_answers_length: allAnswers.length,
                       wrong_answers_from_api_length: wrongAnswersFromAPI.length,
-                      wrong_answers_filtered_length: wrongAnswers.length,
+                      wrong_answers_filtered_length: finalWrongAnswers.length,
                       final_wrong_answers_length: finalWrongAnswers.length,
                       wrong_answers_filtered: finalWrongAnswers.map((a: any) => ({
                         question_order: a.question_order,
