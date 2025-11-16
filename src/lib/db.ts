@@ -132,6 +132,30 @@ export async function markRecurringTaskCompleted(taskId: string, completedBy: st
   return response.json()
 }
 
+// Convenience helper: returns the last completion (most recent) for a task
+export async function getLastRecurringTaskCompletion(taskId: string): Promise<{
+  completedAt: string
+  completedBy: string
+  notes?: string
+  nextDueDate?: string
+} | null> {
+  const completions = await getRecurringTaskCompletions(taskId)
+  if (!completions || completions.length === 0) return null
+  // API already orders DESC by completed_at; fall back to local sort if missing
+  const sorted = [...completions].sort((a, b) => {
+    const aTime = a.completed_at ? new Date(a.completed_at).getTime() : 0
+    const bTime = b.completed_at ? new Date(b.completed_at).getTime() : 0
+    return bTime - aTime
+  })
+  const latest = sorted[0]
+  return {
+    completedAt: latest.completed_at || latest.created_at || new Date().toISOString(),
+    completedBy: latest.completed_by,
+    notes: latest.notes,
+    nextDueDate: latest.next_due_date
+  }
+}
+
 // =====================
 // Documents
 // =====================
