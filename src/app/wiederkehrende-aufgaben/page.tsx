@@ -600,58 +600,61 @@ export default function WiederkehrendeAufgaben() {
                               <span className="text-gray-400">📅</span>
                               <span>Erstellt: {new Date(task.createdAt).toLocaleDateString('de-DE')}</span>
                             </div>
-                            {/* Last completion */}
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <span className="text-gray-400">🕒</span>
-                              {lastCompletions[task.id] ? (
-                                <span>
-                                  Zuletzt erledigt: {new Date(lastCompletions[task.id]!.completedAt).toLocaleString('de-DE')} durch {lastCompletions[task.id]!.completedBy}
-                                </span>
-                              ) : (
-                                <span>Noch nie erledigt</span>
-                              )}
-                            </div>
                           </div>
                         </div>
                       </div>
                       
-                      {/* Action Buttons */}
-                      <div className="flex items-center space-x-2 ml-4">
-                        <button 
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                          onClick={() => toggleTaskStatus(task.id)}
-                          title={task.isActive ? 'Pausieren' : 'Aktivieren'}
-                        >
-                          {task.isActive ? '⏸️' : '▶️'}
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          onClick={() => editTask(task)}
-                          title="Bearbeiten"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          onClick={() => setCompletingTask(task)}
-                          title="Als erledigt markieren"
-                        >
-                          ✅
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                          onClick={() => loadTaskCompletions(task.id)}
-                          title="Erledigungshistorie anzeigen"
-                        >
-                          📊
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          onClick={() => deleteTask(task.id)}
-                          title="Aufgabe löschen"
-                        >
-                          🗑️
-                        </button>
+                      {/* Right Side: Last completion + Action Buttons */}
+                      <div className="flex items-center space-x-3 ml-4">
+                        {/* Last completion (right aligned, compact) */}
+                        <div className="hidden sm:block text-xs text-gray-600 whitespace-nowrap text-right mr-2">
+                          {lastCompletions[task.id] ? (
+                            <span>
+                              🕒 Zuletzt: {new Date(lastCompletions[task.id]!.completedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {' '}• {lastCompletions[task.id]!.completedBy}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">🕒 Noch nie erledigt</span>
+                          )}
+                        </div>
+                        {/* Action Buttons */}
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            onClick={() => toggleTaskStatus(task.id)}
+                            title={task.isActive ? 'Pausieren' : 'Aktivieren'}
+                          >
+                            {task.isActive ? '⏸️' : '▶️'}
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            onClick={() => editTask(task)}
+                            title="Bearbeiten"
+                          >
+                            ✏️
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            onClick={() => setCompletingTask(task)}
+                            title="Als erledigt markieren"
+                          >
+                            ✅
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            onClick={() => loadTaskCompletions(task.id)}
+                            title="Erledigungshistorie anzeigen"
+                          >
+                            📊
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={() => deleteTask(task.id)}
+                            title="Aufgabe löschen"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
