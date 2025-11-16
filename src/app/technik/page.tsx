@@ -422,10 +422,10 @@ export default function TechnikPage() {
 
   const updateTechnikInspection = async (id: string, data: Partial<TechnikInspection>) => {
     try {
-      const response = await fetch(`/api/technik/${id}`, {
+      const response = await fetch(`/api/technik`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ id, ...data })
       })
       if (response.ok) {
         return response.json()
