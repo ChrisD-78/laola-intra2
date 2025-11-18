@@ -53,6 +53,10 @@ export default function Technik() {
     bemerkungen: ''
   })
   const [editFormLoading, setEditFormLoading] = useState(false)
+  const [showCsvImportModal, setShowCsvImportModal] = useState(false)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [csvImportLoading, setCsvImportLoading] = useState(false)
+  const [csvPreview, setCsvPreview] = useState<Array<Record<string, string>>>([])
   const [formData, setFormData] = useState({
     rubrik: '',
     id_nr: '',
@@ -349,13 +353,22 @@ export default function Technik() {
 
       {/* Create Button */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-        >
-          <span>➕</span>
-          <span>Neues Prüfgerät anlegen</span>
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <span>➕</span>
+            <span>Neues Prüfgerät anlegen</span>
+          </button>
+          <button
+            onClick={() => setShowCsvImportModal(true)}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <span>📥</span>
+            <span>CSV Import</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabelle */}
