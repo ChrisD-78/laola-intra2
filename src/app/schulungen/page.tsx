@@ -1280,13 +1280,6 @@ export default function Schulungen() {
             <span>📊</span>
             <span>Schulungsübersicht</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('quiz')}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center space-x-2"
-          >
-            <span>🎯</span>
-            <span>Quiz</span>
-          </button>
         </div>
       </div>
 
