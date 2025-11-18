@@ -1137,6 +1137,260 @@ export default function Technik() {
           </div>
         </div>
       )}
+
+      {/* CSV Import Modal */}
+      {showCsvImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">CSV Import</h3>
+                  <p className="text-sm text-white/90 mt-1">Importieren Sie mehrere Prüfgeräte auf einmal</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCsvImportModal(false)
+                    setCsvFile(null)
+                    setCsvPreview([])
+                  }}
+                  className="text-white hover:text-gray-200 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* CSV File Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  CSV-Datei auswählen
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      setCsvFile(file)
+                      // Parse CSV and show preview
+                      const text = await file.text()
+                      const lines = text.split('\n').filter(line => line.trim())
+                      if (lines.length > 0) {
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+                        const rows = lines.slice(1).map(line => {
+                          const values = line.split(',').map(v => v.trim().replace(/"/g, ''))
+                          const row: Record<string, string> = {}
+                          headers.forEach((header, index) => {
+                            row[header] = values[index] || ''
+                          })
+                          return row
+                        })
+                        setCsvPreview(rows.slice(0, 10)) // Show first 10 rows as preview
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                />
+                {csvFile && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Ausgewählt: {csvFile.name}
+                  </p>
+                )}
+              </div>
+
+              {/* CSV Format Info */}
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p className="text-sm text-blue-700 font-medium mb-2">Erwartetes CSV-Format:</p>
+                <p className="text-xs text-blue-600 mb-2">
+                  Die CSV-Datei sollte folgende Spalten enthalten (Trennzeichen: Komma):
+                </p>
+                <ul className="text-xs text-blue-600 list-disc list-inside space-y-1">
+                  <li><strong>rubrik</strong> (Pflicht) - z.B. "Messgeräte"</li>
+                  <li><strong>id_nr</strong> (Pflicht) - z.B. "M-001"</li>
+                  <li><strong>name</strong> (Pflicht) - Name des Geräts</li>
+                  <li><strong>standort</strong> (Pflicht) - Standort</li>
+                  <li><strong>letzte_pruefung</strong> (Pflicht) - z.B. "01.01.2024"</li>
+                  <li><strong>interval</strong> (Pflicht) - z.B. "Jährlich", "Monatlich"</li>
+                  <li><strong>naechste_pruefung</strong> (Pflicht) - z.B. "01.01.2025"</li>
+                  <li><strong>in_betrieb</strong> (Optional) - "true" oder "false" (Standard: "true")</li>
+                  <li><strong>kontaktdaten</strong> (Optional) - Kontaktinformationen</li>
+                  <li><strong>bemerkungen</strong> (Optional) - Zusätzliche Bemerkungen</li>
+                  <li><strong>status</strong> (Optional) - "Offen", "Überfällig", "Erledigt" (Standard: "Offen")</li>
+                </ul>
+              </div>
+
+              {/* Preview */}
+              {csvPreview.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vorschau (erste {csvPreview.length} Zeilen)
+                  </label>
+                  <div className="overflow-x-auto border border-gray-300 rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200 text-xs">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {Object.keys(csvPreview[0] || {}).map((header) => (
+                            <th key={header} className="px-2 py-2 text-left font-medium text-gray-700">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {csvPreview.map((row, index) => (
+                          <tr key={index}>
+                            {Object.values(row).map((value, cellIndex) => (
+                              <td key={cellIndex} className="px-2 py-2 text-gray-900">
+                                {value || '-'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Import Button */}
+              {csvFile && csvPreview.length > 0 && (
+                <div className="flex gap-3 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCsvImportModal(false)
+                      setCsvFile(null)
+                      setCsvPreview([])
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!csvFile) return
+                      setCsvImportLoading(true)
+                      
+                      try {
+                        const text = await csvFile.text()
+                        const lines = text.split('\n').filter(line => line.trim())
+                        if (lines.length < 2) {
+                          alert('CSV-Datei ist leer oder enthält keine Daten.')
+                          setCsvImportLoading(false)
+                          return
+                        }
+
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+                        const rows = lines.slice(1).map(line => {
+                          const values = line.split(',').map(v => v.trim().replace(/"/g, ''))
+                          const row: Record<string, string> = {}
+                          headers.forEach((header, index) => {
+                            row[header] = values[index] || ''
+                          })
+                          return row
+                        })
+
+                        let successCount = 0
+                        let errorCount = 0
+                        const errors: string[] = []
+
+                        for (const row of rows) {
+                          try {
+                            // Validate required fields
+                            if (!row.rubrik || !row.id_nr || !row.name || !row.standort || !row.letzte_pruefung || !row.interval || !row.naechste_pruefung) {
+                              errors.push(`Zeile mit ID ${row.id_nr || 'unbekannt'}: Pflichtfelder fehlen`)
+                              errorCount++
+                              continue
+                            }
+
+                            // Parse in_betrieb
+                            const inBetrieb = row.in_betrieb === 'false' ? false : true
+
+                            // Determine status
+                            const status = row.status || 'Offen'
+
+                            // Create inspection
+                            await createTechnikInspection({
+                              rubrik: row.rubrik,
+                              id_nr: row.id_nr,
+                              name: row.name,
+                              standort: row.standort,
+                              bild_url: undefined,
+                              bild_name: undefined,
+                              letzte_pruefung: row.letzte_pruefung,
+                              interval: row.interval,
+                              naechste_pruefung: row.naechste_pruefung,
+                              bericht_url: undefined,
+                              bericht_name: undefined,
+                              in_betrieb: inBetrieb,
+                              kontaktdaten: row.kontaktdaten || undefined,
+                              bemerkungen: row.bemerkungen || undefined,
+                              status
+                            })
+
+                            successCount++
+                          } catch (error) {
+                            console.error('Error importing row:', error)
+                            errors.push(`Zeile mit ID ${row.id_nr || 'unbekannt'}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`)
+                            errorCount++
+                          }
+                        }
+
+                        // Reload inspections
+                        const data = await getTechnikInspections()
+                        const mapped: TechnikInspection[] = data.map((r: TechnikInspectionRecord) => ({
+                          id: r.id as string,
+                          rubrik: r.rubrik,
+                          id_nr: r.id_nr,
+                          name: r.name,
+                          standort: r.standort,
+                          bild_url: r.bild_url || undefined,
+                          bild_name: r.bild_name || undefined,
+                          letzte_pruefung: r.letzte_pruefung,
+                          interval: r.interval,
+                          naechste_pruefung: r.naechste_pruefung,
+                          bericht_url: r.bericht_url || undefined,
+                          bericht_name: r.bericht_name || undefined,
+                          bemerkungen: r.bemerkungen || undefined,
+                          in_betrieb: r.in_betrieb,
+                          kontaktdaten: r.kontaktdaten || undefined,
+                          status: r.status
+                        }))
+                        setInspections(mapped)
+
+                        // Show results
+                        let message = `Import abgeschlossen!\n\nErfolgreich: ${successCount}\nFehler: ${errorCount}`
+                        if (errors.length > 0 && errors.length <= 10) {
+                          message += `\n\nFehlerdetails:\n${errors.join('\n')}`
+                        } else if (errors.length > 10) {
+                          message += `\n\nErste 10 Fehler:\n${errors.slice(0, 10).join('\n')}`
+                        }
+                        alert(message)
+
+                        // Close modal
+                        setShowCsvImportModal(false)
+                        setCsvFile(null)
+                        setCsvPreview([])
+                      } catch (error) {
+                        console.error('Failed to import CSV:', error)
+                        alert('Fehler beim Importieren der CSV-Datei. Bitte überprüfen Sie das Format.')
+                      } finally {
+                        setCsvImportLoading(false)
+                      }
+                    }}
+                    disabled={csvImportLoading}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-wait"
+                  >
+                    {csvImportLoading ? 'Importiere...' : '📥 Importieren'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
