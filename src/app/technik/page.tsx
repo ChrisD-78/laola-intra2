@@ -65,11 +65,6 @@ export default function TechnikPage() {
 
   // Helper: Prüft ob Benutzer Admin oder Technik ist
   const isAdminOrTechnik = isAdmin || userRole === 'Technik'
-  
-  // Debug: Log Rechte-Status
-  useEffect(() => {
-    console.log('Technik Page - Rechte:', { isAdmin, userRole, isAdminOrTechnik, currentUser })
-  }, [isAdmin, userRole, isAdminOrTechnik, currentUser])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -451,7 +446,6 @@ export default function TechnikPage() {
   }
 
   const handleStartInlineEdit = (inspection: TechnikInspection) => {
-    console.log('handleStartInlineEdit called:', inspection.id, inspection)
     setEditingRowId(inspection.id)
     setEditingRowData({
       name: inspection.name,
@@ -461,7 +455,6 @@ export default function TechnikPage() {
       kontaktdaten: inspection.kontaktdaten || '',
       bemerkungen: inspection.bemerkungen || ''
     })
-    console.log('Editing state set:', inspection.id)
   }
 
   const handleCancelInlineEdit = () => {
@@ -754,7 +747,7 @@ export default function TechnikPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aktionen
                 </th>
               </tr>
@@ -794,13 +787,8 @@ export default function TechnikPage() {
                   const overdue = isOverdue(inspection.naechste_pruefung) && status !== 'Erledigt'
                   const isEditing = editingRowId === inspection.id
                   
-                  // Debug log
-                  if (isEditing) {
-                    console.log('Row is in editing mode:', inspection.id, editingRowData)
-                  }
-                  
                   return (
-                    <tr key={inspection.id} className={`hover:bg-gray-50 transition-colors ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-400 shadow-md' : ''}`}>
+                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-300' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           {inspection.rubrik}
@@ -879,8 +867,7 @@ export default function TechnikPage() {
                           {status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ minWidth: '200px' }}>
-                        {/* DEBUG: isEditing={String(isEditing)}, editingRowId={editingRowId}, inspection.id={inspection.id} */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {isEditing ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -899,7 +886,7 @@ export default function TechnikPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
                                 setSelectedInspection(inspection)
@@ -911,20 +898,15 @@ export default function TechnikPage() {
                             >
                               Details
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                console.log('Edit button clicked for:', inspection.id, inspection)
-                                handleStartInlineEdit(inspection)
-                              }}
-                              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium shadow-md border-2 border-yellow-600"
-                              title="Direkt bearbeiten"
-                              type="button"
-                              style={{ display: 'block', visibility: 'visible' }}
-                            >
-                              ✏️ Bearbeiten
-                            </button>
+                            {isAdminOrTechnik && (
+                              <button
+                                onClick={() => handleStartInlineEdit(inspection)}
+                                className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
+                                title="Direkt bearbeiten"
+                              >
+                                ✏️
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>
