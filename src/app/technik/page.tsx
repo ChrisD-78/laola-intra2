@@ -754,7 +754,7 @@ export default function TechnikPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   Aktionen
                 </th>
               </tr>
@@ -898,7 +898,7 @@ export default function TechnikPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={() => {
                                 setSelectedInspection(inspection)
@@ -914,12 +914,13 @@ export default function TechnikPage() {
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                console.log('Edit button clicked for:', inspection.id)
+                                console.log('Edit button clicked for:', inspection.id, inspection)
                                 handleStartInlineEdit(inspection)
                               }}
-                              className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs cursor-pointer"
+                              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium shadow-md border-2 border-yellow-600"
                               title="Direkt bearbeiten"
                               type="button"
+                              style={{ display: 'block', visibility: 'visible' }}
                             >
                               ✏️ Bearbeiten
                             </button>
