@@ -1207,18 +1207,21 @@ export default function Technik() {
                   Die CSV-Datei sollte folgende Spalten enthalten (Trennzeichen: Komma):
                 </p>
                 <ul className="text-xs text-blue-600 list-disc list-inside space-y-1">
-                  <li><strong>rubrik</strong> (Pflicht) - z.B. "Messgeräte"</li>
-                  <li><strong>id_nr</strong> (Pflicht) - z.B. "M-001"</li>
-                  <li><strong>name</strong> (Pflicht) - Name des Geräts</li>
-                  <li><strong>standort</strong> (Pflicht) - Standort</li>
-                  <li><strong>letzte_pruefung</strong> (Pflicht) - z.B. "01.01.2024"</li>
-                  <li><strong>interval</strong> (Pflicht) - z.B. "Jährlich", "Monatlich"</li>
-                  <li><strong>naechste_pruefung</strong> (Pflicht) - z.B. "01.01.2025"</li>
+                  <li><strong>rubrik</strong> (Optional) - z.B. "Messgeräte" (Standard: "Messgeräte")</li>
+                  <li><strong>id_nr</strong> (Optional) - z.B. "M-001" (wird automatisch generiert falls leer)</li>
+                  <li><strong>name</strong> (Optional) - Name des Geräts (Standard: "Unbenanntes Gerät")</li>
+                  <li><strong>standort</strong> (Optional) - Standort (Standard: "Nicht angegeben")</li>
+                  <li><strong>letzte_pruefung</strong> (Optional) - z.B. "01.01.2024" (Standard: heutiges Datum)</li>
+                  <li><strong>interval</strong> (Optional) - z.B. "Jährlich", "Monatlich" (Standard: "Jährlich")</li>
+                  <li><strong>naechste_pruefung</strong> (Optional) - z.B. "01.01.2025" (Standard: in 1 Jahr)</li>
                   <li><strong>in_betrieb</strong> (Optional) - "true" oder "false" (Standard: "true")</li>
                   <li><strong>kontaktdaten</strong> (Optional) - Kontaktinformationen</li>
                   <li><strong>bemerkungen</strong> (Optional) - Zusätzliche Bemerkungen</li>
                   <li><strong>status</strong> (Optional) - "Offen", "Überfällig", "Erledigt" (Standard: "Offen")</li>
                 </ul>
+                <p className="text-xs text-blue-600 mt-2 font-medium">
+                  Alle Felder sind optional. Fehlende Felder werden mit Standardwerten befüllt.
+                </p>
               </div>
 
               {/* Preview */}
@@ -1298,12 +1301,14 @@ export default function Technik() {
 
                         for (const row of rows) {
                           try {
-                            // Validate required fields
-                            if (!row.rubrik || !row.id_nr || !row.name || !row.standort || !row.letzte_pruefung || !row.interval || !row.naechste_pruefung) {
-                              errors.push(`Zeile mit ID ${row.id_nr || 'unbekannt'}: Pflichtfelder fehlen`)
-                              errorCount++
-                              continue
-                            }
+                            // Set default values for missing fields
+                            const rubrik = row.rubrik || 'Messgeräte'
+                            const id_nr = row.id_nr || `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                            const name = row.name || 'Unbenanntes Gerät'
+                            const standort = row.standort || 'Nicht angegeben'
+                            const letzte_pruefung = row.letzte_pruefung || new Date().toLocaleDateString('de-DE')
+                            const interval = row.interval || 'Jährlich'
+                            const naechste_pruefung = row.naechste_pruefung || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE')
 
                             // Parse in_betrieb
                             const inBetrieb = row.in_betrieb === 'false' ? false : true
@@ -1313,15 +1318,15 @@ export default function Technik() {
 
                             // Create inspection
                             await createTechnikInspection({
-                              rubrik: row.rubrik,
-                              id_nr: row.id_nr,
-                              name: row.name,
-                              standort: row.standort,
+                              rubrik: rubrik,
+                              id_nr: id_nr,
+                              name: name,
+                              standort: standort,
                               bild_url: undefined,
                               bild_name: undefined,
-                              letzte_pruefung: row.letzte_pruefung,
-                              interval: row.interval,
-                              naechste_pruefung: row.naechste_pruefung,
+                              letzte_pruefung: letzte_pruefung,
+                              interval: interval,
+                              naechste_pruefung: naechste_pruefung,
                               bericht_url: undefined,
                               bericht_name: undefined,
                               in_betrieb: inBetrieb,
