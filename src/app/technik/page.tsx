@@ -879,7 +879,8 @@ export default function TechnikPage() {
                           {status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ minWidth: '200px' }}>
+                        {/* DEBUG: isEditing={String(isEditing)}, editingRowId={editingRowId}, inspection.id={inspection.id} */}
                         {isEditing ? (
                           <div className="flex items-center gap-2">
                             <button
