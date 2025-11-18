@@ -541,14 +541,13 @@ export default function Chat() {
         {/* Action Buttons */}
         <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6">
           <div className="flex justify-center space-x-2">
-              <button
-                onClick={() => setShowProfileSettings(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                title="Profil bearbeiten"
-              >
-                ⚙️ Profil
-              </button>
-            </div>
+            <button
+              onClick={() => setShowProfileSettings(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              title="Profil bearbeiten"
+            >
+              ⚙️ Profil
+            </button>
           </div>
         </div>
 
