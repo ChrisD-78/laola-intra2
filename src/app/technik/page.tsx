@@ -451,6 +451,7 @@ export default function TechnikPage() {
   }
 
   const handleStartInlineEdit = (inspection: TechnikInspection) => {
+    console.log('handleStartInlineEdit called:', inspection.id, inspection)
     setEditingRowId(inspection.id)
     setEditingRowData({
       name: inspection.name,
@@ -460,6 +461,7 @@ export default function TechnikPage() {
       kontaktdaten: inspection.kontaktdaten || '',
       bemerkungen: inspection.bemerkungen || ''
     })
+    console.log('Editing state set:', inspection.id)
   }
 
   const handleCancelInlineEdit = () => {
@@ -792,8 +794,13 @@ export default function TechnikPage() {
                   const overdue = isOverdue(inspection.naechste_pruefung) && status !== 'Erledigt'
                   const isEditing = editingRowId === inspection.id
                   
+                  // Debug log
+                  if (isEditing) {
+                    console.log('Row is in editing mode:', inspection.id, editingRowData)
+                  }
+                  
                   return (
-                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-300' : ''}`}>
+                    <tr key={inspection.id} className={`hover:bg-gray-50 transition-colors ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-400 shadow-md' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           {inspection.rubrik}
@@ -904,11 +911,17 @@ export default function TechnikPage() {
                               Details
                             </button>
                             <button
-                              onClick={() => handleStartInlineEdit(inspection)}
-                              className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                console.log('Edit button clicked for:', inspection.id)
+                                handleStartInlineEdit(inspection)
+                              }}
+                              className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs cursor-pointer"
                               title="Direkt bearbeiten"
+                              type="button"
                             >
-                              ✏️
+                              ✏️ Bearbeiten
                             </button>
                           </div>
                         )}
