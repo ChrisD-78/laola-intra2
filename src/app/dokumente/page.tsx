@@ -264,9 +264,9 @@ export default function Dokumente() {
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Dokumente</h1>
-        <p className="mt-2 text-gray-600">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white text-center">
+        <h1 className="text-2xl lg:text-4xl font-bold mb-2">Dokumente</h1>
+        <p className="text-sm lg:text-base text-white/90">
           Verwalten Sie alle wichtigen Dokumente und Unterlagen
         </p>
       </div>
