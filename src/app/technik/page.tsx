@@ -68,7 +68,7 @@ export default function Technik() {
   return (
     <div className="space-y-4 lg:space-y-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white text-center">
         <h1 className="text-2xl lg:text-4xl font-bold mb-2">
           Technik - Prüfungsübersicht
         </h1>
