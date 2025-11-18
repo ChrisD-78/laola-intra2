@@ -234,7 +234,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white">
         <h1 className="text-2xl lg:text-4xl font-bold mb-4 text-center">
-          Willkommen im Laola Intranet
+          Willkommen im LA OLA Intranet
         </h1>
         <DailyMotivation />
       </div>

@@ -9,7 +9,7 @@ import { ChatNotificationProvider } from "@/contexts/ChatNotificationContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Laola Intranet - Mitarbeiter Portal",
+  title: "LA OLA Intranet - Mitarbeiter Portal",
   description: "Intranet Portal für Mitarbeiter - laola.baederbook.de",
 };
 

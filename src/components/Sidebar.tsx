@@ -60,7 +60,7 @@ const Sidebar = () => {
             <span className="text-white text-2xl">🏊‍♂️</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Laola</h1>
+            <h1 className="text-xl font-bold text-white">LA OLA</h1>
             <p className="text-sm text-white font-medium">Intranet</p>
           </div>
         </div>

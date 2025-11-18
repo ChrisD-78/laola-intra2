@@ -48,7 +48,7 @@ const LoginForm = () => {
             <span className="text-white text-3xl">🏊‍♂️</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-white">
-            Laola Intranet
+            LA OLA Intranet
           </h2>
           <p className="mt-2 text-sm text-white/80">
             Melden Sie sich an, um auf das Mitarbeiter-Portal zuzugreifen
