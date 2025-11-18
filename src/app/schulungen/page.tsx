@@ -1256,30 +1256,37 @@ export default function Schulungen() {
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white text-center">
+        <h1 className="text-2xl lg:text-4xl font-bold mb-2">Schulungen</h1>
+        <p className="text-sm lg:text-base text-white/90">
+          Verwalten Sie Ihre Schulungen und Weiterbildungen
+        </p>
+      </div>
+
+      {/* Action Buttons */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Schulungen</h1>
-            <p className="mt-2 text-gray-600">
-              Verwalten Sie Ihre Schulungen und Weiterbildungen
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button 
-              onClick={() => setShowCreateForm(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-            >
-              <span>➕</span>
-              <span>Neue Schulung</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
-            >
-              <span>📊</span>
-              <span>Schulungsübersicht</span>
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
+          <button 
+            onClick={() => setShowCreateForm(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <span>➕</span>
+            <span>Neue Schulung</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('overview')}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <span>📊</span>
+            <span>Schulungsübersicht</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('quiz')}
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <span>🎯</span>
+            <span>Quiz</span>
+          </button>
         </div>
       </div>
 
