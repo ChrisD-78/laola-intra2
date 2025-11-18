@@ -759,3 +759,29 @@ export async function uploadTechnikPdf(file: File): Promise<{ path: string; publ
     publicUrl: result.publicUrl
   }
 }
+
+export async function updateTechnikInspection(id: string, inspection: Partial<TechnikInspectionRecord>) {
+  const response = await fetch('/api/technik', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...inspection })
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to update technik inspection:', error)
+    throw new Error('Failed to update technik inspection')
+  }
+  return response.json()
+}
+
+export async function deleteTechnikInspection(id: string) {
+  const response = await fetch(`/api/technik?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to delete technik inspection:', error)
+    throw new Error('Failed to delete technik inspection')
+  }
+  return response.json()
+}
