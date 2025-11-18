@@ -375,22 +375,6 @@ export default function TechnikPage() {
     }
   }
 
-  const handleMarkAsCompleted = async (id: string) => {
-    try {
-      const response = await fetch(`/api/technik`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'Erledigt' })
-      })
-
-      if (response.ok) {
-        await fetchInspections()
-        setShowDetailsPopup(false)
-      }
-    } catch (error) {
-      console.error('Failed to update inspection:', error)
-    }
-  }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Möchten Sie diese Prüfung wirklich löschen?')) return
@@ -1130,14 +1114,6 @@ export default function TechnikPage() {
                 >
                   Löschen
                 </button>
-                {selectedInspection.status !== 'Erledigt' && (
-                  <button
-                    onClick={() => handleMarkAsCompleted(selectedInspection.id)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Als erledigt markieren
-                  </button>
-                )}
                 <button
                   onClick={() => setShowDetailsPopup(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
