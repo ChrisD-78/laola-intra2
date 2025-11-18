@@ -47,7 +47,7 @@ interface TechnikInspection {
 }
 
 export default function TechnikPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, isAdmin, userRole } = useAuth()
   const [inspections, setInspections] = useState<TechnikInspection[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
@@ -57,6 +57,9 @@ export default function TechnikPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null)
+
+  // Helper: Prüft ob Benutzer Admin oder Technik ist
+  const isAdminOrTechnik = isAdmin || userRole === 'Technik'
 
   // Form state
   const [formData, setFormData] = useState({
@@ -451,32 +454,34 @@ export default function TechnikPage() {
 
       {/* Recurring Tasks List */}
       <div className="space-y-4">
-        {/* Messgeräte CSV Import */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Messgeräte importieren (CSV)</h3>
-              <p className="text-gray-600 text-sm">Bitte Numbers/Excel als CSV (UTF‑8) mit Kopfzeile exportieren. Erkannt werden u. a.: Inventarnr, Gerät, Standort, Datum letzter Wartung, Wartungsintervall, Nächste Prüfung, Zuständigkeit.</p>
+        {/* Messgeräte CSV Import - Nur für Admin/Technik */}
+        {isAdminOrTechnik && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Messgeräte importieren (CSV)</h3>
+                <p className="text-gray-600 text-sm">Bitte Numbers/Excel als CSV (UTF‑8) mit Kopfzeile exportieren. Erkannt werden u. a.: Inventarnr, Gerät, Standort, Datum letzter Wartung, Wartungsintervall, Nächste Prüfung, Zuständigkeit.</p>
+              </div>
+              <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+                {importing ? 'Import läuft…' : 'CSV auswählen'}
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) importMessgeraeteCsv(file)
+                    e.currentTarget.value = ''
+                  }}
+                  disabled={importing}
+                />
+              </label>
             </div>
-            <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
-              {importing ? 'Import läuft…' : 'CSV auswählen'}
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) importMessgeraeteCsv(file)
-                  e.currentTarget.value = ''
-                }}
-                disabled={importing}
-              />
-            </label>
+            {importProgress && (
+              <div className="mt-2 text-sm text-gray-600">{importProgress.done} / {importProgress.total} importiert…</div>
+            )}
           </div>
-          {importProgress && (
-            <div className="mt-2 text-sm text-gray-600">{importProgress.done} / {importProgress.total} importiert…</div>
-          )}
-        </div>
+        )}
         
         {/* Summary Cards - Clickable Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -581,21 +586,23 @@ export default function TechnikPage() {
         </button>
       </div>
 
-      {/* Add Button */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Neue Prüfung anlegen</h2>
-            <p className="text-gray-600 mt-1">Erstellen Sie eine neue technische Prüfung</p>
+      {/* Add Button - Nur für Admin/Technik */}
+      {isAdminOrTechnik && (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Neue Prüfung anlegen</h2>
+              <p className="text-gray-600 mt-1">Erstellen Sie eine neue technische Prüfung</p>
+            </div>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              + Neue Prüfung
+            </button>
           </div>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            + Neue Prüfung
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Inspections Table */}
       <div id="inspections-table" className="bg-white rounded-2xl shadow-lg border border-gray-100 scroll-mt-4">
@@ -763,17 +770,33 @@ export default function TechnikPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => {
-                            setSelectedInspection(inspection)
-                            setShowDetailsPopup(true)
-                            setEditDetailsMode(false)
-                            setEditDetailsData(inspection)
-                          }}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Details
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedInspection(inspection)
+                              setShowDetailsPopup(true)
+                              setEditDetailsMode(false)
+                              setEditDetailsData(inspection)
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Details
+                          </button>
+                          {isAdminOrTechnik && (
+                            <button
+                              onClick={() => {
+                                setSelectedInspection(inspection)
+                                setShowDetailsPopup(true)
+                                setEditDetailsMode(true)
+                                setEditDetailsData(inspection)
+                              }}
+                              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                              title="Bearbeiten"
+                            >
+                              ✏️
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -1012,16 +1035,18 @@ export default function TechnikPage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-gray-900">Prüfungsdetails</h3>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setEditDetailsMode(prev => !prev)
-                      setEditDetailsData(selectedInspection)
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${editDetailsMode ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-gray-50 border-gray-300 text-gray-700'} `}
-                    title="Bearbeiten"
-                  >
-                    {editDetailsMode ? 'Bearbeiten beenden' : 'Bearbeiten'}
-                  </button>
+                  {isAdminOrTechnik && (
+                    <button
+                      onClick={() => {
+                        setEditDetailsMode(prev => !prev)
+                        setEditDetailsData(selectedInspection)
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${editDetailsMode ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-gray-50 border-gray-300 text-gray-700'} `}
+                      title="Bearbeiten"
+                    >
+                      {editDetailsMode ? 'Bearbeiten beenden' : 'Bearbeiten'}
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowDetailsPopup(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -1265,14 +1290,16 @@ export default function TechnikPage() {
                 </div>
               )}
               
-              {/* Action Buttons */}
+              {/* Action Buttons - Löschen nur für Admin/Technik */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => handleDelete(selectedInspection.id)}
-                  className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
-                >
-                  Löschen
-                </button>
+                {isAdminOrTechnik && (
+                  <button
+                    onClick={() => handleDelete(selectedInspection.id)}
+                    className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    Löschen
+                  </button>
+                )}
                 {selectedInspection.status !== 'Erledigt' && (
                   <button
                     onClick={() => handleMarkAsCompleted(selectedInspection.id)}
