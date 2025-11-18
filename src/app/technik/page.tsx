@@ -57,6 +57,11 @@ export default function TechnikPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null)
+  
+  // Inline editing state
+  const [editingRowId, setEditingRowId] = useState<string | null>(null)
+  const [editingRowData, setEditingRowData] = useState<Partial<TechnikInspection> | null>(null)
+  const [savingRow, setSavingRow] = useState<string | null>(null)
 
   // Helper: Prüft ob Benutzer Admin oder Technik ist
   const isAdminOrTechnik = isAdmin || userRole === 'Technik'
@@ -440,6 +445,40 @@ export default function TechnikPage() {
     }
   }
 
+  const handleStartInlineEdit = (inspection: TechnikInspection) => {
+    setEditingRowId(inspection.id)
+    setEditingRowData({
+      name: inspection.name,
+      standort: inspection.standort,
+      naechste_pruefung: inspection.naechste_pruefung,
+      interval: inspection.interval,
+      kontaktdaten: inspection.kontaktdaten || '',
+      bemerkungen: inspection.bemerkungen || ''
+    })
+  }
+
+  const handleCancelInlineEdit = () => {
+    setEditingRowId(null)
+    setEditingRowData(null)
+  }
+
+  const handleSaveInlineEdit = async (id: string) => {
+    if (!editingRowData) return
+    
+    setSavingRow(id)
+    try {
+      await updateTechnikInspection(id, editingRowData)
+      await fetchInspections()
+      setEditingRowId(null)
+      setEditingRowData(null)
+    } catch (error) {
+      console.error('Failed to save inline edit:', error)
+      alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.')
+    } finally {
+      setSavingRow(null)
+    }
+  }
+
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
@@ -697,26 +736,32 @@ export default function TechnikPage() {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Standort
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nächste Prüfung
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Intervall
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Details
+                  Aktionen
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     Lade Prüfungen...
                   </td>
                 </tr>
               ) : filteredInspections.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
+                  <td colSpan={7} className="px-6 py-8 text-center">
                     <div className="text-4xl mb-4">🔍</div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       {inspections.length === 0 ? 'Keine Prüfungen vorhanden' : 'Keine Prüfungen gefunden'}
@@ -740,9 +785,10 @@ export default function TechnikPage() {
                 filteredInspections.map((inspection) => {
                   const status = calculateStatus(inspection.naechste_pruefung, inspection.status)
                   const overdue = isOverdue(inspection.naechste_pruefung) && status !== 'Erledigt'
+                  const isEditing = editingRowId === inspection.id
                   
                   return (
-                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''}`}>
+                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-300' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           {inspection.rubrik}
@@ -752,13 +798,65 @@ export default function TechnikPage() {
                         {inspection.id_nr}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {inspection.name}
+                        {isEditing && editingRowData ? (
+                          <input
+                            type="text"
+                            value={editingRowData.name || ''}
+                            onChange={(e) => setEditingRowData({ ...editingRowData, name: e.target.value })}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            placeholder="Name"
+                          />
+                        ) : (
+                          inspection.name
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center space-x-2">
-                          {overdue && <span className="text-red-500">🚨</span>}
-                          <span>{formatDate(inspection.naechste_pruefung)}</span>
-                        </div>
+                        {isEditing && editingRowData ? (
+                          <input
+                            type="text"
+                            value={editingRowData.standort || ''}
+                            onChange={(e) => setEditingRowData({ ...editingRowData, standort: e.target.value })}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            placeholder="Standort"
+                          />
+                        ) : (
+                          inspection.standort
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {isEditing && editingRowData ? (
+                          <input
+                            type="date"
+                            value={(editingRowData.naechste_pruefung || '').slice(0, 10)}
+                            onChange={(e) => setEditingRowData({ ...editingRowData, naechste_pruefung: e.target.value })}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            {overdue && <span className="text-red-500">🚨</span>}
+                            <span>{formatDate(inspection.naechste_pruefung)}</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {isEditing && editingRowData ? (
+                          <select
+                            value={editingRowData.interval || ''}
+                            onChange={(e) => setEditingRowData({ ...editingRowData, interval: e.target.value })}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="Täglich">Täglich</option>
+                            <option value="Wöchentlich">Wöchentlich</option>
+                            <option value="Monatlich">Monatlich</option>
+                            <option value="Vierteljährlich">Vierteljährlich</option>
+                            <option value="Halbjährlich">Halbjährlich</option>
+                            <option value="Jährlich">Jährlich</option>
+                            <option value="2 Jahre">2 Jahre</option>
+                            <option value="3 Jahre">3 Jahre</option>
+                          </select>
+                        ) : (
+                          inspection.interval
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -770,33 +868,47 @@ export default function TechnikPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedInspection(inspection)
-                              setShowDetailsPopup(true)
-                              setEditDetailsMode(false)
-                              setEditDetailsData(inspection)
-                            }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Details
-                          </button>
-                          {isAdminOrTechnik && (
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleSaveInlineEdit(inspection.id)}
+                              disabled={savingRow === inspection.id}
+                              className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed text-xs"
+                            >
+                              {savingRow === inspection.id ? '⏳' : '✓'}
+                            </button>
+                            <button
+                              onClick={handleCancelInlineEdit}
+                              disabled={savingRow === inspection.id}
+                              className="px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
                                 setSelectedInspection(inspection)
                                 setShowDetailsPopup(true)
-                                setEditDetailsMode(true)
+                                setEditDetailsMode(false)
                                 setEditDetailsData(inspection)
                               }}
-                              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-                              title="Bearbeiten"
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
                             >
-                              ✏️
+                              Details
                             </button>
-                          )}
-                        </div>
+                            {isAdminOrTechnik && (
+                              <button
+                                onClick={() => handleStartInlineEdit(inspection)}
+                                className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
+                                title="Direkt bearbeiten"
+                              >
+                                ✏️
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )
