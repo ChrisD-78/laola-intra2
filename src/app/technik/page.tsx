@@ -65,6 +65,11 @@ export default function TechnikPage() {
 
   // Helper: Prüft ob Benutzer Admin oder Technik ist
   const isAdminOrTechnik = isAdmin || userRole === 'Technik'
+  
+  // Debug: Log Rechte-Status
+  useEffect(() => {
+    console.log('Technik Page - Rechte:', { isAdmin, userRole, isAdminOrTechnik, currentUser })
+  }, [isAdmin, userRole, isAdminOrTechnik, currentUser])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -898,15 +903,13 @@ export default function TechnikPage() {
                             >
                               Details
                             </button>
-                            {isAdminOrTechnik && (
-                              <button
-                                onClick={() => handleStartInlineEdit(inspection)}
-                                className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
-                                title="Direkt bearbeiten"
-                              >
-                                ✏️
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleStartInlineEdit(inspection)}
+                              className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
+                              title="Direkt bearbeiten"
+                            >
+                              ✏️
+                            </button>
                           </div>
                         )}
                       </td>
