@@ -24,7 +24,6 @@ const Sidebar = () => {
     { href: '/dokumente', label: 'Dokumente', icon: '📄' },
     { href: '/formulare', label: 'Formulare', icon: '📝' },
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
-    { href: '/technik', label: 'Technik', icon: '🔧' },
     { href: '/chat', label: 'Chat', icon: '💬' },
   ]
 
