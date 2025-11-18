@@ -693,3 +693,69 @@ export async function deleteDocumentById(id: string) {
   if (!response.ok) throw new Error('Failed to delete document')
   return response.json()
 }
+
+// =====================
+// Technik Inspections
+// =====================
+export interface TechnikInspectionRecord {
+  id?: string
+  rubrik: string
+  id_nr: string
+  name: string
+  standort: string
+  bild_url?: string
+  bild_name?: string
+  letzte_pruefung: string
+  interval: string
+  naechste_pruefung: string
+  bericht_url?: string
+  bericht_name?: string
+  bemerkungen?: string
+  in_betrieb: boolean
+  kontaktdaten?: string
+  status: string
+  created_at?: string
+  updated_at?: string
+}
+
+export async function getTechnikInspections(): Promise<TechnikInspectionRecord[]> {
+  const response = await fetch('/api/technik')
+  if (!response.ok) throw new Error('Failed to fetch technik inspections')
+  return response.json()
+}
+
+export async function createTechnikInspection(inspection: Omit<TechnikInspectionRecord, 'id' | 'created_at' | 'updated_at'>) {
+  const response = await fetch('/api/technik', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inspection)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create technik inspection:', error)
+    throw new Error('Failed to create technik inspection')
+  }
+  return response.json()
+}
+
+export async function uploadTechnikPdf(file: File): Promise<{ path: string; publicUrl: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/pdf', {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to upload PDF:', error)
+    throw new Error('Failed to upload PDF')
+  }
+
+  const result = await response.json()
+  return {
+    path: result.path,
+    publicUrl: result.publicUrl
+  }
+}
