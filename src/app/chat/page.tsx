@@ -530,18 +530,17 @@ export default function Chat() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xl">💬</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-                <p className="text-gray-600">Angemeldet als: {authUser}</p>
-              </div>
-            </div>
-            <div className="flex space-x-2">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-4 lg:p-8 text-white text-center mb-6">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2">Chat</h1>
+          <p className="text-sm lg:text-base text-white/90">
+            Kommunizieren Sie mit Ihren Kollegen und Teams
+          </p>
+          <p className="text-xs text-white/80 mt-2">Angemeldet als: {authUser}</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6">
+          <div className="flex justify-center space-x-2">
               <button
                 onClick={() => setShowProfileSettings(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
