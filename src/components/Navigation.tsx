@@ -16,7 +16,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="text-gray-800 text-2xl font-bold">
-              🏊‍♂️ LA OLA Intranet
+              🏊‍♂️ Laola Intranet
             </div>
           </div>
           
