@@ -47,24 +47,14 @@ interface TechnikInspection {
 }
 
 export default function TechnikPage() {
-  const { currentUser, isAdmin, userRole } = useAuth()
+  const { currentUser } = useAuth()
   const [inspections, setInspections] = useState<TechnikInspection[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
   const [showDetailsPopup, setShowDetailsPopup] = useState(false)
-  const [editDetailsMode, setEditDetailsMode] = useState(false)
-  const [editDetailsData, setEditDetailsData] = useState<TechnikInspection | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null)
-  
-  // Inline editing state
-  const [editingRowId, setEditingRowId] = useState<string | null>(null)
-  const [editingRowData, setEditingRowData] = useState<Partial<TechnikInspection> | null>(null)
-  const [savingRow, setSavingRow] = useState<string | null>(null)
-
-  // Helper: Prüft ob Benutzer Admin oder Technik ist
-  const isAdminOrTechnik = isAdmin || userRole === 'Technik'
 
   // Form state
   const [formData, setFormData] = useState({
@@ -428,57 +418,6 @@ export default function TechnikPage() {
     })
   }
 
-  const updateTechnikInspection = async (id: string, data: Partial<TechnikInspection>) => {
-    try {
-      const response = await fetch(`/api/technik`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...data })
-      })
-      if (response.ok) {
-        return response.json()
-      }
-      throw new Error('Update failed')
-    } catch (error) {
-      console.error('Failed to update inspection:', error)
-      throw error
-    }
-  }
-
-  const handleStartInlineEdit = (inspection: TechnikInspection) => {
-    setEditingRowId(inspection.id)
-    setEditingRowData({
-      name: inspection.name,
-      standort: inspection.standort,
-      naechste_pruefung: inspection.naechste_pruefung,
-      interval: inspection.interval,
-      kontaktdaten: inspection.kontaktdaten || '',
-      bemerkungen: inspection.bemerkungen || ''
-    })
-  }
-
-  const handleCancelInlineEdit = () => {
-    setEditingRowId(null)
-    setEditingRowData(null)
-  }
-
-  const handleSaveInlineEdit = async (id: string) => {
-    if (!editingRowData) return
-    
-    setSavingRow(id)
-    try {
-      await updateTechnikInspection(id, editingRowData)
-      await fetchInspections()
-      setEditingRowId(null)
-      setEditingRowData(null)
-    } catch (error) {
-      console.error('Failed to save inline edit:', error)
-      alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.')
-    } finally {
-      setSavingRow(null)
-    }
-  }
-
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
@@ -493,34 +432,32 @@ export default function TechnikPage() {
 
       {/* Recurring Tasks List */}
       <div className="space-y-4">
-        {/* Messgeräte CSV Import - Nur für Admin/Technik */}
-        {isAdminOrTechnik && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Messgeräte importieren (CSV)</h3>
-                <p className="text-gray-600 text-sm">Bitte Numbers/Excel als CSV (UTF‑8) mit Kopfzeile exportieren. Erkannt werden u. a.: Inventarnr, Gerät, Standort, Datum letzter Wartung, Wartungsintervall, Nächste Prüfung, Zuständigkeit.</p>
-              </div>
-              <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
-                {importing ? 'Import läuft…' : 'CSV auswählen'}
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) importMessgeraeteCsv(file)
-                    e.currentTarget.value = ''
-                  }}
-                  disabled={importing}
-                />
-              </label>
+        {/* Messgeräte CSV Import */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Messgeräte importieren (CSV)</h3>
+              <p className="text-gray-600 text-sm">Bitte Numbers/Excel als CSV (UTF‑8) mit Kopfzeile exportieren. Erkannt werden u. a.: Inventarnr, Gerät, Standort, Datum letzter Wartung, Wartungsintervall, Nächste Prüfung, Zuständigkeit.</p>
             </div>
-            {importProgress && (
-              <div className="mt-2 text-sm text-gray-600">{importProgress.done} / {importProgress.total} importiert…</div>
-            )}
+            <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+              {importing ? 'Import läuft…' : 'CSV auswählen'}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) importMessgeraeteCsv(file)
+                  e.currentTarget.value = ''
+                }}
+                disabled={importing}
+              />
+            </label>
           </div>
-        )}
+          {importProgress && (
+            <div className="mt-2 text-sm text-gray-600">{importProgress.done} / {importProgress.total} importiert…</div>
+          )}
+        </div>
         
         {/* Summary Cards - Clickable Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -625,23 +562,21 @@ export default function TechnikPage() {
         </button>
       </div>
 
-      {/* Add Button - Nur für Admin/Technik */}
-      {isAdminOrTechnik && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Neue Prüfung anlegen</h2>
-              <p className="text-gray-600 mt-1">Erstellen Sie eine neue technische Prüfung</p>
-            </div>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              + Neue Prüfung
-            </button>
+      {/* Add Button */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Neue Prüfung anlegen</h2>
+            <p className="text-gray-600 mt-1">Erstellen Sie eine neue technische Prüfung</p>
           </div>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            + Neue Prüfung
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Inspections Table */}
       <div id="inspections-table" className="bg-white rounded-2xl shadow-lg border border-gray-100 scroll-mt-4">
@@ -736,32 +671,26 @@ export default function TechnikPage() {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Standort
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nächste Prüfung
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Intervall
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aktionen
+                  Details
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                     Lade Prüfungen...
                   </td>
                 </tr>
               ) : filteredInspections.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center">
+                  <td colSpan={6} className="px-6 py-8 text-center">
                     <div className="text-4xl mb-4">🔍</div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       {inspections.length === 0 ? 'Keine Prüfungen vorhanden' : 'Keine Prüfungen gefunden'}
@@ -785,10 +714,9 @@ export default function TechnikPage() {
                 filteredInspections.map((inspection) => {
                   const status = calculateStatus(inspection.naechste_pruefung, inspection.status)
                   const overdue = isOverdue(inspection.naechste_pruefung) && status !== 'Erledigt'
-                  const isEditing = editingRowId === inspection.id
                   
                   return (
-                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''} ${isEditing ? 'bg-yellow-50 border-2 border-yellow-300' : ''}`}>
+                    <tr key={inspection.id} className={`hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           {inspection.rubrik}
@@ -798,65 +726,13 @@ export default function TechnikPage() {
                         {inspection.id_nr}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {isEditing && editingRowData ? (
-                          <input
-                            type="text"
-                            value={editingRowData.name || ''}
-                            onChange={(e) => setEditingRowData({ ...editingRowData, name: e.target.value })}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                            placeholder="Name"
-                          />
-                        ) : (
-                          inspection.name
-                        )}
+                        {inspection.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {isEditing && editingRowData ? (
-                          <input
-                            type="text"
-                            value={editingRowData.standort || ''}
-                            onChange={(e) => setEditingRowData({ ...editingRowData, standort: e.target.value })}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                            placeholder="Standort"
-                          />
-                        ) : (
-                          inspection.standort
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {isEditing && editingRowData ? (
-                          <input
-                            type="date"
-                            value={(editingRowData.naechste_pruefung || '').slice(0, 10)}
-                            onChange={(e) => setEditingRowData({ ...editingRowData, naechste_pruefung: e.target.value })}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                          />
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            {overdue && <span className="text-red-500">🚨</span>}
-                            <span>{formatDate(inspection.naechste_pruefung)}</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {isEditing && editingRowData ? (
-                          <select
-                            value={editingRowData.interval || ''}
-                            onChange={(e) => setEditingRowData({ ...editingRowData, interval: e.target.value })}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="Täglich">Täglich</option>
-                            <option value="Wöchentlich">Wöchentlich</option>
-                            <option value="Monatlich">Monatlich</option>
-                            <option value="Vierteljährlich">Vierteljährlich</option>
-                            <option value="Halbjährlich">Halbjährlich</option>
-                            <option value="Jährlich">Jährlich</option>
-                            <option value="2 Jahre">2 Jahre</option>
-                            <option value="3 Jahre">3 Jahre</option>
-                          </select>
-                        ) : (
-                          inspection.interval
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {overdue && <span className="text-red-500">🚨</span>}
+                          <span>{formatDate(inspection.naechste_pruefung)}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -868,47 +744,15 @@ export default function TechnikPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleSaveInlineEdit(inspection.id)}
-                              disabled={savingRow === inspection.id}
-                              className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed text-xs"
-                            >
-                              {savingRow === inspection.id ? '⏳' : '✓'}
-                            </button>
-                            <button
-                              onClick={handleCancelInlineEdit}
-                              disabled={savingRow === inspection.id}
-                              className="px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedInspection(inspection)
-                                setShowDetailsPopup(true)
-                                setEditDetailsMode(false)
-                                setEditDetailsData(inspection)
-                              }}
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
-                            >
-                              Details
-                            </button>
-                            {isAdminOrTechnik && (
-                              <button
-                                onClick={() => handleStartInlineEdit(inspection)}
-                                className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs"
-                                title="Direkt bearbeiten"
-                              >
-                                ✏️
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedInspection(inspection)
+                            setShowDetailsPopup(true)
+                          }}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Details
+                        </button>
                       </td>
                     </tr>
                   )
@@ -1146,140 +990,16 @@ export default function TechnikPage() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-gray-900">Prüfungsdetails</h3>
-                <div className="flex items-center gap-2">
-                  {isAdminOrTechnik && (
-                    <button
-                      onClick={() => {
-                        setEditDetailsMode(prev => !prev)
-                        setEditDetailsData(selectedInspection)
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${editDetailsMode ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-gray-50 border-gray-300 text-gray-700'} `}
-                      title="Bearbeiten"
-                    >
-                      {editDetailsMode ? 'Bearbeiten beenden' : 'Bearbeiten'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowDetailsPopup(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <span className="text-2xl">×</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowDetailsPopup(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
               </div>
             </div>
             
             <div className="p-6 space-y-6">
-              {/* Edit form inside details */}
-              {editDetailsMode && editDetailsData ? (
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault()
-                    try {
-                      await updateTechnikInspection(editDetailsData.id, {
-                        standort: editDetailsData.standort,
-                        letzte_pruefung: editDetailsData.letzte_pruefung,
-                        interval: editDetailsData.interval,
-                        naechste_pruefung: editDetailsData.naechste_pruefung,
-                        bemerkungen: editDetailsData.bemerkungen || '',
-                        in_betrieb: editDetailsData.in_betrieb,
-                        kontaktdaten: editDetailsData.kontaktdaten || ''
-                      })
-                      await fetchInspections()
-                      setSelectedInspection(editDetailsData)
-                      setEditDetailsMode(false)
-                      alert('Änderungen gespeichert.')
-                    } catch (error) {
-                      console.error('Update inspection failed', error)
-                      alert('Speichern fehlgeschlagen.')
-                    }
-                  }}
-                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Standort</label>
-                      <input
-                        type="text"
-                        value={editDetailsData.standort}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, standort: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Intervall</label>
-                      <input
-                        type="text"
-                        value={editDetailsData.interval}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, interval: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="z. B. Jährlich"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Letzte Prüfung</label>
-                      <input
-                        type="date"
-                        value={(editDetailsData.letzte_pruefung || '').slice(0,10)}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, letzte_pruefung: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nächste Prüfung</label>
-                      <input
-                        type="date"
-                        value={(editDetailsData.naechste_pruefung || '').slice(0,10)}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, naechste_pruefung: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Kontaktdaten</label>
-                      <input
-                        type="text"
-                        value={editDetailsData.kontaktdaten || ''}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, kontaktdaten: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Bemerkungen</label>
-                      <textarea
-                        rows={3}
-                        value={editDetailsData.bemerkungen || ''}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, bemerkungen: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 md:col-span-2">
-                      <input
-                        id="edit_in_betrieb"
-                        type="checkbox"
-                        checked={editDetailsData.in_betrieb}
-                        onChange={(e) => setEditDetailsData({ ...editDetailsData, in_betrieb: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="edit_in_betrieb" className="text-sm text-gray-700">In Betrieb</label>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setEditDetailsMode(false)}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Abbrechen
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Speichern
-                    </button>
-                  </div>
-                </form>
-              ) : null}
               {/* Bild PDF - Zentral oben mittig */}
               {selectedInspection.bild_url && (
                 <div className="flex flex-col items-center">
@@ -1402,16 +1122,14 @@ export default function TechnikPage() {
                 </div>
               )}
               
-              {/* Action Buttons - Löschen nur für Admin/Technik */}
+              {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                {isAdminOrTechnik && (
-                  <button
-                    onClick={() => handleDelete(selectedInspection.id)}
-                    className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    Löschen
-                  </button>
-                )}
+                <button
+                  onClick={() => handleDelete(selectedInspection.id)}
+                  className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  Löschen
+                </button>
                 {selectedInspection.status !== 'Erledigt' && (
                   <button
                     onClick={() => handleMarkAsCompleted(selectedInspection.id)}
