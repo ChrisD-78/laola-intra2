@@ -347,7 +347,7 @@ export default function Technik() {
                   type="file"
                   accept=".pdf"
                   onChange={(e) => setFormData({ ...formData, bildFile: e.target.files?.[0] || null })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
                 {formData.bildFile && (
                   <p className="mt-1 text-sm text-gray-600">Ausgewählt: {formData.bildFile.name}</p>
@@ -364,7 +364,7 @@ export default function Technik() {
                   required
                   value={formData.rubrik}
                   onChange={(e) => setFormData({ ...formData, rubrik: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="z.B. Messgeräte, Wartungen, Prüfungen"
                 />
               </div>
@@ -379,7 +379,7 @@ export default function Technik() {
                   required
                   value={formData.id_nr}
                   onChange={(e) => setFormData({ ...formData, id_nr: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="z.B. M-001"
                 />
               </div>
@@ -394,7 +394,7 @@ export default function Technik() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="Name/Bezeichnung des Geräts"
                 />
               </div>
@@ -409,7 +409,7 @@ export default function Technik() {
                   required
                   value={formData.standort}
                   onChange={(e) => setFormData({ ...formData, standort: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="Standort des Geräts"
                 />
               </div>
@@ -424,7 +424,7 @@ export default function Technik() {
                   required
                   value={formData.letzte_pruefung}
                   onChange={(e) => setFormData({ ...formData, letzte_pruefung: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="z.B. 01.01.2024"
                 />
               </div>
@@ -438,7 +438,7 @@ export default function Technik() {
                   required
                   value={formData.interval}
                   onChange={(e) => setFormData({ ...formData, interval: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 >
                   <option value="">Bitte wählen</option>
                   <option value="Täglich">Täglich</option>
@@ -460,7 +460,7 @@ export default function Technik() {
                   required
                   value={formData.naechste_pruefung}
                   onChange={(e) => setFormData({ ...formData, naechste_pruefung: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="z.B. 01.01.2025"
                 />
               </div>
@@ -474,7 +474,7 @@ export default function Technik() {
                   required
                   value={formData.in_betrieb ? 'In Betrieb' : 'Außer Betrieb'}
                   onChange={(e) => setFormData({ ...formData, in_betrieb: e.target.value === 'In Betrieb' })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 >
                   <option value="In Betrieb">In Betrieb</option>
                   <option value="Außer Betrieb">Außer Betrieb</option>
@@ -489,7 +489,7 @@ export default function Technik() {
                 <textarea
                   value={formData.kontaktdaten}
                   onChange={(e) => setFormData({ ...formData, kontaktdaten: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   rows={3}
                   placeholder="Kontaktinformationen"
                 />
@@ -504,7 +504,7 @@ export default function Technik() {
                   type="file"
                   accept=".pdf"
                   onChange={(e) => setFormData({ ...formData, berichtFile: e.target.files?.[0] || null })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
                 {formData.berichtFile && (
                   <p className="mt-1 text-sm text-gray-600">Ausgewählt: {formData.berichtFile.name}</p>
@@ -519,7 +519,7 @@ export default function Technik() {
                 <textarea
                   value={formData.bemerkungen}
                   onChange={(e) => setFormData({ ...formData, bemerkungen: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   rows={3}
                   placeholder="Zusätzliche Bemerkungen"
                 />
