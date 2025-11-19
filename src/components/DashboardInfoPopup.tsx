@@ -86,13 +86,13 @@ export default function DashboardInfoPopup({ info, onClose }: DashboardInfoPopup
       {/* Popup */}
       <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none`}>
         <div 
-          className={`bg-white rounded-2xl shadow-2xl max-w-2xl w-full pointer-events-auto transform transition-all duration-300 ${
+          className={`bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col pointer-events-auto transform transition-all duration-300 ${
             isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header mit Gradient */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl p-6 relative overflow-hidden">
+          {/* Header mit Gradient - Sticky oben */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl p-6 relative overflow-hidden flex-shrink-0">
             {/* Decorative Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
@@ -125,8 +125,8 @@ export default function DashboardInfoPopup({ info, onClose }: DashboardInfoPopup
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6">
+          {/* Content - Scrollbar */}
+          <div className="flex-1 overflow-y-auto p-6">
             <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
               <p className="text-gray-900 text-base leading-relaxed whitespace-pre-wrap">
                 {info.content}
@@ -166,8 +166,10 @@ export default function DashboardInfoPopup({ info, onClose }: DashboardInfoPopup
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Action Buttons */}
+          {/* Action Buttons - Sticky unten */}
+          <div className="flex-shrink-0 p-6 pt-0 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleClose}
