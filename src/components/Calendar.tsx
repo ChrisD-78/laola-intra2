@@ -218,7 +218,7 @@ export default function Calendar() {
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           aria-label="Vorheriger Monat"
         >
-          <span className="text-xl">←</span>
+          <span className="text-xl text-gray-900">←</span>
         </button>
         
         <div className="text-center">
@@ -230,7 +230,7 @@ export default function Calendar() {
         <div className="flex items-center space-x-2">
           <button
             onClick={goToToday}
-            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+            className="px-3 py-1 text-sm bg-blue-100 text-gray-900 rounded-lg hover:bg-blue-200 transition-colors font-medium"
           >
             Heute
           </button>
@@ -239,7 +239,7 @@ export default function Calendar() {
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Nächster Monat"
           >
-            <span className="text-xl">→</span>
+            <span className="text-xl text-gray-900">→</span>
           </button>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function Calendar() {
         {weekDays.map(day => (
           <div
             key={day}
-            className="text-center text-sm font-semibold text-gray-600 py-2"
+            className="text-center text-sm font-semibold text-gray-900 py-2"
           >
             {day}
           </div>
@@ -301,19 +301,19 @@ export default function Calendar() {
         <div className="flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-blue-600 ring-2 ring-blue-300"></div>
-            <span className="text-gray-600">Heute</span>
+            <span className="text-gray-900">Heute</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-red-100"></div>
-            <span className="text-gray-600">Feiertag</span>
+            <span className="text-gray-900">Feiertag</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-orange-100"></div>
-            <span className="text-gray-600">Ferien</span>
+            <span className="text-gray-900">Ferien</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-gray-50"></div>
-            <span className="text-gray-600">Wochenende</span>
+            <span className="text-gray-900">Wochenende</span>
           </div>
         </div>
       </div>
@@ -326,9 +326,7 @@ export default function Calendar() {
             <div className={`mt-4 p-3 rounded-lg ${
               holiday.type === 'feiertag' ? 'bg-red-50 border border-red-200' : 'bg-orange-50 border border-orange-200'
             }`}>
-              <p className={`text-sm font-semibold ${
-                holiday.type === 'feiertag' ? 'text-red-800' : 'text-orange-800'
-              }`}>
+              <p className="text-sm font-semibold text-gray-900">
                 {holiday.name}
               </p>
             </div>

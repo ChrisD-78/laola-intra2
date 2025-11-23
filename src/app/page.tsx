@@ -254,8 +254,8 @@ export default function Dashboard() {
               <span className="text-2xl">📅</span>
             </div>
             <div className="ml-4">
-              <p className="text-lg font-semibold text-gray-900">Schichtplaner</p>
-              <p className="text-sm text-gray-600">Dienstpläne ansehen und verwalten</p>
+              <p className="text-base font-semibold text-gray-900">Schichtplaner</p>
+              <p className="text-xs text-gray-600">Dienstpläne ansehen und verwalten</p>
             </div>
           </div>
         </Link>
@@ -271,8 +271,8 @@ export default function Dashboard() {
               <span className="text-2xl">🏊‍♂️</span>
             </div>
             <div className="ml-4">
-              <p className="text-lg font-semibold text-gray-900">Kursmanager</p>
-              <p className="text-sm text-gray-600">Kurse planen und Teilnehmer verwalten</p>
+              <p className="text-base font-semibold text-gray-900">Kursmanager</p>
+              <p className="text-xs text-gray-600">Kurse planen und Teilnehmer verwalten</p>
             </div>
           </div>
         </a>
@@ -288,8 +288,8 @@ export default function Dashboard() {
               <span className="text-2xl">🎉</span>
             </div>
             <div className="ml-4">
-              <p className="text-lg font-semibold text-gray-900">Events</p>
-              <p className="text-sm text-gray-600">Veranstaltungen und Events ansehen</p>
+              <p className="text-base font-semibold text-gray-900">Events</p>
+              <p className="text-xs text-gray-600">Veranstaltungen und Events ansehen</p>
             </div>
           </div>
         </a>
@@ -304,8 +304,8 @@ export default function Dashboard() {
               <span className="text-2xl">📆</span>
             </div>
             <div className="ml-4">
-              <p className="text-lg font-semibold text-gray-900">Kalender</p>
-              <p className="text-sm text-gray-600">Feiertage & Ferien</p>
+              <p className="text-base font-semibold text-gray-900">Kalender</p>
+              <p className="text-xs text-gray-600">Feiertage & Ferien</p>
             </div>
           </div>
         </button>
