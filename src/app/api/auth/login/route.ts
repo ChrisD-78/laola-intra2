@@ -13,9 +13,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Neon Datenbank-Verbindung
-    const sql = neon(process.env.DATABASE_URL!)
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL ist nicht gesetzt!')
+      return NextResponse.json(
+        { success: false, error: 'Datenbankverbindung nicht konfiguriert' },
+        { status: 500 }
+      )
+    }
+    
+    const sql = neon(process.env.DATABASE_URL)
 
     // Benutzer aus Datenbank abrufen
+    console.log('Login attempt for username:', username)
+    
+    // Case-insensitive Suche für Benutzername
     const result = await sql`
       SELECT 
         id,
@@ -26,13 +37,20 @@ export async function POST(request: NextRequest) {
         role,
         is_active
       FROM users
-      WHERE username = ${username}
+      WHERE LOWER(username) = LOWER(${username})
       LIMIT 1
     `
 
+    console.log('Database query result:', {
+      found: result.length > 0,
+      username: result.length > 0 ? result[0].username : null,
+      isActive: result.length > 0 ? result[0].is_active : null
+    })
+
     if (result.length === 0) {
+      console.log('User not found in database')
       return NextResponse.json(
-        { success: false, error: 'Ungültige Anmeldedaten' },
+        { success: false, error: 'Benutzer nicht gefunden. Bitte überprüfen Sie den Benutzernamen.' },
         { status: 401 }
       )
     }
@@ -41,6 +59,7 @@ export async function POST(request: NextRequest) {
 
     // Prüfe ob Benutzer aktiv ist
     if (!user.is_active) {
+      console.log('User account is deactivated:', user.username)
       return NextResponse.json(
         { success: false, error: 'Benutzerkonto ist deaktiviert' },
         { status: 403 }
@@ -48,9 +67,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Passwort prüfen (direkt vergleichen - in Produktion sollte dies gehasht sein)
-    if (user.password !== password) {
+    const passwordMatch = user.password === password
+    console.log('Password check:', {
+      providedLength: password.length,
+      storedLength: user.password?.length || 0,
+      match: passwordMatch
+    })
+    
+    if (!passwordMatch) {
+      console.log('Password mismatch for user:', user.username)
       return NextResponse.json(
-        { success: false, error: 'Ungültige Anmeldedaten' },
+        { success: false, error: 'Falsches Passwort. Bitte versuchen Sie es erneut.' },
         { status: 401 }
       )
     }
@@ -76,8 +103,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Login error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
     return NextResponse.json(
-      { success: false, error: 'Serverfehler beim Login' },
+      { success: false, error: `Serverfehler beim Login: ${errorMessage}` },
       { status: 500 }
     )
   }

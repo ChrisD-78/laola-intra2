@@ -17,9 +17,9 @@ const LoginForm = () => {
 
     try {
       // Verwende die login-Funktion aus dem AuthProvider (jetzt async)
-      const success = await login(username, password)
+      const result = await login(username, password)
       
-      if (success) {
+      if (result.success) {
         // Login erfolgreich - Formular zurücksetzen
         setUsername('')
         setPassword('')
@@ -27,13 +27,15 @@ const LoginForm = () => {
         console.log('Login erfolgreich!')
         // AuthProvider kümmert sich um die Weiterleitung
       } else {
-        setError('Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.')
+        // Zeige die spezifische Fehlermeldung von der API
+        setError(result.error || 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.')
         setPassword('') // Passwort zurücksetzen bei Fehler
-        console.log('Login fehlgeschlagen!')
+        console.log('Login fehlgeschlagen!', result.error)
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler'
+      setError(`Ein Fehler ist aufgetreten: ${errorMessage}`)
       setPassword('')
     } finally {
       setIsLoading(false)

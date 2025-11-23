@@ -8,7 +8,7 @@ interface AuthContextType {
   currentUser: string | null
   isAdmin: boolean
   userRole: string | null
-  login: (username: string, password: string) => Promise<boolean>
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
 
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [])
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     console.log('AuthProvider: Login attempt:', { username })
     
     try {
@@ -65,6 +65,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       })
 
       const data = await response.json()
+      
+      console.log('AuthProvider: API Response:', { 
+        success: data.success, 
+        error: data.error,
+        hasUser: !!data.user 
+      })
 
       if (data.success && data.user) {
         console.log('AuthProvider: Login successful!', data.user.displayName, 'Role:', data.user.role)
@@ -86,14 +92,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           router.push('/')
         }, 100)
         
-        return true
+        return { success: true }
       } else {
         console.log('AuthProvider: Login failed -', data.error)
-        return false
+        console.log('AuthProvider: Full response:', data)
+        return { success: false, error: data.error || 'Ungültige Anmeldedaten' }
       }
     } catch (error) {
       console.error('AuthProvider: Login error:', error)
-      return false
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
+      if (error instanceof Error) {
+        console.error('AuthProvider: Error details:', error.message, error.stack)
+      }
+      return { success: false, error: `Verbindungsfehler: ${errorMessage}` }
     }
   }
 
