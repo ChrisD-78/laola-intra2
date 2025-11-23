@@ -921,7 +921,7 @@ export default function Chat() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Nachricht eingeben..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       />
                       <label className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer flex items-center space-x-2">
                         <span>📷</span>
@@ -1024,7 +1024,7 @@ export default function Chat() {
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
                       placeholder="Ihr Name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       required
                     />
                   </div>
@@ -1076,7 +1076,7 @@ export default function Chat() {
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
                       placeholder="z.B. Projekt Team"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       required
                     />
                   </div>
@@ -1090,7 +1090,7 @@ export default function Chat() {
                       value={newGroupDescription}
                       onChange={(e) => setNewGroupDescription(e.target.value)}
                       placeholder="Kurze Beschreibung der Gruppe"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />
                   </div>
 
