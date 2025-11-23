@@ -9,7 +9,7 @@ import { useState } from 'react'
 const Sidebar = () => {
   const pathname = usePathname()
   const { currentUser, logout, isAdmin } = useAuth()
-  const { unreadCount } = useChatNotifications()
+  const { unreadCount, latestMessage } = useChatNotifications()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleAIAgentClick = () => {
@@ -104,9 +104,18 @@ const Sidebar = () => {
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
-                  <span className="font-medium flex-1">{item.label}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium block">{item.label}</span>
+                    {isChatLink && latestMessage && (
+                      <span className="text-xs text-blue-200/80 truncate block mt-0.5">
+                        {latestMessage.sender}: {latestMessage.content.length > 30 
+                          ? latestMessage.content.substring(0, 30) + '...' 
+                          : latestMessage.content}
+                      </span>
+                    )}
+                  </div>
                   {showBadge && (
-                    <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300">
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300 flex-shrink-0">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}

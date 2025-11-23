@@ -332,10 +332,38 @@ export default function Chat() {
     setImagePreview(null)
   }
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if ((!newMessage.trim() && !selectedImage) || (!selectedRecipient && !selectedGroup)) return
     if (!authUser) return
+
+    let imageUrl: string | null = null
+    let imageName: string | null = null
+
+    // Upload image if selected
+    if (selectedImage) {
+      try {
+        const formData = new FormData()
+        formData.append('file', selectedImage)
+        
+        const uploadResponse = await fetch('/api/upload/chat-image', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image')
+        }
+
+        const uploadData = await uploadResponse.json()
+        imageUrl = uploadData.publicUrl
+        imageName = uploadData.name
+      } catch (err) {
+        console.error('Image upload failed:', err)
+        alert('Fehler beim Hochladen des Bildes. Bitte versuchen Sie es erneut.')
+        return
+      }
+    }
 
     const message: Message = {
       id: Date.now().toString(),
@@ -345,8 +373,8 @@ export default function Chat() {
       content: newMessage.trim(),
       timestamp: new Date().toISOString(),
       isRead: false,
-      imageUrl: selectedImage ? URL.createObjectURL(selectedImage) : undefined,
-      imageName: selectedImage?.name
+      imageUrl: imageUrl || undefined,
+      imageName: imageName || undefined
     }
 
     setMessages(prev => [message, ...prev])
@@ -354,18 +382,23 @@ export default function Chat() {
     setSelectedImage(null)
     setImagePreview(null)
 
-    // Persist in Supabase
-    sendChatMessage({
-      sender_id: authUser,
-      recipient_id: selectedRecipient || null,
-      group_id: selectedGroup || null,
-      content: message.content,
-      is_read: false,
-      image_url: null,
-      image_name: message.imageName || null,
-    }).catch(err => {
+    // Persist in database
+    try {
+      await sendChatMessage({
+        sender_id: authUser,
+        recipient_id: selectedRecipient || null,
+        group_id: selectedGroup || null,
+        content: message.content,
+        is_read: false,
+        image_url: imageUrl,
+        image_name: imageName,
+      })
+      // Aktualisiere unread count nach dem Senden
+      refreshUnreadCount()
+    } catch (err) {
       console.error('Send message failed', err)
-    })
+      alert('Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.')
+    }
   }
 
   const getMessagesForUser = (userId: string) => {
@@ -814,9 +847,13 @@ export default function Chat() {
                               <img
                                 src={message.imageUrl}
                                 alt={message.imageName || 'Bild'}
-                                className="max-w-full h-auto rounded-lg cursor-pointer"
+                                className="max-w-full h-auto rounded-lg cursor-pointer border border-gray-200"
                                 onClick={() => window.open(message.imageUrl, '_blank')}
                                 title="Klicken zum Vergrößern"
+                                onError={(e) => {
+                                  console.error('Failed to load image:', message.imageUrl)
+                                  e.currentTarget.style.display = 'none'
+                                }}
                               />
                               {message.imageName && (
                                 <p className={`text-xs mt-1 ${

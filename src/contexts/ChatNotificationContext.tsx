@@ -16,8 +16,16 @@ interface Message {
   imageName?: string
 }
 
+interface LatestMessage {
+  sender: string
+  content: string
+  timestamp: string
+  isImage: boolean
+}
+
 interface ChatNotificationContextType {
   unreadCount: number
+  latestMessage: LatestMessage | null
   refreshUnreadCount: () => void
 }
 
@@ -26,6 +34,7 @@ const ChatNotificationContext = createContext<ChatNotificationContextType | unde
 export function ChatNotificationProvider({ children }: { children: ReactNode }) {
   const { currentUser: authUser } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [latestMessage, setLatestMessage] = useState<LatestMessage | null>(null)
 
   const refreshUnreadCount = async () => {
     if (!authUser) {
@@ -98,17 +107,39 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
       const unreadDirectMessages = allMessages.filter(msg => 
         msg.recipient === authUser && 
         !msg.isRead
-      ).length
+      )
 
       const unreadGroupMessages = allMessages.filter(msg => 
         msg.groupId && 
         msg.sender !== authUser && 
         !msg.isRead
-      ).length
+      )
 
-      const totalUnread = unreadDirectMessages + unreadGroupMessages
+      const totalUnread = unreadDirectMessages.length + unreadGroupMessages.length
       
-      console.log(`📬 Unread: ${totalUnread} (Direct: ${unreadDirectMessages}, Groups: ${unreadGroupMessages})`)
+      // 4. Find latest unread message
+      const allUnreadMessages = [...unreadDirectMessages, ...unreadGroupMessages]
+      if (allUnreadMessages.length > 0) {
+        // Sort by timestamp (newest first)
+        const sortedUnread = allUnreadMessages.sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        )
+        const latest = sortedUnread[0]
+        
+        // Get sender name
+        const senderName = latest.sender
+        
+        setLatestMessage({
+          sender: senderName,
+          content: latest.imageUrl ? '📷 Bild' : (latest.content || 'Nachricht'),
+          timestamp: latest.timestamp,
+          isImage: !!latest.imageUrl
+        })
+      } else {
+        setLatestMessage(null)
+      }
+      
+      console.log(`📬 Unread: ${totalUnread} (Direct: ${unreadDirectMessages.length}, Groups: ${unreadGroupMessages.length})`)
       setUnreadCount(totalUnread)
     } catch (e) {
       console.error('Failed to refresh unread count:', e)
@@ -125,14 +156,14 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
     // Initial load
     refreshUnreadCount()
 
-    // Poll every 3 seconds (schnellere Updates für bessere UX)
-    const interval = setInterval(refreshUnreadCount, 3000)
+    // Poll every 2 seconds (schnellere Updates für bessere UX)
+    const interval = setInterval(refreshUnreadCount, 2000)
 
     return () => clearInterval(interval)
   }, [authUser])
 
   return (
-    <ChatNotificationContext.Provider value={{ unreadCount, refreshUnreadCount }}>
+    <ChatNotificationContext.Provider value={{ unreadCount, latestMessage, refreshUnreadCount }}>
       {children}
     </ChatNotificationContext.Provider>
   )
