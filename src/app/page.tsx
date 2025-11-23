@@ -8,6 +8,7 @@ import InfoForm from "@/components/InfoForm"
 import { useTasks } from "@/contexts/TaskContext"
 import DashboardInfoPopup from "@/components/DashboardInfoPopup"
 import { useAuth } from "@/components/AuthProvider"
+import Calendar from "@/components/Calendar"
 
 interface InfoItem {
   id: string
@@ -240,7 +241,7 @@ export default function Dashboard() {
       </div>
 
       {/* Aktionen unterhalb des Headers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <Link
           href="https://stadtholding-landau-pep.dejoris.de/de/login//#%257B%2522main%2522%253A%2522de%252Fadmin%252Femployees%2522%252C%2522column%2522%253A%2522de%252Fadmin%252Findex%252Fhome_column%2522%252C%2522icon%2522%253A%2522fas%2520fa-users%2522%257D"
           target="_blank"
@@ -291,6 +292,20 @@ export default function Dashboard() {
             </div>
           </div>
         </a>
+
+        {/* Kalender Kachel */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100">
+          <div className="flex items-center mb-4">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg">
+              <span className="text-2xl">📆</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-lg font-semibold text-gray-900">Kalender</p>
+              <p className="text-sm text-gray-600">Feiertage & Ferien</p>
+            </div>
+          </div>
+          <Calendar />
+        </div>
       </div>
 
       {/* Quick Stats */}
