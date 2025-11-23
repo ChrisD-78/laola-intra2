@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [popupInfo, setPopupInfo] = useState<InfoItem | null>(null)
   const [editingInfo, setEditingInfo] = useState<InfoItem | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
 
   const formatDate = (dateString: string): string => {
     // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
@@ -294,8 +295,11 @@ export default function Dashboard() {
         </a>
 
         {/* Kalender Kachel */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100">
-          <div className="flex items-center mb-4">
+        <button
+          onClick={() => setShowCalendarModal(true)}
+          className="block w-full bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg">
               <span className="text-2xl">📆</span>
             </div>
@@ -304,8 +308,7 @@ export default function Dashboard() {
               <p className="text-sm text-gray-600">Feiertage & Ferien</p>
             </div>
           </div>
-          <Calendar />
-        </div>
+        </button>
       </div>
 
       {/* Quick Stats */}
@@ -521,6 +524,37 @@ export default function Dashboard() {
                 setEditingInfo(null)
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Kalender Modal */}
+      {showCalendarModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCalendarModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Kalender</h3>
+                  <p className="text-sm text-white/80 mt-1">Feiertage & Ferien für Rheinland-Pfalz</p>
+                </div>
+                <button
+                  onClick={() => setShowCalendarModal(false)}
+                  className="text-white hover:text-gray-200 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <Calendar />
+            </div>
           </div>
         </div>
       )}
