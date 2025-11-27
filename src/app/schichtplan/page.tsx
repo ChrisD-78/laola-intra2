@@ -18,7 +18,7 @@ const getMondayOfWeek = (date: Date): Date => {
 }
 
 export default function SchichtplanPage() {
-  const { currentUser, isAdmin } = useAuth()
+  const { currentUser, isAdmin, userRole } = useAuth()
   const [viewMode, setViewMode] = useState<ViewMode>(isAdmin ? 'admin' : 'employee')
   const [schedule, setSchedule] = useState<DaySchedule[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -29,11 +29,45 @@ export default function SchichtplanPage() {
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [showSyncButton, setShowSyncButton] = useState(false)
 
   // Load data from API
   useEffect(() => {
-    loadData()
-  }, [])
+    if (currentUser) {
+      loadData()
+      checkSyncStatus()
+    }
+  }, [currentUser])
+
+  const checkSyncStatus = async () => {
+    try {
+      const res = await fetch('/api/schichtplan/sync-users')
+      const data = await res.json()
+      setShowSyncButton(data.needsSync && isAdmin)
+    } catch (error) {
+      console.error('Failed to check sync status:', error)
+    }
+  }
+
+  const syncUsers = async () => {
+    try {
+      const res = await fetch('/api/schichtplan/sync-users', {
+        method: 'POST'
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        alert(`✅ ${data.synced} Benutzer erfolgreich synchronisiert!`)
+        await loadData()
+        await checkSyncStatus()
+      } else {
+        alert('Fehler beim Synchronisieren: ' + (data.error || 'Unbekannter Fehler'))
+      }
+    } catch (error) {
+      console.error('Failed to sync users:', error)
+      alert('Fehler beim Synchronisieren der Benutzer')
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -44,7 +78,17 @@ export default function SchichtplanPage() {
       const employeesData = await employeesRes.json()
       setEmployees(employeesData)
       
-      if (employeesData.length > 0 && !currentEmployeeId) {
+      // Finde aktuellen Benutzer in der Liste
+      if (currentUser && employeesData.length > 0) {
+        const currentUserEmployee = employeesData.find((emp: any) => 
+          emp.userDisplayName === currentUser || emp.username === currentUser
+        )
+        if (currentUserEmployee) {
+          setCurrentEmployeeId(currentUserEmployee.id)
+        } else if (!currentEmployeeId && employeesData.length > 0) {
+          setCurrentEmployeeId(employeesData[0].id)
+        }
+      } else if (employeesData.length > 0 && !currentEmployeeId) {
         setCurrentEmployeeId(employeesData[0].id)
       }
 
@@ -248,6 +292,16 @@ export default function SchichtplanPage() {
           >
             👤 Mitarbeiter
           </button>
+          {isAdmin && showSyncButton && (
+            <button
+              className="nav-btn"
+              onClick={syncUsers}
+              style={{ background: '#10b981', color: 'white' }}
+              title="Benutzer aus Benutzerverwaltung synchronisieren"
+            >
+              🔄 Benutzer synchronisieren
+            </button>
+          )}
         </div>
         
         {viewMode === 'employee' && (
@@ -257,11 +311,15 @@ export default function SchichtplanPage() {
               onChange={(e) => setCurrentEmployeeId(e.target.value)}
               className="employee-dropdown"
             >
-              {employees.map(emp => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.firstName} {emp.lastName}
-                </option>
-              ))}
+              {employees.map(emp => {
+                // Zeige aktuellen Benutzer bevorzugt
+                const isCurrentUser = (emp as any).userDisplayName === currentUser
+                return (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName} {isCurrentUser ? '(Sie)' : ''}
+                  </option>
+                )
+              })}
             </select>
           </div>
         )}

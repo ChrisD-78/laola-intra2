@@ -8,17 +8,23 @@ export async function GET() {
   try {
     const employees = await sql`
       SELECT 
-        id,
-        first_name as "firstName",
-        last_name as "lastName",
-        areas,
-        phone,
-        email,
-        weekly_hours as "weeklyHours",
-        color,
-        birth_date as "birthDate"
-      FROM schichtplan_employees
-      ORDER BY last_name, first_name
+        se.id,
+        se.user_id as "userId",
+        se.first_name as "firstName",
+        se.last_name as "lastName",
+        se.areas,
+        se.phone,
+        se.email,
+        se.weekly_hours as "weeklyHours",
+        se.color,
+        se.birth_date as "birthDate",
+        se.role,
+        u.display_name as "userDisplayName",
+        u.username,
+        u.is_admin as "userIsAdmin"
+      FROM schichtplan_employees se
+      LEFT JOIN users u ON se.user_id = u.id
+      ORDER BY se.last_name, se.first_name
     `
     return NextResponse.json(employees)
   } catch (error) {
@@ -34,17 +40,18 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate } = body
+    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate, userId, role } = body
 
     const result = await sql`
       INSERT INTO schichtplan_employees (
-        id, first_name, last_name, areas, phone, email, weekly_hours, color, birth_date
+        id, user_id, first_name, last_name, areas, phone, email, weekly_hours, color, birth_date, role
       ) VALUES (
-        ${id}, ${firstName}, ${lastName}, ${areas}, ${phone || null}, ${email || null}, 
-        ${weeklyHours || null}, ${color || null}, ${birthDate || null}
+        ${id}, ${userId || null}, ${firstName}, ${lastName}, ${areas}, ${phone || null}, ${email || null}, 
+        ${weeklyHours || null}, ${color || null}, ${birthDate || null}, ${role || null}
       )
       RETURNING 
         id,
+        user_id as "userId",
         first_name as "firstName",
         last_name as "lastName",
         areas,
@@ -52,7 +59,8 @@ export async function POST(request: NextRequest) {
         email,
         weekly_hours as "weeklyHours",
         color,
-        birth_date as "birthDate"
+        birth_date as "birthDate",
+        role
     `
 
     return NextResponse.json(result[0], { status: 201 })
@@ -69,7 +77,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate } = body
+    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate, userId, role } = body
 
     const result = await sql`
       UPDATE schichtplan_employees
@@ -81,10 +89,13 @@ export async function PUT(request: NextRequest) {
         email = ${email || null},
         weekly_hours = ${weeklyHours || null},
         color = ${color || null},
-        birth_date = ${birthDate || null}
+        birth_date = ${birthDate || null},
+        user_id = ${userId !== undefined ? userId : null},
+        role = ${role !== undefined ? role : null}
       WHERE id = ${id}
       RETURNING 
         id,
+        user_id as "userId",
         first_name as "firstName",
         last_name as "lastName",
         areas,
@@ -92,7 +103,8 @@ export async function PUT(request: NextRequest) {
         email,
         weekly_hours as "weeklyHours",
         color,
-        birth_date as "birthDate"
+        birth_date as "birthDate",
+        role
     `
 
     if (result.length === 0) {

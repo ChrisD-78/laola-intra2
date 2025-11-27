@@ -4,6 +4,7 @@ export type EmployeeColor = 'Rot' | 'Braun' | 'Schwarz' | 'Grün' | 'Violett';
 
 export interface Employee {
   id: string;
+  userId?: string; // Verknüpfung zur users Tabelle
   firstName: string;
   lastName: string;
   areas: AreaType[]; // Assigned work areas (max 4)
@@ -12,6 +13,10 @@ export interface Employee {
   weeklyHours?: number;
   color?: EmployeeColor;
   birthDate?: string; // Format: YYYY-MM-DD
+  role?: string; // Rolle aus users Tabelle (Admin, Verwaltung, Technik, Benutzer)
+  userDisplayName?: string; // display_name aus users Tabelle
+  username?: string; // username aus users Tabelle
+  userIsAdmin?: boolean; // is_admin aus users Tabelle
 }
 
 export interface ShiftAssignment {
