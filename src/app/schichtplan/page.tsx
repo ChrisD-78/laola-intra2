@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Employee, DaySchedule, VacationRequest, Notification, VacationRequestType } from '@/types/schichtplan'
 import AdminView from '@/components/schichtplan/AdminView'
 import EmployeeView from '@/components/schichtplan/EmployeeView'
+import { PushNotificationService } from '@/lib/pushNotifications'
 import '@/styles/schichtplan.css'
 
 type ViewMode = 'admin' | 'employee'
@@ -40,6 +41,8 @@ export default function SchichtplanPage() {
   const [loading, setLoading] = useState(true)
   const [showSyncButton, setShowSyncButton] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushService, setPushService] = useState<PushNotificationService | null>(null)
 
   const checkSyncStatus = async () => {
     try {
@@ -149,6 +152,22 @@ export default function SchichtplanPage() {
       setLoading(false)
     }
   }
+
+  // Initialize Push Notifications
+  useEffect(() => {
+    const initPush = async () => {
+      const service = PushNotificationService.getInstance()
+      const initialized = await service.initialize()
+      
+      if (initialized) {
+        setPushService(service)
+        const isSubscribed = await service.isSubscribed()
+        setPushEnabled(isSubscribed)
+      }
+    }
+    
+    initPush()
+  }, [])
 
   // Load data from API
   useEffect(() => {
@@ -306,6 +325,26 @@ export default function SchichtplanPage() {
     setCurrentWeekStart(newDate.toISOString().split('T')[0])
   }
 
+  const togglePushNotifications = async () => {
+    if (!pushService) return
+
+    if (pushEnabled) {
+      // Deaktivieren
+      const success = await pushService.unsubscribe()
+      if (success) {
+        setPushEnabled(false)
+      }
+    } else {
+      // Aktivieren
+      const success = await pushService.subscribe()
+      if (success) {
+        setPushEnabled(true)
+      } else {
+        alert('Push-Benachrichtigungen konnten nicht aktiviert werden. Bitte erlauben Sie Benachrichtigungen in Ihren Browser-Einstellungen.')
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -362,6 +401,17 @@ export default function SchichtplanPage() {
               🔄 Benutzer synchronisieren
             </button>
           )}
+          <button
+            className="nav-btn"
+            onClick={togglePushNotifications}
+            style={{ 
+              background: pushEnabled ? '#10b981' : '#6b7280', 
+              color: 'white' 
+            }}
+            title={pushEnabled ? 'Push-Benachrichtigungen deaktivieren' : 'Push-Benachrichtigungen aktivieren'}
+          >
+            {pushEnabled ? '🔔 Benachrichtigungen an' : '🔕 Benachrichtigungen aus'}
+          </button>
         </div>
         
         {viewMode === 'employee' && (
