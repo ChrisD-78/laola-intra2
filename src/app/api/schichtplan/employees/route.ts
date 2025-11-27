@@ -6,31 +6,75 @@ const sql = neon(process.env.DATABASE_URL!)
 // GET all employees
 export async function GET() {
   try {
-    const employees = await sql`
-      SELECT 
-        se.id,
-        se.user_id as "userId",
-        se.first_name as "firstName",
-        se.last_name as "lastName",
-        se.areas,
-        se.phone,
-        se.email,
-        se.weekly_hours as "weeklyHours",
-        se.color,
-        se.birth_date as "birthDate",
-        se.role,
-        u.display_name as "userDisplayName",
-        u.username,
-        u.is_admin as "userIsAdmin"
-      FROM schichtplan_employees se
-      LEFT JOIN users u ON se.user_id = u.id
-      ORDER BY se.last_name, se.first_name
-    `
+    // Prüfe ob user_id Spalte existiert
+    let hasUserIdColumn = false
+    let hasRoleColumn = false
+    
+    try {
+      const checkColumns = await sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'schichtplan_employees' 
+        AND column_name IN ('user_id', 'role')
+      `
+      hasUserIdColumn = checkColumns.some((col: any) => col.column_name === 'user_id')
+      hasRoleColumn = checkColumns.some((col: any) => col.column_name === 'role')
+    } catch (checkError) {
+      console.log('Could not check for columns, assuming they do not exist')
+    }
+
+    let employees: any[]
+    
+    if (hasUserIdColumn) {
+      // Mit user_id und role Spalten
+      employees = await sql`
+        SELECT 
+          se.id,
+          se.user_id as "userId",
+          se.first_name as "firstName",
+          se.last_name as "lastName",
+          se.areas,
+          se.phone,
+          se.email,
+          se.weekly_hours as "weeklyHours",
+          se.color,
+          se.birth_date as "birthDate",
+          ${hasRoleColumn ? sql`se.role` : sql`NULL as role`},
+          u.display_name as "userDisplayName",
+          u.username,
+          u.is_admin as "userIsAdmin"
+        FROM schichtplan_employees se
+        LEFT JOIN users u ON se.user_id = u.id
+        ORDER BY se.last_name, se.first_name
+      `
+    } else {
+      // Ohne user_id Spalte
+      employees = await sql`
+        SELECT 
+          se.id,
+          NULL as "userId",
+          se.first_name as "firstName",
+          se.last_name as "lastName",
+          se.areas,
+          se.phone,
+          se.email,
+          se.weekly_hours as "weeklyHours",
+          se.color,
+          se.birth_date as "birthDate",
+          NULL as role,
+          NULL as "userDisplayName",
+          NULL as username,
+          NULL as "userIsAdmin"
+        FROM schichtplan_employees se
+        ORDER BY se.last_name, se.first_name
+      `
+    }
+    
     return NextResponse.json(employees)
   } catch (error) {
     console.error('Failed to fetch employees:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch employees' },
+      { error: 'Failed to fetch employees', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
