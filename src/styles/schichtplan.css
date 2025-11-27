@@ -660,6 +660,11 @@
   cursor: pointer;
   flex: 1;
   min-width: 150px;
+  color: #000000;
+}
+
+.date-input:focus {
+  color: #000000;
 }
 
 .weekday-selector {
@@ -1529,12 +1534,15 @@
   min-height: 44px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  color: #000000;
+  background-color: #ffffff;
 }
 
 .dialog-date-input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  color: #000000;
 }
 
 .week-preview {
