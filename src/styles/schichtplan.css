@@ -3177,11 +3177,14 @@
   font-size: 1rem;
   transition: border-color 0.3s;
   cursor: pointer;
+  color: #000000;
+  background-color: #ffffff;
 }
 
 .sort-select:focus {
   outline: none;
   border-color: #667eea;
+  color: #000000;
 }
 
 .btn-sort-order {
