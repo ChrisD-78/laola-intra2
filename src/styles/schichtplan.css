@@ -3008,7 +3008,11 @@
 }
 
 .dialog-content input[type="date"],
-.dialog-content select {
+.dialog-content select,
+.dialog-content input[type="text"],
+.dialog-content input[type="email"],
+.dialog-content input[type="tel"],
+.dialog-content input[type="number"] {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid #e0e0e0;
@@ -3018,6 +3022,15 @@
 }
 
 .vacation-type-select {
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.vacation-type-select:focus {
+  color: #000000;
+}
+
+.sort-select {
   font-weight: 600;
 }
 
@@ -3567,11 +3580,14 @@
   font-size: 0.9rem;
   resize: vertical;
   margin-bottom: 1rem;
+  color: #000000;
+  background-color: #ffffff;
 }
 
 .import-textarea:focus {
   outline: none;
   border-color: #667eea;
+  color: #000000;
 }
 
 .import-error {
