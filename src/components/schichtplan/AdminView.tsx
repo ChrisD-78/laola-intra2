@@ -71,7 +71,7 @@ export default function AdminView({
   onWeekChange,
   vacationRequests,
   onVacationDecision
-}) => {
+}: AdminViewProps) {
   const [newEmployeeFirstName, setNewEmployeeFirstName] = useState('');
   const [newEmployeeLastName, setNewEmployeeLastName] = useState('');
   const [newEmployeePhone, setNewEmployeePhone] = useState('');
