@@ -83,6 +83,9 @@ export default function AdminView({
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importData, setImportData] = useState<string>('');
+  const [importError, setImportError] = useState<string | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'area' | 'employee'>('area');
   const [employeeViewMode, setEmployeeViewMode] = useState<'week' | 'month'>('week');
@@ -232,6 +235,75 @@ export default function AdminView({
     setNewEmployeeColor(undefined);
     setNewEmployeeBirthDate('');
     setShowEmployeeForm(false);
+  };
+
+  const handleImportEmployees = () => {
+    if (!importData.trim()) {
+      setImportError('⚠️ Bitte geben Sie Daten ein!');
+      return;
+    }
+
+    const lines = importData.split('\n').filter(line => line.trim());
+    const importedEmployees: Employee[] = [];
+    const errors: string[] = [];
+
+    lines.forEach((line, index) => {
+      const parts = line.split(',').map(p => p.trim());
+      
+      if (parts.length < 2) {
+        errors.push(`Zeile ${index + 1}: Zu wenig Daten (mindestens Vorname und Nachname erforderlich)`);
+        return;
+      }
+
+      const firstName = parts[0] || '';
+      const lastName = parts[1] || '';
+      const phone = parts[2] || undefined;
+      const email = parts[3] || undefined;
+
+      if (!firstName || !lastName) {
+        errors.push(`Zeile ${index + 1}: Vorname und Nachname sind erforderlich`);
+        return;
+      }
+
+      // Prüfe ob Mitarbeiter bereits existiert
+      const exists = employees.some(
+        emp => emp.firstName.toLowerCase() === firstName.toLowerCase() && 
+               emp.lastName.toLowerCase() === lastName.toLowerCase()
+      );
+
+      if (exists) {
+        errors.push(`Zeile ${index + 1}: ${firstName} ${lastName} existiert bereits`);
+        return;
+      }
+
+      // Erstelle neuen Mitarbeiter mit Standard-Bereich
+      const newEmployee: Employee = {
+        id: `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+        firstName: firstName,
+        lastName: lastName,
+        areas: ['Halle'], // Standard-Bereich
+        phone: phone,
+        email: email,
+      };
+
+      importedEmployees.push(newEmployee);
+    });
+
+    if (errors.length > 0) {
+      setImportError(errors.join('\n'));
+    }
+
+    if (importedEmployees.length > 0) {
+      const updatedEmployees = [...employees, ...importedEmployees];
+      onEmployeesUpdate(updatedEmployees);
+      setValidationMessage(`✅ ${importedEmployees.length} Mitarbeiter erfolgreich importiert!`);
+      setTimeout(() => setValidationMessage(null), 5000);
+      setShowImportDialog(false);
+      setImportData('');
+      setImportError(null);
+    } else if (errors.length === 0) {
+      setImportError('⚠️ Keine gültigen Daten gefunden');
+    }
   };
 
   const updateEmployee = () => {
@@ -1681,6 +1753,18 @@ export default function AdminView({
           </button>
           
           <button 
+            onClick={() => {
+              setShowImportDialog(true);
+              setImportData('');
+              setImportError(null);
+            }} 
+            className="btn-import-employees"
+            style={{ background: '#10b981', color: 'white' }}
+          >
+            📥 Mitarbeiter importieren
+          </button>
+          
+          <button 
             onClick={() => setShowBulkAssignment(!showBulkAssignment)} 
             className="btn-bulk-assignment"
           >
@@ -1858,6 +1942,47 @@ export default function AdminView({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {showImportDialog && (
+        <div className="import-dialog-overlay" onClick={() => setShowImportDialog(false)}>
+          <div className="import-dialog" onClick={(e) => e.stopPropagation()}>
+            <h2>📥 Mitarbeiter importieren</h2>
+            <p className="import-description">
+              Fügen Sie Mitarbeiterdaten ein. Format: Vorname, Nachname, Telefon, E-Mail (eine Zeile pro Mitarbeiter).<br/>
+              Beispiel:<br/>
+              <code>Max, Mustermann, +49 123 456789, max@example.com</code>
+            </p>
+            <textarea
+              value={importData}
+              onChange={(e) => setImportData(e.target.value)}
+              placeholder="Max, Mustermann, +49 123 456789, max@example.com&#10;Anna, Schmidt, +49 987 654321, anna@example.com&#10;..."
+              className="import-textarea"
+              rows={10}
+            />
+            {importError && (
+              <div className="import-error">{importError}</div>
+            )}
+            <div className="import-actions">
+              <button
+                onClick={handleImportEmployees}
+                className="btn-import-confirm"
+              >
+                Importieren
+              </button>
+              <button
+                onClick={() => {
+                  setShowImportDialog(false);
+                  setImportData('');
+                  setImportError(null);
+                }}
+                className="btn-import-cancel"
+              >
+                Abbrechen
+              </button>
+            </div>
           </div>
         </div>
       )}
