@@ -1,0 +1,3491 @@
+/* Main App Layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.navbar {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f0f0f0;
+  color: #333;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.employee-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-dropdown {
+  padding: 0.5rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  background: white;
+  cursor: pointer;
+  min-width: 150px;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* Admin View */
+.admin-view {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header {
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.validation-message {
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin: 1rem 0;
+  font-weight: 600;
+  animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.validation-message.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.validation-message.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.week-display {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 1rem;
+  text-align: center;
+  min-width: 250px;
+}
+
+.btn-week-nav {
+  padding: 0.75rem 1.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-week-nav:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-week-nav:active {
+  transform: translateY(0);
+}
+
+.employee-section {
+  margin: 1rem 0;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-toggle-form {
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  min-width: 150px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-toggle-form:hover {
+  background: #059669;
+}
+
+.employee-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.employee-form-extended {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+}
+
+.employee-form-extended h4 {
+  margin-bottom: 1rem;
+  color: #059669;
+  font-size: 1.1rem;
+}
+
+.name-inputs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.name-inputs .input-employee {
+  flex: 1;
+  min-width: 150px;
+}
+
+.form-section {
+  margin-bottom: 1.5rem;
+}
+
+.form-section > label {
+  display: block;
+  font-weight: 600;
+  color: #059669;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.contact-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contact-inputs .input-employee {
+  width: 100%;
+}
+
+.area-assignment {
+  margin: 1rem 0;
+}
+
+.area-assignment label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.area-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.area-btn {
+  padding: 0.6rem 1rem;
+  background: white;
+  border: 2px solid #10b981;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #10b981;
+}
+
+.area-btn:hover {
+  background: #d1fae5;
+  transform: translateY(-2px);
+}
+
+.area-btn.selected {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: #059669;
+}
+
+.input-employee {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-add-employee {
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-bulk-assignment {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  min-width: 150px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-bulk-assignment:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+/* Week View Container */
+.week-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.area-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.area-title {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+  background: #f8f9ff;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.area-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+.week-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  min-width: 800px;
+  font-size: 0.9rem;
+}
+
+.week-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-size: 0.9rem;
+}
+
+.week-table th:first-child {
+  border-top-left-radius: 8px;
+  text-align: left;
+  padding-left: 1rem;
+}
+
+.week-table th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.shift-header {
+  min-width: 120px;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+}
+
+.day-header {
+  min-width: 140px;
+}
+
+.day-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.day-date {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-top: 0.2rem;
+}
+
+.week-table td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+
+.shift-name {
+  font-weight: 600;
+  color: #667eea;
+  background: #f8f9ff;
+  padding-left: 1rem !important;
+  text-align: left;
+}
+
+.area-name {
+  font-weight: 600;
+  color: #667eea;
+  background: #f8f9ff;
+  min-width: 100px;
+}
+
+.shift-cell {
+  min-width: 180px;
+}
+
+.shift-cell.understaffed {
+  background: #fee2e2 !important;
+  border: 2px solid #ef4444;
+}
+
+.shift-cell.understaffed .shift-content {
+  position: relative;
+}
+
+.shift-cell.understaffed::before {
+  content: "⚠️";
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  font-size: 0.9rem;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .shift-cell.understaffed::before {
+    font-size: 0.75rem;
+    top: 0.15rem;
+    right: 0.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .shift-cell.understaffed::before {
+    font-size: 0.7rem;
+    top: 0.1rem;
+    right: 0.1rem;
+  }
+}
+
+.shift-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.assignment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.assignment-tag.draggable {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.assignment-tag.draggable:active {
+  cursor: grabbing;
+}
+
+.assignment-tag.draggable:hover {
+  background: #c7d2fe;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(67, 56, 202, 0.2);
+}
+
+.drag-handle {
+  cursor: grab;
+  opacity: 0.5;
+  font-size: 0.9rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.assignment-tag.draggable:active .drag-handle {
+  cursor: grabbing;
+}
+
+.shift-cell.drop-zone {
+  position: relative;
+}
+
+.shift-cell.drop-zone::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 3px dashed #667eea;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.05);
+  pointer-events: none;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.assignment-tag.highlight {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-remove {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.employee-select {
+  padding: 0.5rem;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: #fafafa;
+  width: 100%;
+}
+
+.empty-slot {
+  color: #ccc;
+  font-size: 1.5rem;
+}
+
+/* Bulk Assignment Panel */
+.bulk-assignment-panel {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 3px solid #f59e0b;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 0;
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.2);
+}
+
+.bulk-assignment-panel h3 {
+  margin-bottom: 0.5rem;
+  color: #92400e;
+  font-size: 1.4rem;
+}
+
+.bulk-description {
+  color: #92400e;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.bulk-section {
+  margin-bottom: 1.5rem;
+}
+
+.bulk-section label {
+  display: block;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  padding: 0.75rem 1rem;
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  flex: 1;
+  min-width: 150px;
+}
+
+.weekday-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.weekday-btn {
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 50px;
+}
+
+.weekday-btn:hover {
+  background: #fef3c7;
+  transform: translateY(-2px);
+}
+
+.weekday-btn.selected {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border-color: #d97706;
+}
+
+.shift-config {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.bulk-select {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bulk-select-single {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.employee-multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #f59e0b;
+}
+
+.employee-select-btn {
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+  text-align: left;
+}
+
+.employee-select-btn:hover {
+  background: #f3f4f6;
+  border-color: #f59e0b;
+  transform: translateY(-2px);
+}
+
+.employee-select-btn.selected {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: #059669;
+  font-weight: 600;
+}
+
+.employee-btn-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.employee-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.employee-areas {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-bulk-submit {
+  flex: 1;
+  min-width: 200px;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-bulk-submit:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-bulk-cancel {
+  padding: 1rem 2rem;
+  background: white;
+  color: #92400e;
+  border: 2px solid #92400e;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-bulk-cancel:hover {
+  background: #92400e;
+  color: white;
+}
+
+/* Employees List */
+.employees-list {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+}
+
+.employees-list h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.employee-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.employee-detail-card {
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  position: relative;
+}
+
+.employee-detail-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+}
+
+/* Hours status coloring */
+.employee-detail-card.hours-fulfilled {
+  border-color: #10b981;
+  background: linear-gradient(to bottom, white 0%, #f0fdf4 100%);
+}
+
+.employee-detail-card.hours-under {
+  border-color: #f59e0b;
+  background: linear-gradient(to bottom, white 0%, #fffbeb 100%);
+}
+
+.employee-detail-card.hours-no-target {
+  border-color: #667eea;
+}
+
+.emp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e8eaff;
+}
+
+.emp-card-header h4 {
+  margin: 0;
+  color: #667eea;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.emp-id {
+  font-size: 0.75rem;
+  color: #999;
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.emp-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.emp-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emp-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.emp-value {
+  color: #333;
+  font-size: 0.875rem;
+  text-align: right;
+  word-break: break-word;
+}
+
+.hours-row {
+  background: #f8f9ff;
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.hours-value {
+  font-size: 1rem;
+}
+
+.hours-value strong {
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.target-hours {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.hours-progress {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 10px;
+}
+
+.progress-bar.fulfilled {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.progress-bar.under {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.status-badge {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.status-badge.fulfilled {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.status-badge.under {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.employee-tag {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.employee-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  min-width: 150px;
+}
+
+.emp-name {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.emp-areas {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Employee View */
+.employee-view {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.employee-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.employee-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.employee-name {
+  font-size: 1.2rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.my-shifts {
+  margin: 2rem 0;
+}
+
+.my-shifts h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.shifts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.shift-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.shift-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+}
+
+.shift-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.shift-card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.shift-date {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 0.7rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shift-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shift-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.shift-type {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.shift-time {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-block;
+  width: fit-content;
+}
+
+.shift-area {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.no-shifts {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+.all-shifts-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 3px solid #e0e0e0;
+}
+
+.all-shifts-section h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.shift-time-small {
+  font-size: 0.75rem;
+  font-weight: normal;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+.shift-cell.my-shift {
+  background: #f0fdf4;
+  border-left: 4px solid #10b981;
+}
+
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Time View Toggle (Week/Month) */
+.time-view-toggle {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: #f8f9ff;
+  border-radius: 12px;
+  border: 2px solid #e0e7ff;
+}
+
+.time-view-btn {
+  padding: 0.75rem 1.5rem;
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 1rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.time-view-btn:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.time-view-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Week/Month Navigation */
+.week-navigation-employee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.month-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.month-display {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 1rem;
+  text-align: center;
+  min-width: 250px;
+}
+
+.btn-month-nav {
+  padding: 0.75rem 1.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-month-nav:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.view-mode-btn {
+  padding: 0.75rem 1.5rem;
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.view-mode-btn:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.view-mode-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Employee Overview */
+.employee-overview-container {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
+}
+
+/* Employee View Controls */
+.employee-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9ff;
+  border-radius: 12px;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.control-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.control-hint {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+.btn-copy-week {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-copy-week:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: #e0e7ff;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #4338ca;
+}
+
+.btn-clear-selection {
+  padding: 0.4rem 0.8rem;
+  background: white;
+  color: #4338ca;
+  border: 2px solid #4338ca;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-clear-selection:hover {
+  background: #4338ca;
+  color: white;
+}
+
+/* Shift Palette */
+.shift-palette {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%);
+  border-radius: 12px;
+  border: 2px solid #667eea;
+}
+
+.palette-title {
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.palette-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.palette-item {
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: grab;
+  transition: all 0.3s ease;
+  user-select: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.palette-item:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+.palette-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+
+.palette-frueh {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+}
+
+.palette-mittel {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  color: white;
+}
+
+.palette-spaet {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.palette-urlaub {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: white;
+}
+
+.palette-krank {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  color: white;
+}
+
+.palette-hint {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* Week Copy Dialog */
+.week-copy-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.week-copy-dialog {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease;
+}
+
+.week-copy-dialog h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.dialog-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.dialog-section {
+  margin-bottom: 1.5rem;
+}
+
+.dialog-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.dialog-date-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dialog-date-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.week-preview {
+  padding: 0.5rem 1rem;
+  background: #f8f9ff;
+  border-radius: 8px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-dialog-confirm {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-dialog-confirm:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.btn-dialog-cancel {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #666;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-dialog-cancel:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+/* Calendar Views for Week Copy Dialog */
+.calendar-week-view,
+.calendar-month-view {
+  margin-top: 1rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f8f9ff;
+  border-radius: 8px;
+}
+
+.calendar-nav-btn {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #667eea;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-nav-btn:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  transform: scale(1.05);
+}
+
+.calendar-week-range,
+.calendar-month-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  text-align: center;
+  flex: 1;
+}
+
+.calendar-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-week-day {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-week-day:hover {
+  background: #f0f4ff;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.calendar-week-day.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.calendar-week-day.today {
+  border-color: #10b981;
+  border-width: 3px;
+}
+
+.calendar-day-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.calendar-week-day.selected .calendar-day-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.calendar-day-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.calendar-month-grid {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: #f0f4ff;
+  border-color: #667eea;
+  transform: scale(1.05);
+  z-index: 1;
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+  background: #f9fafb;
+}
+
+.calendar-day.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  font-weight: 700;
+  z-index: 2;
+}
+
+.calendar-day.in-selected-week {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.calendar-day.today {
+  border-color: #10b981;
+  border-width: 3px;
+  font-weight: 700;
+}
+
+.calendar-week-preview {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9ff;
+  border-radius: 8px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Mobile Responsive for Calendar */
+@media (max-width: 768px) {
+  .week-copy-dialog {
+    max-width: 100%;
+    padding: 1rem;
+    max-height: 95vh;
+  }
+
+  .calendar-week-grid {
+    gap: 0.25rem;
+  }
+
+  .calendar-week-day {
+    padding: 0.5rem;
+    min-height: 50px;
+  }
+
+  .calendar-day-name {
+    font-size: 0.65rem;
+  }
+
+  .calendar-day-number {
+    font-size: 0.9rem;
+  }
+
+  .calendar-days-grid {
+    gap: 0.15rem;
+  }
+
+  .calendar-day {
+    font-size: 0.75rem;
+    padding: 0.25rem;
+  }
+
+  .calendar-nav {
+    padding: 0.25rem;
+  }
+
+  .calendar-nav-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+  }
+
+  .calendar-week-range,
+  .calendar-month-name {
+    font-size: 0.85rem;
+  }
+}
+
+.employee-overview-title {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+.employee-overview-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  border-radius: 8px;
+}
+
+.employee-overview-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  min-width: 600px;
+  font-size: 0.95rem;
+}
+
+.employee-name-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  border-top-left-radius: 8px;
+}
+
+.employee-day-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.employee-day-header:last-child {
+  border-top-right-radius: 8px;
+}
+
+.employee-name-cell {
+  background: #f8f9ff;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #667eea;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right: 2px solid #e0e7ff;
+  min-width: 180px;
+}
+
+/* Employee Color Bar */
+.employee-name-with-color {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-color-bar {
+  width: 4px;
+  height: 100%;
+  min-height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.employee-color-bar-small {
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.employee-name-text {
+  flex: 1;
+}
+
+/* Color Selector */
+.color-assignment {
+  margin: 1rem 0;
+}
+
+.color-assignment label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.color-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.color-btn {
+  padding: 0.6rem 1rem;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.color-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.color-btn.selected {
+  background: #f8f9ff;
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #ddd;
+  flex-shrink: 0;
+}
+
+.color-btn.selected .color-preview {
+  border-color: #667eea;
+}
+
+.employee-shift-cell {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+  min-width: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.employee-shift-cell:hover {
+  background: #f8f9ff;
+}
+
+.employee-shift-cell.drop-zone-active {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px dashed #667eea;
+}
+
+.employee-shift-cell.drop-zone-hovered {
+  background: rgba(102, 126, 234, 0.25) !important;
+  border: 3px solid #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3) !important;
+  transform: scale(1.05);
+  z-index: 10;
+  position: relative;
+}
+
+.employee-shift-cell.drop-zone-selected-group {
+  background: rgba(102, 126, 234, 0.2) !important;
+  border: 2px solid #667eea !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+}
+
+.employee-shift-cell.cell-selected {
+  background: #e0e7ff;
+  border: 2px solid #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.employee-shift-cell.status-urlaub {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.employee-shift-cell.status-urlaub-beantragt {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 2px dashed #f59e0b;
+}
+
+.employee-shift-cell.status-urlaub-abgelehnt {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  opacity: 0.7;
+}
+
+.employee-shift-cell.status-ueberstunden {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #312e81;
+}
+
+.employee-shift-cell.status-ueberstunden-beantragt {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+  color: #5b21b6;
+  border: 2px dashed #8b5cf6;
+}
+
+.employee-shift-cell.status-ueberstunden-abgelehnt {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  opacity: 0.7;
+}
+
+.employee-shift-cell.status-krank {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+.shift-abbreviations {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #667eea;
+  letter-spacing: 0.2rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.shift-abbreviation-draggable {
+  cursor: grab;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(102, 126, 234, 0.1);
+  transition: all 0.2s ease;
+  user-select: none;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+}
+
+.shift-abbreviation-draggable:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.shift-abbreviation-draggable:active {
+  cursor: grabbing;
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+
+.no-shift {
+  color: #ccc;
+  font-size: 1.2rem;
+}
+
+/* Month View */
+.employee-month-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  border-radius: 8px;
+  position: relative;
+}
+
+.employee-month-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  min-width: 1200px;
+  font-size: 0.85rem;
+}
+
+.employee-month-day-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 0.3rem;
+  text-align: center;
+  font-weight: 600;
+  min-width: 35px;
+  font-size: 0.75rem;
+}
+
+.employee-month-day-header.weekend {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.day-name-small {
+  font-weight: 700;
+  font-size: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+
+.day-date-small {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.employee-shift-cell-month {
+  padding: 0.4rem 0.2rem;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+  vertical-align: middle;
+  min-width: 35px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.7rem;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.employee-shift-cell-month:hover {
+  background: #f8f9ff;
+}
+
+.employee-shift-cell-month.weekend {
+  background: #faf5ff;
+}
+
+.employee-shift-cell-month.drop-zone-active {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px dashed #667eea;
+}
+
+.employee-shift-cell-month.drop-zone-hovered {
+  background: rgba(102, 126, 234, 0.3) !important;
+  border: 3px solid #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4) !important;
+  transform: scale(1.1);
+  z-index: 10;
+  position: relative;
+  font-weight: 700;
+}
+
+.employee-shift-cell-month.drop-zone-selected-group {
+  background: rgba(102, 126, 234, 0.25) !important;
+  border: 2px solid #667eea !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3) !important;
+  font-weight: 600;
+}
+
+.employee-shift-cell-month.cell-selected {
+  background: #e0e7ff;
+  border: 2px solid #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.employee-shift-cell-month.status-urlaub {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.employee-shift-cell-month.status-urlaub-beantragt {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 2px dashed #f59e0b;
+}
+
+.employee-shift-cell-month.status-urlaub-abgelehnt {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  opacity: 0.7;
+}
+
+.employee-shift-cell-month.status-ueberstunden {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #312e81;
+}
+
+.employee-shift-cell-month.status-ueberstunden-beantragt {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+  color: #5b21b6;
+  border: 2px dashed #8b5cf6;
+}
+
+.employee-shift-cell-month.status-ueberstunden-abgelehnt {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  opacity: 0.7;
+}
+
+.employee-shift-cell-month.status-krank {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+.shift-abbreviations-small {
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #667eea;
+  letter-spacing: 0.1rem;
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.shift-abbreviation-draggable-small {
+  cursor: grab;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  background: rgba(102, 126, 234, 0.1);
+  transition: all 0.2s ease;
+  user-select: none;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.shift-abbreviation-draggable-small:hover {
+  background: rgba(102, 126, 234, 0.25);
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+}
+
+.shift-abbreviation-draggable-small:active {
+  cursor: grabbing;
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+
+.no-shift-small {
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.75rem;
+  }
+
+  .nav-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    min-height: 44px; /* iOS touch target size */
+    touch-action: manipulation;
+  }
+
+  .main-content {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .admin-view,
+  .employee-view {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .admin-header h1,
+  .employee-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .week-navigation {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .week-display {
+    width: 100%;
+    min-width: auto;
+    font-size: 0.9rem;
+  }
+
+  .btn-week-nav {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .area-section {
+    padding: 0.75rem;
+  }
+
+  .area-title {
+    font-size: 1.1rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .week-table {
+    font-size: 0.75rem;
+    min-width: 100%;
+  }
+
+  .week-table th {
+    padding: 0.4rem 0.2rem;
+    font-size: 0.75rem;
+  }
+
+  .week-table td {
+    padding: 0.4rem 0.2rem;
+  }
+
+  .day-header {
+    min-width: 70px;
+  }
+
+  .shift-header {
+    min-width: 70px;
+  }
+
+  .shift-name {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.3rem !important;
+  }
+
+  .shift-name div {
+    font-size: 0.7rem;
+  }
+
+  .day-name {
+    font-size: 0.7rem;
+  }
+
+  .day-date {
+    font-size: 0.65rem;
+  }
+
+  .assignment-tag {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+  }
+
+  .drag-handle {
+    font-size: 0.7rem;
+    touch-action: none;
+  }
+
+  .employee-select {
+    font-size: 0.7rem;
+    padding: 0.25rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .area-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scroll-behavior: smooth;
+    position: relative;
+  }
+
+  .area-table-wrapper::after {
+    content: "← Scrollen für mehr →";
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    background: rgba(102, 126, 234, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .area-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .area-title {
+    font-size: 1rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .shifts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .shift-card {
+    padding: 1rem;
+  }
+
+  .shift-card-header h3 {
+    font-size: 1rem;
+  }
+
+  .my-shifts h2 {
+    font-size: 1.2rem;
+  }
+
+  .all-shifts-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .employee-dropdown {
+    font-size: 0.85rem;
+    min-width: 140px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .employees-list {
+    padding: 1.5rem 1rem;
+  }
+
+  .employee-details-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .employee-detail-card {
+    padding: 1rem;
+  }
+
+  .emp-card-header h4 {
+    font-size: 1rem;
+  }
+
+  .emp-card-header {
+    flex-wrap: wrap;
+  }
+
+  .emp-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .emp-value {
+    text-align: left;
+  }
+
+  .hours-value strong {
+    font-size: 1rem;
+  }
+
+  .status-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .bulk-assignment-panel {
+    padding: 1.5rem;
+  }
+
+  .bulk-assignment-panel h3 {
+    font-size: 1.2rem;
+  }
+
+  .date-range {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-input {
+    width: 100%;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .weekday-btn {
+    padding: 0.6rem 0.75rem;
+    min-width: 45px;
+    font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .bulk-select {
+    width: 100%;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .employee-multi-select {
+    max-height: 200px;
+    padding: 0.75rem;
+  }
+
+  .employee-select-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .bulk-actions {
+    flex-direction: column;
+  }
+
+  .btn-bulk-submit {
+    width: 100%;
+    min-width: auto;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .btn-bulk-cancel {
+    width: 100%;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Touch-friendly buttons */
+  .btn-toggle-form,
+  .btn-bulk-assignment,
+  .btn-add-employee {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .area-btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .btn-remove {
+    min-width: 32px;
+    min-height: 32px;
+    touch-action: manipulation;
+  }
+
+  .view-mode-toggle {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .view-mode-btn {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .employee-overview-container {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .employee-overview-title {
+    font-size: 1.4rem;
+  }
+
+  .employee-overview-table {
+    font-size: 0.8rem;
+    min-width: 100%;
+  }
+
+  .employee-name-header {
+    min-width: 150px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .employee-day-header {
+    min-width: 80px;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.75rem;
+  }
+
+  .employee-name-cell {
+    min-width: 150px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .employee-shift-cell {
+    padding: 0.5rem 0.3rem;
+    min-width: 80px;
+  }
+
+  .shift-abbreviations {
+    font-size: 0.9rem;
+    letter-spacing: 0.1rem;
+  }
+
+  .employee-color-bar {
+    width: 3px;
+    min-height: 18px;
+  }
+
+  .employee-color-bar-small {
+    width: 2px;
+    height: 14px;
+  }
+
+  .time-view-toggle {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .time-view-btn {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .week-navigation-employee,
+  .month-navigation {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .month-display {
+    width: 100%;
+    min-width: auto;
+    font-size: 0.9rem;
+  }
+
+  .btn-month-nav {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .employee-month-table {
+    font-size: 0.7rem;
+    min-width: 100%;
+  }
+
+  .employee-month-day-header {
+    min-width: 30px;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.65rem;
+  }
+
+  .employee-shift-cell-month {
+    padding: 0.3rem 0.15rem;
+    min-width: 30px;
+    font-size: 0.65rem;
+  }
+
+  .shift-abbreviations-small {
+    font-size: 0.65rem;
+    letter-spacing: 0.05rem;
+  }
+
+  .day-name-small {
+    font-size: 0.6rem;
+  }
+
+  .day-date-small {
+    font-size: 0.7rem;
+  }
+
+  .color-selector {
+    flex-direction: column;
+  }
+
+  .color-btn {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .employee-view-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .control-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .palette-buttons {
+    flex-direction: column;
+  }
+
+  .palette-item {
+    width: 100%;
+  }
+
+  .btn-copy-week {
+    width: 100%;
+  }
+
+  .selection-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-clear-selection {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-buttons {
+    width: 100%;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .employee-selector {
+    width: 100%;
+  }
+
+  .employee-dropdown {
+    width: 100%;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .week-table {
+    font-size: 0.7rem;
+    min-width: 100%;
+  }
+
+  .week-table th,
+  .week-table td {
+    padding: 0.3rem 0.15rem;
+  }
+
+  .day-header {
+    min-width: 60px;
+  }
+
+  .shift-header {
+    min-width: 60px;
+    font-size: 0.65rem;
+  }
+
+  .shift-name {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.2rem !important;
+  }
+
+  .shift-name div {
+    font-size: 0.65rem;
+  }
+
+  .shift-time-small {
+    font-size: 0.6rem;
+    margin-top: 0.1rem;
+  }
+
+  .day-name {
+    font-size: 0.65rem;
+  }
+
+  .day-date {
+    font-size: 0.6rem;
+  }
+
+  .area-title {
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .assignment-tag {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 10px;
+    gap: 0.3rem;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+  }
+
+  .drag-handle {
+    font-size: 0.65rem;
+    touch-action: none;
+  }
+
+  .btn-remove {
+    width: 32px;
+    height: 32px;
+    font-size: 0.6rem;
+    min-width: 32px;
+    min-height: 32px;
+    touch-action: manipulation;
+  }
+
+  .employee-select {
+    font-size: 0.65rem;
+    padding: 0.2rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .area-table-wrapper {
+    border-radius: 6px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+
+  .week-table th:first-child,
+  .week-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 1;
+  }
+
+  .week-table th:first-child {
+    z-index: 2;
+  }
+
+  .bulk-assignment-panel h3 {
+    font-size: 1.1rem;
+  }
+
+  .weekday-btn {
+    padding: 0.5rem 0.6rem;
+    min-width: 40px;
+    font-size: 0.75rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .btn-bulk-assignment {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Additional mobile improvements */
+  .input-employee {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .btn-toggle-form,
+  .btn-bulk-assignment,
+  .btn-add-employee {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .area-btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .employee-overview-table {
+    font-size: 0.7rem;
+  }
+
+  .employee-name-header {
+    min-width: 120px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .employee-day-header {
+    min-width: 70px;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.7rem;
+  }
+
+  .employee-name-cell {
+    min-width: 120px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .employee-shift-cell {
+    padding: 0.4rem 0.2rem;
+    min-width: 70px;
+  }
+
+  .shift-abbreviations {
+    font-size: 0.8rem;
+    letter-spacing: 0.05rem;
+  }
+
+  .palette-title {
+    font-size: 0.85rem;
+  }
+
+  .palette-item {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .control-hint {
+    font-size: 0.75rem;
+  }
+
+  .week-copy-dialog {
+    padding: 1.5rem;
+    max-width: 100%;
+    margin: 1rem;
+  }
+
+  .week-copy-dialog h3 {
+    font-size: 1.3rem;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .btn-dialog-confirm,
+  .btn-dialog-cancel {
+    width: 100%;
+  }
+}
+
+/* Vacation Request System */
+.vacation-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.vacation-dialog {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.vacation-dialog h2 {
+  margin-top: 0;
+  color: #667eea;
+}
+
+.dialog-content label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.dialog-content input[type="date"],
+.dialog-content select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.vacation-type-select {
+  font-weight: 600;
+}
+
+.employee-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-vacation-request {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-vacation-request:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.notifications-container {
+  position: relative;
+}
+
+.btn-notifications {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.btn-notifications:hover {
+  background: #667eea;
+  color: white;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  max-width: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: #f5f5f5;
+}
+
+.notification-item.unread {
+  background: #eef2ff;
+  font-weight: 600;
+}
+
+.notification-message {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.notification-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Employee Sort */
+.employee-sort {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sort-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.sort-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.sort-select {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-sort-order {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  height: fit-content;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sort-order:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Vacation Requests in Admin View */
+.vacation-requests-section {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.vacation-requests-section h2 {
+  margin-top: 0;
+  color: #667eea;
+  font-size: 1.5rem;
+}
+
+.vacation-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vacation-request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  border-left: 4px solid #f59e0b;
+}
+
+.vacation-request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vacation-request-info strong {
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.vacation-date {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.vacation-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.vacation-requested-at {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.vacation-request-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-approve {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-approve:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-reject:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Employee Management */
+.employees-list {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.employees-list h4 {
+  margin-top: 0;
+  color: #667eea;
+  font-size: 1.3rem;
+}
+
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.employee-card {
+  background: #f9fafb;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s;
+}
+
+.employee-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.employee-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.employee-card-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.employee-color-bar-small {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.employee-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.employee-card-details strong {
+  color: #333;
+}
+
+.btn-edit-employee {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-edit-employee:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-cancel-employee {
+  padding: 0.75rem 1.5rem;
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel-employee:hover {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+.btn-manage-employees {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-height: 44px;
+  min-width: 150px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-manage-employees:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Employee Management Panel */
+.employee-management-panel {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.employee-management-panel h2 {
+  margin-top: 0;
+  color: #667eea;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.employee-management-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.employee-management-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.employee-management-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.employee-management-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.employee-management-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.employee-management-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.employee-management-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.employee-color-indicator {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit-in-table {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-edit-in-table:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+

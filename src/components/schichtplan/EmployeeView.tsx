@@ -1,0 +1,312 @@
+'use client'
+
+import React, { useState } from 'react'
+import { ShiftType, AreaType, DaySchedule, Employee, Notification, VacationRequestType } from '@/types/schichtplan'
+
+interface EmployeeViewProps {
+  schedule: DaySchedule[]
+  weekSchedule: DaySchedule[]
+  employees: Employee[]
+  currentEmployeeId: string
+  currentWeekStart: string
+  onWeekChange: (direction: 'prev' | 'next') => void
+  onVacationRequest: (employeeId: string, startDate: string, endDate: string, type: VacationRequestType) => void
+  notifications: Notification[]
+  onMarkNotificationRead: (notificationId: string) => void
+}
+
+const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht']
+const AREAS: AreaType[] = ['Halle', 'Kasse', 'Sauna', 'Reinigung', 'Gastro']
+const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+
+const SHIFT_TIMES = {
+  'Frühschicht': '06:00 - 14:00',
+  'Mittelschicht': '14:00 - 22:00',
+  'Spätschicht': '22:00 - 06:00'
+}
+
+export default function EmployeeView({
+  weekSchedule,
+  employees,
+  currentEmployeeId,
+  currentWeekStart,
+  onWeekChange,
+  onVacationRequest,
+  notifications,
+  onMarkNotificationRead
+}: EmployeeViewProps) {
+  const currentEmployee = employees.find(e => e.id === currentEmployeeId)
+  const [showVacationDialog, setShowVacationDialog] = useState(false)
+  const [vacationStartDate, setVacationStartDate] = useState('')
+  const [vacationEndDate, setVacationEndDate] = useState('')
+  const [vacationType, setVacationType] = useState<'Urlaub' | 'Überstunden'>('Urlaub')
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  const unreadNotifications = notifications.filter(n => !n.read)
+
+  const getMyWeekShifts = () => {
+    const myShifts: Array<{
+      date: string
+      dayName: string
+      area: AreaType
+      shift: ShiftType
+      time: string
+    }> = []
+
+    weekSchedule.forEach((day, dayIndex) => {
+      AREAS.forEach(area => {
+        SHIFT_TYPES.forEach(shift => {
+          const assignments = day.shifts[area]?.[shift]
+          if (assignments?.some(a => a.employeeId === currentEmployeeId)) {
+            myShifts.push({
+              date: day.date,
+              dayName: WEEKDAYS[dayIndex],
+              area,
+              shift,
+              time: SHIFT_TIMES[shift]
+            })
+          }
+        })
+      })
+    })
+
+    return myShifts
+  }
+
+  const myShifts = getMyWeekShifts()
+
+  const getWeekRange = () => {
+    const start = new Date(currentWeekStart)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    return `${start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} - ${end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+  }
+
+  const handleSubmitVacationRequest = () => {
+    if (vacationStartDate && vacationEndDate) {
+      if (new Date(vacationStartDate) > new Date(vacationEndDate)) {
+        alert('Das Enddatum muss nach dem Startdatum liegen!')
+        return
+      }
+      onVacationRequest(currentEmployeeId, vacationStartDate, vacationEndDate, vacationType)
+      setVacationStartDate('')
+      setVacationEndDate('')
+      setVacationType('Urlaub')
+      setShowVacationDialog(false)
+    }
+  }
+
+  return (
+    <div className="employee-view">
+      <div className="employee-header">
+        <h1>👤 Meine Schichten</h1>
+        <div className="employee-header-right">
+          <div className="employee-name">
+            {currentEmployee ? (
+              <span>{currentEmployee.firstName} {currentEmployee.lastName}</span>
+            ) : (
+              'Mitarbeiter'
+            )}
+          </div>
+          <div className="header-actions">
+            <button
+              className="btn-vacation-request"
+              onClick={() => setShowVacationDialog(true)}
+            >
+              🏖️ Urlaub beantragen
+            </button>
+            <div className="notifications-container">
+              <button
+                className="btn-notifications"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                🔔 {unreadNotifications.length > 0 && (
+                  <span className="notification-badge">{unreadNotifications.length}</span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="notifications-dropdown">
+                  {notifications.length === 0 ? (
+                    <div className="notification-item">Keine Benachrichtigungen</div>
+                  ) : (
+                    notifications.map(notif => (
+                      <div
+                        key={notif.id}
+                        className={`notification-item ${!notif.read ? 'unread' : ''}`}
+                        onClick={() => onMarkNotificationRead(notif.id)}
+                      >
+                        <div className="notification-message">{notif.message}</div>
+                        <div className="notification-date">
+                          {new Date(notif.createdAt).toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showVacationDialog && (
+        <div className="vacation-dialog-overlay" onClick={() => setShowVacationDialog(false)}>
+          <div className="vacation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h2>Urlaub / Überstunden beantragen</h2>
+            <div className="dialog-content">
+              <label>
+                Art:
+                <select
+                  value={vacationType}
+                  onChange={(e) => setVacationType(e.target.value as 'Urlaub' | 'Überstunden')}
+                  className="vacation-type-select"
+                >
+                  <option value="Urlaub">Urlaub</option>
+                  <option value="Überstunden">Überstunden</option>
+                </select>
+              </label>
+              <label>
+                Von:
+                <input
+                  type="date"
+                  value={vacationStartDate}
+                  onChange={(e) => setVacationStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </label>
+              <label>
+                Bis:
+                <input
+                  type="date"
+                  value={vacationEndDate}
+                  onChange={(e) => setVacationEndDate(e.target.value)}
+                  min={vacationStartDate || new Date().toISOString().split('T')[0]}
+                />
+              </label>
+            </div>
+            <div className="dialog-actions">
+              <button className="btn-dialog-confirm" onClick={handleSubmitVacationRequest}>
+                Beantragen
+              </button>
+              <button className="btn-dialog-cancel" onClick={() => setShowVacationDialog(false)}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="week-navigation">
+        <button onClick={() => onWeekChange('prev')} className="btn-week-nav">
+          ← Vorherige Woche
+        </button>
+        <div className="week-display">
+          <strong>Woche:</strong> {getWeekRange()}
+        </div>
+        <button onClick={() => onWeekChange('next')} className="btn-week-nav">
+          Nächste Woche →
+        </button>
+      </div>
+
+      {myShifts.length > 0 ? (
+        <div className="my-shifts">
+          <h2>Meine Einsätze diese Woche</h2>
+          <div className="shifts-grid">
+            {myShifts.map((shift, index) => (
+              <div key={index} className="shift-card">
+                <div className="shift-card-header">
+                  <h3>{shift.dayName}</h3>
+                  <span className="shift-date">
+                    {new Date(shift.date).toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit'
+                    })}
+                  </span>
+                </div>
+                <div className="shift-card-body">
+                  <div className="shift-info">
+                    <span className="shift-type">{shift.shift}</span>
+                    <span className="shift-time">{shift.time}</span>
+                  </div>
+                  <span className="shift-area">📍 {shift.area}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="no-shifts">
+          <p>Keine Schichten für diese Woche eingeplant</p>
+        </div>
+      )}
+
+      <div className="all-shifts-section">
+        <h2>Gesamter Wochenplan</h2>
+        {AREAS.map(area => (
+          <div key={area} className="area-section">
+            <h3 className="area-title">{area}</h3>
+            <div className="area-table-wrapper">
+              <table className="week-table">
+                <thead>
+                  <tr>
+                    <th className="shift-header">Schicht</th>
+                    {weekSchedule.map((day, index) => (
+                      <th key={day.date} className="day-header">
+                        <div className="day-name">{WEEKDAYS[index]}</div>
+                        <div className="day-date">
+                          {new Date(day.date).toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit'
+                          })}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {SHIFT_TYPES.map(shift => (
+                    <tr key={shift}>
+                      <td className="shift-name">
+                        <div>{shift}</div>
+                        <div className="shift-time-small">{SHIFT_TIMES[shift]}</div>
+                      </td>
+                      {weekSchedule.map(day => {
+                        const assignments = day.shifts[area]?.[shift] || []
+                        const isMyShift = assignments.some(a => a.employeeId === currentEmployeeId)
+                        
+                        return (
+                          <td key={day.date} className={`shift-cell ${isMyShift ? 'my-shift' : ''}`}>
+                            {assignments.length > 0 ? (
+                              <div className="shift-content">
+                                {assignments.map(assignment => (
+                                  <div
+                                    key={assignment.employeeId}
+                                    className={`assignment-tag ${assignment.employeeId === currentEmployeeId ? 'highlight' : ''}`}
+                                  >
+                                    {assignment.employeeName}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="empty-slot">—</span>
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
