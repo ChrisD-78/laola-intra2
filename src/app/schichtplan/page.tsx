@@ -19,7 +19,16 @@ const getMondayOfWeek = (date: Date): Date => {
 
 export default function SchichtplanPage() {
   const { currentUser, isAdmin, userRole } = useAuth()
-  const [viewMode, setViewMode] = useState<ViewMode>(isAdmin ? 'admin' : 'employee')
+  const [viewMode, setViewMode] = useState<ViewMode>('employee')
+  
+  // Update viewMode when isAdmin changes
+  useEffect(() => {
+    if (isAdmin) {
+      setViewMode('admin')
+    } else {
+      setViewMode('employee')
+    }
+  }, [isAdmin])
   const [schedule, setSchedule] = useState<DaySchedule[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
@@ -30,22 +39,19 @@ export default function SchichtplanPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [showSyncButton, setShowSyncButton] = useState(false)
-
-  // Load data from API
-  useEffect(() => {
-    if (currentUser) {
-      loadData()
-      checkSyncStatus()
-    }
-  }, [currentUser])
+  const [error, setError] = useState<string | null>(null)
 
   const checkSyncStatus = async () => {
     try {
       const res = await fetch('/api/schichtplan/sync-users')
+      if (!res.ok) {
+        throw new Error('Failed to check sync status')
+      }
       const data = await res.json()
       setShowSyncButton(data.needsSync && isAdmin)
     } catch (error) {
       console.error('Failed to check sync status:', error)
+      // Nicht kritisch, einfach ignorieren
     }
   }
 
@@ -54,6 +60,9 @@ export default function SchichtplanPage() {
       const res = await fetch('/api/schichtplan/sync-users', {
         method: 'POST'
       })
+      if (!res.ok) {
+        throw new Error('Failed to sync users')
+      }
       const data = await res.json()
       
       if (data.success) {
@@ -72,11 +81,15 @@ export default function SchichtplanPage() {
   const loadData = async () => {
     try {
       setLoading(true)
+      setError(null)
       
       // Load employees
       const employeesRes = await fetch('/api/schichtplan/employees')
+      if (!employeesRes.ok) {
+        throw new Error('Failed to load employees')
+      }
       const employeesData = await employeesRes.json()
-      setEmployees(employeesData)
+      setEmployees(Array.isArray(employeesData) ? employeesData : [])
       
       // Finde aktuellen Benutzer in der Liste
       if (currentUser && employeesData.length > 0) {
@@ -98,26 +111,53 @@ export default function SchichtplanPage() {
       const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString().split('T')[0]
       
       const schedulesRes = await fetch(`/api/schichtplan/schedules?startDate=${startDate}&endDate=${endDate}`)
+      if (!schedulesRes.ok) {
+        throw new Error('Failed to load schedules')
+      }
       const schedulesData = await schedulesRes.json()
-      setSchedule(schedulesData)
+      setSchedule(Array.isArray(schedulesData) ? schedulesData : [])
 
       // Load vacation requests
-      const vacationRes = await fetch('/api/schichtplan/vacation-requests?status=pending')
-      const vacationData = await vacationRes.json()
-      setVacationRequests(vacationData)
+      try {
+        const vacationRes = await fetch('/api/schichtplan/vacation-requests?status=pending')
+        if (vacationRes.ok) {
+          const vacationData = await vacationRes.json()
+          setVacationRequests(Array.isArray(vacationData) ? vacationData : [])
+        }
+      } catch (err) {
+        console.error('Failed to load vacation requests:', err)
+        setVacationRequests([])
+      }
 
       // Load notifications for current employee
       if (currentEmployeeId) {
-        const notifRes = await fetch(`/api/schichtplan/notifications?employeeId=${currentEmployeeId}`)
-        const notifData = await notifRes.json()
-        setNotifications(notifData)
+        try {
+          const notifRes = await fetch(`/api/schichtplan/notifications?employeeId=${currentEmployeeId}`)
+          if (notifRes.ok) {
+            const notifData = await notifRes.json()
+            setNotifications(Array.isArray(notifData) ? notifData : [])
+          }
+        } catch (err) {
+          console.error('Failed to load notifications:', err)
+          setNotifications([])
+        }
       }
     } catch (error) {
       console.error('Failed to load data:', error)
+      setError(error instanceof Error ? error.message : 'Fehler beim Laden der Daten')
     } finally {
       setLoading(false)
     }
   }
+
+  // Load data from API
+  useEffect(() => {
+    if (currentUser) {
+      loadData()
+      checkSyncStatus()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, isAdmin])
 
   const handleScheduleUpdate = async (newSchedule: DaySchedule[]) => {
     setSchedule(newSchedule)
@@ -274,6 +314,26 @@ export default function SchichtplanPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-xl text-red-600 mb-4">Fehler beim Laden</div>
+          <div className="text-gray-600 mb-4">{error}</div>
+          <button
+            onClick={() => {
+              setError(null)
+              loadData()
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <nav className="navbar">
@@ -339,17 +399,28 @@ export default function SchichtplanPage() {
             onVacationDecision={handleVacationDecision}
           />
         ) : (
-          <EmployeeView
-            schedule={schedule}
-            weekSchedule={getCurrentWeekSchedule()}
-            employees={employees}
-            currentEmployeeId={currentEmployeeId}
-            currentWeekStart={currentWeekStart}
-            onWeekChange={changeWeek}
-            onVacationRequest={handleVacationRequest}
-            notifications={notifications.filter(n => n.employeeId === currentEmployeeId)}
-            onMarkNotificationRead={markNotificationAsRead}
-          />
+          currentEmployeeId ? (
+            <EmployeeView
+              schedule={schedule}
+              weekSchedule={getCurrentWeekSchedule()}
+              employees={employees}
+              currentEmployeeId={currentEmployeeId}
+              currentWeekStart={currentWeekStart}
+              onWeekChange={changeWeek}
+              onVacationRequest={handleVacationRequest}
+              notifications={notifications.filter(n => n.employeeId === currentEmployeeId)}
+              onMarkNotificationRead={markNotificationAsRead}
+            />
+          ) : (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="text-xl text-gray-600 mb-4">Keine Mitarbeiter gefunden</div>
+                <div className="text-sm text-gray-500">
+                  {isAdmin && 'Bitte synchronisieren Sie die Benutzer aus der Benutzerverwaltung.'}
+                </div>
+              </div>
+            </div>
+          )
         )}
       </main>
     </div>
