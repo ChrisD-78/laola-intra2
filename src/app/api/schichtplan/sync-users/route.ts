@@ -28,7 +28,9 @@ export async function POST(request: NextRequest) {
         username,
         display_name,
         role,
-        is_admin
+        is_admin,
+        phone,
+        email
       FROM users
       WHERE is_active = true
       ORDER BY display_name
@@ -78,6 +80,8 @@ export async function POST(request: NextRequest) {
                 first_name = ${firstName},
                 last_name = ${lastName},
                 role = ${user.role || 'Benutzer'},
+                phone = ${user.phone || null},
+                email = ${user.email || null},
                 updated_at = NOW()
               WHERE user_id = ${user.id}
             `
@@ -87,6 +91,8 @@ export async function POST(request: NextRequest) {
               SET 
                 first_name = ${firstName},
                 last_name = ${lastName},
+                phone = ${user.phone || null},
+                email = ${user.email || null},
                 updated_at = NOW()
               WHERE id = ${employeeId}
             `
@@ -101,14 +107,18 @@ export async function POST(request: NextRequest) {
                 first_name,
                 last_name,
                 areas,
-                role
+                role,
+                phone,
+                email
               ) VALUES (
                 ${employeeId},
                 ${user.id},
                 ${firstName},
                 ${lastName},
                 ARRAY['Halle']::TEXT[],
-                ${user.role || 'Benutzer'}
+                ${user.role || 'Benutzer'},
+                ${user.phone || null},
+                ${user.email || null}
               )
             `
           } else {
@@ -117,12 +127,16 @@ export async function POST(request: NextRequest) {
                 id,
                 first_name,
                 last_name,
-                areas
+                areas,
+                phone,
+                email
               ) VALUES (
                 ${employeeId},
                 ${firstName},
                 ${lastName},
-                ARRAY['Halle']::TEXT[]
+                ARRAY['Halle']::TEXT[],
+                ${user.phone || null},
+                ${user.email || null}
               )
             `
           }

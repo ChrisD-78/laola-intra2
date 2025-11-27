@@ -4,7 +4,7 @@ import { neon } from '@neondatabase/serverless'
 // POST - Neuen Benutzer erstellen (nur für Admins)
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, displayName, role, createdBy } = await request.json()
+    const { username, password, displayName, role, phone, email, createdBy } = await request.json()
 
     // Validierung
     if (!username || !password || !displayName) {
@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
         role,
         is_admin,
         is_active,
-        created_by
+        created_by,
+        phone,
+        email
       ) VALUES (
         ${username},
         ${password},
@@ -58,9 +60,11 @@ export async function POST(request: NextRequest) {
         ${userRole},
         ${isAdmin},
         true,
-        ${createdBy || null}
+        ${createdBy || null},
+        ${phone || null},
+        ${email || null}
       )
-      RETURNING id, username, display_name, role, is_admin, is_active, created_at
+      RETURNING id, username, display_name, role, is_admin, is_active, created_at, phone, email
     `
 
     const newUser = result[0]

@@ -15,6 +15,8 @@ interface User {
   created_at: string
   last_login?: string
   created_by?: string
+  phone?: string
+  email?: string
 }
 
 export default function AdminUsersPage() {
@@ -31,7 +33,9 @@ export default function AdminUsersPage() {
     username: '',
     password: '',
     displayName: '',
-    role: 'Benutzer'
+    role: 'Benutzer',
+    phone: '',
+    email: ''
   })
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -101,6 +105,8 @@ export default function AdminUsersPage() {
           password: formData.password,
           displayName: formData.displayName,
           role: formData.role,
+          phone: formData.phone || null,
+          email: formData.email || null,
           createdBy: currentUser
         })
       })
@@ -113,7 +119,9 @@ export default function AdminUsersPage() {
           username: '',
           password: '',
           displayName: '',
-          role: 'Benutzer'
+          role: 'Benutzer',
+          phone: '',
+          email: ''
         })
         
         // Aktualisiere Benutzerliste
@@ -339,6 +347,32 @@ export default function AdminUsersPage() {
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="z.B. +49 123 456789"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-Mail
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="z.B. max.mustermann@example.com"
+                  />
+                </div>
+
                 {formError && (
                   <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
                     <p className="text-red-700">{formError}</p>
@@ -408,6 +442,12 @@ export default function AdminUsersPage() {
                         Rolle
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Telefon
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        E-Mail
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -455,6 +495,12 @@ export default function AdminUsersPage() {
                               👤 Benutzer
                             </span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {user.phone || '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {user.email || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {user.is_active ? (

@@ -17,7 +17,9 @@ export async function GET() {
         is_active,
         created_at,
         last_login,
-        created_by
+        created_by,
+        phone,
+        email
       FROM users
       ORDER BY 
         CASE role
