@@ -429,7 +429,29 @@ export default function SchichtplanPage() {
             console.error('Fehler beim Abrufen der VAPID Keys:', vapidError)
           }
           
-          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nMögliche Ursachen:\n1. Browser-Berechtigung wurde nicht erteilt\n2. Seite läuft nicht über HTTPS (erforderlich)\n3. Service Worker konnte nicht initialisiert werden\n\nBitte:\n- Öffnen Sie die Browser-Konsole (F12) für weitere Details\n- Prüfen Sie die Browser-Einstellungen für Benachrichtigungen\n- Stellen Sie sicher, dass die Seite über HTTPS läuft')
+          // Safari-spezifische Fehlermeldung
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+          
+          let errorMsg = 'Push-Benachrichtigungen konnten nicht aktiviert werden.\n\n'
+          
+          if (isSafari || isIOS) {
+            errorMsg += 'Safari/iOS-spezifische Hinweise:\n'
+            errorMsg += '- Benötigt iOS 16.4+ oder macOS 16.4+\n'
+            errorMsg += '- Stellen Sie sicher, dass Benachrichtigungen in den Safari-Einstellungen erlaubt sind\n'
+            errorMsg += '- Prüfen Sie: Safari → Einstellungen → Websites → Benachrichtigungen\n\n'
+          }
+          
+          errorMsg += 'Mögliche Ursachen:\n'
+          errorMsg += '1. Browser-Berechtigung wurde nicht erteilt\n'
+          errorMsg += '2. Seite läuft nicht über HTTPS (erforderlich)\n'
+          errorMsg += '3. Service Worker konnte nicht initialisiert werden\n\n'
+          errorMsg += 'Bitte:\n'
+          errorMsg += '- Öffnen Sie die Browser-Konsole (F12) für weitere Details\n'
+          errorMsg += '- Prüfen Sie die Browser-Einstellungen für Benachrichtigungen\n'
+          errorMsg += '- Stellen Sie sicher, dass die Seite über HTTPS läuft'
+          
+          alert(errorMsg)
         }
       }
     } catch (error) {

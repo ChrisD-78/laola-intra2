@@ -16,6 +16,26 @@ export class PushNotificationService {
   }
 
   async initialize(): Promise<boolean> {
+    // Safari-spezifische Prüfung
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    
+    if (isSafari || isIOS) {
+      console.log('Safari/iOS erkannt')
+      // Safari unterstützt Web Push erst ab iOS 16.4+ / macOS 16.4+
+      if (isIOS) {
+        const iosVersion = navigator.userAgent.match(/OS (\d+)_(\d+)/)
+        if (iosVersion) {
+          const major = parseInt(iosVersion[1])
+          const minor = parseInt(iosVersion[2])
+          if (major < 16 || (major === 16 && minor < 4)) {
+            console.log('❌ iOS Version zu alt für Web Push (benötigt iOS 16.4+)')
+            return false
+          }
+        }
+      }
+    }
+
     if (!('serviceWorker' in navigator)) {
       console.log('❌ Service Worker wird nicht unterstützt')
       return false
@@ -23,6 +43,9 @@ export class PushNotificationService {
 
     if (!('PushManager' in window)) {
       console.log('❌ Push Manager wird nicht unterstützt')
+      if (isSafari || isIOS) {
+        console.log('Hinweis: Safari benötigt iOS 16.4+ oder macOS 16.4+ für Web Push')
+      }
       return false
     }
 
@@ -49,25 +72,48 @@ export class PushNotificationService {
         
         // Prüfe zuerst ob sw.js erreichbar ist
         try {
-          const swCheck = await fetch('/sw.js', { method: 'HEAD' })
+          const swCheck = await fetch('/sw.js', { 
+            method: 'HEAD',
+            cache: 'no-cache'
+          })
+          console.log('sw.js Response Status:', swCheck.status)
+          console.log('sw.js Content-Type:', swCheck.headers.get('content-type'))
+          
           if (!swCheck.ok) {
             console.error('❌ sw.js Datei nicht gefunden (Status:', swCheck.status, ')')
-            return false
+            // Versuche GET statt HEAD
+            const swGet = await fetch('/sw.js', { cache: 'no-cache' })
+            if (!swGet.ok) {
+              console.error('❌ sw.js auch per GET nicht erreichbar (Status:', swGet.status, ')')
+              return false
+            }
+            console.log('✅ sw.js per GET erreichbar')
+          } else {
+            console.log('✅ sw.js Datei ist erreichbar')
           }
-          console.log('✅ sw.js Datei ist erreichbar')
         } catch (fetchError) {
           console.error('❌ Fehler beim Prüfen von sw.js:', fetchError)
+          if (fetchError instanceof Error) {
+            console.error('Fehlerdetails:', fetchError.message)
+          }
           return false
         }
         
         try {
           // Versuche Service Worker zu registrieren
+          console.log('Versuche Service Worker zu registrieren...')
+          console.log('Aktuelle URL:', window.location.href)
+          console.log('Origin:', window.location.origin)
+          
           this.registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/',
             updateViaCache: 'none'
           })
           console.log('✅ Service Worker registriert:', this.registration.scope)
           console.log('Service Worker State:', this.registration.active?.state || this.registration.installing?.state || this.registration.waiting?.state)
+          console.log('Service Worker Active:', !!this.registration.active)
+          console.log('Service Worker Installing:', !!this.registration.installing)
+          console.log('Service Worker Waiting:', !!this.registration.waiting)
         } catch (registerError) {
           console.error('❌ Fehler bei Service Worker Registrierung:', registerError)
           if (registerError instanceof Error) {
@@ -219,10 +265,26 @@ export class PushNotificationService {
 
   async requestPermission(): Promise<NotificationPermission> {
     if (!('Notification' in window)) {
+      console.log('❌ Notification API wird nicht unterstützt')
       return 'denied'
     }
 
-    return await Notification.requestPermission()
+    // Safari-spezifische Behandlung
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    
+    if (isSafari) {
+      // Safari benötigt explizite Berechtigung
+      console.log('Safari erkannt - fordere Benachrichtigungsberechtigung an')
+    }
+
+    try {
+      const permission = await Notification.requestPermission()
+      console.log('Benachrichtigungsberechtigung:', permission)
+      return permission
+    } catch (error) {
+      console.error('Fehler beim Anfordern der Berechtigung:', error)
+      return 'denied'
+    }
   }
 
   async subscribe(userId?: string): Promise<boolean> {
