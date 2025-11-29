@@ -156,13 +156,20 @@ export default function SchichtplanPage() {
   // Initialize Push Notifications
   useEffect(() => {
     const initPush = async () => {
-      const service = PushNotificationService.getInstance()
-      const initialized = await service.initialize()
-      
-      if (initialized) {
-        setPushService(service)
-        const isSubscribed = await service.isSubscribed()
-        setPushEnabled(isSubscribed)
+      try {
+        const service = PushNotificationService.getInstance()
+        const initialized = await service.initialize()
+        
+        if (initialized) {
+          setPushService(service)
+          const isSubscribed = await service.isSubscribed()
+          console.log('Push Notification Status:', isSubscribed ? 'aktiviert' : 'deaktiviert')
+          setPushEnabled(isSubscribed)
+        } else {
+          console.log('Push Notifications nicht verfügbar')
+        }
+      } catch (error) {
+        console.error('Fehler bei Push Notification Initialisierung:', error)
       }
     }
     
@@ -326,22 +333,45 @@ export default function SchichtplanPage() {
   }
 
   const togglePushNotifications = async () => {
-    if (!pushService) return
+    if (!pushService) {
+      console.error('Push Service nicht initialisiert')
+      alert('Push-Benachrichtigungen sind nicht verfügbar. Bitte laden Sie die Seite neu.')
+      return
+    }
 
-    if (pushEnabled) {
-      // Deaktivieren
-      const success = await pushService.unsubscribe()
-      if (success) {
-        setPushEnabled(false)
-      }
-    } else {
-      // Aktivieren
-      const success = await pushService.subscribe()
-      if (success) {
-        setPushEnabled(true)
+    try {
+      if (pushEnabled) {
+        // Deaktivieren
+        console.log('Deaktiviere Push-Benachrichtigungen...')
+        const success = await pushService.unsubscribe()
+        if (success) {
+          setPushEnabled(false)
+          console.log('Push-Benachrichtigungen deaktiviert')
+        } else {
+          console.error('Fehler beim Deaktivieren')
+          alert('Fehler beim Deaktivieren der Push-Benachrichtigungen.')
+        }
       } else {
-        alert('Push-Benachrichtigungen konnten nicht aktiviert werden. Bitte erlauben Sie Benachrichtigungen in Ihren Browser-Einstellungen.')
+        // Aktivieren
+        console.log('Aktiviere Push-Benachrichtigungen...')
+        
+        // Hole userId für Subscription
+        const userId = currentUser ? employees.find((emp: any) => 
+          emp.userDisplayName === currentUser || emp.username === currentUser
+        )?.userId : undefined
+        
+        const success = await pushService.subscribe(userId)
+        if (success) {
+          setPushEnabled(true)
+          console.log('Push-Benachrichtigungen aktiviert')
+        } else {
+          console.error('Fehler beim Aktivieren')
+          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nBitte:\n1. Erlauben Sie Benachrichtigungen in Ihren Browser-Einstellungen\n2. Stellen Sie sicher, dass die Seite über HTTPS läuft\n3. Prüfen Sie die Browser-Konsole für weitere Details')
+        }
       }
+    } catch (error) {
+      console.error('Fehler beim Toggle Push Notifications:', error)
+      alert('Fehler beim Ändern der Push-Benachrichtigungseinstellungen: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'))
     }
   }
 

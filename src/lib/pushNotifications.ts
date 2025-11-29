@@ -48,37 +48,71 @@ export class PushNotificationService {
     if (!this.registration) {
       const initialized = await this.initialize()
       if (!initialized) {
+        console.error('Service Worker konnte nicht initialisiert werden')
         return false
       }
     }
 
     if (!this.registration) {
+      console.error('Service Worker Registration nicht verfügbar')
       return false
     }
 
     try {
+      // Prüfe ob bereits subscribed
+      const existingSubscription = await this.registration.pushManager.getSubscription()
+      if (existingSubscription) {
+        console.log('Bereits subscribed, aktualisiere...')
+        this.subscription = existingSubscription
+        // Aktualisiere auf Server
+        const subscribeResponse = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscription: {
+              endpoint: this.subscription.endpoint,
+              keys: {
+                p256dh: this.arrayBufferToBase64(this.subscription.getKey('p256dh')!),
+                auth: this.arrayBufferToBase64(this.subscription.getKey('auth')!)
+              }
+            },
+            userId: userId,
+            userAgent: navigator.userAgent
+          })
+        })
+        return subscribeResponse.ok
+      }
+
       // Prüfe Berechtigung
       const permission = await this.requestPermission()
       if (permission !== 'granted') {
-        console.log('Push-Benachrichtigungen nicht erlaubt')
+        console.log('Push-Benachrichtigungen nicht erlaubt. Permission:', permission)
         return false
       }
 
       // Hole VAPID Public Key
       const response = await fetch('/api/push/vapid-public-key')
-      const { publicKey } = await response.json()
+      if (!response.ok) {
+        console.error('Fehler beim Abrufen des VAPID Public Keys:', response.status)
+        return false
+      }
+      
+      const data = await response.json()
+      const publicKey = data.publicKey
 
       if (!publicKey) {
         console.error('VAPID Public Key nicht verfügbar')
         return false
       }
 
+      console.log('Erstelle Push Subscription...')
       // Erstelle Subscription
       this.subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: this.urlBase64ToUint8Array(publicKey)
       })
 
+      console.log('Subscription erstellt, sende an Server...')
       // Sende Subscription an Server
       const subscribeResponse = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -97,10 +131,11 @@ export class PushNotificationService {
       })
 
       if (subscribeResponse.ok) {
-        console.log('Push Subscription erfolgreich')
+        console.log('✅ Push Subscription erfolgreich gespeichert')
         return true
       } else {
-        console.error('Fehler beim Speichern der Subscription')
+        const errorData = await subscribeResponse.json().catch(() => ({}))
+        console.error('Fehler beim Speichern der Subscription:', subscribeResponse.status, errorData)
         return false
       }
     } catch (error) {
@@ -110,21 +145,44 @@ export class PushNotificationService {
   }
 
   async unsubscribe(): Promise<boolean> {
-    if (!this.subscription) {
-      return true
-    }
-
     try {
-      await this.subscription.unsubscribe()
+      // Prüfe ob Subscription existiert
+      if (!this.registration) {
+        const initialized = await this.initialize()
+        if (!initialized) {
+          return true // Kein Service Worker = bereits deaktiviert
+        }
+      }
+
+      if (!this.registration) {
+        return true
+      }
+
+      // Hole aktuelle Subscription
+      const currentSubscription = await this.registration.pushManager.getSubscription()
+      
+      if (!currentSubscription) {
+        this.subscription = null
+        return true // Bereits deaktiviert
+      }
+
+      console.log('Entferne Push Subscription...')
+      await currentSubscription.unsubscribe()
 
       // Entferne von Server
-      await fetch('/api/push/unsubscribe', {
+      const unsubscribeResponse = await fetch('/api/push/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          endpoint: this.subscription.endpoint
+          endpoint: currentSubscription.endpoint
         })
       })
+
+      if (unsubscribeResponse.ok) {
+        console.log('✅ Push Subscription erfolgreich entfernt')
+      } else {
+        console.warn('Fehler beim Entfernen von Server:', unsubscribeResponse.status)
+      }
 
       this.subscription = null
       return true
