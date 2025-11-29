@@ -460,13 +460,24 @@ export default function SchichtplanPage() {
           <button
             className="nav-btn"
             onClick={togglePushNotifications}
+            disabled={pushInitializing}
             style={{ 
               background: pushEnabled ? '#10b981' : '#6b7280', 
-              color: 'white' 
+              color: 'white',
+              opacity: pushInitializing ? 0.6 : 1,
+              cursor: pushInitializing ? 'wait' : 'pointer'
             }}
-            title={pushEnabled ? 'Push-Benachrichtigungen deaktivieren' : 'Push-Benachrichtigungen aktivieren'}
+            title={pushInitializing 
+              ? 'Push-Benachrichtigungen werden initialisiert...' 
+              : pushEnabled 
+                ? 'Push-Benachrichtigungen deaktivieren' 
+                : 'Push-Benachrichtigungen aktivieren'}
           >
-            {pushEnabled ? '🔔 Benachrichtigungen an' : '🔕 Benachrichtigungen aus'}
+            {pushInitializing 
+              ? '⏳ Initialisiere...' 
+              : pushEnabled 
+                ? '🔔 Benachrichtigungen an' 
+                : '🔕 Benachrichtigungen aus'}
           </button>
         </div>
         
