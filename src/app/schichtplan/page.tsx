@@ -354,7 +354,28 @@ export default function SchichtplanPage() {
         service = PushNotificationService.getInstance()
         const initialized = await service.initialize()
         if (!initialized) {
-          alert('Push-Benachrichtigungen sind auf diesem Gerät/Browser nicht verfügbar.\n\nMögliche Gründe:\n- Browser unterstützt keine Push Notifications\n- Seite läuft nicht über HTTPS (erforderlich für Push Notifications)\n- Service Worker kann nicht registriert werden')
+          // Prüfe spezifische Probleme
+          const isHttps = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+          const hasServiceWorker = 'serviceWorker' in navigator
+          const hasPushManager = 'PushManager' in window
+          
+          let errorMsg = 'Push-Benachrichtigungen sind auf diesem Gerät/Browser nicht verfügbar.\n\n'
+          
+          if (!isHttps) {
+            errorMsg += '❌ Seite läuft nicht über HTTPS (erforderlich für Push Notifications)\n'
+          }
+          if (!hasServiceWorker) {
+            errorMsg += '❌ Browser unterstützt keine Service Workers\n'
+          }
+          if (!hasPushManager) {
+            errorMsg += '❌ Browser unterstützt keine Push Notifications\n'
+          }
+          if (isHttps && hasServiceWorker && hasPushManager) {
+            errorMsg += '❌ Service Worker konnte nicht registriert werden\n'
+            errorMsg += '\nBitte:\n- Öffnen Sie die Browser-Konsole (F12) für Details\n- Prüfen Sie ob /sw.js erreichbar ist\n- Versuchen Sie die Seite neu zu laden'
+          }
+          
+          alert(errorMsg)
           return
         }
         setPushService(service)
