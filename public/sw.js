@@ -1,4 +1,21 @@
 // Service Worker für Push Notifications
+console.log('Service Worker geladen:', self.registration?.scope || 'unbekannt')
+
+// Install Event
+self.addEventListener('install', function(event) {
+  console.log('Service Worker installiert')
+  // Sofort aktivieren
+  self.skipWaiting()
+})
+
+// Activate Event
+self.addEventListener('activate', function(event) {
+  console.log('Service Worker aktiviert')
+  // Übernehme sofort die Kontrolle
+  event.waitUntil(self.clients.claim())
+})
+
+// Push Event
 self.addEventListener('push', function(event) {
   const data = event.data ? event.data.json() : {}
   const title = data.title || 'Schichtplan Update'
