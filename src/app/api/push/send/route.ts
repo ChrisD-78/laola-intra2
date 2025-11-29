@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { title, body, icon, url, userId } = body
+    const requestBody = await request.json()
+    const { title, body, icon, url, userId } = requestBody
 
     // Hole alle Subscriptions (optional gefiltert nach userId)
     let subscriptions
