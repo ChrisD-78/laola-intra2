@@ -389,10 +389,26 @@ export default function SchichtplanPage() {
         const success = await service.subscribe(userId)
         if (success) {
           setPushEnabled(true)
-          console.log('Push-Benachrichtigungen aktiviert')
+          console.log('✅ Push-Benachrichtigungen aktiviert')
         } else {
-          console.error('Fehler beim Aktivieren')
-          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nBitte:\n1. Erlauben Sie Benachrichtigungen in Ihren Browser-Einstellungen\n2. Stellen Sie sicher, dass die Seite über HTTPS läuft\n3. Prüfen Sie die Browser-Konsole für weitere Details')
+          console.error('❌ Fehler beim Aktivieren')
+          // Prüfe ob VAPID Keys konfiguriert sind
+          try {
+            const vapidResponse = await fetch('/api/push/vapid-public-key')
+            if (!vapidResponse.ok) {
+              alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nFehler: VAPID Keys sind nicht konfiguriert.\n\nBitte konfigurieren Sie die VAPID Keys in den Netlify Environment Variables.')
+              return
+            }
+            const vapidData = await vapidResponse.json()
+            if (!vapidData.publicKey) {
+              alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nFehler: VAPID Public Key nicht gefunden.\n\nBitte konfigurieren Sie NEXT_PUBLIC_VAPID_PUBLIC_KEY in den Netlify Environment Variables.')
+              return
+            }
+          } catch (vapidError) {
+            console.error('Fehler beim Abrufen der VAPID Keys:', vapidError)
+          }
+          
+          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.\n\nMögliche Ursachen:\n1. Browser-Berechtigung wurde nicht erteilt\n2. Seite läuft nicht über HTTPS (erforderlich)\n3. Service Worker konnte nicht initialisiert werden\n\nBitte:\n- Öffnen Sie die Browser-Konsole (F12) für weitere Details\n- Prüfen Sie die Browser-Einstellungen für Benachrichtigungen\n- Stellen Sie sicher, dass die Seite über HTTPS läuft')
         }
       }
     } catch (error) {
