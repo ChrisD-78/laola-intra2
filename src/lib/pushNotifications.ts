@@ -17,53 +17,122 @@ export class PushNotificationService {
 
   async initialize(): Promise<boolean> {
     if (!('serviceWorker' in navigator)) {
-      console.log('Service Worker wird nicht unterstützt')
+      console.log('❌ Service Worker wird nicht unterstützt')
       return false
     }
 
     if (!('PushManager' in window)) {
-      console.log('Push Manager wird nicht unterstützt')
+      console.log('❌ Push Manager wird nicht unterstützt')
       return false
     }
 
     try {
-      // Service Worker registrieren
-      console.log('Registriere Service Worker...')
-      this.registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      })
-      console.log('✅ Service Worker registriert:', this.registration.scope)
+      // Prüfe ob bereits ein Service Worker registriert ist
+      const existingRegistrations = await navigator.serviceWorker.getRegistrations()
+      console.log('Gefundene Service Worker Registrierungen:', existingRegistrations.length)
+
+      // Entferne alte/fehlerhafte Registrierungen
+      for (const registration of existingRegistrations) {
+        if (registration.scope !== window.location.origin + '/') {
+          console.log('Entferne alte Service Worker Registrierung:', registration.scope)
+          await registration.unregister()
+        } else {
+          // Verwende bestehende Registrierung
+          this.registration = registration
+          console.log('✅ Verwende bestehende Service Worker Registrierung')
+        }
+      }
+
+      // Registriere neuen Service Worker falls noch nicht vorhanden
+      if (!this.registration) {
+        console.log('Registriere neuen Service Worker...')
+        try {
+          this.registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+            updateViaCache: 'none'
+          })
+          console.log('✅ Service Worker registriert:', this.registration.scope)
+        } catch (registerError) {
+          console.error('Fehler bei Service Worker Registrierung:', registerError)
+          if (registerError instanceof Error) {
+            console.error('Fehlerdetails:', registerError.message)
+            // Prüfe ob die Datei existiert
+            try {
+              const response = await fetch('/sw.js')
+              if (!response.ok) {
+                console.error('❌ sw.js Datei nicht gefunden oder nicht erreichbar:', response.status)
+              } else {
+                console.log('✅ sw.js Datei ist erreichbar')
+              }
+            } catch (fetchError) {
+              console.error('❌ Fehler beim Abrufen von sw.js:', fetchError)
+            }
+          }
+          return false
+        }
+      }
 
       // Warte bis Service Worker aktiv ist
       if (this.registration.installing) {
-        await new Promise<void>((resolve) => {
+        console.log('Service Worker wird installiert...')
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Service Worker Installation Timeout'))
+          }, 10000) // 10 Sekunden Timeout
+
           this.registration!.installing!.addEventListener('statechange', function() {
+            console.log('Service Worker State:', this.state)
             if (this.state === 'activated') {
+              clearTimeout(timeout)
               resolve()
+            } else if (this.state === 'redundant') {
+              clearTimeout(timeout)
+              reject(new Error('Service Worker wurde redundant'))
             }
           })
         })
+        console.log('✅ Service Worker installiert und aktiviert')
       } else if (this.registration.waiting) {
-        await new Promise<void>((resolve) => {
+        console.log('Service Worker wartet auf Aktivierung...')
+        // Versuche zu aktivieren
+        this.registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Service Worker Aktivierung Timeout'))
+          }, 10000)
+
           this.registration!.waiting!.addEventListener('statechange', function() {
+            console.log('Service Worker State:', this.state)
             if (this.state === 'activated') {
+              clearTimeout(timeout)
               resolve()
+            } else if (this.state === 'redundant') {
+              clearTimeout(timeout)
+              reject(new Error('Service Worker wurde redundant'))
             }
           })
         })
+        console.log('✅ Service Worker aktiviert')
+      } else if (this.registration.active) {
+        console.log('✅ Service Worker ist bereits aktiv')
       }
 
       // Prüfe ob bereits eine Subscription existiert
-      this.subscription = await this.registration.pushManager.getSubscription()
-      if (this.subscription) {
-        console.log('✅ Bestehende Subscription gefunden')
-      } else {
-        console.log('Keine bestehende Subscription gefunden')
+      try {
+        this.subscription = await this.registration.pushManager.getSubscription()
+        if (this.subscription) {
+          console.log('✅ Bestehende Subscription gefunden')
+        } else {
+          console.log('Keine bestehende Subscription gefunden')
+        }
+      } catch (subscriptionError) {
+        console.error('Fehler beim Abrufen der Subscription:', subscriptionError)
+        // Nicht kritisch, weiter machen
       }
       
       return true
     } catch (error) {
-      console.error('Fehler bei Service Worker Registrierung:', error)
+      console.error('❌ Fehler bei Service Worker Initialisierung:', error)
       if (error instanceof Error) {
         console.error('Fehlerdetails:', error.message, error.stack)
       }
