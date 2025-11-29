@@ -43,6 +43,7 @@ export default function SchichtplanPage() {
   const [error, setError] = useState<string | null>(null)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushService, setPushService] = useState<PushNotificationService | null>(null)
+  const [pushInitializing, setPushInitializing] = useState(true)
 
   const checkSyncStatus = async () => {
     try {
@@ -157,6 +158,7 @@ export default function SchichtplanPage() {
   useEffect(() => {
     const initPush = async () => {
       try {
+        setPushInitializing(true)
         const service = PushNotificationService.getInstance()
         const initialized = await service.initialize()
         
@@ -166,10 +168,17 @@ export default function SchichtplanPage() {
           console.log('Push Notification Status:', isSubscribed ? 'aktiviert' : 'deaktiviert')
           setPushEnabled(isSubscribed)
         } else {
-          console.log('Push Notifications nicht verfügbar')
+          console.log('Push Notifications nicht verfügbar (Service Worker oder Push Manager nicht unterstützt)')
+          // Setze Service trotzdem, damit der Button angezeigt wird
+          setPushService(service)
         }
       } catch (error) {
         console.error('Fehler bei Push Notification Initialisierung:', error)
+        // Setze Service trotzdem, damit der Button angezeigt wird
+        const service = PushNotificationService.getInstance()
+        setPushService(service)
+      } finally {
+        setPushInitializing(false)
       }
     }
     
@@ -333,17 +342,34 @@ export default function SchichtplanPage() {
   }
 
   const togglePushNotifications = async () => {
-    if (!pushService) {
-      console.error('Push Service nicht initialisiert')
-      alert('Push-Benachrichtigungen sind nicht verfügbar. Bitte laden Sie die Seite neu.')
+    if (pushInitializing) {
+      alert('Push-Benachrichtigungen werden noch initialisiert. Bitte warten Sie einen Moment.')
       return
+    }
+
+    // Initialisiere Service falls noch nicht geschehen
+    let service = pushService
+    if (!service) {
+      try {
+        service = PushNotificationService.getInstance()
+        const initialized = await service.initialize()
+        if (!initialized) {
+          alert('Push-Benachrichtigungen sind auf diesem Gerät/Browser nicht verfügbar.\n\nMögliche Gründe:\n- Browser unterstützt keine Push Notifications\n- Seite läuft nicht über HTTPS (erforderlich für Push Notifications)\n- Service Worker kann nicht registriert werden')
+          return
+        }
+        setPushService(service)
+      } catch (error) {
+        console.error('Fehler bei Service Initialisierung:', error)
+        alert('Fehler bei der Initialisierung der Push-Benachrichtigungen: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'))
+        return
+      }
     }
 
     try {
       if (pushEnabled) {
         // Deaktivieren
         console.log('Deaktiviere Push-Benachrichtigungen...')
-        const success = await pushService.unsubscribe()
+        const success = await service.unsubscribe()
         if (success) {
           setPushEnabled(false)
           console.log('Push-Benachrichtigungen deaktiviert')
@@ -360,7 +386,7 @@ export default function SchichtplanPage() {
           emp.userDisplayName === currentUser || emp.username === currentUser
         )?.userId : undefined
         
-        const success = await pushService.subscribe(userId)
+        const success = await service.subscribe(userId)
         if (success) {
           setPushEnabled(true)
           console.log('Push-Benachrichtigungen aktiviert')

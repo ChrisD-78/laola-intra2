@@ -16,22 +16,57 @@ export class PushNotificationService {
   }
 
   async initialize(): Promise<boolean> {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('Push Notifications werden nicht unterstützt')
+    if (!('serviceWorker' in navigator)) {
+      console.log('Service Worker wird nicht unterstützt')
+      return false
+    }
+
+    if (!('PushManager' in window)) {
+      console.log('Push Manager wird nicht unterstützt')
       return false
     }
 
     try {
       // Service Worker registrieren
-      this.registration = await navigator.serviceWorker.register('/sw.js')
-      console.log('Service Worker registriert')
+      console.log('Registriere Service Worker...')
+      this.registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      })
+      console.log('✅ Service Worker registriert:', this.registration.scope)
+
+      // Warte bis Service Worker aktiv ist
+      if (this.registration.installing) {
+        await new Promise<void>((resolve) => {
+          this.registration!.installing!.addEventListener('statechange', function() {
+            if (this.state === 'activated') {
+              resolve()
+            }
+          })
+        })
+      } else if (this.registration.waiting) {
+        await new Promise<void>((resolve) => {
+          this.registration!.waiting!.addEventListener('statechange', function() {
+            if (this.state === 'activated') {
+              resolve()
+            }
+          })
+        })
+      }
 
       // Prüfe ob bereits eine Subscription existiert
       this.subscription = await this.registration.pushManager.getSubscription()
+      if (this.subscription) {
+        console.log('✅ Bestehende Subscription gefunden')
+      } else {
+        console.log('Keine bestehende Subscription gefunden')
+      }
       
       return true
     } catch (error) {
       console.error('Fehler bei Service Worker Registrierung:', error)
+      if (error instanceof Error) {
+        console.error('Fehlerdetails:', error.message, error.stack)
+      }
       return false
     }
   }
