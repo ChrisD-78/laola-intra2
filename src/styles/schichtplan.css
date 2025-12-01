@@ -1859,6 +1859,10 @@
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 8px;
+  /* Vertikales Scrollen erlauben, damit Kopfzeile stehen bleibt */
+  max-height: 500px;
+  overflow-y: auto;
+  position: relative;
 }
 
 .employee-overview-table {
@@ -1878,7 +1882,8 @@
   font-weight: 600;
   position: sticky;
   left: 0;
-  z-index: 10;
+  top: 0;
+  z-index: 20;
   min-width: 180px;
   border-top-left-radius: 8px;
 }
@@ -1890,6 +1895,10 @@
   text-align: center;
   font-weight: 600;
   min-width: 100px;
+  /* Kopfzeile mit Wochentagen/Datum fixieren */
+  position: sticky;
+  top: 0;
+  z-index: 15;
 }
 
 .employee-day-header:last-child {
@@ -2122,6 +2131,9 @@
   scroll-behavior: smooth;
   border-radius: 8px;
   position: relative;
+  /* Vertikales Scrollen für viele Mitarbeiter erlauben */
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .employee-month-table {
@@ -2141,6 +2153,10 @@
   font-weight: 600;
   min-width: 35px;
   font-size: 0.75rem;
+  /* Kopfzeile mit Tageszahlen fixieren */
+  position: sticky;
+  top: 0;
+  z-index: 15;
 }
 
 .employee-month-day-header.weekend {
