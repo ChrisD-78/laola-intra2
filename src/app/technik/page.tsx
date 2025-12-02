@@ -33,6 +33,8 @@ export default function Technik() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [inspectionToDelete, setInspectionToDelete] = useState<TechnikInspection | null>(null)
+  const [sortColumn, setSortColumn] = useState<'rubrik' | 'id_nr' | 'name' | 'naechste_pruefung' | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [editFormData, setEditFormData] = useState({
     id: '',
     rubrik: '',
@@ -316,6 +318,61 @@ export default function Technik() {
     }
   }
 
+  const handleSort = (column: 'rubrik' | 'id_nr' | 'name' | 'naechste_pruefung') => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Set new column with ascending as default
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const getSortedInspections = () => {
+    if (!sortColumn) return inspections
+
+    return [...inspections].sort((a, b) => {
+      let aValue = a[sortColumn]
+      let bValue = b[sortColumn]
+
+      // Handle special date sorting for naechste_pruefung
+      if (sortColumn === 'naechste_pruefung') {
+        // Try to parse German date format (DD.MM.YYYY)
+        const parseGermanDate = (dateStr: string) => {
+          const parts = dateStr.split('.')
+          if (parts.length === 3) {
+            return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0])).getTime()
+          }
+          return new Date(dateStr).getTime()
+        }
+        aValue = parseGermanDate(aValue).toString()
+        bValue = parseGermanDate(bValue).toString()
+      }
+
+      // Natural sort for id_nr (handles M-001, M-002, etc.)
+      if (sortColumn === 'id_nr') {
+        const naturalCompare = (a: string, b: string) => {
+          return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+        }
+        const result = naturalCompare(aValue, bValue)
+        return sortDirection === 'asc' ? result : -result
+      }
+
+      // String comparison
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  const getSortIcon = (column: 'rubrik' | 'id_nr' | 'name' | 'naechste_pruefung') => {
+    if (sortColumn !== column) {
+      return <span className="text-gray-400 ml-1">⇅</span>
+    }
+    return sortDirection === 'asc' ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>
+  }
+
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase()
     if (statusLower === 'offen' || statusLower === 'erledigt' || statusLower === 'in betrieb') {
@@ -387,17 +444,37 @@ export default function Technik() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    Rubrik
+                  <th 
+                    className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('rubrik')}
+                  >
+                    <div className="flex items-center">
+                      Rubrik {getSortIcon('rubrik')}
+                    </div>
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    ID-NR.
+                  <th 
+                    className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('id_nr')}
+                  >
+                    <div className="flex items-center">
+                      ID-NR. {getSortIcon('id_nr')}
+                    </div>
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    Name
+                  <th 
+                    className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      Name {getSortIcon('name')}
+                    </div>
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    Nächste Prüfung
+                  <th 
+                    className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('naechste_pruefung')}
+                  >
+                    <div className="flex items-center">
+                      Nächste Prüfung {getSortIcon('naechste_pruefung')}
+                    </div>
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                     STATUS
@@ -408,7 +485,7 @@ export default function Technik() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {inspections.length === 0 ? (
+                {getSortedInspections().length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
                       <div className="flex flex-col items-center">
@@ -419,7 +496,7 @@ export default function Technik() {
                     </td>
                   </tr>
                 ) : (
-                  inspections.map((inspection) => (
+                  getSortedInspections().map((inspection) => (
                     <tr key={inspection.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {inspection.rubrik || '-'}
