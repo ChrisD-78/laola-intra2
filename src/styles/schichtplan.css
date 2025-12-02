@@ -1901,6 +1901,23 @@
   z-index: 15;
 }
 
+/* Feiertag Header */
+.employee-day-header.holiday-header {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Ferien Header */
+.employee-day-header.vacation-header {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+/* Holiday Indicator */
+.holiday-indicator {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
 .employee-day-header:last-child {
   border-top-right-radius: 8px;
 }
@@ -2161,6 +2178,23 @@
 
 .employee-month-day-header.weekend {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* Feiertag Header für Monatsansicht */
+.employee-month-day-header.holiday-header {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Ferien Header für Monatsansicht */
+.employee-month-day-header.vacation-header {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+/* Holiday Indicator für Monatsansicht */
+.holiday-indicator-small {
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
 }
 
 .day-name-small {

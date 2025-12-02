@@ -1,7 +1,13 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { ShiftType, AreaType, DaySchedule, Employee, SpecialStatus, EmployeeColor, VacationRequest } from '@/types/schichtplan';
+
+interface Holiday {
+  date: string; // Format: YYYY-MM-DD
+  name: string;
+  type: 'feiertag' | 'ferien';
+}
 
 interface AdminViewProps {
   schedule: DaySchedule[];
@@ -18,6 +24,128 @@ interface AdminViewProps {
 const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht'];
 const AREAS: AreaType[] = ['Halle', 'Kasse', 'Sauna', 'Reinigung', 'Gastro'];
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+
+// Gesetzliche Feiertage für Rheinland-Pfalz
+const getHolidays = (year: number): Holiday[] => {
+  const holidays: Holiday[] = []
+
+  // Feste Feiertage
+  holidays.push(
+    { date: `${year}-01-01`, name: 'Neujahr', type: 'feiertag' },
+    { date: `${year}-05-01`, name: 'Tag der Arbeit', type: 'feiertag' },
+    { date: `${year}-10-03`, name: 'Tag der Deutschen Einheit', type: 'feiertag' },
+    { date: `${year}-11-01`, name: 'Allerheiligen', type: 'feiertag' },
+    { date: `${year}-12-25`, name: '1. Weihnachtsfeiertag', type: 'feiertag' },
+    { date: `${year}-12-26`, name: '2. Weihnachtsfeiertag', type: 'feiertag' }
+  )
+
+  // Berechnung beweglicher Feiertage (Ostern-basiert)
+  const easter = calculateEaster(year)
+  const goodFriday = addDaysToDate(easter, -2)
+  const easterMonday = addDaysToDate(easter, 1)
+  const ascension = addDaysToDate(easter, 39)
+  const whitMonday = addDaysToDate(easter, 50)
+  const corpusChristi = addDaysToDate(easter, 60)
+
+  holidays.push(
+    { date: formatDateToString(goodFriday), name: 'Karfreitag', type: 'feiertag' },
+    { date: formatDateToString(easterMonday), name: 'Ostermontag', type: 'feiertag' },
+    { date: formatDateToString(ascension), name: 'Christi Himmelfahrt', type: 'feiertag' },
+    { date: formatDateToString(whitMonday), name: 'Pfingstmontag', type: 'feiertag' },
+    { date: formatDateToString(corpusChristi), name: 'Fronleichnam', type: 'feiertag' }
+  )
+
+  // Ferientage für Rheinland-Pfalz
+  if (year === 2025) {
+    // Osterferien 2025
+    for (let day = 14; day <= 25; day++) {
+      holidays.push({ date: `2025-04-${String(day).padStart(2, '0')}`, name: 'Osterferien', type: 'ferien' })
+    }
+    // Pfingstferien 2025
+    holidays.push(
+      { date: '2025-05-30', name: 'Pfingstferien', type: 'ferien' },
+      { date: '2025-06-02', name: 'Pfingstferien', type: 'ferien' }
+    )
+    // Sommerferien 2025
+    for (let month = 7; month <= 8; month++) {
+      const startDay = month === 7 ? 28 : 1
+      const endDay = month === 7 ? 31 : 5
+      for (let day = startDay; day <= endDay; day++) {
+        holidays.push({ date: `2025-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, name: 'Sommerferien', type: 'ferien' })
+      }
+    }
+    // Herbstferien 2025
+    for (let day = 20; day <= 31; day++) {
+      holidays.push({ date: `2025-10-${String(day).padStart(2, '0')}`, name: 'Herbstferien', type: 'ferien' })
+    }
+    // Weihnachtsferien 2025
+    for (let day = 22; day <= 31; day++) {
+      holidays.push({ date: `2025-12-${String(day).padStart(2, '0')}`, name: 'Weihnachtsferien', type: 'ferien' })
+    }
+  } else if (year === 2026) {
+    // Osterferien 2026
+    for (let day = 30; day <= 31; day++) {
+      holidays.push({ date: `2026-03-${String(day).padStart(2, '0')}`, name: 'Osterferien', type: 'ferien' })
+    }
+    for (let day = 1; day <= 11; day++) {
+      holidays.push({ date: `2026-04-${String(day).padStart(2, '0')}`, name: 'Osterferien', type: 'ferien' })
+    }
+    // Pfingstferien 2026
+    for (let day = 22; day <= 25; day++) {
+      holidays.push({ date: `2026-05-${String(day).padStart(2, '0')}`, name: 'Pfingstferien', type: 'ferien' })
+    }
+    // Sommerferien 2026
+    for (let month = 7; month <= 8; month++) {
+      const startDay = month === 7 ? 27 : 1
+      const endDay = month === 7 ? 31 : 4
+      for (let day = startDay; day <= endDay; day++) {
+        holidays.push({ date: `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, name: 'Sommerferien', type: 'ferien' })
+      }
+    }
+    // Herbstferien 2026
+    for (let day = 19; day <= 30; day++) {
+      holidays.push({ date: `2026-10-${String(day).padStart(2, '0')}`, name: 'Herbstferien', type: 'ferien' })
+    }
+    // Weihnachtsferien 2026
+    for (let day = 23; day <= 31; day++) {
+      holidays.push({ date: `2026-12-${String(day).padStart(2, '0')}`, name: 'Weihnachtsferien', type: 'ferien' })
+    }
+  }
+
+  return holidays
+}
+
+// Berechnet das Osterdatum (Gauß'sche Osterformel)
+function calculateEaster(year: number): Date {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day)
+}
+
+function addDaysToDate(date: Date, days: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+function formatDateToString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 // Color mapping function
 const getColorValue = (color: EmployeeColor | undefined): string => {
@@ -149,6 +277,26 @@ export default function AdminView({
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  // Get holidays for current year
+  const currentYear = new Date(currentWeekStart).getFullYear();
+  const holidays = useMemo(() => {
+    // Get holidays for current year and next year (for year transitions)
+    return [...getHolidays(currentYear), ...getHolidays(currentYear + 1)];
+  }, [currentYear]);
+
+  // Helper function to get holiday info for a date
+  const getHolidayInfo = (dateStr: string): { isHoliday: boolean; isVacation: boolean; name?: string } => {
+    const holiday = holidays.find(h => h.date === dateStr);
+    if (holiday) {
+      return {
+        isHoliday: holiday.type === 'feiertag',
+        isVacation: holiday.type === 'ferien',
+        name: holiday.name
+      };
+    }
+    return { isHoliday: false, isVacation: false };
+  };
 
   const toggleAreaSelection = (area: AreaType) => {
     setNewEmployeeAreas(prev => {
@@ -2391,17 +2539,29 @@ export default function AdminView({
                 <thead>
                   <tr>
                     <th className="employee-name-header">Mitarbeiter</th>
-                    {weekSchedule.map((day, index) => (
-                      <th key={day.date} className="employee-day-header">
-                        <div className="day-name">{WEEKDAYS[index]}</div>
-                        <div className="day-date">
-                          {new Date(day.date).toLocaleDateString('de-DE', { 
-                            day: '2-digit', 
-                            month: '2-digit' 
-                          })}
-                        </div>
-                      </th>
-                    ))}
+                    {weekSchedule.map((day, index) => {
+                      const holidayInfo = getHolidayInfo(day.date);
+                      return (
+                        <th 
+                          key={day.date} 
+                          className={`employee-day-header ${holidayInfo.isHoliday ? 'holiday-header' : ''} ${holidayInfo.isVacation ? 'vacation-header' : ''}`}
+                          title={holidayInfo.name || ''}
+                        >
+                          <div className="day-name">{WEEKDAYS[index]}</div>
+                          <div className="day-date">
+                            {new Date(day.date).toLocaleDateString('de-DE', { 
+                              day: '2-digit', 
+                              month: '2-digit' 
+                            })}
+                          </div>
+                          {holidayInfo.name && (
+                            <div className="holiday-indicator" title={holidayInfo.name}>
+                              {holidayInfo.isHoliday ? '🎉' : '🏖️'}
+                            </div>
+                          )}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -2555,15 +2715,22 @@ export default function AdminView({
                         const date = new Date(dateStr);
                         const dayOfWeek = date.getDay();
                         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                        const holidayInfo = getHolidayInfo(dateStr);
                         return (
                           <th 
                             key={dateStr} 
-                            className={`employee-month-day-header ${isWeekend ? 'weekend' : ''}`}
+                            className={`employee-month-day-header ${isWeekend ? 'weekend' : ''} ${holidayInfo.isHoliday ? 'holiday-header' : ''} ${holidayInfo.isVacation ? 'vacation-header' : ''}`}
+                            title={holidayInfo.name || ''}
                           >
                             <div className="day-name-small">{getDayName(dateStr)}</div>
                             <div className="day-date-small">
                               {date.getDate()}
                             </div>
+                            {holidayInfo.name && (
+                              <div className="holiday-indicator-small" title={holidayInfo.name}>
+                                {holidayInfo.isHoliday ? '🎉' : '🏖️'}
+                              </div>
+                            )}
                           </th>
                         );
                       });
