@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Employee, DaySchedule, VacationRequest, Notification, VacationRequestType } from '@/types/schichtplan'
 import AdminView from '@/components/schichtplan/AdminView'
 import EmployeeView from '@/components/schichtplan/EmployeeView'
+import Calendar from '@/components/Calendar'
 import { PushNotificationService } from '@/lib/pushNotifications'
 import '@/styles/schichtplan.css'
 
@@ -44,6 +45,7 @@ export default function SchichtplanPage() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushService, setPushService] = useState<PushNotificationService | null>(null)
   const [pushInitializing, setPushInitializing] = useState(true)
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
 
   const checkSyncStatus = async () => {
     try {
@@ -538,6 +540,14 @@ export default function SchichtplanPage() {
                 ? '🔔 Benachrichtigungen an' 
                 : '🔕 Benachrichtigungen aus'}
           </button>
+          <button
+            className="nav-btn"
+            onClick={() => setShowCalendarModal(true)}
+            style={{ background: '#8b5cf6', color: 'white' }}
+            title="Kalender mit Feiertagen und Ferien"
+          >
+            📅 Kalender
+          </button>
         </div>
         
         {viewMode === 'employee' && (
@@ -599,6 +609,37 @@ export default function SchichtplanPage() {
           )
         )}
       </main>
+
+      {/* Kalender Modal */}
+      {showCalendarModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCalendarModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Kalender</h3>
+                  <p className="text-sm text-white/80 mt-1">Feiertage & Ferien für Rheinland-Pfalz</p>
+                </div>
+                <button
+                  onClick={() => setShowCalendarModal(false)}
+                  className="text-white hover:text-gray-200 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <Calendar />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
