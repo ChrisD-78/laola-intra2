@@ -873,12 +873,16 @@ export default function AdminView({
   // Get all dates in a month
   const getMonthDates = (yearMonth: string): string[] => {
     const [year, month] = yearMonth.split('-').map(Number);
-    const lastDay = new Date(year, month, 0);
+    // month is 1-12, but Date() uses 0-11
+    // Get the last day of the month by using next month with day 0
+    const lastDayOfMonth = new Date(year, month, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
     const dates: string[] = [];
     
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const date = new Date(year, month - 1, day);
-      dates.push(date.toISOString().split('T')[0]);
+    // Construct date strings manually to avoid timezone issues with toISOString()
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      dates.push(dateStr);
     }
     
     return dates;
