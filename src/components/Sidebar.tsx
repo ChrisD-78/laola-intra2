@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
+import { useSidebar } from '@/contexts/SidebarContext'
 import { useState } from 'react'
 
 const Sidebar = () => {
   const pathname = usePathname()
   const { currentUser, logout, isAdmin } = useAuth()
   const { unreadCount, latestMessage } = useChatNotifications()
+  const { isCollapsed, toggleSidebar } = useSidebar()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleAIAgentClick = () => {
@@ -43,6 +45,17 @@ const Sidebar = () => {
         <span className="text-xl">☰</span>
       </button>
 
+      {/* Desktop Toggle Button (when collapsed) */}
+      {isCollapsed && (
+        <button
+          onClick={toggleSidebar}
+          className="hidden lg:flex fixed top-4 left-4 z-40 items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-xl shadow-2xl hover:bg-blue-700 transition-all duration-300 hover:scale-110 border-2 border-blue-400"
+          title="Seitenleiste öffnen"
+        >
+          <span className="text-xl">▶</span>
+        </button>
+      )}
+
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -52,19 +65,31 @@ const Sidebar = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full w-64 bg-blue-900 lg:bg-blue-900/20 backdrop-blur-xl border-r border-blue-200/30 shadow-2xl z-50 transform transition-transform duration-300 flex flex-col ${
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      <div className={`fixed left-0 top-0 h-full w-64 bg-blue-900 lg:bg-blue-900/20 backdrop-blur-xl border-r border-blue-200/30 shadow-2xl z-50 transform transition-all duration-300 flex flex-col ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } ${
+        isCollapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0'
       }`}>
       {/* Header */}
       <div className="flex-shrink-0 p-6 border-b border-blue-200/30">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-blue-800/40 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-blue-300/40">
-            <span className="text-white text-2xl">🏊‍♂️</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-blue-800/40 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-blue-300/40">
+              <span className="text-white text-2xl">🏊‍♂️</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">LA OLA</h1>
+              <p className="text-sm text-white font-medium">Intranet</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">LA OLA</h1>
-            <p className="text-sm text-white font-medium">Intranet</p>
-          </div>
+          {/* Desktop Toggle Button */}
+          <button
+            onClick={toggleSidebar}
+            className="hidden lg:flex items-center justify-center w-8 h-8 bg-blue-800/40 backdrop-blur-sm rounded-lg hover:bg-blue-700/60 transition-all duration-200 border border-blue-300/40 shadow-lg"
+            title="Seitenleiste ein-/ausblenden"
+          >
+            <span className="text-white text-lg">◀</span>
+          </button>
         </div>
       </div>
 

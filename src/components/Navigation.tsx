@@ -1,9 +1,11 @@
 'use client'
 
 import { useAuth } from '@/components/AuthProvider'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 const Navigation = () => {
   const { isLoggedIn, currentUser } = useAuth()
+  const { isCollapsed } = useSidebar()
 
   // Wenn nicht angemeldet, keine Navigation anzeigen
   if (!isLoggedIn) {
@@ -12,7 +14,7 @@ const Navigation = () => {
 
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200">
-      <div className="ml-64 px-6">
+      <div className={`transition-all duration-300 px-6 ${isCollapsed ? 'ml-0' : 'ml-64'}`}>
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="text-gray-800 text-2xl font-bold">

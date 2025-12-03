@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Navigation from '@/components/Navigation'
 import Sidebar from '@/components/Sidebar'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface ProtectedLayoutProps {
   children: React.ReactNode
@@ -12,6 +13,7 @@ interface ProtectedLayoutProps {
 
 const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
   const { isLoggedIn } = useAuth()
+  const { isCollapsed } = useSidebar()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -36,7 +38,7 @@ const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar />
-      <div className="lg:ml-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-0' : 'lg:ml-64'}`}>
         <Navigation />
         <main className="p-4 lg:p-8 pt-16 lg:pt-8">
           {children}

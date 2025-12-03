@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import ProtectedLayout from "@/components/ProtectedLayout";
 import { TaskProvider } from "@/contexts/TaskContext";
 import { ChatNotificationProvider } from "@/contexts/ChatNotificationContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,13 +49,15 @@ export default function RootLayout({
     <html lang="de">
         <body className={inter.className}>
           <AuthProvider>
-            <ChatNotificationProvider>
-              <TaskProvider>
-                <ProtectedLayout>
-                  {children}
-                </ProtectedLayout>
-              </TaskProvider>
-            </ChatNotificationProvider>
+            <SidebarProvider>
+              <ChatNotificationProvider>
+                <TaskProvider>
+                  <ProtectedLayout>
+                    {children}
+                  </ProtectedLayout>
+                </TaskProvider>
+              </ChatNotificationProvider>
+            </SidebarProvider>
           </AuthProvider>
         </body>
     </html>
