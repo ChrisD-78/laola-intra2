@@ -372,6 +372,12 @@ export default function AdminView({
     setShowEmployeeForm(true);
   };
 
+  // Function to open employee management and edit dialog from table
+  const openEmployeeEditFromTable = (employee: Employee) => {
+    setShowEmployeeManagement(true);
+    startEditEmployee(employee);
+  };
+
   const cancelEdit = () => {
     setEditingEmployeeId(null);
     setNewEmployeeFirstName('');
@@ -2572,7 +2578,11 @@ export default function AdminView({
                   {getSortedEmployees().map(employee => (
                     <tr key={employee.id}>
                       <td className="employee-name-cell">
-                        <div className="employee-name-with-color">
+                        <div 
+                          className="employee-name-with-color employee-name-clickable"
+                          onClick={() => openEmployeeEditFromTable(employee)}
+                          title="Klicken um Mitarbeiter zu bearbeiten"
+                        >
                           {employee.color && (
                             <span 
                               className="employee-color-bar" 
@@ -2745,7 +2755,11 @@ export default function AdminView({
                   {getSortedEmployees().map(employee => (
                     <tr key={employee.id}>
                       <td className="employee-name-cell">
-                        <div className="employee-name-with-color">
+                        <div 
+                          className="employee-name-with-color employee-name-clickable"
+                          onClick={() => openEmployeeEditFromTable(employee)}
+                          title="Klicken um Mitarbeiter zu bearbeiten"
+                        >
                           {employee.color && (
                             <span 
                               className="employee-color-bar" 

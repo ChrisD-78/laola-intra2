@@ -1941,6 +1941,24 @@
   gap: 0.5rem;
 }
 
+.employee-name-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.25rem;
+  border-radius: 6px;
+  margin: -0.25rem;
+}
+
+.employee-name-clickable:hover {
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateX(2px);
+}
+
+.employee-name-clickable:active {
+  transform: translateX(0px);
+  background: rgba(102, 126, 234, 0.2);
+}
+
 .employee-color-bar {
   width: 4px;
   height: 100%;
