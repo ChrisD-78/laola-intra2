@@ -49,7 +49,7 @@ const Sidebar = () => {
       {isCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex fixed top-4 left-4 z-40 items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-xl shadow-2xl hover:bg-blue-700 transition-all duration-300 hover:scale-110 border-2 border-blue-400"
+          className="hidden lg:flex fixed top-4 left-4 z-40 items-center justify-center w-12 h-12 bg-blue-800/40 backdrop-blur-sm text-white rounded-xl shadow-2xl hover:bg-blue-700/60 transition-all duration-300 hover:scale-110 border border-blue-300/40"
           title="Seitenleiste öffnen"
         >
           <span className="text-xl">▶</span>
