@@ -13,6 +13,7 @@ export interface Employee {
   weeklyHours?: number;
   color?: EmployeeColor;
   birthDate?: string; // Format: YYYY-MM-DD
+  active?: boolean; // Mitarbeiter aktiv/deaktiviert (Standard: true)
   role?: string; // Rolle aus users Tabelle (Admin, Verwaltung, Technik, Benutzer)
   userDisplayName?: string; // display_name aus users Tabelle
   username?: string; // username aus users Tabelle

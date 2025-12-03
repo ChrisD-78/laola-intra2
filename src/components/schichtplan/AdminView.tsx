@@ -527,6 +527,56 @@ export default function AdminView({
     setTimeout(() => setValidationMessage(null), 3000);
   };
 
+  // Toggle employee active/inactive status
+  const toggleEmployeeActive = async (employee: Employee) => {
+    const newActiveStatus = !employee.active;
+    const action = newActiveStatus ? 'aktiviert' : 'deaktiviert';
+    
+    if (!confirm(`Möchten Sie ${employee.firstName} ${employee.lastName} wirklich ${action}?\n\n${!newActiveStatus ? 'Deaktivierte Mitarbeiter können keine neuen Dienste mehr zugewiesen bekommen. Bisherige Dienste bleiben erhalten.' : 'Der Mitarbeiter kann wieder Dienste zugewiesen bekommen.'}`)) {
+      return;
+    }
+
+    const updatedEmployee: Employee = {
+      ...employee,
+      active: newActiveStatus
+    };
+
+    const updatedEmployees = employees.map(e => 
+      e.id === employee.id ? updatedEmployee : e
+    );
+    onEmployeesUpdate(updatedEmployees);
+
+    setValidationMessage(`✅ ${employee.firstName} ${employee.lastName} wurde ${action}!`);
+    setTimeout(() => setValidationMessage(null), 3000);
+  };
+
+  // Delete employee (schedules remain intact)
+  const deleteEmployee = async (employee: Employee) => {
+    if (!confirm(`Möchten Sie ${employee.firstName} ${employee.lastName} wirklich löschen?\n\nDer Mitarbeiter wird entfernt, aber alle bisherigen Schicht-Zuweisungen bleiben erhalten.\n\nDieser Vorgang kann nicht rückgängig gemacht werden!`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/schichtplan/employees?id=${employee.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete employee');
+      }
+
+      const updatedEmployees = employees.filter(e => e.id !== employee.id);
+      onEmployeesUpdate(updatedEmployees);
+
+      setValidationMessage(`✅ ${employee.firstName} ${employee.lastName} wurde gelöscht!`);
+      setTimeout(() => setValidationMessage(null), 3000);
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      setValidationMessage(`❌ Fehler beim Löschen von ${employee.firstName} ${employee.lastName}`);
+      setTimeout(() => setValidationMessage(null), 3000);
+    }
+  };
+
   // Mark birthday in schedule for current year and future years
   const markBirthdayInSchedule = (employeeId: string, birthDate: string) => {
     const updatedSchedule = [...schedule];
@@ -2065,6 +2115,7 @@ export default function AdminView({
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Status</th>
                   <th>Farbe</th>
                   <th>Bereiche</th>
                   <th>Telefon</th>
@@ -2076,9 +2127,17 @@ export default function AdminView({
               </thead>
               <tbody>
                 {employees.map(employee => (
-                  <tr key={employee.id}>
+                  <tr key={employee.id} className={employee.active === false ? 'employee-inactive' : ''}>
                     <td>
                       {employee.firstName} {employee.lastName}
+                      {employee.active === false && <span className="inactive-badge">Deaktiviert</span>}
+                    </td>
+                    <td>
+                      {employee.active === false ? (
+                        <span className="status-badge status-inactive">❌ Inaktiv</span>
+                      ) : (
+                        <span className="status-badge status-active">✅ Aktiv</span>
+                      )}
                     </td>
                     <td>
                       {employee.color && (
@@ -2099,16 +2158,32 @@ export default function AdminView({
                         : '—'}
                     </td>
                     <td>
-                      <button
-                        onClick={() => {
-                          startEditEmployee(employee);
-                          setShowEmployeeManagement(false);
-                        }}
-                        className="btn-edit-in-table"
-                        title="Mitarbeiter bearbeiten"
-                      >
-                        ✏️ Bearbeiten
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          onClick={() => {
+                            startEditEmployee(employee);
+                            setShowEmployeeManagement(false);
+                          }}
+                          className="btn-edit-in-table"
+                          title="Mitarbeiter bearbeiten"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => toggleEmployeeActive(employee)}
+                          className={`btn-toggle-active ${employee.active === false ? 'btn-activate' : 'btn-deactivate'}`}
+                          title={employee.active === false ? 'Mitarbeiter aktivieren' : 'Mitarbeiter deaktivieren'}
+                        >
+                          {employee.active === false ? '✓' : '⊗'}
+                        </button>
+                        <button
+                          onClick={() => deleteEmployee(employee)}
+                          className="btn-delete-employee"
+                          title="Mitarbeiter löschen"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -2914,8 +2989,8 @@ export default function AdminView({
                       <td className="shift-name">{shift}</td>
                       {weekSchedule.map(day => {
                         const assignments = day.shifts[area]?.[shift] || [];
-                        // Filter employees who can work in this area
-                        const availableEmployees = employees.filter(emp => emp.areas.includes(area));
+                        // Filter employees who can work in this area (and are active)
+                        const availableEmployees = employees.filter(emp => emp.areas.includes(area) && emp.active !== false);
                         const underStaffed = isUnderStaffed(area, shift, assignments.length);
                         
                         return (
