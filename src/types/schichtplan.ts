@@ -1,4 +1,4 @@
-export type ShiftType = 'Frühschicht' | 'Mittelschicht' | 'Spätschicht';
+export type ShiftType = 'Frühschicht' | 'Mittelschicht' | 'Spätschicht' | 'Gastro Reinigung' | 'Sauna Reinigung';
 export type AreaType = 'Halle' | 'Kasse' | 'Sauna' | 'Reinigung' | 'Gastro';
 export type EmployeeColor = 'Rot' | 'Braun' | 'Schwarz' | 'Grün' | 'Violett' | 'Blau' | 'Gelb';
 

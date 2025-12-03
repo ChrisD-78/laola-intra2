@@ -21,7 +21,7 @@ interface AdminViewProps {
   onVacationDecision: (requestId: string, approved: boolean, reviewedBy?: string) => void;
 }
 
-const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht'];
+const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht', 'Gastro Reinigung', 'Sauna Reinigung'];
 const AREAS: AreaType[] = ['Halle', 'Kasse', 'Sauna', 'Reinigung', 'Gastro'];
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
@@ -167,27 +167,37 @@ const MIN_STAFFING: Record<AreaType, Record<ShiftType, number>> = {
   'Halle': {
     'Frühschicht': 2,
     'Mittelschicht': 0,
-    'Spätschicht': 2
+    'Spätschicht': 2,
+    'Gastro Reinigung': 0,
+    'Sauna Reinigung': 0
   },
   'Kasse': {
     'Frühschicht': 1,
     'Mittelschicht': 0,
-    'Spätschicht': 1
+    'Spätschicht': 1,
+    'Gastro Reinigung': 0,
+    'Sauna Reinigung': 0
   },
   'Sauna': {
     'Frühschicht': 1,
     'Mittelschicht': 0,
-    'Spätschicht': 1
+    'Spätschicht': 1,
+    'Gastro Reinigung': 0,
+    'Sauna Reinigung': 1
   },
   'Reinigung': {
     'Frühschicht': 1,
     'Mittelschicht': 0,
-    'Spätschicht': 1
+    'Spätschicht': 1,
+    'Gastro Reinigung': 0,
+    'Sauna Reinigung': 0
   },
   'Gastro': {
     'Frühschicht': 1,
     'Mittelschicht': 0,
-    'Spätschicht': 1
+    'Spätschicht': 1,
+    'Gastro Reinigung': 1,
+    'Sauna Reinigung': 0
   }
 };
 
@@ -1179,10 +1189,12 @@ export default function AdminView({
       SHIFT_TYPES.forEach(shift => {
         const assignments = daySchedule.shifts[area]?.[shift];
         if (assignments?.some(a => a.employeeId === employeeId)) {
-          // F for Frühschicht, M for Mittelschicht, S for Spätschicht
+          // F for Frühschicht, M for Mittelschicht, S for Spätschicht, GR for Gastro Reinigung, SR for Sauna Reinigung
           if (shift === 'Frühschicht') shifts.push('F');
           else if (shift === 'Mittelschicht') shifts.push('M');
           else if (shift === 'Spätschicht') shifts.push('S');
+          else if (shift === 'Gastro Reinigung') shifts.push('GR');
+          else if (shift === 'Sauna Reinigung') shifts.push('SR');
         }
       });
     });
