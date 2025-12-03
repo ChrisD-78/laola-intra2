@@ -155,7 +155,9 @@ const getColorValue = (color: EmployeeColor | undefined): string => {
     'Braun': '#92400e',
     'Schwarz': '#1f2937',
     'Grün': '#10b981',
-    'Violett': '#8b5cf6'
+    'Violett': '#8b5cf6',
+    'Blau': '#3b82f6',
+    'Gelb': '#eab308'
   };
   return colorMap[color];
 };
@@ -2012,7 +2014,7 @@ export default function AdminView({
               <div className="color-assignment">
                 <label>Farbe:</label>
                 <div className="color-selector">
-                  {(['Rot', 'Braun', 'Schwarz', 'Grün', 'Violett'] as EmployeeColor[]).map(color => (
+                  {(['Rot', 'Braun', 'Schwarz', 'Grün', 'Violett', 'Blau', 'Gelb'] as EmployeeColor[]).map(color => (
                     <button
                       key={color}
                       onClick={() => setNewEmployeeColor(newEmployeeColor === color ? undefined : color)}
