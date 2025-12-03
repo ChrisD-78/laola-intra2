@@ -227,6 +227,14 @@ export default function AdminView({
   const [importData, setImportData] = useState<string>('');
   const [importError, setImportError] = useState<string | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  
+  // PDF Export states
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportType, setExportType] = useState<'area' | 'days' | 'employee'>('area');
+  const [exportSelectedArea, setExportSelectedArea] = useState<AreaType>('Halle');
+  const [exportSelectedEmployees, setExportSelectedEmployees] = useState<string[]>([]);
+  const [exportStartDate, setExportStartDate] = useState<string>('');
+  const [exportEndDate, setExportEndDate] = useState<string>('');
   const [viewMode, setViewMode] = useState<'area' | 'employee'>('area');
   const [employeeViewMode, setEmployeeViewMode] = useState<'week' | 'month'>('week');
   const [currentMonth, setCurrentMonth] = useState<string>(() => {
@@ -388,6 +396,93 @@ export default function AdminView({
   const openEmployeeEditFromTable = (employee: Employee) => {
     setShowEmployeeManagement(true);
     startEditEmployee(employee);
+  };
+
+  // PDF Export function
+  const exportToPDF = async () => {
+    try {
+      // Dynamic import to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default;
+      const autoTable = (await import('jspdf-autotable')).default;
+      
+      const doc = new jsPDF('l', 'mm', 'a4'); // Landscape mode
+      const monthDates = getMonthDates(currentMonth);
+      const [year, month] = currentMonth.split('-');
+      const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+      
+      // Filter data based on export type
+      let filteredEmployees = [...employees];
+      let filteredDates = [...monthDates];
+      let title = `Schichtplan ${monthName}`;
+      
+      if (exportType === 'area') {
+        // Filter by area
+        filteredEmployees = employees.filter(emp => emp.areas.includes(exportSelectedArea));
+        title += ` - Bereich: ${exportSelectedArea}`;
+      } else if (exportType === 'employee') {
+        // Filter by selected employees
+        filteredEmployees = employees.filter(emp => exportSelectedEmployees.includes(emp.id));
+        title += ` - Ausgewählte Mitarbeiter`;
+      } else if (exportType === 'days') {
+        // Filter by date range
+        if (exportStartDate && exportEndDate) {
+          filteredDates = monthDates.filter(date => date >= exportStartDate && date <= exportEndDate);
+          title += ` - ${new Date(exportStartDate).toLocaleDateString('de-DE')} bis ${new Date(exportEndDate).toLocaleDateString('de-DE')}`;
+        }
+      }
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(title, 14, 15);
+      
+      // Prepare table data
+      const headers = ['Mitarbeiter', ...filteredDates.map(date => {
+        const d = new Date(date);
+        return `${d.getDate()}.${d.getMonth() + 1}`;
+      })];
+      
+      const rows = filteredEmployees.map(emp => {
+        const row = [`${emp.firstName} ${emp.lastName}`];
+        filteredDates.forEach(date => {
+          const shifts = getEmployeeShiftsForDate(emp.id, date);
+          row.push(shifts.join(', ') || '-');
+        });
+        return row;
+      });
+      
+      // Generate table
+      (doc as any).autoTable({
+        head: [headers],
+        body: rows,
+        startY: 25,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [102, 126, 234], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [248, 249, 255] },
+        margin: { top: 25 },
+        didDrawPage: function(data: any) {
+          // Footer
+          doc.setFontSize(8);
+          doc.text(
+            `Seite ${data.pageNumber}`,
+            doc.internal.pageSize.width / 2,
+            doc.internal.pageSize.height - 10,
+            { align: 'center' }
+          );
+        }
+      });
+      
+      // Save PDF
+      const filename = `Schichtplan_${monthName.replace(' ', '_')}_${exportType}.pdf`;
+      doc.save(filename);
+      
+      setShowExportDialog(false);
+      setValidationMessage('✅ PDF wurde erfolgreich exportiert!');
+      setTimeout(() => setValidationMessage(null), 3000);
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      setValidationMessage('❌ Fehler beim PDF-Export. Bitte installieren Sie die erforderlichen Pakete.');
+      setTimeout(() => setValidationMessage(null), 5000);
+    }
   };
 
   const cancelEdit = () => {
@@ -2234,6 +2329,130 @@ export default function AdminView({
         </div>
       )}
 
+      {/* PDF Export Dialog */}
+      {showExportDialog && (
+        <div className="import-dialog-overlay" onClick={() => setShowExportDialog(false)}>
+          <div className="import-dialog" onClick={(e) => e.stopPropagation()}>
+            <h2>📄 PDF Export</h2>
+            <p className="import-description">
+              Wählen Sie die gewünschten Exportoptionen für den Schichtplan.
+            </p>
+
+            {/* Export Type Selection */}
+            <div className="export-option-group">
+              <label className="export-label">Export nach:</label>
+              <div className="export-type-buttons">
+                <button
+                  className={`export-type-btn ${exportType === 'area' ? 'active' : ''}`}
+                  onClick={() => setExportType('area')}
+                >
+                  📍 Bereich
+                </button>
+                <button
+                  className={`export-type-btn ${exportType === 'days' ? 'active' : ''}`}
+                  onClick={() => setExportType('days')}
+                >
+                  📅 Tage
+                </button>
+                <button
+                  className={`export-type-btn ${exportType === 'employee' ? 'active' : ''}`}
+                  onClick={() => setExportType('employee')}
+                >
+                  👤 Namen
+                </button>
+              </div>
+            </div>
+
+            {/* Area Selection */}
+            {exportType === 'area' && (
+              <div className="export-option-group">
+                <label className="export-label">Bereich auswählen:</label>
+                <select
+                  value={exportSelectedArea}
+                  onChange={(e) => setExportSelectedArea(e.target.value as AreaType)}
+                  className="export-select"
+                >
+                  {AREAS.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Date Range Selection */}
+            {exportType === 'days' && (
+              <div className="export-option-group">
+                <label className="export-label">Zeitraum:</label>
+                <div className="date-range-export">
+                  <input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(e) => setExportStartDate(e.target.value)}
+                    className="export-date-input"
+                  />
+                  <span>bis</span>
+                  <input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(e) => setExportEndDate(e.target.value)}
+                    className="export-date-input"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Employee Selection */}
+            {exportType === 'employee' && (
+              <div className="export-option-group">
+                <label className="export-label">Mitarbeiter auswählen:</label>
+                <div className="employee-checkbox-list">
+                  {employees.filter(emp => emp.active !== false).map(emp => (
+                    <label key={emp.id} className="employee-checkbox-item">
+                      <input
+                        type="checkbox"
+                        checked={exportSelectedEmployees.includes(emp.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setExportSelectedEmployees([...exportSelectedEmployees, emp.id]);
+                          } else {
+                            setExportSelectedEmployees(exportSelectedEmployees.filter(id => id !== emp.id));
+                          }
+                        }}
+                      />
+                      <span>{emp.firstName} {emp.lastName}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="import-actions">
+              <button
+                onClick={exportToPDF}
+                className="btn-import-confirm"
+                disabled={
+                  (exportType === 'days' && (!exportStartDate || !exportEndDate)) ||
+                  (exportType === 'employee' && exportSelectedEmployees.length === 0)
+                }
+              >
+                📥 PDF Exportieren
+              </button>
+              <button
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportStartDate('');
+                  setExportEndDate('');
+                  setExportSelectedEmployees([]);
+                }}
+                className="btn-import-cancel"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showBulkAssignment && (
         <div className="bulk-assignment-panel">
           <h3>📅 Wochenplan erstellen</h3>
@@ -2364,6 +2583,13 @@ export default function AdminView({
               </div>
               <button onClick={() => changeMonth('next')} className="btn-month-nav">
                 Nächster Monat →
+              </button>
+              <button 
+                onClick={() => setShowExportDialog(true)} 
+                className="btn-export-pdf"
+                title="Schichtplan als PDF exportieren"
+              >
+                📄 PDF Export
               </button>
             </div>
           )}

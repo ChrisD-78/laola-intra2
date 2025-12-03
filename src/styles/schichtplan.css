@@ -1271,6 +1271,152 @@
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+/* PDF Export Button */
+.btn-export-pdf {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-export-pdf:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Export Dialog */
+.export-option-group {
+  margin: 1.5rem 0;
+}
+
+.export-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #333;
+  font-size: 1rem;
+}
+
+.export-type-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.export-type-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.export-type-btn:hover {
+  background: #f8f9ff;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
+}
+
+.export-type-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.export-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #000;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.export-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.date-range-export {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.export-date-input {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #000;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.export-date-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.employee-checkbox-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+}
+
+.employee-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.employee-checkbox-item:hover {
+  background: #f8f9ff;
+}
+
+.employee-checkbox-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.employee-checkbox-item span {
+  font-size: 0.95rem;
+  color: #333;
+}
+
 .view-mode-btn {
   padding: 0.75rem 1.5rem;
   background: #f0f0f0;
