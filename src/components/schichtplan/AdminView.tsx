@@ -400,12 +400,30 @@ export default function AdminView({
 
   // PDF Export function
   const exportToPDF = async () => {
+    console.log('PDF Export gestartet...');
+    console.log('Export Type:', exportType);
+    console.log('Current Month:', currentMonth);
+    
     try {
-      // Dynamic import to avoid SSR issues
-      const jsPDF = (await import('jspdf')).default;
-      const autoTable = (await import('jspdf-autotable')).default;
+      // Check if packages are available
+      console.log('Versuche jspdf zu laden...');
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default || jsPDFModule;
+      console.log('jsPDF geladen:', typeof jsPDF);
       
-      const doc = new jsPDF('l', 'mm', 'a4'); // Landscape mode
+      console.log('Versuche jspdf-autotable zu laden...');
+      await import('jspdf-autotable');
+      console.log('jspdf-autotable geladen');
+      
+      // Create PDF document
+      console.log('Erstelle PDF Dokument...');
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      console.log('PDF Dokument erstellt');
+      
       const monthDates = getMonthDates(currentMonth);
       const [year, month] = currentMonth.split('-');
       const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
@@ -415,27 +433,40 @@ export default function AdminView({
       let filteredDates = [...monthDates];
       let title = `Schichtplan ${monthName}`;
       
+      console.log('Filtere Daten...');
       if (exportType === 'area') {
-        // Filter by area
         filteredEmployees = employees.filter(emp => emp.areas.includes(exportSelectedArea));
         title += ` - Bereich: ${exportSelectedArea}`;
+        console.log(`Gefiltert nach Bereich ${exportSelectedArea}: ${filteredEmployees.length} Mitarbeiter`);
       } else if (exportType === 'employee') {
-        // Filter by selected employees
         filteredEmployees = employees.filter(emp => exportSelectedEmployees.includes(emp.id));
         title += ` - Ausgewählte Mitarbeiter`;
+        console.log(`Gefiltert nach Mitarbeitern: ${filteredEmployees.length} Mitarbeiter`);
       } else if (exportType === 'days') {
-        // Filter by date range
         if (exportStartDate && exportEndDate) {
           filteredDates = monthDates.filter(date => date >= exportStartDate && date <= exportEndDate);
           title += ` - ${new Date(exportStartDate).toLocaleDateString('de-DE')} bis ${new Date(exportEndDate).toLocaleDateString('de-DE')}`;
+          console.log(`Gefiltert nach Tagen: ${filteredDates.length} Tage`);
         }
       }
       
+      if (filteredEmployees.length === 0) {
+        alert('Keine Mitarbeiter zum Exportieren vorhanden!');
+        return;
+      }
+      
+      if (filteredDates.length === 0) {
+        alert('Keine Tage zum Exportieren vorhanden!');
+        return;
+      }
+      
       // Add title
+      console.log('Füge Titel hinzu...');
       doc.setFontSize(16);
       doc.text(title, 14, 15);
       
       // Prepare table data
+      console.log('Bereite Tabellendaten vor...');
       const headers = ['Mitarbeiter', ...filteredDates.map(date => {
         const d = new Date(date);
         return `${d.getDate()}.${d.getMonth() + 1}`;
@@ -450,15 +481,28 @@ export default function AdminView({
         return row;
       });
       
+      console.log(`Tabelle: ${headers.length} Spalten, ${rows.length} Zeilen`);
+      
       // Generate table
+      console.log('Generiere Tabelle...');
       (doc as any).autoTable({
         head: [headers],
         body: rows,
         startY: 25,
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [102, 126, 234], textColor: [255, 255, 255] },
-        alternateRowStyles: { fillColor: [248, 249, 255] },
-        margin: { top: 25 },
+        styles: { 
+          fontSize: 8, 
+          cellPadding: 2,
+          overflow: 'linebreak'
+        },
+        headStyles: { 
+          fillColor: [102, 126, 234], 
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: { 
+          fillColor: [248, 249, 255] 
+        },
+        margin: { top: 25, left: 10, right: 10 },
         didDrawPage: function(data: any) {
           // Footer
           doc.setFontSize(8);
@@ -471,17 +515,33 @@ export default function AdminView({
         }
       });
       
+      console.log('Tabelle generiert');
+      
       // Save PDF
-      const filename = `Schichtplan_${monthName.replace(' ', '_')}_${exportType}.pdf`;
+      const filename = `Schichtplan_${monthName.replace(/ /g, '_')}_${exportType}.pdf`;
+      console.log('Speichere PDF:', filename);
       doc.save(filename);
       
+      console.log('PDF erfolgreich gespeichert!');
       setShowExportDialog(false);
       setValidationMessage('✅ PDF wurde erfolgreich exportiert!');
       setTimeout(() => setValidationMessage(null), 3000);
-    } catch (error) {
-      console.error('PDF Export Error:', error);
-      setValidationMessage('❌ Fehler beim PDF-Export. Bitte installieren Sie die erforderlichen Pakete.');
-      setTimeout(() => setValidationMessage(null), 5000);
+    } catch (error: any) {
+      console.error('PDF Export Fehler:', error);
+      console.error('Error Stack:', error?.stack);
+      console.error('Error Message:', error?.message);
+      
+      let errorMessage = '❌ Fehler beim PDF-Export.';
+      
+      if (error?.message?.includes('Cannot find module') || error?.code === 'MODULE_NOT_FOUND') {
+        errorMessage += ' Pakete fehlen! Bitte führen Sie aus: npm install jspdf jspdf-autotable';
+      } else {
+        errorMessage += ` Details: ${error?.message || 'Unbekannter Fehler'}`;
+      }
+      
+      alert(errorMessage);
+      setValidationMessage(errorMessage);
+      setTimeout(() => setValidationMessage(null), 8000);
     }
   };
 
