@@ -2005,8 +2005,8 @@
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 8px;
-  /* Vertikales Scrollen erlauben, damit Kopfzeile stehen bleibt */
-  max-height: 500px;
+  /* Vertikales Scrollen erlauben, damit Kopfzeile stehen bleibt - 20 Mitarbeiter sichtbar */
+  max-height: 1200px;
   overflow-y: auto;
   position: relative;
 }
@@ -2312,8 +2312,8 @@
   scroll-behavior: smooth;
   border-radius: 8px;
   position: relative;
-  /* Vertikales Scrollen für viele Mitarbeiter erlauben */
-  max-height: 500px;
+  /* Vertikales Scrollen für viele Mitarbeiter erlauben - 20 Mitarbeiter sichtbar */
+  max-height: 1200px;
   overflow-y: auto;
 }
 
