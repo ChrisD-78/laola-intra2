@@ -10,17 +10,21 @@ export async function GET() {
     let hasUserIdColumn = false
     let hasRoleColumn = false
     let hasActiveColumn = false
+    let hasEmploymentTypeColumn = false
+    let hasMonthlyHoursColumn = false
     
     try {
       const checkColumns = await sql`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'schichtplan_employees' 
-        AND column_name IN ('user_id', 'role', 'active')
+        AND column_name IN ('user_id', 'role', 'active', 'employment_type', 'monthly_hours')
       `
       hasUserIdColumn = checkColumns.some((col: any) => col.column_name === 'user_id')
       hasRoleColumn = checkColumns.some((col: any) => col.column_name === 'role')
       hasActiveColumn = checkColumns.some((col: any) => col.column_name === 'active')
+      hasEmploymentTypeColumn = checkColumns.some((col: any) => col.column_name === 'employment_type')
+      hasMonthlyHoursColumn = checkColumns.some((col: any) => col.column_name === 'monthly_hours')
     } catch (checkError) {
       console.log('Could not check for columns, assuming they do not exist')
     }
@@ -39,6 +43,8 @@ export async function GET() {
           se.phone,
           se.email,
           se.weekly_hours as "weeklyHours",
+          ${hasEmploymentTypeColumn ? sql`se.employment_type as "employmentType"` : sql`NULL as "employmentType"`},
+          ${hasMonthlyHoursColumn ? sql`se.monthly_hours as "monthlyHours"` : sql`NULL as "monthlyHours"`},
           se.color,
           se.birth_date as "birthDate",
           ${hasActiveColumn ? sql`se.active` : sql`true as active`},
@@ -62,6 +68,8 @@ export async function GET() {
           se.phone,
           se.email,
           se.weekly_hours as "weeklyHours",
+          ${hasEmploymentTypeColumn ? sql`se.employment_type as "employmentType"` : sql`NULL as "employmentType"`},
+          ${hasMonthlyHoursColumn ? sql`se.monthly_hours as "monthlyHours"` : sql`NULL as "monthlyHours"`},
           se.color,
           se.birth_date as "birthDate",
           ${hasActiveColumn ? sql`se.active` : sql`true as active`},
@@ -88,29 +96,75 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate, userId, role, active } = body
+    const { id, firstName, lastName, areas, phone, email, weeklyHours, monthlyHours, employmentType, color, birthDate, userId, role, active } = body
 
-    const result = await sql`
-      INSERT INTO schichtplan_employees (
-        id, user_id, first_name, last_name, areas, phone, email, weekly_hours, color, birth_date, role, active
-      ) VALUES (
-        ${id}, ${userId || null}, ${firstName}, ${lastName}, ${areas}, ${phone || null}, ${email || null}, 
-        ${weeklyHours || null}, ${color || null}, ${birthDate || null}, ${role || null}, ${active !== undefined ? active : true}
-      )
-      RETURNING 
-        id,
-        user_id as "userId",
-        first_name as "firstName",
-        last_name as "lastName",
-        areas,
-        phone,
-        email,
-        weekly_hours as "weeklyHours",
-        color,
-        birth_date as "birthDate",
-        active,
-        role
-    `
+    // Check if columns exist
+    let hasEmploymentTypeColumn = false
+    let hasMonthlyHoursColumn = false
+    
+    try {
+      const checkColumns = await sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'schichtplan_employees' 
+        AND column_name IN ('employment_type', 'monthly_hours')
+      `
+      hasEmploymentTypeColumn = checkColumns.some((col: any) => col.column_name === 'employment_type')
+      hasMonthlyHoursColumn = checkColumns.some((col: any) => col.column_name === 'monthly_hours')
+    } catch (checkError) {
+      console.log('Could not check for columns')
+    }
+
+    if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
+      const result = await sql`
+        INSERT INTO schichtplan_employees (
+          id, user_id, first_name, last_name, areas, phone, email, weekly_hours, monthly_hours, employment_type, color, birth_date, role, active
+        ) VALUES (
+          ${id}, ${userId || null}, ${firstName}, ${lastName}, ${areas}, ${phone || null}, ${email || null}, 
+          ${weeklyHours || null}, ${monthlyHours || null}, ${employmentType || null}, ${color || null}, ${birthDate || null}, ${role || null}, ${active !== undefined ? active : true}
+        )
+        RETURNING 
+          id,
+          user_id as "userId",
+          first_name as "firstName",
+          last_name as "lastName",
+          areas,
+          phone,
+          email,
+          weekly_hours as "weeklyHours",
+          monthly_hours as "monthlyHours",
+          employment_type as "employmentType",
+          color,
+          birth_date as "birthDate",
+          active,
+          role
+      `
+      return NextResponse.json(result[0], { status: 201 })
+    } else {
+      // Fallback for old schema
+      const result = await sql`
+        INSERT INTO schichtplan_employees (
+          id, user_id, first_name, last_name, areas, phone, email, weekly_hours, color, birth_date, role, active
+        ) VALUES (
+          ${id}, ${userId || null}, ${firstName}, ${lastName}, ${areas}, ${phone || null}, ${email || null}, 
+          ${weeklyHours || null}, ${color || null}, ${birthDate || null}, ${role || null}, ${active !== undefined ? active : true}
+        )
+        RETURNING 
+          id,
+          user_id as "userId",
+          first_name as "firstName",
+          last_name as "lastName",
+          areas,
+          phone,
+          email,
+          weekly_hours as "weeklyHours",
+          color,
+          birth_date as "birthDate",
+          active,
+          role
+      `
+      return NextResponse.json(result[0], { status: 201 })
+    }
 
     return NextResponse.json(result[0], { status: 201 })
   } catch (error) {
@@ -126,37 +180,99 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, firstName, lastName, areas, phone, email, weeklyHours, color, birthDate, userId, role, active } = body
+    const { id, firstName, lastName, areas, phone, email, weeklyHours, monthlyHours, employmentType, color, birthDate, userId, role, active } = body
 
-    const result = await sql`
-      UPDATE schichtplan_employees
-      SET 
-        first_name = ${firstName},
-        last_name = ${lastName},
-        areas = ${areas},
-        phone = ${phone || null},
-        email = ${email || null},
-        weekly_hours = ${weeklyHours || null},
-        color = ${color || null},
-        birth_date = ${birthDate || null},
-        user_id = ${userId !== undefined ? userId : null},
-        role = ${role !== undefined ? role : null},
-        active = ${active !== undefined ? active : true}
-      WHERE id = ${id}
-      RETURNING 
-        id,
-        user_id as "userId",
-        first_name as "firstName",
-        last_name as "lastName",
-        areas,
-        phone,
-        email,
-        weekly_hours as "weeklyHours",
-        color,
-        birth_date as "birthDate",
-        active,
-        role
-    `
+    // Check if columns exist
+    let hasEmploymentTypeColumn = false
+    let hasMonthlyHoursColumn = false
+    
+    try {
+      const checkColumns = await sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'schichtplan_employees' 
+        AND column_name IN ('employment_type', 'monthly_hours')
+      `
+      hasEmploymentTypeColumn = checkColumns.some((col: any) => col.column_name === 'employment_type')
+      hasMonthlyHoursColumn = checkColumns.some((col: any) => col.column_name === 'monthly_hours')
+    } catch (checkError) {
+      console.log('Could not check for columns')
+    }
+
+    if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
+      const result = await sql`
+        UPDATE schichtplan_employees
+        SET 
+          first_name = ${firstName},
+          last_name = ${lastName},
+          areas = ${areas},
+          phone = ${phone || null},
+          email = ${email || null},
+          weekly_hours = ${weeklyHours || null},
+          monthly_hours = ${monthlyHours || null},
+          employment_type = ${employmentType || null},
+          color = ${color || null},
+          birth_date = ${birthDate || null},
+          user_id = ${userId !== undefined ? userId : null},
+          role = ${role !== undefined ? role : null},
+          active = ${active !== undefined ? active : true}
+        WHERE id = ${id}
+        RETURNING 
+          id,
+          user_id as "userId",
+          first_name as "firstName",
+          last_name as "lastName",
+          areas,
+          phone,
+          email,
+          weekly_hours as "weeklyHours",
+          monthly_hours as "monthlyHours",
+          employment_type as "employmentType",
+          color,
+          birth_date as "birthDate",
+          active,
+          role
+      `
+      if (result.length === 0) {
+        return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
+      }
+      return NextResponse.json(result[0])
+    } else {
+      // Fallback for old schema
+      const result = await sql`
+        UPDATE schichtplan_employees
+        SET 
+          first_name = ${firstName},
+          last_name = ${lastName},
+          areas = ${areas},
+          phone = ${phone || null},
+          email = ${email || null},
+          weekly_hours = ${weeklyHours || null},
+          color = ${color || null},
+          birth_date = ${birthDate || null},
+          user_id = ${userId !== undefined ? userId : null},
+          role = ${role !== undefined ? role : null},
+          active = ${active !== undefined ? active : true}
+        WHERE id = ${id}
+        RETURNING 
+          id,
+          user_id as "userId",
+          first_name as "firstName",
+          last_name as "lastName",
+          areas,
+          phone,
+          email,
+          weekly_hours as "weeklyHours",
+          color,
+          birth_date as "birthDate",
+          active,
+          role
+      `
+      if (result.length === 0) {
+        return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
+      }
+      return NextResponse.json(result[0])
+    }
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 })

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { ShiftType, AreaType, DaySchedule, Employee, SpecialStatus, EmployeeColor, VacationRequest } from '@/types/schichtplan';
+import { ShiftType, AreaType, DaySchedule, Employee, SpecialStatus, EmployeeColor, VacationRequest, EmploymentType } from '@/types/schichtplan';
 
 interface Holiday {
   date: string; // Format: YYYY-MM-DD
@@ -216,7 +216,9 @@ export default function AdminView({
   const [newEmployeeLastName, setNewEmployeeLastName] = useState('');
   const [newEmployeePhone, setNewEmployeePhone] = useState('');
   const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [newEmployeeEmploymentType, setNewEmployeeEmploymentType] = useState<EmploymentType | ''>('');
   const [newEmployeeWeeklyHours, setNewEmployeeWeeklyHours] = useState<string>('');
+  const [newEmployeeMonthlyHours, setNewEmployeeMonthlyHours] = useState<string>('');
   const [newEmployeeAreas, setNewEmployeeAreas] = useState<AreaType[]>([]);
   const [newEmployeeColor, setNewEmployeeColor] = useState<EmployeeColor | undefined>(undefined);
   const [newEmployeeBirthDate, setNewEmployeeBirthDate] = useState<string>('');
@@ -352,7 +354,13 @@ export default function AdminView({
       areas: [...newEmployeeAreas],
       phone: newEmployeePhone.trim() || undefined,
       email: newEmployeeEmail.trim() || undefined,
-      weeklyHours: newEmployeeWeeklyHours ? parseFloat(newEmployeeWeeklyHours) : undefined,
+      employmentType: newEmployeeEmploymentType || undefined,
+      weeklyHours: (newEmployeeEmploymentType === 'Vollzeit' || newEmployeeEmploymentType === 'Teilzeit') && newEmployeeWeeklyHours 
+        ? parseFloat(newEmployeeWeeklyHours) 
+        : undefined,
+      monthlyHours: newEmployeeEmploymentType === 'Aushilfe' && newEmployeeMonthlyHours 
+        ? parseFloat(newEmployeeMonthlyHours) 
+        : undefined,
       color: newEmployeeColor,
       birthDate: newEmployeeBirthDate || undefined
     };
@@ -369,7 +377,9 @@ export default function AdminView({
     setNewEmployeeLastName('');
     setNewEmployeePhone('');
     setNewEmployeeEmail('');
+    setNewEmployeeEmploymentType('');
     setNewEmployeeWeeklyHours('');
+    setNewEmployeeMonthlyHours('');
     setNewEmployeeAreas([]);
     setNewEmployeeColor(undefined);
     setNewEmployeeBirthDate('');
@@ -385,7 +395,9 @@ export default function AdminView({
     setNewEmployeeLastName(employee.lastName);
     setNewEmployeePhone(employee.phone || '');
     setNewEmployeeEmail(employee.email || '');
+    setNewEmployeeEmploymentType(employee.employmentType || '');
     setNewEmployeeWeeklyHours(employee.weeklyHours?.toString() || '');
+    setNewEmployeeMonthlyHours(employee.monthlyHours?.toString() || '');
     setNewEmployeeAreas([...employee.areas]);
     setNewEmployeeColor(employee.color);
     setNewEmployeeBirthDate(employee.birthDate || '');
@@ -551,7 +563,9 @@ export default function AdminView({
     setNewEmployeeLastName('');
     setNewEmployeePhone('');
     setNewEmployeeEmail('');
+    setNewEmployeeEmploymentType('');
     setNewEmployeeWeeklyHours('');
+    setNewEmployeeMonthlyHours('');
     setNewEmployeeAreas([]);
     setNewEmployeeColor(undefined);
     setNewEmployeeBirthDate('');
@@ -655,7 +669,13 @@ export default function AdminView({
       areas: [...newEmployeeAreas],
       phone: newEmployeePhone.trim() || undefined,
       email: newEmployeeEmail.trim() || undefined,
-      weeklyHours: newEmployeeWeeklyHours ? parseFloat(newEmployeeWeeklyHours) : undefined,
+      employmentType: newEmployeeEmploymentType || undefined,
+      weeklyHours: (newEmployeeEmploymentType === 'Vollzeit' || newEmployeeEmploymentType === 'Teilzeit') && newEmployeeWeeklyHours 
+        ? parseFloat(newEmployeeWeeklyHours) 
+        : undefined,
+      monthlyHours: newEmployeeEmploymentType === 'Aushilfe' && newEmployeeMonthlyHours 
+        ? parseFloat(newEmployeeMonthlyHours) 
+        : undefined,
       color: newEmployeeColor,
       birthDate: newBirthDate
     };
@@ -2199,16 +2219,45 @@ export default function AdminView({
                     placeholder="E-Mail"
                     className="input-employee"
                   />
-                  <input
-                    type="number"
-                    value={newEmployeeWeeklyHours}
-                    onChange={(e) => setNewEmployeeWeeklyHours(e.target.value)}
-                    placeholder="Wochenarbeitsstunden"
+                  <select
+                    value={newEmployeeEmploymentType}
+                    onChange={(e) => {
+                      setNewEmployeeEmploymentType(e.target.value as EmploymentType | '');
+                      // Reset hours when changing type
+                      setNewEmployeeWeeklyHours('');
+                      setNewEmployeeMonthlyHours('');
+                    }}
                     className="input-employee"
-                    min="0"
-                    max="60"
-                    step="0.5"
-                  />
+                  >
+                    <option value="">Beschäftigungstyp wählen</option>
+                    <option value="Vollzeit">Vollzeit</option>
+                    <option value="Teilzeit">Teilzeit</option>
+                    <option value="Aushilfe">Aushilfe</option>
+                  </select>
+                  {(newEmployeeEmploymentType === 'Vollzeit' || newEmployeeEmploymentType === 'Teilzeit') && (
+                    <input
+                      type="number"
+                      value={newEmployeeWeeklyHours}
+                      onChange={(e) => setNewEmployeeWeeklyHours(e.target.value)}
+                      placeholder="Wochenarbeitsstunden"
+                      className="input-employee"
+                      min="0"
+                      max="60"
+                      step="0.5"
+                    />
+                  )}
+                  {newEmployeeEmploymentType === 'Aushilfe' && (
+                    <input
+                      type="number"
+                      value={newEmployeeMonthlyHours}
+                      onChange={(e) => setNewEmployeeMonthlyHours(e.target.value)}
+                      placeholder="Monatsarbeitsstunden"
+                      className="input-employee"
+                      min="0"
+                      max="200"
+                      step="0.5"
+                    />
+                  )}
                 </div>
               </div>
               
@@ -2271,11 +2320,12 @@ export default function AdminView({
                 <tr>
                   <th>Name</th>
                   <th>Status</th>
+                  <th>Typ</th>
                   <th>Farbe</th>
                   <th>Bereiche</th>
                   <th>Telefon</th>
                   <th>E-Mail</th>
-                  <th>Stunden/Woche</th>
+                  <th>Stunden</th>
                   <th>Geburtsdatum</th>
                   <th>Aktionen</th>
                 </tr>
@@ -2295,6 +2345,9 @@ export default function AdminView({
                       )}
                     </td>
                     <td>
+                      {employee.employmentType || '—'}
+                    </td>
+                    <td>
                       {employee.color && (
                         <span 
                           className="employee-color-indicator" 
@@ -2306,7 +2359,12 @@ export default function AdminView({
                     <td>{employee.areas.join(', ')}</td>
                     <td>{employee.phone || '—'}</td>
                     <td>{employee.email || '—'}</td>
-                    <td>{employee.weeklyHours || '—'}</td>
+                    <td>
+                      {employee.employmentType === 'Aushilfe' 
+                        ? (employee.monthlyHours ? `${employee.monthlyHours}h/Monat` : '—')
+                        : (employee.weeklyHours ? `${employee.weeklyHours}h/Woche` : '—')
+                      }
+                    </td>
                     <td>
                       {employee.birthDate 
                         ? new Date(employee.birthDate).toLocaleDateString('de-DE')

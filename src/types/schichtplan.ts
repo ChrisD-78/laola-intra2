@@ -1,6 +1,7 @@
 export type ShiftType = 'Frühschicht' | 'Mittelschicht' | 'Spätschicht' | 'Gastro Reinigung' | 'Sauna Reinigung';
 export type AreaType = 'Halle' | 'Kasse' | 'Sauna' | 'Reinigung' | 'Gastro';
 export type EmployeeColor = 'Rot' | 'Braun' | 'Schwarz' | 'Grün' | 'Violett' | 'Blau' | 'Gelb';
+export type EmploymentType = 'Vollzeit' | 'Teilzeit' | 'Aushilfe';
 
 export interface Employee {
   id: string;
@@ -10,7 +11,9 @@ export interface Employee {
   areas: AreaType[]; // Assigned work areas (max 4)
   phone?: string;
   email?: string;
-  weeklyHours?: number;
+  employmentType?: EmploymentType; // Vollzeit, Teilzeit oder Aushilfe
+  weeklyHours?: number; // Für Vollzeit/Teilzeit
+  monthlyHours?: number; // Für Aushilfen
   color?: EmployeeColor;
   birthDate?: string; // Format: YYYY-MM-DD
   active?: boolean; // Mitarbeiter aktiv/deaktiviert (Standard: true)
