@@ -1992,17 +1992,19 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           </div>
         )}
         
-        <div className="week-navigation">
-          <button onClick={() => onWeekChange('prev')} className="btn-week-nav">
-            ← Vorherige Woche
-          </button>
-          <div className="week-display">
-            <strong>Woche:</strong> {getWeekRange()}
+        {viewMode === 'area' && (
+          <div className="week-navigation">
+            <button onClick={() => onWeekChange('prev')} className="btn-week-nav">
+              ← Vorherige Woche
+            </button>
+            <div className="week-display">
+              <strong>Woche:</strong> {getWeekRange()}
+            </div>
+            <button onClick={() => onWeekChange('next')} className="btn-week-nav">
+              Nächste Woche →
+            </button>
           </div>
-          <button onClick={() => onWeekChange('next')} className="btn-week-nav">
-            Nächste Woche →
-          </button>
-        </div>
+        )}
 
         <div className="view-mode-toggle">
           <button 
