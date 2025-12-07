@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Employee, DaySchedule, VacationRequest, Notification, VacationRequestType } from '@/types/schichtplan'
-import AdminView from '@/components/schichtplan/AdminView'
+import AdminView, { AdminViewRef } from '@/components/schichtplan/AdminView'
 import EmployeeView from '@/components/schichtplan/EmployeeView'
 import { PushNotificationService } from '@/lib/pushNotifications'
 import '@/styles/schichtplan.css'
@@ -44,6 +44,27 @@ export default function SchichtplanPage() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushService, setPushService] = useState<PushNotificationService | null>(null)
   const [pushInitializing, setPushInitializing] = useState(true)
+  const adminViewRef = useRef<AdminViewRef>(null)
+  const [showEmployeeForm, setShowEmployeeForm] = useState(false)
+  const [showEmployeeManagement, setShowEmployeeManagement] = useState(false)
+  
+  // Sync states from AdminView ref
+  useEffect(() => {
+    if (viewMode !== 'admin') {
+      setShowEmployeeForm(false)
+      setShowEmployeeManagement(false)
+      return
+    }
+    
+    const interval = setInterval(() => {
+      if (adminViewRef.current) {
+        setShowEmployeeForm(adminViewRef.current.showEmployeeForm)
+        setShowEmployeeManagement(adminViewRef.current.showEmployeeManagement)
+      }
+    }, 100)
+    
+    return () => clearInterval(interval)
+  }, [viewMode])
 
   const checkSyncStatus = async () => {
     try {
@@ -538,6 +559,30 @@ export default function SchichtplanPage() {
                 ? '🔔 Benachrichtigungen an' 
                 : '🔕 Benachrichtigungen aus'}
           </button>
+          {viewMode === 'admin' && (
+            <>
+              <button
+                className="nav-btn"
+                onClick={() => {
+                  adminViewRef.current?.toggleEmployeeForm()
+                }}
+                style={{ background: '#667eea', color: 'white' }}
+                title="Mitarbeiter hinzufügen"
+              >
+                {showEmployeeForm ? '✕ Abbrechen' : '+ Mitarbeiter'}
+              </button>
+              <button
+                className="nav-btn"
+                onClick={() => {
+                  adminViewRef.current?.toggleEmployeeManagement()
+                }}
+                style={{ background: '#667eea', color: 'white' }}
+                title="Mitarbeiter verwalten"
+              >
+                {showEmployeeManagement ? '✕ Schließen' : '👥 Mitarbeiter verwalten'}
+              </button>
+            </>
+          )}
         </div>
         
         {viewMode === 'employee' && (
@@ -564,6 +609,7 @@ export default function SchichtplanPage() {
       <main className="main-content">
         {viewMode === 'admin' ? (
           <AdminView
+            ref={adminViewRef}
             schedule={schedule}
             weekSchedule={getCurrentWeekSchedule()}
             employees={employees}

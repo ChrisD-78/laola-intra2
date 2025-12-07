@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { ShiftType, AreaType, DaySchedule, Employee, SpecialStatus, EmployeeColor, VacationRequest, EmploymentType } from '@/types/schichtplan';
 
 interface Holiday {
@@ -19,6 +19,13 @@ interface AdminViewProps {
   onWeekChange: (direction: 'prev' | 'next') => void;
   vacationRequests: VacationRequest[];
   onVacationDecision: (requestId: string, approved: boolean, reviewedBy?: string) => void;
+}
+
+export interface AdminViewRef {
+  toggleEmployeeForm: () => void;
+  toggleEmployeeManagement: () => void;
+  showEmployeeForm: boolean;
+  showEmployeeManagement: boolean;
 }
 
 const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht', 'Gastro Reinigung', 'Sauna Reinigung'];
@@ -201,7 +208,7 @@ const MIN_STAFFING: Record<AreaType, Record<ShiftType, number>> = {
   }
 };
 
-export default function AdminView({ 
+const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({ 
   schedule, 
   weekSchedule,
   employees, 
@@ -211,7 +218,7 @@ export default function AdminView({
   onWeekChange,
   vacationRequests,
   onVacationDecision
-}: AdminViewProps) {
+}, ref) => {
   const [newEmployeeFirstName, setNewEmployeeFirstName] = useState('');
   const [newEmployeeLastName, setNewEmployeeLastName] = useState('');
   const [newEmployeePhone, setNewEmployeePhone] = useState('');
@@ -226,6 +233,25 @@ export default function AdminView({
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    toggleEmployeeForm: () => {
+      if (showEmployeeForm && editingEmployeeId) {
+        cancelEdit();
+      } else {
+        setShowEmployeeForm(!showEmployeeForm);
+        setShowEmployeeManagement(false);
+      }
+    },
+    toggleEmployeeManagement: () => {
+      setShowEmployeeManagement(!showEmployeeManagement);
+      setShowEmployeeForm(false);
+      setEditingEmployeeId(null);
+    },
+    showEmployeeForm,
+    showEmployeeManagement
+  }));
   
   // PDF Export states
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -2053,31 +2079,6 @@ export default function AdminView({
 
         <div className="employee-section">
           <button 
-            onClick={() => {
-              if (showEmployeeForm && editingEmployeeId) {
-                cancelEdit();
-              } else {
-                setShowEmployeeForm(!showEmployeeForm);
-                setShowEmployeeManagement(false);
-              }
-            }} 
-            className="btn-toggle-form"
-          >
-            {showEmployeeForm ? '✕ Abbrechen' : '+ Mitarbeiter'}
-          </button>
-          
-          <button 
-            onClick={() => {
-              setShowEmployeeManagement(!showEmployeeManagement);
-              setShowEmployeeForm(false);
-              setEditingEmployeeId(null);
-            }} 
-            className="btn-manage-employees"
-          >
-            {showEmployeeManagement ? '✕ Schließen' : '👥 Mitarbeiter verwalten'}
-          </button>
-          
-          <button 
             onClick={() => setShowBulkAssignment(!showBulkAssignment)} 
             className="btn-bulk-assignment"
           >
@@ -3291,4 +3292,8 @@ export default function AdminView({
       )}
     </div>
   );
-}
+});
+
+AdminView.displayName = 'AdminView';
+
+export default AdminView;
