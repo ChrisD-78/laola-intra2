@@ -16,7 +16,7 @@
     "@vercel/blob": "^2.0.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
-    "next": "15.5.2",
+    "next": "15.5.7",
     "nodemailer": "^7.0.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -30,7 +30,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.2",
+    "eslint-config-next": "15.5.7",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
