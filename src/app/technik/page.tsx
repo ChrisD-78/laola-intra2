@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { getTechnikInspections, createTechnikInspection, updateTechnikInspection, deleteTechnikInspection, uploadTechnikPdf, TechnikInspectionRecord } from '@/lib/db'
+import Link from 'next/link'
 
 interface TechnikInspection {
   id: string
@@ -410,7 +411,7 @@ export default function Technik() {
 
       {/* Create Button */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
@@ -418,13 +419,13 @@ export default function Technik() {
             <span>➕</span>
             <span>Neues Prüfgerät anlegen</span>
           </button>
-          <button
-            onClick={() => setShowCsvImportModal(true)}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          <Link
+            href="/technik/gefahrstoffe"
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center space-x-2"
           >
-            <span>📥</span>
-            <span>CSV Import</span>
-          </button>
+            <span>⚠️</span>
+            <span>Gefahrstoffe</span>
+          </Link>
         </div>
       </div>
 

@@ -785,3 +785,71 @@ export async function deleteTechnikInspection(id: string) {
   }
   return response.json()
 }
+
+// =====================
+// Gefahrstoffe
+// =====================
+export interface GefahrstoffRecord {
+  id?: string
+  name: string
+  gefahrstoffsymbole?: string
+  info?: string
+  bemerkung?: string
+  sicherheitsdatenblatt_url?: string
+  sicherheitsdatenblatt_name?: string
+  betriebsanweisung_laola_url?: string
+  betriebsanweisung_laola_name?: string
+  betriebsanweisung_freibad_url?: string
+  betriebsanweisung_freibad_name?: string
+  wassergefaehrdungsklasse?: string
+  verbrauch_jahresmenge?: string
+  substitution_geprueft_ergebnis?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export async function getGefahrstoffe(): Promise<GefahrstoffRecord[]> {
+  const response = await fetch('/api/technik/gefahrstoffe')
+  if (!response.ok) throw new Error('Failed to fetch gefahrstoffe')
+  return response.json()
+}
+
+export async function createGefahrstoff(gefahrstoff: Omit<GefahrstoffRecord, 'id' | 'created_at' | 'updated_at'>) {
+  const response = await fetch('/api/technik/gefahrstoffe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(gefahrstoff)
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to create gefahrstoff:', error)
+    throw new Error('Failed to create gefahrstoff')
+  }
+  return response.json()
+}
+
+export async function updateGefahrstoff(id: string, gefahrstoff: Partial<GefahrstoffRecord>) {
+  const response = await fetch('/api/technik/gefahrstoffe', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...gefahrstoff })
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to update gefahrstoff:', error)
+    throw new Error('Failed to update gefahrstoff')
+  }
+  return response.json()
+}
+
+export async function deleteGefahrstoff(id: string) {
+  const response = await fetch(`/api/technik/gefahrstoffe?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to delete gefahrstoff:', error)
+    throw new Error('Failed to delete gefahrstoff')
+  }
+  return response.json()
+}

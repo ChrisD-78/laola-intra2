@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHS-Piktogramme Vorschau</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .piktogramm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .piktogramm-item {
+            text-align: center;
+        }
+        .diamond {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .diamond img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .code {
+            font-weight: bold;
+            color: #333;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .name {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GHS-Piktogramme - Offizielle Darstellung</h1>
+        <p style="color: #666; margin-bottom: 30px;">Alle 9 offiziellen GHS-Piktogramme in roten Diamanten-Rahmen (DIN-konform)</p>
+        
+        <div class="piktogramm-grid">
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs01.svg" alt="GHS01">
+                </div>
+                <div class="code">GHS01</div>
+                <div class="name">Explodierende Bombe</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs02.svg" alt="GHS02">
+                </div>
+                <div class="code">GHS02</div>
+                <div class="name">Flamme</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs03.svg" alt="GHS03">
+                </div>
+                <div class="code">GHS03</div>
+                <div class="name">Flamme über Kreis</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs04.svg" alt="GHS04">
+                </div>
+                <div class="code">GHS04</div>
+                <div class="name">Gasflasche</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs05.svg" alt="GHS05">
+                </div>
+                <div class="code">GHS05</div>
+                <div class="name">Ätzwirkung</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs06.svg" alt="GHS06">
+                </div>
+                <div class="code">GHS06</div>
+                <div class="name">Totenkopf mit gekreuzten Knochen</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs07.svg" alt="GHS07">
+                </div>
+                <div class="code">GHS07</div>
+                <div class="name">Ausrufezeichen</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs08.svg" alt="GHS08">
+                </div>
+                <div class="code">GHS08</div>
+                <div class="name">Gesundheitsgefahr</div>
+            </div>
+            
+            <div class="piktogramm-item">
+                <div class="diamond">
+                    <img src="ghs09.svg" alt="GHS09">
+                </div>
+                <div class="code">GHS09</div>
+                <div class="name">Umwelt</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -579,6 +579,44 @@ CREATE TRIGGER update_technik_inspections_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
+-- TEIL 13.1: GEFAHRSTOFFE TABELLE
+-- =====================================================
+
+-- Gefahrstoffe Table
+CREATE TABLE IF NOT EXISTS gefahrstoffe (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,                                    -- Name des Gefahrstoffs
+  gefahrstoffsymbole TEXT,                                       -- Gefahrstoffsymbole (kann mehrere enthalten, z.B. "GHS02, GHS05")
+  info TEXT,                                                      -- Zusätzliche Informationen
+  bemerkung TEXT,                                                -- Bemerkungen
+  sicherheitsdatenblatt_url TEXT,                               -- Sicherheitsdatenblatt PDF URL
+  sicherheitsdatenblatt_name VARCHAR(255),                      -- Sicherheitsdatenblatt PDF Dateiname
+  betriebsanweisung_laola_url TEXT,                             -- Betriebsanweisung LA OLA PDF URL
+  betriebsanweisung_laola_name VARCHAR(255),                    -- Betriebsanweisung LA OLA PDF Dateiname
+  betriebsanweisung_freibad_url TEXT,                           -- Betriebsanweisung Freibad PDF URL
+  betriebsanweisung_freibad_name VARCHAR(255),                  -- Betriebsanweisung Freibad PDF Dateiname
+  wassergefaehrdungsklasse VARCHAR(50),                           -- Einstufung Wassergefährdungsklasse (z.B. "WGK 1", "WGK 2", "WGK 3")
+  verbrauch_jahresmenge VARCHAR(100),                           -- Verbrauch Jahresmenge (z.B. "50 Liter", "100 kg")
+  substitution_geprueft_ergebnis TEXT,                          -- Substitution geprüft Ergebnis
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for performance
+CREATE INDEX IF NOT EXISTS idx_gefahrstoffe_name
+  ON gefahrstoffe (name);
+
+CREATE INDEX IF NOT EXISTS idx_gefahrstoffe_wassergefaehrdungsklasse
+  ON gefahrstoffe (wassergefaehrdungsklasse);
+
+-- Create trigger for auto-updating updated_at
+DROP TRIGGER IF EXISTS update_gefahrstoffe_updated_at ON gefahrstoffe;
+CREATE TRIGGER update_gefahrstoffe_updated_at
+  BEFORE UPDATE ON gefahrstoffe
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
 -- TEIL 14: PUSH NOTIFICATIONS TABELLE
 -- =====================================================
 
