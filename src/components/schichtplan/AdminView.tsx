@@ -323,6 +323,50 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  // Geburtstagsanzeige - Berechne anstehende Geburtstage
+  const getUpcomingBirthdays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in30Days = new Date(today);
+    in30Days.setDate(in30Days.getDate() + 30);
+
+    const upcomingBirthdays: Array<{
+      employee: Employee;
+      birthday: Date;
+      daysUntil: number;
+      age: number;
+    }> = [];
+
+    employees.forEach(employee => {
+      if (!employee.birthDate || employee.active === false) return;
+
+      const [year, month, day] = employee.birthDate.split('-').map(Number);
+      const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
+      const nextYearBirthday = new Date(today.getFullYear() + 1, month - 1, day);
+
+      let birthday: Date;
+      if (thisYearBirthday >= today) {
+        birthday = thisYearBirthday;
+      } else {
+        birthday = nextYearBirthday;
+      }
+
+      if (birthday <= in30Days) {
+        const daysUntil = Math.ceil((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const age = birthday.getFullYear() - year;
+        
+        upcomingBirthdays.push({
+          employee,
+          birthday,
+          daysUntil,
+          age
+        });
+      }
+    });
+
+    return upcomingBirthdays.sort((a, b) => a.daysUntil - b.daysUntil);
+  }, [employees]);
+
   // Get holidays for current year
   const currentYear = new Date(currentWeekStart).getFullYear();
   const holidays = useMemo(() => {
@@ -2078,8 +2122,71 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             </div>
           </div>
         )}
+      </div>
 
-        <div className="employee-section">
+      {/* Geburtstagsanzeige für Admins */}
+      {getUpcomingBirthdays.length > 0 && (
+        <div className="birthday-display" style={{
+          background: 'rgba(37, 99, 235, 0.15)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(37, 99, 235, 0.3)',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '20px',
+          marginTop: '20px',
+          boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
+        }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+            🎂 Anstehende Geburtstage (nächste 30 Tage)
+          </h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+            {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
+              const isToday = daysUntil === 0;
+              const isTomorrow = daysUntil === 1;
+              
+              return (
+                <div
+                  key={employee.id}
+                  style={{
+                    background: isToday 
+                      ? 'rgba(34, 197, 94, 0.2)' 
+                      : 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    border: `1px solid ${isToday ? 'rgba(34, 197, 94, 0.4)' : 'rgba(37, 99, 235, 0.3)'}`,
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    minWidth: '200px',
+                    boxShadow: isToday 
+                      ? '0 4px 16px 0 rgba(34, 197, 94, 0.2)' 
+                      : '0 4px 16px 0 rgba(37, 99, 235, 0.1)'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '6px', color: '#1e3a8a' }}>
+                    {employee.firstName} {employee.lastName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#475569' }}>
+                    {isToday ? (
+                      <span style={{ color: '#16a34a', fontWeight: 'bold' }}>🎉 Heute!</span>
+                    ) : isTomorrow ? (
+                      <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Morgen</span>
+                    ) : (
+                      <span style={{ color: '#2563eb' }}>{daysUntil} Tage</span>
+                    )}
+                    {' • '}
+                    {birthday.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    {' • '}
+                    {age} Jahre
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="employee-section">
           <button 
             onClick={() => setShowBulkAssignment(!showBulkAssignment)} 
             className="btn-bulk-assignment"
@@ -2226,8 +2333,6 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
               </div>
             </div>
           )}
-
-        </div>
       </div>
 
       {showEmployeeManagement && (
