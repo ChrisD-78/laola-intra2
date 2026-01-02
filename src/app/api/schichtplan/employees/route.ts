@@ -6,25 +6,27 @@ const sql = neon(process.env.DATABASE_URL!)
 // GET all employees
 export async function GET() {
   try {
-    // Prüfe ob user_id, role und active Spalten existieren
+    // Prüfe ob user_id, role, active und birth_date Spalten existieren
     let hasUserIdColumn = false
     let hasRoleColumn = false
     let hasActiveColumn = false
     let hasEmploymentTypeColumn = false
     let hasMonthlyHoursColumn = false
+    let hasBirthDateColumn = false
     
     try {
       const checkColumns = await sql`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'schichtplan_employees' 
-        AND column_name IN ('user_id', 'role', 'active', 'employment_type', 'monthly_hours')
+        AND column_name IN ('user_id', 'role', 'active', 'employment_type', 'monthly_hours', 'birth_date')
       `
       hasUserIdColumn = checkColumns.some((col: any) => col.column_name === 'user_id')
       hasRoleColumn = checkColumns.some((col: any) => col.column_name === 'role')
       hasActiveColumn = checkColumns.some((col: any) => col.column_name === 'active')
       hasEmploymentTypeColumn = checkColumns.some((col: any) => col.column_name === 'employment_type')
       hasMonthlyHoursColumn = checkColumns.some((col: any) => col.column_name === 'monthly_hours')
+      hasBirthDateColumn = checkColumns.some((col: any) => col.column_name === 'birth_date')
     } catch (checkError) {
       console.log('Could not check for columns, assuming they do not exist')
     }
@@ -46,7 +48,7 @@ export async function GET() {
           ${hasEmploymentTypeColumn ? sql`se.employment_type as "employmentType"` : sql`NULL as "employmentType"`},
           ${hasMonthlyHoursColumn ? sql`se.monthly_hours as "monthlyHours"` : sql`NULL as "monthlyHours"`},
           se.color,
-          se.birth_date as "birthDate",
+          ${hasBirthDateColumn ? sql`se.birth_date as "birthDate"` : sql`NULL as "birthDate"`},
           ${hasActiveColumn ? sql`se.active` : sql`true as active`},
           ${hasRoleColumn ? sql`se.role` : sql`NULL as role`},
           u.display_name as "userDisplayName",
@@ -71,7 +73,7 @@ export async function GET() {
           ${hasEmploymentTypeColumn ? sql`se.employment_type as "employmentType"` : sql`NULL as "employmentType"`},
           ${hasMonthlyHoursColumn ? sql`se.monthly_hours as "monthlyHours"` : sql`NULL as "monthlyHours"`},
           se.color,
-          se.birth_date as "birthDate",
+          ${hasBirthDateColumn ? sql`se.birth_date as "birthDate"` : sql`NULL as "birthDate"`},
           ${hasActiveColumn ? sql`se.active` : sql`true as active`},
           NULL as role,
           NULL as "userDisplayName",
