@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { useRouter } from 'next/navigation'
 import { getTechnikInspections, createTechnikInspection, updateTechnikInspection, deleteTechnikInspection, uploadTechnikPdf, TechnikInspectionRecord } from '@/lib/db'
 import Link from 'next/link'
 
@@ -25,9 +26,22 @@ interface TechnikInspection {
 }
 
 export default function Technik() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, userRole, isLoggedIn } = useAuth()
+  const router = useRouter()
   const [inspections, setInspections] = useState<TechnikInspection[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Zugriffskontrolle: Nur Admin und Technik-Rolle haben Zugriff
+  useEffect(() => {
+    if (isLoggedIn && !isAdmin && userRole !== 'Technik') {
+      router.push('/')
+    }
+  }, [isLoggedIn, isAdmin, userRole, router])
+
+  // Wenn nicht angemeldet oder keine Berechtigung, nichts anzeigen
+  if (!isLoggedIn || (!isAdmin && userRole !== 'Technik')) {
+    return null
+  }
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)

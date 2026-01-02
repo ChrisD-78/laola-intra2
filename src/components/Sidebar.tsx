@@ -9,7 +9,7 @@ import { useState } from 'react'
 
 const Sidebar = () => {
   const pathname = usePathname()
-  const { currentUser, logout, isAdmin } = useAuth()
+  const { currentUser, logout, isAdmin, userRole } = useAuth()
   const { unreadCount, latestMessage } = useChatNotifications()
   const { isCollapsed, toggleSidebar } = useSidebar()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -19,6 +19,9 @@ const Sidebar = () => {
     setIsMobileMenuOpen(false)
   }
 
+  // Prüfe, ob Benutzer Zugriff auf Technik-Bereich hat
+  const hasTechnikAccess = isAdmin || userRole === 'Technik'
+
   const navItems = [
     { href: '/', label: 'Dashboard', icon: '🏠' },
     { href: '/schichtplan', label: 'Schichtplan', icon: '📅' },
@@ -27,7 +30,7 @@ const Sidebar = () => {
     { href: '/dokumente', label: 'Dokumente', icon: '📄' },
     { href: '/formulare', label: 'Formulare', icon: '📝' },
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
-    { href: '/technik', label: 'Technik', icon: '🔧' },
+    ...(hasTechnikAccess ? [{ href: '/technik', label: 'Technik', icon: '🔧' }] : []),
     { href: '/chat', label: 'Chat', icon: '💬' },
   ]
 

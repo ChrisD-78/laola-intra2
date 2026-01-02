@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { useRouter } from 'next/navigation'
 import { getGefahrstoffe, createGefahrstoff, updateGefahrstoff, deleteGefahrstoff, uploadTechnikPdf, GefahrstoffRecord } from '@/lib/db'
 import Link from 'next/link'
 
@@ -23,9 +24,22 @@ interface Gefahrstoff {
 }
 
 export default function Gefahrstoffe() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, userRole, isLoggedIn } = useAuth()
+  const router = useRouter()
   const [gefahrstoffe, setGefahrstoffe] = useState<Gefahrstoff[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Zugriffskontrolle: Nur Admin und Technik-Rolle haben Zugriff
+  useEffect(() => {
+    if (isLoggedIn && !isAdmin && userRole !== 'Technik') {
+      router.push('/')
+    }
+  }, [isLoggedIn, isAdmin, userRole, router])
+
+  // Wenn nicht angemeldet oder keine Berechtigung, nichts anzeigen
+  if (!isLoggedIn || (!isAdmin && userRole !== 'Technik')) {
+    return null
+  }
   const [selectedGefahrstoff, setSelectedGefahrstoff] = useState<Gefahrstoff | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
