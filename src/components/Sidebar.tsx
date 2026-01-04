@@ -77,8 +77,12 @@ const Sidebar = () => {
       <div className="flex-shrink-0 p-6 border-b border-blue-200/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-800/40 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-blue-300/40">
-              <span className="text-white text-2xl">🏊‍♂️</span>
+            <div className="w-12 h-12 bg-blue-800/40 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-blue-300/40 p-2">
+              <img
+                src="/logo-intra.png"
+                alt="LA OLA Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">LA OLA</h1>

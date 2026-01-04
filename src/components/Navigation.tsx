@@ -16,9 +16,14 @@ const Navigation = () => {
     <nav className="bg-white shadow-lg border-b border-gray-200">
       <div className={`transition-all duration-300 px-6 ${isCollapsed ? 'ml-0' : 'ml-64'}`}>
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-3">
+            <img
+              src="/logo-intra.png"
+              alt="LA OLA Logo"
+              className="h-8 w-auto object-contain"
+            />
             <div className="text-gray-800 text-2xl font-bold">
-              🏊‍♂️ LA OLA Intranet
+              LA OLA Intranet
             </div>
           </div>
           

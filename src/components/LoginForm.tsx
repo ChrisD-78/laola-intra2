@@ -43,21 +43,25 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border border-white/30">
-            <span className="text-white text-3xl">🏊‍♂️</span>
+          <div className="mx-auto h-20 w-20 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-gray-200 p-2">
+            <img
+              src="/logo-intra.png"
+              alt="LA OLA Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-white">
+          <h2 className="mt-6 text-3xl font-bold text-gray-800">
             LA OLA Intranet
           </h2>
-          <p className="mt-2 text-sm text-white/80">
+          <p className="mt-2 text-sm text-gray-600">
             Melden Sie sich an, um auf das Mitarbeiter-Portal zuzugreifen
           </p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-2xl border border-white/20">
+        <div className="bg-gradient-to-br from-blue-600 to-purple-600 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-2xl border border-blue-500/20">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-white">
