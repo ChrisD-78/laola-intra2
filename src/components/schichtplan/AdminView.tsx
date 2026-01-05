@@ -663,10 +663,19 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     if (!employee) return;
     
     const oldBirthDate = employee.birthDate;
-    // Normalize birthDate: empty string becomes null (for API consistency)
+    // Normalize birthDate: empty string becomes undefined (which will be converted to null in API)
+    // Keep as string if provided, otherwise undefined (not null, to distinguish from existing null values)
     const newBirthDate = (newEmployeeBirthDate && newEmployeeBirthDate.trim() !== '') 
       ? newEmployeeBirthDate.trim() 
-      : null;
+      : undefined;
+    
+    console.log('Updating employee birthDate:', {
+      employeeId: editingEmployeeId,
+      oldBirthDate: oldBirthDate,
+      newEmployeeBirthDate: newEmployeeBirthDate,
+      normalizedNewBirthDate: newBirthDate,
+      willChange: oldBirthDate !== newBirthDate
+    });
     
     const updatedEmployee: Employee = {
       ...employee,

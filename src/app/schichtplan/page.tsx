@@ -235,12 +235,15 @@ export default function SchichtplanPage() {
   const handleEmployeesUpdate = async (newEmployees: Employee[]) => {
     // Normalize birthDate values for API (empty string, undefined, null all become null)
     const normalizeBirthDateForAPI = (bd: string | undefined | null): string | null => {
-      if (!bd) return null
+      if (bd === undefined || bd === null) return null
       const trimmed = typeof bd === 'string' ? bd.trim() : ''
       return trimmed === '' ? null : trimmed
     }
     
-    // Compare birthDate values (handles undefined, null, empty string as equivalent)
+    // Compare birthDate values
+    // Important: undefined means "no value provided" (should be treated as null for comparison)
+    // null means "explicitly set to null" (existing null value in database)
+    // We need to compare the normalized values (both become null)
     const birthDateEquals = (bd1: string | undefined | null, bd2: string | undefined | null): boolean => {
       const norm1 = normalizeBirthDateForAPI(bd1)
       const norm2 = normalizeBirthDateForAPI(bd2)
@@ -270,17 +273,22 @@ export default function SchichtplanPage() {
           
           if (hasChanges) {
             // Normalize birthDate before sending to API
+            const normalizedBirthDate = normalizeBirthDateForAPI(employee.birthDate)
             const employeeToSave = {
               ...employee,
-              birthDate: normalizeBirthDateForAPI(employee.birthDate)
+              birthDate: normalizedBirthDate
             }
             
             console.log('Updating employee:', employeeToSave.id, {
               firstName: employeeToSave.firstName,
               lastName: employeeToSave.lastName,
-              birthDate: employeeToSave.birthDate,
+              originalBirthDate: employee.birthDate,
+              normalizedBirthDate: normalizedBirthDate,
               oldBirthDate: existing.birthDate,
-              hasChanges
+              oldBirthDateType: typeof existing.birthDate,
+              newBirthDateType: typeof employee.birthDate,
+              hasChanges,
+              birthDateChanged: !birthDateEquals(existing.birthDate, employee.birthDate)
             })
             
             const response = await fetch('/api/schichtplan/employees', {
