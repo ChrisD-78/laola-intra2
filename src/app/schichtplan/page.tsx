@@ -114,6 +114,15 @@ export default function SchichtplanPage() {
         throw new Error('Failed to load employees')
       }
       const employeesData = await employeesRes.json()
+      
+      // Debug: Log birthDate values from API
+      console.log('Loaded employees from API:', employeesData.map((emp: any) => ({
+        id: emp.id,
+        name: `${emp.firstName} ${emp.lastName}`,
+        birthDate: emp.birthDate,
+        birthDateType: typeof emp.birthDate
+      })))
+      
       setEmployees(Array.isArray(employeesData) ? employeesData : [])
       
       // Finde aktuellen Benutzer in der Liste
