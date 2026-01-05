@@ -337,8 +337,22 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       age: number;
     }> = [];
 
+    console.log('Calculating upcoming birthdays. Total employees:', employees.length);
+    console.log('Today:', today.toISOString().split('T')[0]);
+    console.log('In 30 days:', in30Days.toISOString().split('T')[0]);
+
     employees.forEach(employee => {
-      if (!employee.birthDate || employee.active === false) return;
+      // Check if employee is active (default to true if undefined)
+      const isActive = employee.active !== false;
+      
+      if (!employee.birthDate || !isActive) {
+        if (!employee.birthDate) {
+          console.log(`Skipping ${employee.firstName} ${employee.lastName}: no birthDate`);
+        } else if (!isActive) {
+          console.log(`Skipping ${employee.firstName} ${employee.lastName}: not active`);
+        }
+        return;
+      }
 
       const [year, month, day] = employee.birthDate.split('-').map(Number);
       const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
@@ -351,9 +365,12 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         birthday = nextYearBirthday;
       }
 
+      // Include birthdays up to and including 30 days from today
       if (birthday <= in30Days) {
         const daysUntil = Math.ceil((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         const age = birthday.getFullYear() - year;
+        
+        console.log(`Found upcoming birthday: ${employee.firstName} ${employee.lastName}, ${daysUntil} days, age ${age}`);
         
         upcomingBirthdays.push({
           employee,
@@ -364,6 +381,7 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       }
     });
 
+    console.log(`Total upcoming birthdays found: ${upcomingBirthdays.length}`);
     return upcomingBirthdays.sort((a, b) => a.daysUntil - b.daysUntil);
   }, [employees]);
 
@@ -2083,23 +2101,26 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         </div>
 
         {/* Geburtstagsanzeige für Admins */}
-        {getUpcomingBirthdays.length > 0 && (
-          <div className="birthday-display" style={{
-            background: 'rgba(37, 99, 235, 0.15)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            border: '1px solid rgba(37, 99, 235, 0.3)',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            marginTop: '20px',
-            boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-              🎂 Anstehende Geburtstage (nächste 30 Tage)
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
+        {(() => {
+          console.log('Rendering birthday display. Upcoming birthdays count:', getUpcomingBirthdays.length);
+          console.log('Upcoming birthdays:', getUpcomingBirthdays);
+          return getUpcomingBirthdays.length > 0 ? (
+            <div className="birthday-display" style={{
+              background: 'rgba(37, 99, 235, 0.15)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(37, 99, 235, 0.3)',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '20px',
+              marginTop: '20px',
+              boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+                🎂 Anstehende Geburtstage (nächste 30 Tage)
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
                 const isToday = daysUntil === 0;
                 const isTomorrow = daysUntil === 1;
                 
@@ -2140,9 +2161,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
                   </div>
                 );
               })}
+              </div>
             </div>
-          </div>
-        )}
+          ) : null;
+        })()}
 
         {vacationRequests.length > 0 && (
           <div className="vacation-requests-section">
