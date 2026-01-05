@@ -356,7 +356,9 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
 
       const [year, month, day] = employee.birthDate.split('-').map(Number);
       const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
+      thisYearBirthday.setHours(0, 0, 0, 0);
       const nextYearBirthday = new Date(today.getFullYear() + 1, month - 1, day);
+      nextYearBirthday.setHours(0, 0, 0, 0);
 
       let birthday: Date;
       if (thisYearBirthday >= today) {
@@ -365,12 +367,14 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         birthday = nextYearBirthday;
       }
 
-      // Include birthdays up to and including 30 days from today
-      if (birthday <= in30Days) {
+      // Include birthdays from today up to and including 30 days from today
+      // Use >= today instead of <= in30Days to include today's birthdays
+      if (birthday >= today && birthday <= in30Days) {
         const daysUntil = Math.ceil((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         const age = birthday.getFullYear() - year;
         
-        console.log(`Found upcoming birthday: ${employee.firstName} ${employee.lastName}, ${daysUntil} days, age ${age}`);
+        console.log(`Found upcoming birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthday.toISOString().split('T')[0]}, ${daysUntil} days, age ${age}`);
+        console.log(`  - birthDate: ${employee.birthDate}, thisYearBirthday: ${thisYearBirthday.toISOString().split('T')[0]}, today: ${today.toISOString().split('T')[0]}`);
         
         upcomingBirthdays.push({
           employee,
@@ -378,6 +382,8 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           daysUntil,
           age
         });
+      } else {
+        console.log(`Skipping birthday for ${employee.firstName} ${employee.lastName}: birthday ${birthday.toISOString().split('T')[0]} is not in range (today: ${today.toISOString().split('T')[0]}, in30Days: ${in30Days.toISOString().split('T')[0]})`);
       }
     });
 
