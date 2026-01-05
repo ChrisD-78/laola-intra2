@@ -2082,6 +2082,68 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           </button>
         </div>
 
+        {/* Geburtstagsanzeige für Admins */}
+        {getUpcomingBirthdays.length > 0 && (
+          <div className="birthday-display" style={{
+            background: 'rgba(37, 99, 235, 0.15)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(37, 99, 235, 0.3)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px',
+            marginTop: '20px',
+            boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+              🎂 Anstehende Geburtstage (nächste 30 Tage)
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
+                const isToday = daysUntil === 0;
+                const isTomorrow = daysUntil === 1;
+                
+                return (
+                  <div
+                    key={employee.id}
+                    style={{
+                      background: isToday 
+                        ? 'rgba(34, 197, 94, 0.2)' 
+                        : 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: `1px solid ${isToday ? 'rgba(34, 197, 94, 0.4)' : 'rgba(37, 99, 235, 0.3)'}`,
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      minWidth: '200px',
+                      boxShadow: isToday 
+                        ? '0 4px 16px 0 rgba(34, 197, 94, 0.2)' 
+                        : '0 4px 16px 0 rgba(37, 99, 235, 0.1)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '6px', color: '#1e3a8a' }}>
+                      {employee.firstName} {employee.lastName}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#475569' }}>
+                      {isToday ? (
+                        <span style={{ color: '#16a34a', fontWeight: 'bold' }}>🎉 Heute!</span>
+                      ) : isTomorrow ? (
+                        <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Morgen</span>
+                      ) : (
+                        <span style={{ color: '#2563eb' }}>{daysUntil} Tage</span>
+                      )}
+                      {' • '}
+                      {birthday.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {' • '}
+                      {age} Jahre
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {vacationRequests.length > 0 && (
           <div className="vacation-requests-section">
             <h2>🏖️ Urlaubsanträge ({vacationRequests.filter(r => r.status === 'pending').length} offen)</h2>
@@ -2140,68 +2202,6 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           </div>
         )}
       </div>
-
-      {/* Geburtstagsanzeige für Admins */}
-      {getUpcomingBirthdays.length > 0 && (
-        <div className="birthday-display" style={{
-          background: 'rgba(37, 99, 235, 0.15)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          border: '1px solid rgba(37, 99, 235, 0.3)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '20px',
-          marginTop: '20px',
-          boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-            🎂 Anstehende Geburtstage (nächste 30 Tage)
-          </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-            {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
-              const isToday = daysUntil === 0;
-              const isTomorrow = daysUntil === 1;
-              
-              return (
-                <div
-                  key={employee.id}
-                  style={{
-                    background: isToday 
-                      ? 'rgba(34, 197, 94, 0.2)' 
-                      : 'rgba(255, 255, 255, 0.7)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    border: `1px solid ${isToday ? 'rgba(34, 197, 94, 0.4)' : 'rgba(37, 99, 235, 0.3)'}`,
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    minWidth: '200px',
-                    boxShadow: isToday 
-                      ? '0 4px 16px 0 rgba(34, 197, 94, 0.2)' 
-                      : '0 4px 16px 0 rgba(37, 99, 235, 0.1)'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '6px', color: '#1e3a8a' }}>
-                    {employee.firstName} {employee.lastName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#475569' }}>
-                    {isToday ? (
-                      <span style={{ color: '#16a34a', fontWeight: 'bold' }}>🎉 Heute!</span>
-                    ) : isTomorrow ? (
-                      <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Morgen</span>
-                    ) : (
-                      <span style={{ color: '#2563eb' }}>{daysUntil} Tage</span>
-                    )}
-                    {' • '}
-                    {birthday.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    {' • '}
-                    {age} Jahre
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <div className="employee-section">
           <button 
