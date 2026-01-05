@@ -307,15 +307,27 @@ export default function SchichtplanPage() {
             })
             
             if (!response.ok) {
-              const errorData = await response.json()
-              console.error('Failed to update employee:', errorData)
-              throw new Error(`Failed to update employee: ${errorData.error || 'Unknown error'}`)
+              let errorData
+              try {
+                errorData = await response.json()
+              } catch (e) {
+                errorData = { error: `HTTP ${response.status}: ${response.statusText}` }
+              }
+              console.error('Failed to update employee:', {
+                status: response.status,
+                statusText: response.statusText,
+                errorData,
+                employeeId: employeeToSave.id,
+                employeeData: employeeToSave
+              })
+              throw new Error(`Failed to update employee: ${errorData.error || errorData.details || 'Unknown error'}`)
             }
             
             const updatedEmployee = await response.json()
             console.log('Employee updated successfully:', updatedEmployee.id, {
               birthDate: updatedEmployee.birthDate,
-              returnedBirthDate: updatedEmployee.birthDate
+              returnedBirthDate: updatedEmployee.birthDate,
+              fullEmployee: updatedEmployee
             })
           } else {
             console.log('No changes detected for employee:', employee.id, {

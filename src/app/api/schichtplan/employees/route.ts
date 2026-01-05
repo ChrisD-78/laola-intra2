@@ -307,14 +307,29 @@ export async function PUT(request: NextRequest) {
     console.log('Executing UPDATE for employee:', id, 'with', baseSetFields.length, 'fields')
     console.log('birthDate being set:', normalizedBirthDate, 'type:', typeof normalizedBirthDate)
     console.log('hasBirthDateColumn:', hasBirthDateColumn)
-    console.log('baseSetFields includes birth_date:', baseSetFields.some((f: any) => f && f.strings && f.strings[0] && f.strings[0].includes('birth_date')))
+    console.log('baseSetFields count:', baseSetFields.length)
+    console.log('returningFields count:', returningFields.length)
     
-    const result = await sql`
-      UPDATE schichtplan_employees
-      SET ${sql.join(baseSetFields, sql`, `)}
-      WHERE id = ${id}
-      RETURNING ${sql.join(returningFields, sql`, `)}
-    `
+    let result
+    try {
+      result = await sql`
+        UPDATE schichtplan_employees
+        SET ${sql.join(baseSetFields, sql`, `)}
+        WHERE id = ${id}
+        RETURNING ${sql.join(returningFields, sql`, `)}
+      `
+    } catch (sqlError) {
+      console.error('SQL Error during UPDATE:', sqlError)
+      console.error('SQL Error details:', {
+        message: sqlError instanceof Error ? sqlError.message : 'Unknown error',
+        stack: sqlError instanceof Error ? sqlError.stack : undefined,
+        baseSetFieldsCount: baseSetFields.length,
+        returningFieldsCount: returningFields.length,
+        hasBirthDateColumn,
+        normalizedBirthDate
+      })
+      throw sqlError
+    }
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
