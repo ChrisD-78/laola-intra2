@@ -233,6 +233,9 @@ export async function PUT(request: NextRequest) {
     
     if (hasBirthDateColumn) {
       baseSetFields.push(sql`birth_date = ${normalizedBirthDate}`)
+      console.log('Adding birth_date to UPDATE:', normalizedBirthDate, 'type:', typeof normalizedBirthDate)
+    } else {
+      console.log('WARNING: birth_date column does not exist, cannot update birthDate')
     }
     
     if (hasUserIdColumn) {
@@ -292,6 +295,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Execute UPDATE
+    console.log('Executing UPDATE for employee:', id, 'with', baseSetFields.length, 'fields')
     const result = await sql`
       UPDATE schichtplan_employees
       SET ${sql.join(baseSetFields, sql`, `)}
@@ -302,6 +306,8 @@ export async function PUT(request: NextRequest) {
     if (result.length === 0) {
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
     }
+    
+    console.log('UPDATE successful, returned birthDate:', result[0].birthDate)
     return NextResponse.json(result[0])
   } catch (error) {
     console.error('Failed to update employee:', error)

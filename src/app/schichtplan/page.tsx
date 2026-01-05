@@ -233,11 +233,18 @@ export default function SchichtplanPage() {
   }
 
   const handleEmployeesUpdate = async (newEmployees: Employee[]) => {
-    // Normalize birthDate values for comparison (empty string, undefined, null all become null)
-    const normalizeBirthDate = (bd: string | undefined | null): string | null => {
+    // Normalize birthDate values for API (empty string, undefined, null all become null)
+    const normalizeBirthDateForAPI = (bd: string | undefined | null): string | null => {
       if (!bd) return null
       const trimmed = typeof bd === 'string' ? bd.trim() : ''
       return trimmed === '' ? null : trimmed
+    }
+    
+    // Compare birthDate values (handles undefined, null, empty string as equivalent)
+    const birthDateEquals = (bd1: string | undefined | null, bd2: string | undefined | null): boolean => {
+      const norm1 = normalizeBirthDateForAPI(bd1)
+      const norm2 = normalizeBirthDateForAPI(bd2)
+      return norm1 === norm2
     }
     
     // Save to database first
@@ -245,11 +252,7 @@ export default function SchichtplanPage() {
       try {
         const existing = employees.find(e => e.id === employee.id)
         if (existing) {
-          // Normalize birthDate for comparison
-          const existingBirthDate = normalizeBirthDate(existing.birthDate)
-          const newBirthDate = normalizeBirthDate(employee.birthDate)
-          
-          // Only update if something changed
+          // Check if something changed - use birthDateEquals for birthDate comparison
           const hasChanges = 
             existing.firstName !== employee.firstName ||
             existing.lastName !== employee.lastName ||
@@ -260,7 +263,7 @@ export default function SchichtplanPage() {
             existing.monthlyHours !== employee.monthlyHours ||
             existing.employmentType !== employee.employmentType ||
             existing.color !== employee.color ||
-            existingBirthDate !== newBirthDate ||
+            !birthDateEquals(existing.birthDate, employee.birthDate) ||
             existing.userId !== employee.userId ||
             existing.role !== employee.role ||
             existing.active !== employee.active
@@ -269,10 +272,16 @@ export default function SchichtplanPage() {
             // Normalize birthDate before sending to API
             const employeeToSave = {
               ...employee,
-              birthDate: newBirthDate
+              birthDate: normalizeBirthDateForAPI(employee.birthDate)
             }
             
-            console.log('Updating employee:', employeeToSave.id, 'birthDate:', employeeToSave.birthDate)
+            console.log('Updating employee:', employeeToSave.id, {
+              firstName: employeeToSave.firstName,
+              lastName: employeeToSave.lastName,
+              birthDate: employeeToSave.birthDate,
+              oldBirthDate: existing.birthDate,
+              hasChanges
+            })
             
             const response = await fetch('/api/schichtplan/employees', {
               method: 'PUT',
@@ -287,13 +296,21 @@ export default function SchichtplanPage() {
             }
             
             const updatedEmployee = await response.json()
-            console.log('Employee updated successfully:', updatedEmployee.id, 'birthDate:', updatedEmployee.birthDate)
+            console.log('Employee updated successfully:', updatedEmployee.id, {
+              birthDate: updatedEmployee.birthDate,
+              returnedBirthDate: updatedEmployee.birthDate
+            })
+          } else {
+            console.log('No changes detected for employee:', employee.id, {
+              existingBirthDate: existing.birthDate,
+              newBirthDate: employee.birthDate
+            })
           }
         } else {
           // Normalize birthDate before sending to API
           const employeeToSave = {
             ...employee,
-            birthDate: normalizeBirthDate(employee.birthDate)
+            birthDate: normalizeBirthDateForAPI(employee.birthDate)
           }
           
           console.log('Creating employee:', employeeToSave.id, 'birthDate:', employeeToSave.birthDate)
