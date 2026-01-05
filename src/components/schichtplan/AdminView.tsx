@@ -337,10 +337,9 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       age: number;
     }> = [];
 
-    // Debug logs (can be removed later)
-    // console.log('Calculating upcoming birthdays. Total employees:', employees.length);
-    // console.log('Today:', today.toISOString().split('T')[0]);
-    // console.log('In 30 days:', in30Days.toISOString().split('T')[0]);
+    console.log('🎂 Calculating upcoming birthdays. Total employees:', employees.length);
+    console.log('📅 Today:', today.toISOString().split('T')[0], '(', today.toLocaleDateString('de-DE'), ')');
+    console.log('📅 In 30 days:', in30Days.toISOString().split('T')[0]);
 
     employees.forEach(employee => {
       // Check if employee is active (default to true if undefined)
@@ -391,11 +390,24 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
         const daysUntil = Math.floor((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
+        console.log(`🔍 Checking ${employee.firstName} ${employee.lastName}:`, {
+          birthDate: employee.birthDate,
+          birthYear,
+          month,
+          day,
+          thisYearBirthday: thisYearBirthday.toISOString().split('T')[0],
+          nextYearBirthday: nextYearBirthday.toISOString().split('T')[0],
+          selectedBirthday: birthday.toISOString().split('T')[0],
+          today: today.toISOString().split('T')[0],
+          daysUntil,
+          inRange: daysUntil >= 0 && daysUntil <= 30
+        });
+        
         if (daysUntil >= 0 && daysUntil <= 30) {
           // Berechne das Alter basierend auf dem Geburtsjahr
           const age = birthday.getFullYear() - birthYear;
           
-          console.log(`✅ Found birthday: ${employee.firstName} ${employee.lastName}, birthDate: ${employee.birthDate}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil}, age: ${age}`);
+          console.log(`✅ Found birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil}, age: ${age}`);
           
           upcomingBirthdays.push({
             employee,
@@ -404,7 +416,7 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             age
           });
         } else {
-          console.log(`⏭️ Skipping birthday: ${employee.firstName} ${employee.lastName}, birthDate: ${employee.birthDate}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil} (not in 0-30 range)`);
+          console.log(`⏭️ Skipping birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil} (not in 0-30 range)`);
         }
       } catch (error) {
         console.error(`❌ Error processing birthday for ${employee.firstName} ${employee.lastName}:`, error);
@@ -412,8 +424,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       }
     });
 
-    // console.log(`Total upcoming birthdays found: ${upcomingBirthdays.length}`);
-    return upcomingBirthdays.sort((a, b) => a.daysUntil - b.daysUntil);
+    console.log(`📊 Total upcoming birthdays found: ${upcomingBirthdays.length}`);
+    const sorted = upcomingBirthdays.sort((a, b) => a.daysUntil - b.daysUntil);
+    console.log('📋 Sorted birthdays:', sorted.map(b => `${b.employee.firstName} ${b.employee.lastName} (${b.daysUntil} days)`));
+    return sorted;
   }, [employees]);
 
   // Get holidays for current year
