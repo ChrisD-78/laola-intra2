@@ -356,36 +356,46 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         return;
       }
 
-      // Parse birthDate safely
+      // Parse birthDate safely - nur Monat und Tag verwenden, nicht das Jahr
       try {
         const birthDateParts = employee.birthDate.split('-');
         if (birthDateParts.length !== 3) {
           return;
         }
 
-        const [year, month, day] = birthDateParts.map(Number);
+        const [birthYear, month, day] = birthDateParts.map(Number);
         
         // Validate parsed values
-        if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+        if (isNaN(birthYear) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
           return;
         }
 
-        const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
+        // Berechne den nächsten Geburtstag - nur mit Monat und Tag, nicht mit Jahr
+        const currentYear = today.getFullYear();
+        const thisYearBirthday = new Date(currentYear, month - 1, day);
         thisYearBirthday.setHours(0, 0, 0, 0);
-        const nextYearBirthday = new Date(today.getFullYear() + 1, month - 1, day);
+        
+        const nextYearBirthday = new Date(currentYear + 1, month - 1, day);
         nextYearBirthday.setHours(0, 0, 0, 0);
 
+        // Bestimme den nächsten Geburtstag (dieses Jahr oder nächstes Jahr)
         let birthday: Date;
-        if (thisYearBirthday >= today) {
+        if (thisYearBirthday.getTime() >= today.getTime()) {
+          // Geburtstag ist noch in diesem Jahr
           birthday = thisYearBirthday;
         } else {
+          // Geburtstag war bereits in diesem Jahr, nimm nächstes Jahr
           birthday = nextYearBirthday;
         }
 
-        // Include birthdays from today up to and including 30 days from today
-        if (birthday >= today && birthday <= in30Days) {
-          const daysUntil = Math.ceil((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          const age = birthday.getFullYear() - year;
+        // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
+        const daysUntil = Math.floor((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysUntil >= 0 && daysUntil <= 30) {
+          // Berechne das Alter basierend auf dem Geburtsjahr
+          const age = birthday.getFullYear() - birthYear;
+          
+          console.log(`✅ Found birthday: ${employee.firstName} ${employee.lastName}, birthDate: ${employee.birthDate}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil}, age: ${age}`);
           
           upcomingBirthdays.push({
             employee,
@@ -393,9 +403,11 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             daysUntil,
             age
           });
+        } else {
+          console.log(`⏭️ Skipping birthday: ${employee.firstName} ${employee.lastName}, birthDate: ${employee.birthDate}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil} (not in 0-30 range)`);
         }
       } catch (error) {
-        console.error(`Error processing birthday for ${employee.firstName} ${employee.lastName}:`, error);
+        console.error(`❌ Error processing birthday for ${employee.firstName} ${employee.lastName}:`, error);
         console.error(`birthDate value: ${employee.birthDate}`);
       }
     });
