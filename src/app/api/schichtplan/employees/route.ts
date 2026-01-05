@@ -180,99 +180,172 @@ export async function POST(request: NextRequest) {
 
 // PUT update employee
 export async function PUT(request: NextRequest) {
+  let body: any = null
   try {
-    const body = await request.json()
+    body = await request.json()
     const { id, firstName, lastName, areas, phone, email, weeklyHours, monthlyHours, employmentType, color, birthDate, userId, role, active } = body
 
     // Normalize birthDate: empty string or undefined becomes null
-    const normalizedBirthDate = (birthDate && birthDate.trim() !== '') ? birthDate : null
+    const normalizedBirthDate = (birthDate && typeof birthDate === 'string' && birthDate.trim() !== '') ? birthDate.trim() : null
 
     // Check if columns exist
     let hasEmploymentTypeColumn = false
     let hasMonthlyHoursColumn = false
+    let hasBirthDateColumn = false
     
     try {
       const checkColumns = await sql`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'schichtplan_employees' 
-        AND column_name IN ('employment_type', 'monthly_hours')
+        AND column_name IN ('employment_type', 'monthly_hours', 'birth_date')
       `
       hasEmploymentTypeColumn = checkColumns.some((col: any) => col.column_name === 'employment_type')
       hasMonthlyHoursColumn = checkColumns.some((col: any) => col.column_name === 'monthly_hours')
+      hasBirthDateColumn = checkColumns.some((col: any) => col.column_name === 'birth_date')
     } catch (checkError) {
-      console.log('Could not check for columns')
+      console.log('Could not check for columns:', checkError)
     }
+    
+    console.log('Updating employee:', id, 'birthDate:', normalizedBirthDate, 'hasBirthDateColumn:', hasBirthDateColumn)
 
     if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
-      const result = await sql`
-        UPDATE schichtplan_employees
-        SET 
-          first_name = ${firstName},
-          last_name = ${lastName},
-          areas = ${areas},
-          phone = ${phone || null},
-          email = ${email || null},
-          weekly_hours = ${weeklyHours || null},
-          monthly_hours = ${monthlyHours || null},
-          employment_type = ${employmentType || null},
-          color = ${color || null},
-          birth_date = ${normalizedBirthDate},
-          user_id = ${userId !== undefined ? userId : null},
-          role = ${role !== undefined ? role : null},
-          active = ${active !== undefined ? active : true}
-        WHERE id = ${id}
-        RETURNING 
-          id,
-          user_id as "userId",
-          first_name as "firstName",
-          last_name as "lastName",
-          areas,
-          phone,
-          email,
-          weekly_hours as "weeklyHours",
-          monthly_hours as "monthlyHours",
-          employment_type as "employmentType",
-          color,
-          birth_date as "birthDate",
-          active,
-          role
-      `
+      let result
+      if (hasBirthDateColumn) {
+        result = await sql`
+          UPDATE schichtplan_employees
+          SET 
+            first_name = ${firstName},
+            last_name = ${lastName},
+            areas = ${areas},
+            phone = ${phone || null},
+            email = ${email || null},
+            weekly_hours = ${weeklyHours || null},
+            monthly_hours = ${monthlyHours || null},
+            employment_type = ${employmentType || null},
+            color = ${color || null},
+            birth_date = ${normalizedBirthDate},
+            user_id = ${userId !== undefined ? userId : null},
+            role = ${role !== undefined ? role : null},
+            active = ${active !== undefined ? active : true}
+          WHERE id = ${id}
+          RETURNING 
+            id,
+            user_id as "userId",
+            first_name as "firstName",
+            last_name as "lastName",
+            areas,
+            phone,
+            email,
+            weekly_hours as "weeklyHours",
+            monthly_hours as "monthlyHours",
+            employment_type as "employmentType",
+            color,
+            birth_date as "birthDate",
+            active,
+            role
+        `
+      } else {
+        result = await sql`
+          UPDATE schichtplan_employees
+          SET 
+            first_name = ${firstName},
+            last_name = ${lastName},
+            areas = ${areas},
+            phone = ${phone || null},
+            email = ${email || null},
+            weekly_hours = ${weeklyHours || null},
+            monthly_hours = ${monthlyHours || null},
+            employment_type = ${employmentType || null},
+            color = ${color || null},
+            user_id = ${userId !== undefined ? userId : null},
+            role = ${role !== undefined ? role : null},
+            active = ${active !== undefined ? active : true}
+          WHERE id = ${id}
+          RETURNING 
+            id,
+            user_id as "userId",
+            first_name as "firstName",
+            last_name as "lastName",
+            areas,
+            phone,
+            email,
+            weekly_hours as "weeklyHours",
+            monthly_hours as "monthlyHours",
+            employment_type as "employmentType",
+            color,
+            NULL as "birthDate",
+            active,
+            role
+        `
+      }
       if (result.length === 0) {
         return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
       }
       return NextResponse.json(result[0])
     } else {
       // Fallback for old schema
-      const result = await sql`
-        UPDATE schichtplan_employees
-        SET 
-          first_name = ${firstName},
-          last_name = ${lastName},
-          areas = ${areas},
-          phone = ${phone || null},
-          email = ${email || null},
-          weekly_hours = ${weeklyHours || null},
-          color = ${color || null},
-          birth_date = ${normalizedBirthDate},
-          user_id = ${userId !== undefined ? userId : null},
-          role = ${role !== undefined ? role : null},
-          active = ${active !== undefined ? active : true}
-        WHERE id = ${id}
-        RETURNING 
-          id,
-          user_id as "userId",
-          first_name as "firstName",
-          last_name as "lastName",
-          areas,
-          phone,
-          email,
-          weekly_hours as "weeklyHours",
-          color,
-          birth_date as "birthDate",
-          active,
-          role
-      `
+      let result
+      if (hasBirthDateColumn) {
+        result = await sql`
+          UPDATE schichtplan_employees
+          SET 
+            first_name = ${firstName},
+            last_name = ${lastName},
+            areas = ${areas},
+            phone = ${phone || null},
+            email = ${email || null},
+            weekly_hours = ${weeklyHours || null},
+            color = ${color || null},
+            birth_date = ${normalizedBirthDate},
+            user_id = ${userId !== undefined ? userId : null},
+            role = ${role !== undefined ? role : null},
+            active = ${active !== undefined ? active : true}
+          WHERE id = ${id}
+          RETURNING 
+            id,
+            user_id as "userId",
+            first_name as "firstName",
+            last_name as "lastName",
+            areas,
+            phone,
+            email,
+            weekly_hours as "weeklyHours",
+            color,
+            birth_date as "birthDate",
+            active,
+            role
+        `
+      } else {
+        result = await sql`
+          UPDATE schichtplan_employees
+          SET 
+            first_name = ${firstName},
+            last_name = ${lastName},
+            areas = ${areas},
+            phone = ${phone || null},
+            email = ${email || null},
+            weekly_hours = ${weeklyHours || null},
+            color = ${color || null},
+            user_id = ${userId !== undefined ? userId : null},
+            role = ${role !== undefined ? role : null},
+            active = ${active !== undefined ? active : true}
+          WHERE id = ${id}
+          RETURNING 
+            id,
+            user_id as "userId",
+            first_name as "firstName",
+            last_name as "lastName",
+            areas,
+            phone,
+            email,
+            weekly_hours as "weeklyHours",
+            color,
+            NULL as "birthDate",
+            active,
+            role
+        `
+      }
       if (result.length === 0) {
         return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
       }
@@ -280,8 +353,14 @@ export async function PUT(request: NextRequest) {
     }
   } catch (error) {
     console.error('Failed to update employee:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    console.error('Error details:', { errorMessage, errorStack, requestBody: body })
     return NextResponse.json(
-      { error: 'Failed to update employee', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to update employee', 
+        details: errorMessage
+      },
       { status: 500 }
     )
   }
