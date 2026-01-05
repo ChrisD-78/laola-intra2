@@ -233,29 +233,93 @@ export default function SchichtplanPage() {
   }
 
   const handleEmployeesUpdate = async (newEmployees: Employee[]) => {
-    setEmployees(newEmployees)
+    // Normalize birthDate values for comparison (empty string, undefined, null all become null)
+    const normalizeBirthDate = (bd: string | undefined | null): string | null => {
+      if (!bd) return null
+      const trimmed = typeof bd === 'string' ? bd.trim() : ''
+      return trimmed === '' ? null : trimmed
+    }
     
-    // Save to database
+    // Save to database first
     for (const employee of newEmployees) {
       try {
         const existing = employees.find(e => e.id === employee.id)
         if (existing) {
-          await fetch('/api/schichtplan/employees', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(employee)
-          })
+          // Normalize birthDate for comparison
+          const existingBirthDate = normalizeBirthDate(existing.birthDate)
+          const newBirthDate = normalizeBirthDate(employee.birthDate)
+          
+          // Only update if something changed
+          const hasChanges = 
+            existing.firstName !== employee.firstName ||
+            existing.lastName !== employee.lastName ||
+            JSON.stringify(existing.areas) !== JSON.stringify(employee.areas) ||
+            existing.phone !== employee.phone ||
+            existing.email !== employee.email ||
+            existing.weeklyHours !== employee.weeklyHours ||
+            existing.monthlyHours !== employee.monthlyHours ||
+            existing.employmentType !== employee.employmentType ||
+            existing.color !== employee.color ||
+            existingBirthDate !== newBirthDate ||
+            existing.userId !== employee.userId ||
+            existing.role !== employee.role ||
+            existing.active !== employee.active
+          
+          if (hasChanges) {
+            // Normalize birthDate before sending to API
+            const employeeToSave = {
+              ...employee,
+              birthDate: newBirthDate
+            }
+            
+            console.log('Updating employee:', employeeToSave.id, 'birthDate:', employeeToSave.birthDate)
+            
+            const response = await fetch('/api/schichtplan/employees', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(employeeToSave)
+            })
+            
+            if (!response.ok) {
+              const errorData = await response.json()
+              console.error('Failed to update employee:', errorData)
+              throw new Error(`Failed to update employee: ${errorData.error || 'Unknown error'}`)
+            }
+            
+            const updatedEmployee = await response.json()
+            console.log('Employee updated successfully:', updatedEmployee.id, 'birthDate:', updatedEmployee.birthDate)
+          }
         } else {
-          await fetch('/api/schichtplan/employees', {
+          // Normalize birthDate before sending to API
+          const employeeToSave = {
+            ...employee,
+            birthDate: normalizeBirthDate(employee.birthDate)
+          }
+          
+          console.log('Creating employee:', employeeToSave.id, 'birthDate:', employeeToSave.birthDate)
+          
+          const response = await fetch('/api/schichtplan/employees', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(employee)
+            body: JSON.stringify(employeeToSave)
           })
+          
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error('Failed to create employee:', errorData)
+            throw new Error(`Failed to create employee: ${errorData.error || 'Unknown error'}`)
+          }
         }
       } catch (error) {
         console.error('Failed to save employee:', error)
+        // Reload data to ensure consistency
+        await loadData()
+        return
       }
     }
+    
+    // Reload data from database to ensure state is synchronized
+    await loadData()
   }
 
   const handleVacationRequest = async (employeeId: string, startDate: string, endDate: string, type: VacationRequestType) => {

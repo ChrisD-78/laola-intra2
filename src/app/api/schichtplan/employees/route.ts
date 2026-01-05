@@ -184,6 +184,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, firstName, lastName, areas, phone, email, weeklyHours, monthlyHours, employmentType, color, birthDate, userId, role, active } = body
 
+    // Normalize birthDate: empty string or undefined becomes null
+    const normalizedBirthDate = (birthDate && birthDate.trim() !== '') ? birthDate : null
+
     // Check if columns exist
     let hasEmploymentTypeColumn = false
     let hasMonthlyHoursColumn = false
@@ -214,7 +217,7 @@ export async function PUT(request: NextRequest) {
           monthly_hours = ${monthlyHours || null},
           employment_type = ${employmentType || null},
           color = ${color || null},
-          birth_date = ${birthDate || null},
+          birth_date = ${normalizedBirthDate},
           user_id = ${userId !== undefined ? userId : null},
           role = ${role !== undefined ? role : null},
           active = ${active !== undefined ? active : true}
@@ -251,7 +254,7 @@ export async function PUT(request: NextRequest) {
           email = ${email || null},
           weekly_hours = ${weeklyHours || null},
           color = ${color || null},
-          birth_date = ${birthDate || null},
+          birth_date = ${normalizedBirthDate},
           user_id = ${userId !== undefined ? userId : null},
           role = ${role !== undefined ? role : null},
           active = ${active !== undefined ? active : true}
@@ -275,16 +278,10 @@ export async function PUT(request: NextRequest) {
       }
       return NextResponse.json(result[0])
     }
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
-    }
-
-    return NextResponse.json(result[0])
   } catch (error) {
     console.error('Failed to update employee:', error)
     return NextResponse.json(
-      { error: 'Failed to update employee' },
+      { error: 'Failed to update employee', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

@@ -414,6 +414,11 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       return;
     }
     
+    // Normalize birthDate: empty string becomes undefined (which will be converted to null in API)
+    const normalizedBirthDate = (newEmployeeBirthDate && newEmployeeBirthDate.trim() !== '') 
+      ? newEmployeeBirthDate.trim() 
+      : undefined;
+    
     const newEmployee: Employee = {
       id: Date.now().toString(),
       firstName: newEmployeeFirstName.trim(),
@@ -429,15 +434,15 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         ? parseFloat(newEmployeeMonthlyHours) 
         : undefined,
       color: newEmployeeColor,
-      birthDate: newEmployeeBirthDate || undefined
+      birthDate: normalizedBirthDate
     };
     
     const updatedEmployees = [...employees, newEmployee];
     onEmployeesUpdate(updatedEmployees);
     
     // Mark birthday in schedule if birthDate is set
-    if (newEmployeeBirthDate) {
-      markBirthdayInSchedule(newEmployee.id, newEmployeeBirthDate);
+    if (normalizedBirthDate) {
+      markBirthdayInSchedule(newEmployee.id, normalizedBirthDate);
     }
     
     setNewEmployeeFirstName('');
@@ -658,7 +663,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     if (!employee) return;
     
     const oldBirthDate = employee.birthDate;
-    const newBirthDate = newEmployeeBirthDate || undefined;
+    // Normalize birthDate: empty string becomes undefined (which will be converted to null in API)
+    const newBirthDate = (newEmployeeBirthDate && newEmployeeBirthDate.trim() !== '') 
+      ? newEmployeeBirthDate.trim() 
+      : undefined;
     
     const updatedEmployee: Employee = {
       ...employee,
