@@ -84,6 +84,15 @@ export async function GET() {
       `
     }
     
+    // Debug: Log birthDate values from database
+    console.log('GET employees - birthDate values:', employees.map((emp: any) => ({
+      id: emp.id,
+      name: `${emp.firstName} ${emp.lastName}`,
+      birthDate: emp.birthDate,
+      birthDateType: typeof emp.birthDate,
+      birthDateRaw: emp.birthDate
+    })))
+    
     return NextResponse.json(employees)
   } catch (error) {
     console.error('Failed to fetch employees:', error)
