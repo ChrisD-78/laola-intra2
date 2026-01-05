@@ -2101,26 +2101,23 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         </div>
 
         {/* Geburtstagsanzeige für Admins */}
-        {(() => {
-          console.log('Rendering birthday display. Upcoming birthdays count:', getUpcomingBirthdays.length);
-          console.log('Upcoming birthdays:', getUpcomingBirthdays);
-          return getUpcomingBirthdays.length > 0 ? (
-            <div className="birthday-display" style={{
-              background: 'rgba(37, 99, 235, 0.15)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(37, 99, 235, 0.3)',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '20px',
-              marginTop: '20px',
-              boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
-            }}>
-              <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                🎂 Anstehende Geburtstage (nächste 30 Tage)
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
+        <div className="birthday-display" style={{
+          background: 'rgba(37, 99, 235, 0.15)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(37, 99, 235, 0.3)',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '20px',
+          marginTop: '20px',
+          boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)'
+        }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+            🎂 Anstehende Geburtstage (nächste 30 Tage)
+          </h3>
+          {getUpcomingBirthdays.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {getUpcomingBirthdays.map(({ employee, birthday, daysUntil, age }) => {
                 const isToday = daysUntil === 0;
                 const isTomorrow = daysUntil === 1;
                 
@@ -2161,10 +2158,13 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
                   </div>
                 );
               })}
-              </div>
             </div>
-          ) : null;
-        })()}
+          ) : (
+            <div style={{ color: '#64748b', fontSize: '14px', fontStyle: 'italic' }}>
+              Keine anstehenden Geburtstage in den nächsten 30 Tagen
+            </div>
+          )}
+        </div>
 
         {vacationRequests.length > 0 && (
           <div className="vacation-requests-section">
