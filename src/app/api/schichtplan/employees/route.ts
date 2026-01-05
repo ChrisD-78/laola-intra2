@@ -224,108 +224,241 @@ export async function PUT(request: NextRequest) {
     
     console.log('Updating employee:', id, 'birthDate:', normalizedBirthDate, 'hasBirthDateColumn:', hasBirthDateColumn, 'hasActiveColumn:', hasActiveColumn)
 
-    // Build base SET clause
-    const baseSetFields = [
-      sql`first_name = ${firstName}`,
-      sql`last_name = ${lastName}`,
-      sql`areas = ${areas}`,
-      sql`phone = ${phone || null}`,
-      sql`email = ${email || null}`,
-      sql`weekly_hours = ${weeklyHours || null}`,
-      sql`color = ${color || null}`
-    ]
-    
-    if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
-      baseSetFields.push(sql`monthly_hours = ${monthlyHours || null}`)
-      baseSetFields.push(sql`employment_type = ${employmentType || null}`)
-    }
-    
-    if (hasBirthDateColumn) {
-      baseSetFields.push(sql`birth_date = ${normalizedBirthDate}`)
-      console.log('Adding birth_date to UPDATE:', normalizedBirthDate, 'type:', typeof normalizedBirthDate)
-    } else {
-      console.log('WARNING: birth_date column does not exist, cannot update birthDate')
-    }
-    
-    if (hasUserIdColumn) {
-      baseSetFields.push(sql`user_id = ${userId !== undefined ? userId : null}`)
-    }
-    
-    if (hasRoleColumn) {
-      baseSetFields.push(sql`role = ${role !== undefined ? role : null}`)
-    }
-    
-    if (hasActiveColumn) {
-      baseSetFields.push(sql`active = ${active !== undefined ? active : true}`)
-    }
-    
-    // Build RETURNING clause
-    const returningFields = [
-      sql`id`,
-      sql`first_name as "firstName"`,
-      sql`last_name as "lastName"`,
-      sql`areas`,
-      sql`phone`,
-      sql`email`,
-      sql`weekly_hours as "weeklyHours"`,
-      sql`color`
-    ]
-    
-    if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
-      returningFields.push(sql`monthly_hours as "monthlyHours"`)
-      returningFields.push(sql`employment_type as "employmentType"`)
-    } else {
-      returningFields.push(sql`NULL as "monthlyHours"`)
-      returningFields.push(sql`NULL as "employmentType"`)
-    }
-    
-    if (hasBirthDateColumn) {
-      returningFields.push(sql`birth_date as "birthDate"`)
-    } else {
-      returningFields.push(sql`NULL as "birthDate"`)
-    }
-    
-    if (hasUserIdColumn) {
-      returningFields.push(sql`user_id as "userId"`)
-    } else {
-      returningFields.push(sql`NULL as "userId"`)
-    }
-    
-    if (hasRoleColumn) {
-      returningFields.push(sql`role`)
-    } else {
-      returningFields.push(sql`NULL as role`)
-    }
-    
-    if (hasActiveColumn) {
-      returningFields.push(sql`active`)
-    } else {
-      returningFields.push(sql`true as active`)
-    }
-    
-    // Execute UPDATE
-    console.log('Executing UPDATE for employee:', id, 'with', baseSetFields.length, 'fields')
+    // Build UPDATE query based on available columns
+    console.log('Executing UPDATE for employee:', id)
     console.log('birthDate being set:', normalizedBirthDate, 'type:', typeof normalizedBirthDate)
     console.log('hasBirthDateColumn:', hasBirthDateColumn)
-    console.log('baseSetFields count:', baseSetFields.length)
-    console.log('returningFields count:', returningFields.length)
+    console.log('hasActiveColumn:', hasActiveColumn)
+    console.log('hasUserIdColumn:', hasUserIdColumn)
+    console.log('hasRoleColumn:', hasRoleColumn)
     
     let result
     try {
-      result = await sql`
-        UPDATE schichtplan_employees
-        SET ${sql.join(baseSetFields, sql`, `)}
-        WHERE id = ${id}
-        RETURNING ${sql.join(returningFields, sql`, `)}
-      `
+      if (hasEmploymentTypeColumn && hasMonthlyHoursColumn) {
+        if (hasBirthDateColumn && hasActiveColumn && hasUserIdColumn && hasRoleColumn) {
+          // Full schema with all columns
+          result = await sql`
+            UPDATE schichtplan_employees
+            SET 
+              first_name = ${firstName},
+              last_name = ${lastName},
+              areas = ${areas},
+              phone = ${phone || null},
+              email = ${email || null},
+              weekly_hours = ${weeklyHours || null},
+              monthly_hours = ${monthlyHours || null},
+              employment_type = ${employmentType || null},
+              color = ${color || null},
+              birth_date = ${normalizedBirthDate},
+              user_id = ${userId !== undefined ? userId : null},
+              role = ${role !== undefined ? role : null},
+              active = ${active !== undefined ? active : true}
+            WHERE id = ${id}
+            RETURNING 
+              id,
+              user_id as "userId",
+              first_name as "firstName",
+              last_name as "lastName",
+              areas,
+              phone,
+              email,
+              weekly_hours as "weeklyHours",
+              monthly_hours as "monthlyHours",
+              employment_type as "employmentType",
+              color,
+              birth_date as "birthDate",
+              active,
+              role
+          `
+        } else {
+          // Partial schema - build dynamically
+          let setParts: any[] = [
+            sql`first_name = ${firstName}`,
+            sql`last_name = ${lastName}`,
+            sql`areas = ${areas}`,
+            sql`phone = ${phone || null}`,
+            sql`email = ${email || null}`,
+            sql`weekly_hours = ${weeklyHours || null}`,
+            sql`monthly_hours = ${monthlyHours || null}`,
+            sql`employment_type = ${employmentType || null}`,
+            sql`color = ${color || null}`
+          ]
+          
+          if (hasBirthDateColumn) {
+            setParts.push(sql`birth_date = ${normalizedBirthDate}`)
+          }
+          if (hasUserIdColumn) {
+            setParts.push(sql`user_id = ${userId !== undefined ? userId : null}`)
+          }
+          if (hasRoleColumn) {
+            setParts.push(sql`role = ${role !== undefined ? role : null}`)
+          }
+          if (hasActiveColumn) {
+            setParts.push(sql`active = ${active !== undefined ? active : true}`)
+          }
+          
+          let returningParts: any[] = [
+            sql`id`,
+            sql`first_name as "firstName"`,
+            sql`last_name as "lastName"`,
+            sql`areas`,
+            sql`phone`,
+            sql`email`,
+            sql`weekly_hours as "weeklyHours"`,
+            sql`monthly_hours as "monthlyHours"`,
+            sql`employment_type as "employmentType"`,
+            sql`color`
+          ]
+          
+          if (hasBirthDateColumn) {
+            returningParts.push(sql`birth_date as "birthDate"`)
+          } else {
+            returningParts.push(sql`NULL as "birthDate"`)
+          }
+          if (hasUserIdColumn) {
+            returningParts.push(sql`user_id as "userId"`)
+          } else {
+            returningParts.push(sql`NULL as "userId"`)
+          }
+          if (hasRoleColumn) {
+            returningParts.push(sql`role`)
+          } else {
+            returningParts.push(sql`NULL as role`)
+          }
+          if (hasActiveColumn) {
+            returningParts.push(sql`active`)
+          } else {
+            returningParts.push(sql`true as active`)
+          }
+          
+          // Build query manually
+          const setClause = setParts.reduce((acc, part, idx) => {
+            return idx === 0 ? part : sql`${acc}, ${part}`
+          })
+          const returningClause = returningParts.reduce((acc, part, idx) => {
+            return idx === 0 ? part : sql`${acc}, ${part}`
+          })
+          
+          result = await sql`
+            UPDATE schichtplan_employees
+            SET ${setClause}
+            WHERE id = ${id}
+            RETURNING ${returningClause}
+          `
+        }
+      } else {
+        // Old schema without employment_type and monthly_hours
+        if (hasBirthDateColumn && hasActiveColumn && hasUserIdColumn && hasRoleColumn) {
+          result = await sql`
+            UPDATE schichtplan_employees
+            SET 
+              first_name = ${firstName},
+              last_name = ${lastName},
+              areas = ${areas},
+              phone = ${phone || null},
+              email = ${email || null},
+              weekly_hours = ${weeklyHours || null},
+              color = ${color || null},
+              birth_date = ${normalizedBirthDate},
+              user_id = ${userId !== undefined ? userId : null},
+              role = ${role !== undefined ? role : null},
+              active = ${active !== undefined ? active : true}
+            WHERE id = ${id}
+            RETURNING 
+              id,
+              user_id as "userId",
+              first_name as "firstName",
+              last_name as "lastName",
+              areas,
+              phone,
+              email,
+              weekly_hours as "weeklyHours",
+              color,
+              birth_date as "birthDate",
+              active,
+              role
+          `
+        } else {
+          // Partial old schema
+          let setParts: any[] = [
+            sql`first_name = ${firstName}`,
+            sql`last_name = ${lastName}`,
+            sql`areas = ${areas}`,
+            sql`phone = ${phone || null}`,
+            sql`email = ${email || null}`,
+            sql`weekly_hours = ${weeklyHours || null}`,
+            sql`color = ${color || null}`
+          ]
+          
+          if (hasBirthDateColumn) {
+            setParts.push(sql`birth_date = ${normalizedBirthDate}`)
+          }
+          if (hasUserIdColumn) {
+            setParts.push(sql`user_id = ${userId !== undefined ? userId : null}`)
+          }
+          if (hasRoleColumn) {
+            setParts.push(sql`role = ${role !== undefined ? role : null}`)
+          }
+          if (hasActiveColumn) {
+            setParts.push(sql`active = ${active !== undefined ? active : true}`)
+          }
+          
+          let returningParts: any[] = [
+            sql`id`,
+            sql`first_name as "firstName"`,
+            sql`last_name as "lastName"`,
+            sql`areas`,
+            sql`phone`,
+            sql`email`,
+            sql`weekly_hours as "weeklyHours"`,
+            sql`color`
+          ]
+          
+          if (hasBirthDateColumn) {
+            returningParts.push(sql`birth_date as "birthDate"`)
+          } else {
+            returningParts.push(sql`NULL as "birthDate"`)
+          }
+          if (hasUserIdColumn) {
+            returningParts.push(sql`user_id as "userId"`)
+          } else {
+            returningParts.push(sql`NULL as "userId"`)
+          }
+          if (hasRoleColumn) {
+            returningParts.push(sql`role`)
+          } else {
+            returningParts.push(sql`NULL as role`)
+          }
+          if (hasActiveColumn) {
+            returningParts.push(sql`active`)
+          } else {
+            returningParts.push(sql`true as active`)
+          }
+          
+          const setClause = setParts.reduce((acc, part, idx) => {
+            return idx === 0 ? part : sql`${acc}, ${part}`
+          })
+          const returningClause = returningParts.reduce((acc, part, idx) => {
+            return idx === 0 ? part : sql`${acc}, ${part}`
+          })
+          
+          result = await sql`
+            UPDATE schichtplan_employees
+            SET ${setClause}
+            WHERE id = ${id}
+            RETURNING ${returningClause}
+          `
+        }
+      }
     } catch (sqlError) {
       console.error('SQL Error during UPDATE:', sqlError)
       console.error('SQL Error details:', {
         message: sqlError instanceof Error ? sqlError.message : 'Unknown error',
         stack: sqlError instanceof Error ? sqlError.stack : undefined,
-        baseSetFieldsCount: baseSetFields.length,
-        returningFieldsCount: returningFields.length,
         hasBirthDateColumn,
+        hasActiveColumn,
+        hasUserIdColumn,
+        hasRoleColumn,
         normalizedBirthDate
       })
       throw sqlError
