@@ -371,10 +371,21 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
 
         // Berechne den nächsten Geburtstag - nur mit Monat und Tag, nicht mit Jahr
         const currentYear = today.getFullYear();
+        
+        // Erstelle Datum für dieses Jahr
         const thisYearBirthday = new Date(currentYear, month - 1, day);
+        if (isNaN(thisYearBirthday.getTime())) {
+          console.error(`❌ Invalid date created for ${employee.firstName} ${employee.lastName}: month=${month}, day=${day}`);
+          return;
+        }
         thisYearBirthday.setHours(0, 0, 0, 0);
         
+        // Erstelle Datum für nächstes Jahr
         const nextYearBirthday = new Date(currentYear + 1, month - 1, day);
+        if (isNaN(nextYearBirthday.getTime())) {
+          console.error(`❌ Invalid date created for ${employee.firstName} ${employee.lastName}: month=${month}, day=${day} (next year)`);
+          return;
+        }
         nextYearBirthday.setHours(0, 0, 0, 0);
 
         // Bestimme den nächsten Geburtstag (dieses Jahr oder nächstes Jahr)
@@ -387,17 +398,28 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           birthday = nextYearBirthday;
         }
 
+        // Prüfe ob birthday ein gültiges Datum ist
+        if (isNaN(birthday.getTime())) {
+          console.error(`❌ Invalid birthday date for ${employee.firstName} ${employee.lastName}:`, birthday);
+          return;
+        }
+
         // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
         const daysUntil = Math.floor((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Sicherstellen, dass alle Daten gültig sind bevor toISOString() aufgerufen wird
+        const thisYearBirthdayStr = isNaN(thisYearBirthday.getTime()) ? 'Invalid Date' : thisYearBirthday.toISOString().split('T')[0];
+        const nextYearBirthdayStr = isNaN(nextYearBirthday.getTime()) ? 'Invalid Date' : nextYearBirthday.toISOString().split('T')[0];
+        const birthdayStr = isNaN(birthday.getTime()) ? 'Invalid Date' : birthday.toISOString().split('T')[0];
         
         console.log(`🔍 Checking ${employee.firstName} ${employee.lastName}:`, {
           birthDate: employee.birthDate,
           birthYear,
           month,
           day,
-          thisYearBirthday: thisYearBirthday.toISOString().split('T')[0],
-          nextYearBirthday: nextYearBirthday.toISOString().split('T')[0],
-          selectedBirthday: birthday.toISOString().split('T')[0],
+          thisYearBirthday: thisYearBirthdayStr,
+          nextYearBirthday: nextYearBirthdayStr,
+          selectedBirthday: birthdayStr,
           today: today.toISOString().split('T')[0],
           daysUntil,
           inRange: daysUntil >= 0 && daysUntil <= 30
@@ -407,7 +429,8 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           // Berechne das Alter basierend auf dem Geburtsjahr
           const age = birthday.getFullYear() - birthYear;
           
-          console.log(`✅ Found birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil}, age: ${age}`);
+          const birthdayStr = isNaN(birthday.getTime()) ? 'Invalid Date' : birthday.toISOString().split('T')[0];
+          console.log(`✅ Found birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthdayStr}, daysUntil: ${daysUntil}, age: ${age}`);
           
           upcomingBirthdays.push({
             employee,
@@ -416,7 +439,8 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             age
           });
         } else {
-          console.log(`⏭️ Skipping birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthday.toISOString().split('T')[0]}, daysUntil: ${daysUntil} (not in 0-30 range)`);
+          const birthdayStr = isNaN(birthday.getTime()) ? 'Invalid Date' : birthday.toISOString().split('T')[0];
+          console.log(`⏭️ Skipping birthday: ${employee.firstName} ${employee.lastName}, birthday: ${birthdayStr}, daysUntil: ${daysUntil} (not in 0-30 range)`);
         }
       } catch (error) {
         console.error(`❌ Error processing birthday for ${employee.firstName} ${employee.lastName}:`, error);
@@ -2475,7 +2499,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
                     </td>
                     <td>
                       {employee.birthDate 
-                        ? new Date(employee.birthDate).toLocaleDateString('de-DE')
+                        ? (() => {
+                            const date = new Date(employee.birthDate);
+                            return isNaN(date.getTime()) ? '—' : date.toLocaleDateString('de-DE');
+                          })()
                         : '—'}
                     </td>
                     <td>
