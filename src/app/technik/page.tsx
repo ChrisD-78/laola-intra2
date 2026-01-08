@@ -590,48 +590,150 @@ export default function Technik() {
       {/* Rubrik Filter Kacheln */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Rubriken</h3>
-        <div className="flex flex-wrap gap-3">
-          {['Elektrische Prüfungen', 'Lüftungsanlagen', 'Messgeräte', 'Technische Prüfungen', 'Wartungen'].map((rubrik) => (
-            <button
-              key={rubrik}
-              onClick={() => setSelectedRubrik(selectedRubrik === rubrik ? null : rubrik)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedRubrik === rubrik
-                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {rubrik}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[
+            { name: 'Elektrische Prüfungen', icon: '⚡', color: 'yellow' },
+            { name: 'Lüftungsanlagen', icon: '💨', color: 'blue' },
+            { name: 'Messgeräte', icon: '📊', color: 'purple' },
+            { name: 'Technische Prüfungen', icon: '🔧', color: 'indigo' },
+            { name: 'Wartungen', icon: '🛠️', color: 'orange' }
+          ].map(({ name, icon, color }) => {
+            const count = inspections.filter(inspection => inspection.rubrik === name).length
+            const isActive = selectedRubrik === name
+            
+            const colorClasses = {
+              yellow: {
+                bg: 'bg-yellow-50',
+                border: isActive ? 'border-yellow-500 ring-2 ring-yellow-300' : 'border-yellow-200 hover:border-yellow-400',
+                iconBg: 'bg-yellow-100',
+                text: 'text-yellow-800',
+                textBold: 'text-yellow-900',
+                activeText: 'text-yellow-700'
+              },
+              blue: {
+                bg: 'bg-blue-50',
+                border: isActive ? 'border-blue-500 ring-2 ring-blue-300' : 'border-blue-200 hover:border-blue-400',
+                iconBg: 'bg-blue-100',
+                text: 'text-blue-800',
+                textBold: 'text-blue-900',
+                activeText: 'text-blue-700'
+              },
+              purple: {
+                bg: 'bg-purple-50',
+                border: isActive ? 'border-purple-500 ring-2 ring-purple-300' : 'border-purple-200 hover:border-purple-400',
+                iconBg: 'bg-purple-100',
+                text: 'text-purple-800',
+                textBold: 'text-purple-900',
+                activeText: 'text-purple-700'
+              },
+              indigo: {
+                bg: 'bg-indigo-50',
+                border: isActive ? 'border-indigo-500 ring-2 ring-indigo-300' : 'border-indigo-200 hover:border-indigo-400',
+                iconBg: 'bg-indigo-100',
+                text: 'text-indigo-800',
+                textBold: 'text-indigo-900',
+                activeText: 'text-indigo-700'
+              },
+              orange: {
+                bg: 'bg-orange-50',
+                border: isActive ? 'border-orange-500 ring-2 ring-orange-300' : 'border-orange-200 hover:border-orange-400',
+                iconBg: 'bg-orange-100',
+                text: 'text-orange-800',
+                textBold: 'text-orange-900',
+                activeText: 'text-orange-700'
+              }
+            }
+            
+            const classes = colorClasses[color as keyof typeof colorClasses]
+            
+            return (
+              <button
+                key={name}
+                onClick={() => setSelectedRubrik(selectedRubrik === name ? null : name)}
+                className={`${classes.bg} border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${classes.border} ${isActive ? 'shadow-lg' : ''}`}
+              >
+                <div className="flex items-center">
+                  <div className={`p-2 ${classes.iconBg} rounded-lg`}>
+                    <span className="text-xl">{icon}</span>
+                  </div>
+                  <div className="ml-3 text-left">
+                    <p className={`text-sm font-medium ${classes.text}`}>{name}</p>
+                    <p className={`text-2xl font-bold ${classes.textBold}`}>{count}</p>
+                  </div>
+                </div>
+                {isActive && (
+                  <div className={`mt-2 text-xs ${classes.activeText} font-medium`}>✓ Aktiver Filter</div>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Status Filter Kacheln */}
       <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Status</h3>
-        <div className="flex flex-wrap gap-3">
-          {['Alle', 'In Betrieb', 'Außer Betrieb'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(status === 'Alle' ? null : status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedStatus === (status === 'Alle' ? null : status)
-                  ? status === 'Alle'
-                    ? 'bg-gray-800 text-white shadow-md transform scale-105'
-                    : status === 'In Betrieb'
-                    ? 'bg-green-600 text-white shadow-md transform scale-105'
-                    : 'bg-red-600 text-white shadow-md transform scale-105'
-                  : status === 'Alle'
-                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  : status === 'In Betrieb'
-                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                  : 'bg-red-50 text-red-700 hover:bg-red-100'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { name: 'Alle', icon: '📋', color: 'gray', filter: null },
+            { name: 'In Betrieb', icon: '✅', color: 'green', filter: true },
+            { name: 'Außer Betrieb', icon: '❌', color: 'red', filter: false }
+          ].map(({ name, icon, color, filter }) => {
+            const count = filter === null 
+              ? inspections.length 
+              : inspections.filter(inspection => inspection.in_betrieb === filter).length
+            const isActive = selectedStatus === (filter === null ? null : (filter ? 'In Betrieb' : 'Außer Betrieb'))
+            
+            const colorClasses = {
+              gray: {
+                bg: 'bg-gray-50',
+                border: isActive ? 'border-gray-500 ring-2 ring-gray-300' : 'border-gray-200 hover:border-gray-400',
+                iconBg: 'bg-gray-100',
+                text: 'text-gray-800',
+                textBold: 'text-gray-900',
+                activeText: 'text-gray-700'
+              },
+              green: {
+                bg: 'bg-green-50',
+                border: isActive ? 'border-green-500 ring-2 ring-green-300' : 'border-green-200 hover:border-green-400',
+                iconBg: 'bg-green-100',
+                text: 'text-green-800',
+                textBold: 'text-green-900',
+                activeText: 'text-green-700'
+              },
+              red: {
+                bg: 'bg-red-50',
+                border: isActive ? 'border-red-500 ring-2 ring-red-300' : 'border-red-200 hover:border-red-400',
+                iconBg: 'bg-red-100',
+                text: 'text-red-800',
+                textBold: 'text-red-900',
+                activeText: 'text-red-700'
+              }
+            }
+            
+            const classes = colorClasses[color as keyof typeof colorClasses]
+            
+            return (
+              <button
+                key={name}
+                onClick={() => setSelectedStatus(filter === null ? null : (filter ? 'In Betrieb' : 'Außer Betrieb'))}
+                className={`${classes.bg} border rounded-xl p-4 transition-all duration-200 hover:shadow-lg ${classes.border} ${isActive ? 'shadow-lg' : ''}`}
+              >
+                <div className="flex items-center">
+                  <div className={`p-2 ${classes.iconBg} rounded-lg`}>
+                    <span className="text-xl">{icon}</span>
+                  </div>
+                  <div className="ml-3 text-left">
+                    <p className={`text-sm font-medium ${classes.text}`}>{name}</p>
+                    <p className={`text-2xl font-bold ${classes.textBold}`}>{count}</p>
+                  </div>
+                </div>
+                {isActive && (
+                  <div className={`mt-2 text-xs ${classes.activeText} font-medium`}>✓ Aktiver Filter</div>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
