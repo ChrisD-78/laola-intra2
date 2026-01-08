@@ -50,6 +50,8 @@ export default function Technik() {
   const [inspectionToDelete, setInspectionToDelete] = useState<TechnikInspection | null>(null)
   const [sortColumn, setSortColumn] = useState<'rubrik' | 'id_nr' | 'name' | 'naechste_pruefung' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [selectedRubrik, setSelectedRubrik] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState({
     id: '',
     rubrik: '',
@@ -344,25 +346,94 @@ export default function Technik() {
     }
   }
 
-  const getSortedInspections = () => {
-    if (!sortColumn) return inspections
+  // Helper function to parse German date format (DD.MM.YYYY)
+  const parseGermanDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null
+    const parts = dateStr.split('.')
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const year = parseInt(parts[2], 10)
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        const date = new Date(year, month, day)
+        date.setHours(0, 0, 0, 0)
+        return date
+      }
+    }
+    // Fallback: try standard date parsing
+    const date = new Date(dateStr)
+    if (!isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0)
+      return date
+    }
+    return null
+  }
 
-    return [...inspections].sort((a, b) => {
+  // Get overdue inspections (naechste_pruefung < today)
+  const getOverdueInspections = () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    return inspections.filter(inspection => {
+      const nextDate = parseGermanDate(inspection.naechste_pruefung)
+      if (!nextDate) return false
+      return nextDate < today
+    })
+  }
+
+  // Get inspections due in next 15 days (today <= naechste_pruefung <= today + 15 days)
+  const getDueSoonInspections = () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const in15Days = new Date(today)
+    in15Days.setDate(in15Days.getDate() + 15)
+    
+    return inspections.filter(inspection => {
+      const nextDate = parseGermanDate(inspection.naechste_pruefung)
+      if (!nextDate) return false
+      return nextDate >= today && nextDate <= in15Days
+    })
+  }
+
+  const getSortedInspections = () => {
+    // Zuerst filtern
+    let filtered = inspections
+
+    // Filter nach Rubrik
+    if (selectedRubrik) {
+      filtered = filtered.filter(inspection => inspection.rubrik === selectedRubrik)
+    }
+
+    // Filter nach Status
+    if (selectedStatus) {
+      if (selectedStatus === 'In Betrieb') {
+        filtered = filtered.filter(inspection => inspection.in_betrieb === true)
+      } else if (selectedStatus === 'Außer Betrieb') {
+        filtered = filtered.filter(inspection => inspection.in_betrieb === false)
+      }
+      // "Alle" wird durch selectedStatus === null abgedeckt
+    }
+
+    // Dann sortieren
+    if (!sortColumn) return filtered
+
+    return [...filtered].sort((a, b) => {
       let aValue = a[sortColumn]
       let bValue = b[sortColumn]
 
       // Handle special date sorting for naechste_pruefung
       if (sortColumn === 'naechste_pruefung') {
-        // Try to parse German date format (DD.MM.YYYY)
-        const parseGermanDate = (dateStr: string) => {
-          const parts = dateStr.split('.')
-          if (parts.length === 3) {
-            return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0])).getTime()
-          }
-          return new Date(dateStr).getTime()
+        const aDate = parseGermanDate(aValue)
+        const bDate = parseGermanDate(bValue)
+        if (aDate && bDate) {
+          aValue = aDate.getTime().toString()
+          bValue = bDate.getTime().toString()
+        } else {
+          // Fallback to string comparison if parsing fails
+          aValue = aValue || ''
+          bValue = bValue || ''
         }
-        aValue = parseGermanDate(aValue).toString()
-        bValue = parseGermanDate(bValue).toString()
       }
 
       // Natural sort for id_nr (handles M-001, M-002, etc.)
@@ -440,6 +511,127 @@ export default function Technik() {
             <span>⚠️</span>
             <span>Gefahrstoffe</span>
           </Link>
+        </div>
+      </div>
+
+      {/* Warnanzeigen für überfällige und bald fällige Prüfungen */}
+      {getOverdueInspections().length > 0 && (
+        <div className="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm p-4 lg:p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">🔴</span>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">
+                Überfällige Prüfungen ({getOverdueInspections().length})
+              </h3>
+              <div className="space-y-2">
+                {getOverdueInspections().map((inspection) => (
+                  <div
+                    key={inspection.id}
+                    className="bg-white rounded-lg p-3 border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
+                    onClick={() => handleShowDetails(inspection)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {inspection.name} ({inspection.id_nr})
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {inspection.rubrik} • Fällig: {inspection.naechste_pruefung}
+                        </p>
+                      </div>
+                      <span className="text-red-600 font-semibold">Überfällig</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {getDueSoonInspections().length > 0 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg shadow-sm p-4 lg:p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">🟡</span>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                Prüfungen in den nächsten 15 Tagen ({getDueSoonInspections().length})
+              </h3>
+              <div className="space-y-2">
+                {getDueSoonInspections().map((inspection) => (
+                  <div
+                    key={inspection.id}
+                    className="bg-white rounded-lg p-3 border border-yellow-200 hover:border-yellow-300 transition-colors cursor-pointer"
+                    onClick={() => handleShowDetails(inspection)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {inspection.name} ({inspection.id_nr})
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {inspection.rubrik} • Fällig: {inspection.naechste_pruefung}
+                        </p>
+                      </div>
+                      <span className="text-yellow-600 font-semibold">Bald fällig</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rubrik Filter Kacheln */}
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Rubriken</h3>
+        <div className="flex flex-wrap gap-3">
+          {['Elektrische Prüfungen', 'Lüftungsanlagen', 'Messgeräte', 'Technische Prüfungen', 'Wartungen'].map((rubrik) => (
+            <button
+              key={rubrik}
+              onClick={() => setSelectedRubrik(selectedRubrik === rubrik ? null : rubrik)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                selectedRubrik === rubrik
+                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {rubrik}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Status Filter Kacheln */}
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Status</h3>
+        <div className="flex flex-wrap gap-3">
+          {['Alle', 'In Betrieb', 'Außer Betrieb'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status === 'Alle' ? null : status)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                selectedStatus === (status === 'Alle' ? null : status)
+                  ? status === 'Alle'
+                    ? 'bg-gray-800 text-white shadow-md transform scale-105'
+                    : status === 'In Betrieb'
+                    ? 'bg-green-600 text-white shadow-md transform scale-105'
+                    : 'bg-red-600 text-white shadow-md transform scale-105'
+                  : status === 'Alle'
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : status === 'In Betrieb'
+                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                  : 'bg-red-50 text-red-700 hover:bg-red-100'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -729,6 +921,8 @@ export default function Technik() {
                   <option value="Vierteljährlich">Vierteljährlich</option>
                   <option value="Halbjährlich">Halbjährlich</option>
                   <option value="Jährlich">Jährlich</option>
+                  <option value="alle 2 Jahre">alle 2 Jahre</option>
+                  <option value="alle 5 Jahre">alle 5 Jahre</option>
                 </select>
               </div>
 
@@ -1088,6 +1282,8 @@ export default function Technik() {
                   <option value="Vierteljährlich">Vierteljährlich</option>
                   <option value="Halbjährlich">Halbjährlich</option>
                   <option value="Jährlich">Jährlich</option>
+                  <option value="alle 2 Jahre">alle 2 Jahre</option>
+                  <option value="alle 5 Jahre">alle 5 Jahre</option>
                 </select>
               </div>
 
