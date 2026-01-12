@@ -347,19 +347,22 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
       const isActive = employee.active !== false;
       
       if (!employee.birthDate || !isActive) {
-        // Debug logs (can be removed later)
-        // if (!employee.birthDate) {
-        //   console.log(`Skipping ${employee.firstName} ${employee.lastName}: no birthDate`);
-        // } else if (!isActive) {
-        //   console.log(`Skipping ${employee.firstName} ${employee.lastName}: not active`);
-        // }
+        // Debug logs für bessere Fehlerdiagnose
+        if (!employee.birthDate) {
+          console.log(`⏭️ Skipping ${employee.firstName} ${employee.lastName}: no birthDate`);
+        } else if (!isActive) {
+          console.log(`⏭️ Skipping ${employee.firstName} ${employee.lastName}: not active`);
+        }
         return;
       }
 
       // Parse birthDate safely - nur Monat und Tag verwenden, nicht das Jahr
       try {
+        console.log(`🔍 Processing ${employee.firstName} ${employee.lastName} - birthDate: "${employee.birthDate}" (type: ${typeof employee.birthDate})`);
+        
         const birthDateParts = employee.birthDate.split('-');
         if (birthDateParts.length !== 3) {
+          console.error(`❌ Invalid birthDate format for ${employee.firstName} ${employee.lastName}: "${employee.birthDate}" (expected YYYY-MM-DD)`);
           return;
         }
 
@@ -367,8 +370,11 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         
         // Validate parsed values
         if (isNaN(birthYear) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+          console.error(`❌ Invalid birthDate values for ${employee.firstName} ${employee.lastName}: year=${birthYear}, month=${month}, day=${day}`);
           return;
         }
+        
+        console.log(`✅ Parsed birthDate for ${employee.firstName} ${employee.lastName}: year=${birthYear}, month=${month}, day=${day}`);
 
         // Berechne den nächsten Geburtstag - nur mit Monat und Tag, nicht mit Jahr
         const currentYear = today.getFullYear();
@@ -391,12 +397,18 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
 
         // Bestimme den nächsten Geburtstag (dieses Jahr oder nächstes Jahr)
         let birthday: Date;
-        if (thisYearBirthday.getTime() >= today.getTime()) {
-          // Geburtstag ist noch in diesem Jahr
+        const todayTime = today.getTime();
+        const thisYearTime = thisYearBirthday.getTime();
+        const nextYearTime = nextYearBirthday.getTime();
+        
+        if (thisYearTime >= todayTime) {
+          // Geburtstag ist noch in diesem Jahr (heute oder in der Zukunft)
           birthday = thisYearBirthday;
+          console.log(`📅 ${employee.firstName} ${employee.lastName}: Using this year's birthday (${thisYearBirthday.toISOString().split('T')[0]})`);
         } else {
           // Geburtstag war bereits in diesem Jahr, nimm nächstes Jahr
           birthday = nextYearBirthday;
+          console.log(`📅 ${employee.firstName} ${employee.lastName}: Using next year's birthday (${nextYearBirthday.toISOString().split('T')[0]})`);
         }
 
         // Prüfe ob birthday ein gültiges Datum ist
