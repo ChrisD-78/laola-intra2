@@ -504,13 +504,25 @@ export default function Technik() {
             <span>➕</span>
             <span>Neues Prüfgerät anlegen</span>
           </button>
-          <Link
-            href="/technik/gefahrstoffe"
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center space-x-2"
-          >
-            <span>⚠️</span>
-            <span>Gefahrstoffe</span>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => {
+                // Öffne die MSR-Hilfsseite, die die automatische Anmeldung durchführt
+                window.open('/technik/msr', '_blank')
+              }}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+            >
+              <span>🔧</span>
+              <span>MSR</span>
+            </button>
+            <Link
+              href="/technik/gefahrstoffe"
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center space-x-2"
+            >
+              <span>⚠️</span>
+              <span>Gefahrstoffe</span>
+            </Link>
+          </div>
         </div>
       </div>
 
