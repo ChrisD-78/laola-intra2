@@ -329,6 +329,7 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     today.setHours(0, 0, 0, 0);
     const in30Days = new Date(today);
     in30Days.setDate(in30Days.getDate() + 30);
+    in30Days.setHours(0, 0, 0, 0); // Stelle sicher, dass auch in30Days auf Mitternacht gesetzt ist
 
     const upcomingBirthdays: Array<{
       employee: Employee;
@@ -404,12 +405,13 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           return;
         }
 
-        // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
-        // Verwende direkten Datumsvergleich statt Berechnung der Tage (genauer)
-        const isInRange = birthday.getTime() >= today.getTime() && birthday.getTime() <= in30Days.getTime();
-        
         // Berechne daysUntil für Anzeige
         const daysUntil = Math.floor((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
+        // Verwende Tage-Berechnung (0-30 Tage) für zuverlässige Ergebnisse
+        // daysUntil kann negativ sein, wenn der Geburtstag in der Vergangenheit liegt
+        const isInRange = daysUntil >= 0 && daysUntil <= 30;
         
         // Sicherstellen, dass alle Daten gültig sind bevor toISOString() aufgerufen wird
         const thisYearBirthdayStr = isNaN(thisYearBirthday.getTime()) ? 'Invalid Date' : thisYearBirthday.toISOString().split('T')[0];
