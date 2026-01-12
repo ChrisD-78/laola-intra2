@@ -405,6 +405,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
         }
 
         // Prüfe ob der Geburtstag in den nächsten 30 Tagen liegt
+        // Verwende direkten Datumsvergleich statt Berechnung der Tage (genauer)
+        const isInRange = birthday.getTime() >= today.getTime() && birthday.getTime() <= in30Days.getTime();
+        
+        // Berechne daysUntil für Anzeige
         const daysUntil = Math.floor((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
         // Sicherstellen, dass alle Daten gültig sind bevor toISOString() aufgerufen wird
@@ -421,11 +425,12 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           nextYearBirthday: nextYearBirthdayStr,
           selectedBirthday: birthdayStr,
           today: today.toISOString().split('T')[0],
+          in30Days: in30Days.toISOString().split('T')[0],
           daysUntil,
-          inRange: daysUntil >= 0 && daysUntil <= 30
+          isInRange
         });
         
-        if (daysUntil >= 0 && daysUntil <= 30) {
+        if (isInRange) {
           // Berechne das Alter basierend auf dem Geburtsjahr
           const age = birthday.getFullYear() - birthYear;
           
