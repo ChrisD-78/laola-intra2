@@ -507,10 +507,17 @@ export default function Technik() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => {
-                // Öffne die MSR-Hilfsseite, die die automatische Anmeldung durchführt
-                window.open('/technik/msr', '_blank')
+                // Öffne die externe MSR-Seite direkt in einem neuen Tab
+                const newWindow = window.open('https://dulconnex.com/welcome', '_blank', 'noopener,noreferrer')
+                
+                if (newWindow) {
+                  // Zeige Anmeldedaten in einem kurzen Alert (optional)
+                  // Die automatische Anmeldung ist bei externen Seiten aufgrund von CORS-Beschränkungen nicht möglich
+                  console.log('MSR Seite geöffnet. Anmeldedaten: Login: La-Ola, Passwort: La-Ola+3')
+                }
               }}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+              title="MSR öffnen (Login: La-Ola, Passwort: La-Ola+3)"
             >
               <span>🔧</span>
               <span>MSR</span>
