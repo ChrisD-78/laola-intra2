@@ -358,19 +358,59 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
 
       // Parse birthDate safely - nur Monat und Tag verwenden, nicht das Jahr
       try {
-        console.log(`🔍 Processing ${employee.firstName} ${employee.lastName} - birthDate: "${employee.birthDate}" (type: ${typeof employee.birthDate})`);
+        console.log(`🔍 Processing ${employee.firstName} ${employee.lastName} - birthDate: "${employee.birthDate}" (type: ${typeof employee.birthDate}, length: ${employee.birthDate?.length})`);
         
-        const birthDateParts = employee.birthDate.split('-');
-        if (birthDateParts.length !== 3) {
-          console.error(`❌ Invalid birthDate format for ${employee.firstName} ${employee.lastName}: "${employee.birthDate}" (expected YYYY-MM-DD)`);
+        // Trim und normalisiere das Datum
+        const normalizedBirthDate = employee.birthDate.trim();
+        
+        // Versuche verschiedene Datumsformate zu parsen
+        let birthYear: number, month: number, day: number;
+        
+        // Format 1: YYYY-MM-DD (Standard)
+        if (normalizedBirthDate.includes('-')) {
+          const birthDateParts = normalizedBirthDate.split('-').map(part => part.trim());
+          console.log(`📋 Split parts: [${birthDateParts.join(', ')}]`);
+          
+          if (birthDateParts.length !== 3) {
+            console.error(`❌ Invalid birthDate format for ${employee.firstName} ${employee.lastName}: "${normalizedBirthDate}" (expected YYYY-MM-DD, got ${birthDateParts.length} parts)`);
+            return;
+          }
+
+          birthYear = parseInt(birthDateParts[0], 10);
+          month = parseInt(birthDateParts[1], 10);
+          day = parseInt(birthDateParts[2], 10);
+          
+          console.log(`📋 Parsed values: year=${birthYear}, month=${month}, day=${day} (raw: "${birthDateParts[0]}", "${birthDateParts[1]}", "${birthDateParts[2]}")`);
+        } 
+        // Format 2: DD.MM.YYYY (deutsches Format)
+        else if (normalizedBirthDate.includes('.')) {
+          const birthDateParts = normalizedBirthDate.split('.').map(part => part.trim());
+          console.log(`📋 Split parts (DD.MM.YYYY): [${birthDateParts.join(', ')}]`);
+          
+          if (birthDateParts.length !== 3) {
+            console.error(`❌ Invalid birthDate format for ${employee.firstName} ${employee.lastName}: "${normalizedBirthDate}" (expected DD.MM.YYYY, got ${birthDateParts.length} parts)`);
+            return;
+          }
+
+          day = parseInt(birthDateParts[0], 10);
+          month = parseInt(birthDateParts[1], 10);
+          birthYear = parseInt(birthDateParts[2], 10);
+          
+          console.log(`📋 Parsed values (DD.MM.YYYY): year=${birthYear}, month=${month}, day=${day}`);
+        } 
+        else {
+          console.error(`❌ Unknown birthDate format for ${employee.firstName} ${employee.lastName}: "${normalizedBirthDate}" (expected YYYY-MM-DD or DD.MM.YYYY)`);
           return;
         }
-
-        const [birthYear, month, day] = birthDateParts.map(Number);
         
         // Validate parsed values
-        if (isNaN(birthYear) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
-          console.error(`❌ Invalid birthDate values for ${employee.firstName} ${employee.lastName}: year=${birthYear}, month=${month}, day=${day}`);
+        if (isNaN(birthYear) || isNaN(month) || isNaN(day)) {
+          console.error(`❌ Invalid birthDate values for ${employee.firstName} ${employee.lastName}: year=${birthYear}, month=${month}, day=${day} (one or more is NaN)`);
+          return;
+        }
+        
+        if (month < 1 || month > 12 || day < 1 || day > 31) {
+          console.error(`❌ Invalid birthDate range for ${employee.firstName} ${employee.lastName}: year=${birthYear}, month=${month}, day=${day} (month must be 1-12, day must be 1-31)`);
           return;
         }
         
