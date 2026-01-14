@@ -9,6 +9,7 @@ import Link from 'next/link'
 interface Gefahrstoff {
   id: string
   name: string
+  hersteller?: string
   gefahrstoffsymbole?: string
   info?: string
   bemerkung?: string
@@ -51,6 +52,7 @@ export default function Gefahrstoffe() {
   const [editFormData, setEditFormData] = useState({
     id: '',
     name: '',
+    hersteller: '',
     gefahrstoffsymbole: '',
     info: '',
     bemerkung: '',
@@ -70,6 +72,7 @@ export default function Gefahrstoffe() {
   const [editFormLoading, setEditFormLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
+    hersteller: '',
     gefahrstoffsymbole: '',
     info: '',
     bemerkung: '',
@@ -135,6 +138,7 @@ export default function Gefahrstoffe() {
       // Update gefahrstoff
       await updateGefahrstoff(editFormData.id, {
         name: editFormData.name,
+        hersteller: editFormData.hersteller || undefined,
         gefahrstoffsymbole: editFormData.gefahrstoffsymbole || undefined,
         info: editFormData.info || undefined,
         bemerkung: editFormData.bemerkung || undefined,
@@ -215,6 +219,7 @@ export default function Gefahrstoffe() {
       // Create gefahrstoff
       await createGefahrstoff({
         name: formData.name,
+        hersteller: formData.hersteller || undefined,
         gefahrstoffsymbole: formData.gefahrstoffsymbole || undefined,
         info: formData.info || undefined,
         bemerkung: formData.bemerkung || undefined,
@@ -236,6 +241,7 @@ export default function Gefahrstoffe() {
       // Reset form and close modal
       setFormData({
         name: '',
+        hersteller: '',
         gefahrstoffsymbole: '',
         info: '',
         bemerkung: '',
@@ -427,6 +433,9 @@ export default function Gefahrstoffe() {
                     </div>
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    Hersteller
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                     Gefahrstoffsymbole
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
@@ -466,7 +475,7 @@ export default function Gefahrstoffe() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {getSortedGefahrstoffe().length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={12} className="px-6 py-8 text-center text-sm text-gray-500">
                       <div className="flex flex-col items-center">
                         <span className="text-4xl mb-2">⚠️</span>
                         <p className="font-medium">Keine Gefahrstoffe vorhanden</p>
@@ -481,6 +490,9 @@ export default function Gefahrstoffe() {
                     <tr key={gefahrstoff.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {gefahrstoff.name}
+                      </td>
+                      <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {gefahrstoff.hersteller || <span className="text-gray-400">—</span>}
                       </td>
                       <td className="px-3 lg:px-6 py-4 text-sm text-gray-900">
                         {renderGefahrstoffsymbole(gefahrstoff.gefahrstoffsymbole)}
@@ -563,6 +575,7 @@ export default function Gefahrstoffe() {
                                   setEditFormData({
                                     id: gefahrstoff.id,
                                     name: gefahrstoff.name,
+                                    hersteller: gefahrstoff.hersteller || '',
                                     gefahrstoffsymbole: gefahrstoff.gefahrstoffsymbole || '',
                                     info: gefahrstoff.info || '',
                                     bemerkung: gefahrstoff.bemerkung || '',
@@ -637,6 +650,12 @@ export default function Gefahrstoffe() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedGefahrstoff.name}</p>
                 </div>
+                {selectedGefahrstoff.hersteller && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hersteller</label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedGefahrstoff.hersteller}</p>
+                  </div>
+                )}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Gefahrstoffsymbole</label>
                   <div className="bg-gray-50 p-2 rounded-lg">
@@ -738,6 +757,7 @@ export default function Gefahrstoffe() {
                     setShowCreateModal(false)
                     setFormData({
                       name: '',
+                      hersteller: '',
                       gefahrstoffsymbole: '',
                       info: '',
                       bemerkung: '',
@@ -768,6 +788,19 @@ export default function Gefahrstoffe() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900"
                   placeholder="Name des Gefahrstoffs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Hersteller
+                </label>
+                <input
+                  type="text"
+                  value={formData.hersteller}
+                  onChange={(e) => setFormData({ ...formData, hersteller: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900"
+                  placeholder="Hersteller des Gefahrstoffs"
                 />
               </div>
 
@@ -932,6 +965,7 @@ export default function Gefahrstoffe() {
                     setShowCreateModal(false)
                     setFormData({
                       name: '',
+                      hersteller: '',
                       gefahrstoffsymbole: '',
                       info: '',
                       bemerkung: '',
@@ -990,6 +1024,19 @@ export default function Gefahrstoffe() {
                   onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900"
                   placeholder="Name des Gefahrstoffs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Hersteller
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.hersteller}
+                  onChange={(e) => setEditFormData({ ...editFormData, hersteller: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900"
+                  placeholder="Hersteller des Gefahrstoffs"
                 />
               </div>
 

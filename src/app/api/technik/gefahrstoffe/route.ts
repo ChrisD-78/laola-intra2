@@ -9,6 +9,7 @@ export async function GET() {
       SELECT 
         id,
         name,
+        hersteller,
         gefahrstoffsymbole,
         info,
         bemerkung,
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       name,
+      hersteller,
       gefahrstoffsymbole,
       info,
       bemerkung,
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest) {
     const result = await sql`
       INSERT INTO gefahrstoffe (
         name,
+        hersteller,
         gefahrstoffsymbole,
         info,
         bemerkung,
@@ -72,6 +75,7 @@ export async function POST(request: NextRequest) {
         substitution_geprueft_ergebnis
       ) VALUES (
         ${name},
+        ${hersteller || null},
         ${gefahrstoffsymbole || null},
         ${info || null},
         ${bemerkung || null},
@@ -104,6 +108,7 @@ export async function PATCH(request: NextRequest) {
     const {
       id,
       name,
+      hersteller,
       gefahrstoffsymbole,
       info,
       bemerkung,
@@ -122,6 +127,7 @@ export async function PATCH(request: NextRequest) {
       UPDATE gefahrstoffe
       SET 
         name = ${name},
+        hersteller = ${hersteller || null},
         gefahrstoffsymbole = ${gefahrstoffsymbole || null},
         info = ${info || null},
         bemerkung = ${bemerkung || null},

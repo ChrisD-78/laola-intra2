@@ -792,6 +792,7 @@ export async function deleteTechnikInspection(id: string) {
 export interface GefahrstoffRecord {
   id?: string
   name: string
+  hersteller?: string
   gefahrstoffsymbole?: string
   info?: string
   bemerkung?: string
