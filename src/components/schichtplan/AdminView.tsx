@@ -3665,13 +3665,61 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
 
       {/* SP Einstellung Modal */}
       {showVacationLimitsModal && (
-        <div className="modal-overlay" onClick={() => setShowVacationLimitsModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflow: 'auto' }}>
-            <div className="modal-header">
-              <h2>⚙️ SP Einstellung - Urlaubsplanung Voreinstellungen</h2>
-              <button className="modal-close" onClick={() => setShowVacationLimitsModal(false)}>✕</button>
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem'
+          }}
+          onClick={() => setShowVacationLimitsModal(false)}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              background: 'white',
+              borderRadius: '15px',
+              padding: '2rem',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              position: 'relative'
+            }}
+          >
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px',
+              paddingBottom: '15px',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <h2 style={{ margin: 0, color: '#667eea', fontSize: '1.8rem' }}>⚙️ SP Einstellung - Urlaubsplanung Voreinstellungen</h2>
+              <button 
+                onClick={() => setShowVacationLimitsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '5px 10px',
+                  lineHeight: 1
+                }}
+              >
+                ✕
+              </button>
             </div>
-            <div className="modal-body">
+            <div style={{ padding: '0' }}>
               <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>Neue Voreinstellung hinzufügen</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
