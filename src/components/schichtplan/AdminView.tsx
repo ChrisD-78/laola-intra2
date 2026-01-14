@@ -2312,9 +2312,10 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             👥 Mitarbeiteransicht
           </button>
           <button 
-            onClick={() => {
+            onClick={async () => {
+              console.log('SP Einstellung Button clicked');
               setShowVacationLimitsModal(true);
-              loadVacationLimits();
+              await loadVacationLimits();
             }}
             className="view-mode-btn"
             style={{ marginLeft: '10px', backgroundColor: '#8b5cf6', color: 'white' }}
@@ -3721,33 +3722,33 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             </div>
             <div style={{ padding: '0' }}>
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>Neue Voreinstellung hinzufügen</h3>
+                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold', color: '#000000' }}>Neue Voreinstellung hinzufügen</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Von Datum:</label>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#000000' }}>Von Datum:</label>
                     <input
                       type="date"
                       value={newLimit.startDate}
                       onChange={(e) => setNewLimit({ ...newLimit, startDate: e.target.value })}
-                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', color: '#000000' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Bis Datum:</label>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#000000' }}>Bis Datum:</label>
                     <input
                       type="date"
                       value={newLimit.endDate}
                       onChange={(e) => setNewLimit({ ...newLimit, endDate: e.target.value })}
                       min={newLimit.startDate}
-                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', color: '#000000' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Einsatzbereich:</label>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#000000' }}>Einsatzbereich:</label>
                     <select
                       value={newLimit.area}
                       onChange={(e) => setNewLimit({ ...newLimit, area: e.target.value as AreaType })}
-                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', color: '#000000' }}
                     >
                       {AREAS.map(area => (
                         <option key={area} value={area}>{area}</option>
@@ -3755,13 +3756,13 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Max. Mitarbeiter gleichzeitig:</label>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#000000' }}>Max. Mitarbeiter gleichzeitig:</label>
                     <input
                       type="number"
                       min="1"
                       value={newLimit.maxEmployees}
                       onChange={(e) => setNewLimit({ ...newLimit, maxEmployees: parseInt(e.target.value) || 1 })}
-                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', color: '#000000' }}
                     />
                   </div>
                 </div>
@@ -3782,32 +3783,32 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
               </div>
 
               <div style={{ marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>Bestehende Voreinstellungen</h3>
+                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold', color: '#000000' }}>Bestehende Voreinstellungen</h3>
                 {vacationLimits.length === 0 ? (
-                  <p style={{ color: '#666', fontStyle: 'italic' }}>Keine Voreinstellungen vorhanden</p>
+                  <p style={{ color: '#000000', fontStyle: 'italic' }}>Keine Voreinstellungen vorhanden</p>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ backgroundColor: '#f3f4f6' }}>
-                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Von</th>
-                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Bis</th>
-                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Bereich</th>
-                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Max. Mitarbeiter</th>
-                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Aktion</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd', color: '#000000' }}>Von</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd', color: '#000000' }}>Bis</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd', color: '#000000' }}>Bereich</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd', color: '#000000' }}>Max. Mitarbeiter</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd', color: '#000000' }}>Aktion</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vacationLimits.map((limit) => (
                           <tr key={limit.id}>
-                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                            <td style={{ padding: '10px', border: '1px solid #ddd', color: '#000000' }}>
                               {new Date(limit.startDate).toLocaleDateString('de-DE')}
                             </td>
-                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                            <td style={{ padding: '10px', border: '1px solid #ddd', color: '#000000' }}>
                               {new Date(limit.endDate).toLocaleDateString('de-DE')}
                             </td>
-                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>{limit.area}</td>
-                            <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>{limit.maxEmployees}</td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd', color: '#000000' }}>{limit.area}</td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center', color: '#000000' }}>{limit.maxEmployees}</td>
                             <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                               <button
                                 onClick={() => deleteVacationLimit(limit.id)}
