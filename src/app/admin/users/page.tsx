@@ -55,6 +55,14 @@ export default function AdminUsersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // Rollen-Änderungsdialog
+  const [showRoleModal, setShowRoleModal] = useState(false)
+  const [userToEdit, setUserToEdit] = useState<User | null>(null)
+  const [newRole, setNewRole] = useState<string>('Benutzer')
+  const [roleLoading, setRoleLoading] = useState(false)
+  const [roleError, setRoleError] = useState<string | null>(null)
+  const [roleSuccess, setRoleSuccess] = useState<string | null>(null)
+
   // Prüfe Admin-Rechte
   useEffect(() => {
     if (isLoggedIn && !isAdmin) {
@@ -219,6 +227,60 @@ export default function AdminUsersPage() {
     setShowDeleteModal(false)
     setUserToDelete(null)
     setDeleteError(null)
+  }
+
+  const handleOpenRoleModal = (user: User) => {
+    setUserToEdit(user)
+    setNewRole(user.role)
+    setRoleError(null)
+    setRoleSuccess(null)
+    setShowRoleModal(true)
+  }
+
+  const handleCloseRoleModal = () => {
+    setShowRoleModal(false)
+    setUserToEdit(null)
+    setRoleError(null)
+    setRoleSuccess(null)
+  }
+
+  const handleUpdateRole = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userToEdit) return
+
+    setRoleLoading(true)
+    setRoleError(null)
+    setRoleSuccess(null)
+
+    try {
+      const response = await fetch(`/api/users/${userToEdit.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: newRole,
+          is_active: userToEdit.is_active
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setRoleSuccess(data.message)
+        await loadUsers()
+        
+        // Schließe Modal nach 2 Sekunden
+        setTimeout(() => {
+          handleCloseRoleModal()
+        }, 2000)
+      } else {
+        setRoleError(data.error || 'Fehler beim Aktualisieren der Rolle')
+      }
+    } catch (err) {
+      console.error('Failed to update role:', err)
+      setRoleError('Netzwerkfehler - Bitte versuchen Sie es erneut')
+    } finally {
+      setRoleLoading(false)
+    }
   }
 
   const handleDeleteUser = async () => {
@@ -525,6 +587,13 @@ export default function AdminUsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
                             <button
+                              onClick={() => handleOpenRoleModal(user)}
+                              className="text-purple-600 hover:text-purple-900 font-medium"
+                              title="Rolle ändern"
+                            >
+                              👤
+                            </button>
+                            <button
                               onClick={() => handleOpenPasswordModal(user)}
                               className="text-blue-600 hover:text-blue-900 font-medium"
                               title="Passwort zurücksetzen"
@@ -600,6 +669,69 @@ export default function AdminUsersPage() {
                       type="button"
                       onClick={handleClosePasswordModal}
                       className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Rollen-Änderungsdialog */}
+          {showRoleModal && userToEdit && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  👤 Rolle ändern
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Rolle für <strong>{userToEdit.display_name}</strong> ändern:
+                </p>
+                
+                <form onSubmit={handleUpdateRole} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Neue Rolle *
+                    </label>
+                    <select
+                      required
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Benutzer">Benutzer</option>
+                      <option value="Technik">Technik</option>
+                      <option value="Teamleiter">Teamleiter</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
+
+                  {roleError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                      <p className="text-red-700 text-sm">{roleError}</p>
+                    </div>
+                  )}
+
+                  {roleSuccess && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="text-green-700 text-sm">{roleSuccess}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      disabled={roleLoading}
+                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {roleLoading ? 'Wird gespeichert...' : 'Rolle ändern'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCloseRoleModal}
+                      disabled={roleLoading}
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Abbrechen
                     </button>
