@@ -283,22 +283,6 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   
-  // SP Einstellung (Urlaubsplanung Voreinstellungen)
-  const [showVacationLimitsModal, setShowVacationLimitsModal] = useState(false);
-  const [vacationLimits, setVacationLimits] = useState<Array<{
-    id: number;
-    startDate: string;
-    endDate: string;
-    area: AreaType;
-    maxEmployees: number;
-  }>>([]);
-  const [newLimit, setNewLimit] = useState({
-    startDate: '',
-    endDate: '',
-    area: 'Halle' as AreaType,
-    maxEmployees: 1
-  });
-  
   // Bulk assignment state
   const [showBulkAssignment, setShowBulkAssignment] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
