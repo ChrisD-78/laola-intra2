@@ -268,6 +268,25 @@ export default function Formulare() {
     { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
   ]
 
+  // Berechne Anzahl der Einreichungen pro Formulartyp
+  const getSubmissionCount = (type: string) => {
+    if (type === '') {
+      return submissions.length
+    }
+    return submissions.filter(sub => sub.type === type).length
+  }
+
+  // Toggle-Funktionalität für Formular-Filter
+  const handleFormTypeClick = (type: string) => {
+    if (filterType === type) {
+      // Wenn bereits ausgewählt, zurücksetzen auf "Alle"
+      setFilterType('')
+    } else {
+      // Sonst den neuen Typ setzen
+      setFilterType(type)
+    }
+  }
+
   // Filter submissions based on selected filters
   const filteredSubmissions = submissions.filter((submission) => {
     const matchesStatus = !filterStatus || submission.status === filterStatus
@@ -482,20 +501,31 @@ export default function Formulare() {
             
             {/* Formular-Typ Kacheln */}
             <div className="flex flex-wrap gap-2">
-              {formTypes.map((formType) => (
-                <button
-                  key={formType.value}
-                  onClick={() => setFilterType(formType.value)}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                    filterType === formType.value
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className="text-lg">{formType.icon}</span>
-                  <span>{formType.label}</span>
-                </button>
-              ))}
+              {formTypes.map((formType) => {
+                const count = getSubmissionCount(formType.value)
+                const isSelected = filterType === formType.value
+                return (
+                  <button
+                    key={formType.value}
+                    onClick={() => handleFormTypeClick(formType.value)}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg">{formType.icon}</span>
+                    <span>{formType.label}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      isSelected
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-300 text-gray-700'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
 
             {/* Status Filter */}
