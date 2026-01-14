@@ -239,9 +239,34 @@ export default function Formulare() {
       case 'kassenabrechnung': return 'Kassenabrechnung'
       case 'arbeitsunfall': return 'Arbeitsunfall'
       case 'feedback': return 'Feedback'
+      case 'stundenkorrektur': return 'Stundenkorrektur'
       default: return type
     }
   }
+
+  const getFormTypeIcon = (type: string) => {
+    switch (type) {
+      case 'wassermessung': return '💧'
+      case 'rutschenkontrolle': return '🎢'
+      case 'stoermeldung': return '🚨'
+      case 'kassenabrechnung': return '💰'
+      case 'arbeitsunfall': return '🏥'
+      case 'feedback': return '💬'
+      case 'stundenkorrektur': return '⏰'
+      default: return '📝'
+    }
+  }
+
+  const formTypes = [
+    { value: '', label: 'Alle Formulare', icon: '📋' },
+    { value: 'wassermessung', label: 'Wassermessung', icon: '💧' },
+    { value: 'rutschenkontrolle', label: 'Rutschenkontrolle', icon: '🎢' },
+    { value: 'stoermeldung', label: 'Störmeldung', icon: '🚨' },
+    { value: 'kassenabrechnung', label: 'Kassenabrechnung', icon: '💰' },
+    { value: 'arbeitsunfall', label: 'Arbeitsunfall', icon: '🏥' },
+    { value: 'feedback', label: 'Feedback', icon: '💬' },
+    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
+  ]
 
   // Filter submissions based on selected filters
   const filteredSubmissions = submissions.filter((submission) => {
@@ -452,8 +477,28 @@ export default function Formulare() {
       {/* Detailed Table View */}
       <div className="bg-white rounded-lg shadow-sm">
         <div className="p-4 lg:p-6 border-b border-gray-200">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Alle Formulareinreichungen</h2>
+            
+            {/* Formular-Typ Kacheln */}
+            <div className="flex flex-wrap gap-2">
+              {formTypes.map((formType) => (
+                <button
+                  key={formType.value}
+                  onClick={() => setFilterType(formType.value)}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                    filterType === formType.value
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="text-lg">{formType.icon}</span>
+                  <span>{formType.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Status Filter */}
             <div className="flex flex-col sm:flex-row gap-2">
               <select 
                 value={filterStatus} 
@@ -464,19 +509,6 @@ export default function Formulare() {
                 <option value="Eingegangen">Eingegangen</option>
                 <option value="In Bearbeitung">In Bearbeitung</option>
                 <option value="Abgeschlossen">Abgeschlossen</option>
-              </select>
-              <select 
-                value={filterType} 
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Alle Formulare</option>
-                <option value="wassermessung">Wassermessung</option>
-                <option value="rutschenkontrolle">Rutschenkontrolle</option>
-                <option value="stoermeldung">Störmeldung</option>
-                <option value="kassenabrechnung">Kassenabrechnung</option>
-                <option value="arbeitsunfall">Arbeitsunfall</option>
-                <option value="feedback">Feedback</option>
               </select>
             </div>
           </div>
