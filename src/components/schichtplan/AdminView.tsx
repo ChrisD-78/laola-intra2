@@ -2311,6 +2311,16 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
           >
             👥 Mitarbeiteransicht
           </button>
+          <button 
+            onClick={() => {
+              setShowVacationLimitsModal(true);
+              loadVacationLimits();
+            }}
+            className="view-mode-btn"
+            style={{ marginLeft: '10px', backgroundColor: '#8b5cf6', color: 'white' }}
+          >
+            ⚙️ SP Einstellung
+          </button>
         </div>
 
         {/* Geburtstagsanzeige für Admins */}
