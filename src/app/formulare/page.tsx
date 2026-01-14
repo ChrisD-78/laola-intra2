@@ -555,6 +555,9 @@ export default function Formulare() {
               })}
             </div>
 
+            {/* Optische Trennlinie */}
+            <div className="border-t border-gray-300 my-4"></div>
+
             {/* Status Filter Kacheln */}
             <div className="flex flex-wrap gap-2">
               {statusOptions.map((statusOption) => {
