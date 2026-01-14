@@ -276,6 +276,14 @@ export default function Formulare() {
     return submissions.filter(sub => sub.type === type).length
   }
 
+  // Berechne Anzahl der Einreichungen pro Status
+  const getStatusCount = (status: string) => {
+    if (status === '') {
+      return submissions.length
+    }
+    return submissions.filter(sub => sub.status === status).length
+  }
+
   // Toggle-Funktionalität für Formular-Filter
   const handleFormTypeClick = (type: string) => {
     if (filterType === type) {
@@ -286,6 +294,25 @@ export default function Formulare() {
       setFilterType(type)
     }
   }
+
+  // Toggle-Funktionalität für Status-Filter
+  const handleStatusClick = (status: string) => {
+    if (filterStatus === status) {
+      // Wenn bereits ausgewählt, zurücksetzen auf "Alle"
+      setFilterStatus('')
+    } else {
+      // Sonst den neuen Status setzen
+      setFilterStatus(status)
+    }
+  }
+
+  // Status-Optionen für Kacheln
+  const statusOptions = [
+    { value: '', label: 'Alle Status', icon: '📋' },
+    { value: 'Eingegangen', label: 'Eingegangen', icon: '📥' },
+    { value: 'In Bearbeitung', label: 'In Bearbeitung', icon: '⚙️' },
+    { value: 'Abgeschlossen', label: 'Abgeschlossen', icon: '✅' }
+  ]
 
   // Filter submissions based on selected filters
   const filteredSubmissions = submissions.filter((submission) => {
@@ -528,18 +555,45 @@ export default function Formulare() {
               })}
             </div>
 
-            {/* Status Filter */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Alle Status</option>
-                <option value="Eingegangen">Eingegangen</option>
-                <option value="In Bearbeitung">In Bearbeitung</option>
-                <option value="Abgeschlossen">Abgeschlossen</option>
-              </select>
+            {/* Status Filter Kacheln */}
+            <div className="flex flex-wrap gap-2">
+              {statusOptions.map((statusOption) => {
+                const count = getStatusCount(statusOption.value)
+                const isSelected = filterStatus === statusOption.value
+                return (
+                  <button
+                    key={statusOption.value}
+                    onClick={() => handleStatusClick(statusOption.value)}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                      isSelected
+                        ? statusOption.value === 'Abgeschlossen' 
+                          ? 'bg-green-600 text-white shadow-md'
+                          : statusOption.value === 'In Bearbeitung'
+                          ? 'bg-yellow-600 text-white shadow-md'
+                          : statusOption.value === 'Eingegangen'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg">{statusOption.icon}</span>
+                    <span>{statusOption.label}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      isSelected
+                        ? statusOption.value === 'Abgeschlossen'
+                          ? 'bg-green-500 text-white'
+                          : statusOption.value === 'In Bearbeitung'
+                          ? 'bg-yellow-500 text-white'
+                          : statusOption.value === 'Eingegangen'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-500 text-white'
+                        : 'bg-gray-300 text-gray-700'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
