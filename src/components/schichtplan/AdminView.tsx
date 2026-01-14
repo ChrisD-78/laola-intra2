@@ -262,9 +262,41 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
   const [exportEndDate, setExportEndDate] = useState<string>('');
   const [viewMode, setViewMode] = useState<'area' | 'employee'>('area');
   const [employeeViewMode, setEmployeeViewMode] = useState<'week' | 'month'>('week');
+  
+  // SP Einstellung (Urlaubsplanung Voreinstellungen)
+  const [showVacationLimitsModal, setShowVacationLimitsModal] = useState(false);
+  const [vacationLimits, setVacationLimits] = useState<Array<{
+    id: number;
+    startDate: string;
+    endDate: string;
+    area: AreaType;
+    maxEmployees: number;
+  }>>([]);
+  const [newLimit, setNewLimit] = useState({
+    startDate: '',
+    endDate: '',
+    area: 'Halle' as AreaType,
+    maxEmployees: 1
+  });
   const [currentMonth, setCurrentMonth] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  
+  // SP Einstellung (Urlaubsplanung Voreinstellungen)
+  const [showVacationLimitsModal, setShowVacationLimitsModal] = useState(false);
+  const [vacationLimits, setVacationLimits] = useState<Array<{
+    id: number;
+    startDate: string;
+    endDate: string;
+    area: AreaType;
+    maxEmployees: number;
+  }>>([]);
+  const [newLimit, setNewLimit] = useState({
+    startDate: '',
+    endDate: '',
+    area: 'Halle' as AreaType,
+    maxEmployees: 1
   });
   
   // Bulk assignment state
@@ -2188,6 +2220,75 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
     setSelectedWeekdays([1, 2, 3, 4, 5]);
   };
 
+  // SP Einstellung Funktionen
+  const loadVacationLimits = async () => {
+    try {
+      const response = await fetch('/api/schichtplan/vacation-limits');
+      if (response.ok) {
+        const data = await response.json();
+        setVacationLimits(data);
+      }
+    } catch (error) {
+      console.error('Failed to load vacation limits:', error);
+    }
+  };
+
+  const createVacationLimit = async () => {
+    if (!newLimit.startDate || !newLimit.endDate || !newLimit.area || newLimit.maxEmployees < 1) {
+      setValidationMessage('⚠️ Bitte füllen Sie alle Felder aus!');
+      setTimeout(() => setValidationMessage(null), 3000);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/schichtplan/vacation-limits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLimit)
+      });
+
+      if (response.ok) {
+        await loadVacationLimits();
+        setNewLimit({ startDate: '', endDate: '', area: 'Halle', maxEmployees: 1 });
+        setValidationMessage('✅ Voreinstellung erfolgreich erstellt!');
+        setTimeout(() => setValidationMessage(null), 3000);
+      } else {
+        const error = await response.json();
+        setValidationMessage(`⚠️ ${error.error || 'Fehler beim Erstellen'}`);
+        setTimeout(() => setValidationMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to create vacation limit:', error);
+      setValidationMessage('⚠️ Fehler beim Erstellen der Voreinstellung');
+      setTimeout(() => setValidationMessage(null), 3000);
+    }
+  };
+
+  const deleteVacationLimit = async (id: number) => {
+    if (!confirm('Möchten Sie diese Voreinstellung wirklich löschen?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/schichtplan/vacation-limits?id=${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await loadVacationLimits();
+        setValidationMessage('✅ Voreinstellung erfolgreich gelöscht!');
+        setTimeout(() => setValidationMessage(null), 3000);
+      } else {
+        setValidationMessage('⚠️ Fehler beim Löschen');
+        setTimeout(() => setValidationMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to delete vacation limit:', error);
+      setValidationMessage('⚠️ Fehler beim Löschen');
+      setTimeout(() => setValidationMessage(null), 3000);
+    }
+  };
+
   return (
     <div className="admin-view">
       <div className="admin-header">
@@ -3565,6 +3666,131 @@ const AdminView = forwardRef<AdminViewRef, AdminViewProps>(({
             </div>
           </div>
         ))}
+        </div>
+      )}
+
+      {/* SP Einstellung Modal */}
+      {showVacationLimitsModal && (
+        <div className="modal-overlay" onClick={() => setShowVacationLimitsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflow: 'auto' }}>
+            <div className="modal-header">
+              <h2>⚙️ SP Einstellung - Urlaubsplanung Voreinstellungen</h2>
+              <button className="modal-close" onClick={() => setShowVacationLimitsModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>Neue Voreinstellung hinzufügen</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Von Datum:</label>
+                    <input
+                      type="date"
+                      value={newLimit.startDate}
+                      onChange={(e) => setNewLimit({ ...newLimit, startDate: e.target.value })}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Bis Datum:</label>
+                    <input
+                      type="date"
+                      value={newLimit.endDate}
+                      onChange={(e) => setNewLimit({ ...newLimit, endDate: e.target.value })}
+                      min={newLimit.startDate}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Einsatzbereich:</label>
+                    <select
+                      value={newLimit.area}
+                      onChange={(e) => setNewLimit({ ...newLimit, area: e.target.value as AreaType })}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    >
+                      {AREAS.map(area => (
+                        <option key={area} value={area}>{area}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Max. Mitarbeiter gleichzeitig:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={newLimit.maxEmployees}
+                      onChange={(e) => setNewLimit({ ...newLimit, maxEmployees: parseInt(e.target.value) || 1 })}
+                      style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={createVacationLimit}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  Voreinstellung hinzufügen
+                </button>
+              </div>
+
+              <div style={{ marginTop: '30px' }}>
+                <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>Bestehende Voreinstellungen</h3>
+                {vacationLimits.length === 0 ? (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>Keine Voreinstellungen vorhanden</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f3f4f6' }}>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Von</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Bis</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Bereich</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Max. Mitarbeiter</th>
+                          <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Aktion</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vacationLimits.map((limit) => (
+                          <tr key={limit.id}>
+                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                              {new Date(limit.startDate).toLocaleDateString('de-DE')}
+                            </td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                              {new Date(limit.endDate).toLocaleDateString('de-DE')}
+                            </td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>{limit.area}</td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>{limit.maxEmployees}</td>
+                            <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                              <button
+                                onClick={() => deleteVacationLimit(limit.id)}
+                                style={{
+                                  padding: '5px 10px',
+                                  backgroundColor: '#ef4444',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Löschen
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

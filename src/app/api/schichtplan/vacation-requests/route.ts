@@ -79,6 +79,70 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { id, employeeId, employeeName, startDate, endDate, type } = body
 
+    // Prüfe Urlaubslimit nur für Urlaubsanträge
+    if (type === 'Urlaub') {
+      // Hole den Bereich des Mitarbeiters
+      const employee = await sql`
+        SELECT areas
+        FROM schichtplan_employees
+        WHERE id = ${employeeId}
+        LIMIT 1
+      `
+
+      if (employee.length > 0 && employee[0].areas && Array.isArray(employee[0].areas) && employee[0].areas.length > 0) {
+        const employeeAreas = employee[0].areas
+
+        // Prüfe für jeden Bereich des Mitarbeiters
+        for (const area of employeeAreas) {
+          // Finde alle relevanten Limits, die mit dem Zeitraum überlappen
+          const limits = await sql`
+            SELECT 
+              id,
+              start_date as "startDate",
+              end_date as "endDate",
+              area,
+              max_employees as "maxEmployees"
+            FROM schichtplan_vacation_limits
+            WHERE area = ${area}
+              AND start_date <= ${endDate}
+              AND end_date >= ${startDate}
+          `
+
+          if (limits.length > 0) {
+            // Prüfe für jedes Limit, ob die maximale Anzahl erreicht ist
+            for (const limit of limits) {
+              // Zähle genehmigte und ausstehende Urlaubsanträge im überlappenden Zeitraum für diesen Bereich
+              const overlappingRequests = await sql`
+                SELECT COUNT(*)::int as count
+                FROM schichtplan_vacation_requests vr
+                INNER JOIN schichtplan_employees se ON se.id = vr.employee_id
+                WHERE vr.status IN ('pending', 'approved')
+                  AND vr.type = 'Urlaub'
+                  AND se.areas @> ${JSON.stringify([area])}
+                  AND vr.start_date <= ${limit.endDate}
+                  AND vr.end_date >= ${limit.startDate}
+              `
+
+              const currentCount = overlappingRequests[0]?.count || 0
+              
+              if (currentCount >= limit.maxEmployees) {
+                return NextResponse.json(
+                  { 
+                    error: 'Zu diesem Zeitpunkt ist die maximale Urlaubsfreigabe bereits ausgeschöpft.',
+                    limitExceeded: true,
+                    area: area,
+                    currentCount: currentCount,
+                    maxCount: limit.maxEmployees
+                  },
+                  { status: 400 }
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+
     const result = await sql`
       INSERT INTO schichtplan_vacation_requests (
         id, employee_id, employee_name, start_date, end_date, type

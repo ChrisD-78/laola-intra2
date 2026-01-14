@@ -384,16 +384,27 @@ export default function SchichtplanPage() {
     }
 
     try {
-      await fetch('/api/schichtplan/vacation-requests', {
+      const response = await fetch('/api/schichtplan/vacation-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request)
       })
       
-      setVacationRequests(prev => [...prev, request])
+      if (!response.ok) {
+        const errorData = await response.json()
+        if (errorData.limitExceeded) {
+          alert(errorData.error || 'Zu diesem Zeitpunkt ist die maximale Urlaubsfreigabe bereits ausgeschöpft.')
+          return
+        }
+        throw new Error(errorData.error || 'Fehler beim Erstellen des Urlaubsantrags')
+      }
+      
+      const createdRequest = await response.json()
+      setVacationRequests(prev => [...prev, createdRequest])
       await loadData() // Reload to get updated schedule
     } catch (error) {
       console.error('Failed to create vacation request:', error)
+      alert(error instanceof Error ? error.message : 'Fehler beim Erstellen des Urlaubsantrags')
     }
   }
 
