@@ -339,7 +339,7 @@ export default function AdminUsersPage() {
                   >
                     <option value="Benutzer">Benutzer</option>
                     <option value="Technik">Technik</option>
-                    <option value="Verwaltung">Verwaltung</option>
+                    <option value="Teamleiter">Teamleiter</option>
                     <option value="Admin">Admin</option>
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
@@ -482,9 +482,9 @@ export default function AdminUsersPage() {
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               👑 Admin
                             </span>
-                          ) : user.role === 'Verwaltung' ? (
+                          ) : user.role === 'Teamleiter' ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              📋 Verwaltung
+                              👔 Teamleiter
                             </span>
                           ) : user.role === 'Technik' ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -665,8 +665,8 @@ export default function AdminUsersPage() {
                     <p className="text-xs mt-1">Voller Zugriff auf alle Bereiche, kann Benutzer verwalten</p>
                   </div>
                   <div>
-                    <p className="font-semibold">📋 Verwaltung</p>
-                    <p className="text-xs mt-1">Standard-Rechte für Verwaltungspersonal</p>
+                    <p className="font-semibold">👔 Teamleiter</p>
+                    <p className="text-xs mt-1">Admin-Rechte im Schichtplan, Technik-Rechte, alle Verwaltungsrechte</p>
                   </div>
                   <div>
                     <p className="font-semibold">🔧 Technik</p>

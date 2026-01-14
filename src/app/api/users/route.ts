@@ -24,7 +24,7 @@ export async function GET() {
       ORDER BY 
         CASE role
           WHEN 'Admin' THEN 1
-          WHEN 'Verwaltung' THEN 2
+          WHEN 'Teamleiter' THEN 2
           WHEN 'Technik' THEN 3
           WHEN 'Benutzer' THEN 4
           ELSE 5

@@ -20,7 +20,7 @@ const Sidebar = () => {
   }
 
   // Prüfe, ob Benutzer Zugriff auf Technik-Bereich hat
-  const hasTechnikAccess = isAdmin || userRole === 'Technik'
+  const hasTechnikAccess = isAdmin || userRole === 'Technik' || userRole === 'Teamleiter'
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: '🏠' },

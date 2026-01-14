@@ -22,14 +22,14 @@ export default function SchichtplanPage() {
   const { currentUser, isAdmin, userRole } = useAuth()
   const [viewMode, setViewMode] = useState<ViewMode>('employee')
   
-  // Update viewMode when isAdmin changes
+  // Update viewMode when isAdmin or Teamleiter changes
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin || userRole === 'Teamleiter') {
       setViewMode('admin')
     } else {
       setViewMode('employee')
     }
-  }, [isAdmin])
+  }, [isAdmin, userRole])
   const [schedule, setSchedule] = useState<DaySchedule[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')

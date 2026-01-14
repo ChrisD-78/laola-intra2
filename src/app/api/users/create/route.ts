@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validiere Rolle
-    const validRoles = ['Admin', 'Verwaltung', 'Technik', 'Benutzer']
+    const validRoles = ['Admin', 'Teamleiter', 'Technik', 'Benutzer']
     const userRole = role && validRoles.includes(role) ? role : 'Benutzer'
     const isAdmin = userRole === 'Admin'
 

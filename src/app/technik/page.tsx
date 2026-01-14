@@ -31,15 +31,15 @@ export default function Technik() {
   const [inspections, setInspections] = useState<TechnikInspection[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Zugriffskontrolle: Nur Admin und Technik-Rolle haben Zugriff
+  // Zugriffskontrolle: Nur Admin, Technik-Rolle und Teamleiter haben Zugriff
   useEffect(() => {
-    if (isLoggedIn && !isAdmin && userRole !== 'Technik') {
+    if (isLoggedIn && !isAdmin && userRole !== 'Technik' && userRole !== 'Teamleiter') {
       router.push('/')
     }
   }, [isLoggedIn, isAdmin, userRole, router])
 
   // Wenn nicht angemeldet oder keine Berechtigung, nichts anzeigen
-  if (!isLoggedIn || (!isAdmin && userRole !== 'Technik')) {
+  if (!isLoggedIn || (!isAdmin && userRole !== 'Technik' && userRole !== 'Teamleiter')) {
     return null
   }
   const [selectedInspection, setSelectedInspection] = useState<TechnikInspection | null>(null)
