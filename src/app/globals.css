@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure consistent input text contrast across forms */
+form input,
+form textarea,
+form select {
+  color: #000;
+}
