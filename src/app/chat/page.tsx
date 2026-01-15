@@ -265,11 +265,12 @@ export default function Chat() {
 
     ;(async () => {
       try {
-        const groupId = await createChatGroup(
+        const createdGroup = await createChatGroup(
           newGroupName.trim(),
           newGroupDescription.trim() || '',
           authUser
         )
+        const groupId = createdGroup.id as string
         setGroups(prev => [{ id: groupId, name: newGroupName.trim(), members: [...selectedGroupMembers, authUser], createdBy: authUser, createdAt: new Date().toISOString(), description: newGroupDescription.trim() || undefined }, ...prev])
         setNewGroupName('')
         setNewGroupDescription('')
