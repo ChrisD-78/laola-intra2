@@ -9,7 +9,7 @@ import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
 import StundenkorrekturForm from '@/components/StundenkorrekturForm'
 import RettungsuebungForm from '@/components/RettungsuebungForm'
-import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof } from '@/lib/db'
+import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof, uploadProofPdf } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
 interface FormSubmission {
@@ -65,11 +65,21 @@ export default function Formulare() {
   const handleFormSubmit = async (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       if (type === 'rettungsuebung') {
+        const pdfBlob = await createRettungsuebungPdf(data)
+        const dateValue = data.abnehmendeDatum || new Date().toISOString().split('T')[0]
+        const safeNachname = (data.nachname || 'Unbekannt').replace(/\s+/g, '-')
+        const safeVorname = (data.vorname || '').replace(/\s+/g, '-')
+        const fileName = `Rettungsuebung_${safeNachname}${safeVorname ? `_${safeVorname}` : ''}_${dateValue}.pdf`
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' })
+        const uploadResult = await uploadProofPdf(pdfFile)
+
         await insertExternalProof({
           bezeichnung: 'Rettungsübung',
           vorname: data.vorname || '',
           nachname: data.nachname || '',
-          datum: data.abnehmendeDatum || new Date().toISOString().split('T')[0]
+          datum: dateValue,
+          pdf_name: pdfFile.name,
+          pdf_url: uploadResult.publicUrl
         })
         return
       }
@@ -152,6 +162,92 @@ export default function Formulare() {
       default:
         return 'Formular eingereicht'
     }
+  }
+
+  const createRettungsuebungPdf = async (data: any): Promise<Blob> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const jsPDFModule = await import('jspdf')
+    const jsPDF = jsPDFModule.default || jsPDFModule
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const marginX = 40
+    const lineHeight = 16
+    let y = 50
+
+    const addHeading = (text: string) => {
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'bold')
+      doc.text(text, marginX, y)
+      y += 24
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(11)
+    }
+
+    const addLine = (label: string, value: string) => {
+      const content = `${label}: ${value || '-'}`
+      const lines = doc.splitTextToSize(content, pageWidth - marginX * 2)
+      lines.forEach((line: string) => {
+        if (y > 780) {
+          doc.addPage()
+          y = 50
+        }
+        doc.text(line, marginX, y)
+        y += lineHeight
+      })
+    }
+
+    const boolValue = (value: string) => (value === 'Ja' ? 'Ja' : 'Nein')
+
+    doc.setFontSize(16)
+    doc.setFont(undefined, 'bold')
+    doc.text('Rettungsübung – Schulungsnachweis', marginX, y)
+    y += 28
+    doc.setFontSize(11)
+    doc.setFont(undefined, 'normal')
+
+    addHeading('Teilnehmer/in')
+    addLine('Anrede', data.anrede || '')
+    addLine('Vorname', data.vorname || '')
+    addLine('Nachname', data.nachname || '')
+    addLine('Beschäftigt in/bei', data.beschaeftigtBei || '')
+    addLine('Einrichtung/Schule/Verein', data.einrichtung || '')
+    addLine('Abnahmesituation', data.abnahmesituation || '')
+
+    addHeading('Bad/Becken')
+    addLine('Name des Bades', data.nameDesBades || '')
+    addLine('Beckentyp', data.beckentyp || '')
+    addLine('Beckenabmessungen', `${data.beckenLaenge || '-'} m x ${data.beckenBreite || '-' } m`)
+    addLine('Wassertiefe', data.wassertiefe ? `${data.wassertiefe} m` : '')
+
+    addHeading('Nachweis der Leistungen')
+    addLine('Hilfe herbeirufen', boolValue(data.leistungHilfeHerbeirufen))
+    addLine('Notruf absetzen veranlassen', boolValue(data.leistungNotrufAbsetzen))
+    addLine('Sprung ins Wasser', boolValue(data.leistungSprungInsWasser))
+    addLine('Anschwimmen/Abtauchen Rettungspuppe', boolValue(data.leistungAnschwimmenAbtauchen))
+    addLine('Heraufholen der Rettungspuppe', boolValue(data.leistungRettungspuppeHeraufholen))
+    addLine('Loslassen der Puppe', boolValue(data.leistungRettungspuppeLoslassen))
+
+    addHeading('Fortsetzung der Übung')
+    addLine('Vermeidung einer Umklammerung', boolValue(data.fortsetzungUmklammerungVermeiden))
+    addLine('Befreiungsgriff', boolValue(data.fortsetzungBefreiungsgriff))
+    addLine('Fesselschleppgriff', boolValue(data.fortsetzungFesselschleppgriff))
+    addLine('Sichern am Beckenrand', boolValue(data.fortsetzungSichernBeckenrand))
+    addLine('Aus dem Wasser / Ablegen', boolValue(data.fortsetzungAusDemWasser))
+
+    addHeading('Zusätzliche Punkte')
+    addLine('Nachfrage Notruf abgesetzt', boolValue(data.nachfrageNotruf))
+    addLine('Herz-Lungen-Wiederbelebung durchgeführt', boolValue(data.hlwDurchgefuehrt))
+
+    addHeading('Erste-Hilfe-Kurs')
+    addLine('Bescheinigung liegt vor', data.ersteHilfeKurs === 'ja' ? 'Ja' : 'Nein')
+    addLine('Ausbildende Organisation', data.ersteHilfeOrganisation || '')
+    addLine('Datum', data.ersteHilfeDatum || '')
+
+    addHeading('Abnehmende/r')
+    addLine('Name, Vorname', data.abnehmendeName || '')
+    addLine('Ort', data.abnehmendeOrt || '')
+    addLine('Datum', data.abnehmendeDatum || '')
+
+    return doc.output('blob')
   }
 
   const formatDate = (dateString: string): string => {
@@ -280,8 +376,7 @@ export default function Formulare() {
     { value: 'kassenabrechnung', label: 'Kassenabrechnung', icon: '💰' },
     { value: 'arbeitsunfall', label: 'Arbeitsunfall', icon: '🏥' },
     { value: 'feedback', label: 'Feedback', icon: '💬' },
-    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' },
-    { value: 'rettungsuebung', label: 'Rettungsübung', icon: '🛟' }
+    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
   ]
 
   // Berechne Anzahl der Einreichungen pro Formulartyp
