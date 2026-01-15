@@ -9,7 +9,7 @@ import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
 import StundenkorrekturForm from '@/components/StundenkorrekturForm'
 import RettungsuebungForm from '@/components/RettungsuebungForm'
-import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById } from '@/lib/db'
+import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
 interface FormSubmission {
@@ -64,6 +64,16 @@ export default function Formulare() {
 
   const handleFormSubmit = async (type: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
+      if (type === 'rettungsuebung') {
+        await insertExternalProof({
+          bezeichnung: 'Rettungsübung',
+          vorname: data.vorname || '',
+          nachname: data.nachname || '',
+          datum: data.abnehmendeDatum || new Date().toISOString().split('T')[0]
+        })
+        return
+      }
+
       const submissionData = {
         type,
         title: `${type} - ${new Date().toLocaleDateString('de-DE')}`,
