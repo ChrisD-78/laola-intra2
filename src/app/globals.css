@@ -41,3 +41,14 @@ form textarea::placeholder {
   color: #6b7280;
   opacity: 1;
 }
+
+form button {
+  color: #000;
+}
+
+form small,
+form .helper-text,
+form .text-xs,
+form .text-sm {
+  color: #000;
+}
