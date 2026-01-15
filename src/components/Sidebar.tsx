@@ -148,14 +148,9 @@ const Sidebar = () => {
                     )}
                   </div>
                   {showBadge && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                      <span className="bg-red-600 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-lg animate-pulse whitespace-nowrap">
-                        Neue Nachricht eingegangen
-                      </span>
-                    </div>
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300 flex-shrink-0">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                   )}
                 </Link>
               </li>
