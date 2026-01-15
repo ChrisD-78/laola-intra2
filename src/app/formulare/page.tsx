@@ -8,6 +8,7 @@ import KassenabrechnungForm from '@/components/KassenabrechnungForm'
 import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
 import StundenkorrekturForm from '@/components/StundenkorrekturForm'
+import RettungsuebungForm from '@/components/RettungsuebungForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -136,6 +137,8 @@ export default function Formulare() {
         return `Kategorie: ${data.kategorie}, Bereich: ${data.betroffenerBereich}, Priorität: ${data.prioritaet}`
       case 'stundenkorrektur':
         return `Name: ${data.name}, Datum: ${data.datum}, Zeit: ${data.uhrzeitVon} - ${data.uhrzeitBis}, Grund: ${data.grund}`
+      case 'rettungsuebung':
+        return `Teilnehmer: ${data.vorname} ${data.nachname}, Bad: ${data.nameDesBades}, Abnahme-Datum: ${data.abnehmendeDatum || 'n/a'}`
       default:
         return 'Formular eingereicht'
     }
@@ -240,6 +243,7 @@ export default function Formulare() {
       case 'arbeitsunfall': return 'Arbeitsunfall'
       case 'feedback': return 'Feedback'
       case 'stundenkorrektur': return 'Stundenkorrektur'
+      case 'rettungsuebung': return 'Rettungsübung'
       default: return type
     }
   }
@@ -253,6 +257,7 @@ export default function Formulare() {
       case 'arbeitsunfall': return '🏥'
       case 'feedback': return '💬'
       case 'stundenkorrektur': return '⏰'
+      case 'rettungsuebung': return '🛟'
       default: return '📝'
     }
   }
@@ -265,7 +270,8 @@ export default function Formulare() {
     { value: 'kassenabrechnung', label: 'Kassenabrechnung', icon: '💰' },
     { value: 'arbeitsunfall', label: 'Arbeitsunfall', icon: '🏥' },
     { value: 'feedback', label: 'Feedback', icon: '💬' },
-    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
+    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' },
+    { value: 'rettungsuebung', label: 'Rettungsübung', icon: '🛟' }
   ]
 
   // Berechne Anzahl der Einreichungen pro Formulartyp
@@ -457,6 +463,24 @@ export default function Formulare() {
             <button 
               onClick={() => setOpenForm('kassenabrechnung')}
               className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">🛟</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Rettungsübung
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Dokumentation der kombinierten Rettungsübung
+            </p>
+            <button 
+              onClick={() => setOpenForm('rettungsuebung')}
+              className="w-full px-4 py-2.5 text-base bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -951,6 +975,12 @@ export default function Formulare() {
         isOpen={openForm === 'stundenkorrektur'}
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('stundenkorrektur', data)}
+      />
+
+      <RettungsuebungForm
+        isOpen={openForm === 'rettungsuebung'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('rettungsuebung', data)}
       />
     </div>
   )

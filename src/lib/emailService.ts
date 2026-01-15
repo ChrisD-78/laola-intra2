@@ -301,6 +301,8 @@ export const createFormSubmissionEmail = (formData: {
         return ['christof.drost@landau.de', 'christof.drost@gmail.com', 'kirstin.kreusch@landau.de']
       case 'stundenkorrektur':
         return ['christof.drost@landau.de', 'kirstin.kreusch@landau.de']
+      case 'rettungsuebung':
+        return ['christof.drost@landau.de', 'christof.drost@gmail.com', 'kirstin.kreusch@landau.de']
       case 'arbeitsunfall':
       case 'unfall':
         return ['christof.drost@gmail.com', 'christof.drost@landau.de', 'kirstin.kreusch@landau.de']
@@ -320,6 +322,7 @@ export const createFormSubmissionEmail = (formData: {
       case 'unfall': return '🚨 Unfall'
       case 'feedback': return '📝 Feedback'
       case 'stundenkorrektur': return '⏰ Stundenkorrektur'
+      case 'rettungsuebung': return '🛟 Rettungsübung'
       default: return `📋 ${type}`
     }
   }
@@ -335,6 +338,7 @@ export const createFormSubmissionEmail = (formData: {
       case 'unfall': return '#DC2626'
       case 'feedback': return '#6366F1'
       case 'stundenkorrektur': return '#7C3AED'
+      case 'rettungsuebung': return '#0EA5E9'
       default: return '#6B7280'
     }
   }
