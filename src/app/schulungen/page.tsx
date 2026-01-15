@@ -1582,10 +1582,10 @@ export default function Schulungen() {
                 )}
               </div>
 
-              {/* Externe Schulungsnachweise Zusatz-Tabelle */}
+              {/* Schulungsnachweise Zusatz-Tabelle */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">Externe Schulungsnachweise</h3>
+                  <h3 className="font-semibold text-gray-900">Schulungsnachweise</h3>
                   <button
                     onClick={() => setShowProofForm(true)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
