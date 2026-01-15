@@ -39,14 +39,6 @@ interface RettungsuebungData {
   abnehmendeName: string
   abnehmendeOrt: string
   abnehmendeDatum: string
-  abnehmendeUnterschrift: string
-  kenntnisName: string
-  kenntnisMassnahme1: string
-  kenntnisMassnahme2: string
-  kenntnisZuErledigenBis: string
-  kenntnisOrt: string
-  kenntnisDatum: string
-  kenntnisUnterschrift: string
 }
 
 const RettungsuebungForm = ({ isOpen, onClose, onSubmit }: RettungsuebungFormProps) => {
@@ -80,15 +72,7 @@ const RettungsuebungForm = ({ isOpen, onClose, onSubmit }: RettungsuebungFormPro
     ersteHilfeDatum: '',
     abnehmendeName: '',
     abnehmendeOrt: '',
-    abnehmendeDatum: '',
-    abnehmendeUnterschrift: '',
-    kenntnisName: '',
-    kenntnisMassnahme1: '',
-    kenntnisMassnahme2: '',
-    kenntnisZuErledigenBis: '',
-    kenntnisOrt: '',
-    kenntnisDatum: '',
-    kenntnisUnterschrift: ''
+    abnehmendeDatum: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -129,15 +113,7 @@ const RettungsuebungForm = ({ isOpen, onClose, onSubmit }: RettungsuebungFormPro
       ersteHilfeDatum: '',
       abnehmendeName: '',
       abnehmendeOrt: '',
-      abnehmendeDatum: '',
-      abnehmendeUnterschrift: '',
-      kenntnisName: '',
-      kenntnisMassnahme1: '',
-      kenntnisMassnahme2: '',
-      kenntnisZuErledigenBis: '',
-      kenntnisOrt: '',
-      kenntnisDatum: '',
-      kenntnisUnterschrift: ''
+      abnehmendeDatum: ''
     })
   }
 
@@ -434,84 +410,6 @@ const RettungsuebungForm = ({ isOpen, onClose, onSubmit }: RettungsuebungFormPro
                     type="date"
                     value={formData.abnehmendeDatum}
                     onChange={(e) => setFormData({ ...formData, abnehmendeDatum: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Stempel/Unterschrift</label>
-                  <input
-                    type="text"
-                    value={formData.abnehmendeUnterschrift}
-                    onChange={(e) => setFormData({ ...formData, abnehmendeUnterschrift: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Zur Kenntnis genommen</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={formData.kenntnisName}
-                    onChange={(e) => setFormData({ ...formData, kenntnisName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Erforderliche Maßnahmen 1</label>
-                  <input
-                    type="text"
-                    value={formData.kenntnisMassnahme1}
-                    onChange={(e) => setFormData({ ...formData, kenntnisMassnahme1: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Erforderliche Maßnahmen 2</label>
-                  <input
-                    type="text"
-                    value={formData.kenntnisMassnahme2}
-                    onChange={(e) => setFormData({ ...formData, kenntnisMassnahme2: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Zu erledigen bis</label>
-                  <input
-                    type="date"
-                    value={formData.kenntnisZuErledigenBis}
-                    onChange={(e) => setFormData({ ...formData, kenntnisZuErledigenBis: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Ort</label>
-                  <input
-                    type="text"
-                    value={formData.kenntnisOrt}
-                    onChange={(e) => setFormData({ ...formData, kenntnisOrt: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Datum</label>
-                  <input
-                    type="date"
-                    value={formData.kenntnisDatum}
-                    onChange={(e) => setFormData({ ...formData, kenntnisDatum: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Stempel/Unterschrift (Betriebsleiter:in)</label>
-                  <input
-                    type="text"
-                    value={formData.kenntnisUnterschrift}
-                    onChange={(e) => setFormData({ ...formData, kenntnisUnterschrift: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
