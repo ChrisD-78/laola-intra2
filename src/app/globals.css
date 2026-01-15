@@ -31,3 +31,13 @@ form textarea,
 form select {
   color: #000;
 }
+
+form label {
+  color: #000;
+}
+
+form input::placeholder,
+form textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
