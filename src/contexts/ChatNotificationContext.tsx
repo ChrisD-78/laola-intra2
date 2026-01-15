@@ -35,6 +35,17 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
   const { currentUser: authUser } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
   const [latestMessage, setLatestMessage] = useState<LatestMessage | null>(null)
+  const fallbackUsers = [
+    'Christof Drost',
+    'Kirstin Kreusch',
+    'Julia Wodonis',
+    'Lisa Schnagl',
+    'Jonas Jooss',
+    'Dennis Wilkens',
+    'Lea Hofmann',
+    'Team LAOLA',
+    'Verwaltung Stadtholding Landau'
+  ]
 
   const refreshUnreadCount = async () => {
     if (!authUser) {
@@ -48,11 +59,15 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
       // 1. Get all direct messages from all users
       try {
         const dbUsers = await getChatUsers()
-        for (const user of dbUsers) {
-          if (user.id === authUser) continue
+        const userIds = dbUsers.length > 0
+          ? dbUsers.map(user => user.id)
+          : fallbackUsers
+
+        for (const userId of userIds) {
+          if (userId === authUser) continue
 
           try {
-            const dbMessages = await getDirectMessages(authUser, user.id)
+            const dbMessages = await getDirectMessages(authUser, userId)
             const localMessages: Message[] = dbMessages.map((msg: ChatMessageRecord) => ({
               id: msg.id as string,
               sender: msg.sender_id,
