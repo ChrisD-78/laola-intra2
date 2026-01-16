@@ -38,17 +38,29 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
     setIsOpen(false)
   }
 
+  const MAX_PDF_MB = 10
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-      if (isPdf) {
-        setSelectedFile(file)
-      } else {
+      const sizeMb = file.size / 1024 / 1024
+      if (!isPdf) {
         alert('Bitte wählen Sie nur PDF-Dateien aus.')
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
+        return
+      }
+      if (sizeMb > MAX_PDF_MB) {
+        alert(`Die PDF ist zu groß. Maximal erlaubt: ${MAX_PDF_MB} MB.`)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        return
+      }
+      if (isPdf) {
+        setSelectedFile(file)
       }
     }
   }
