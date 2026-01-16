@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -10,11 +13,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    if (file.type !== 'application/pdf') {
+      return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 })
+    }
+
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: 'Blob token missing', details: 'BLOB_READ_WRITE_TOKEN is not set' },
+        { status: 500 }
+      )
+    }
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+
     // Upload to Vercel Blob
-    const blob = await put(file.name, file, {
+    const blob = await put(`pdfs/${timestamp}-${safeName}`, file, {
       access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN,
-      addRandomSuffix: true, // Add unique suffix to prevent duplicates
+      addRandomSuffix: false, // We already include a timestamp
     })
 
     return NextResponse.json({

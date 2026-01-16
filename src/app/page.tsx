@@ -138,7 +138,8 @@ export default function Dashboard() {
     } catch (e) {
       console.error('Create dashboard info failed', e)
       setCurrentInfos(prev => prev.filter(i => i.id !== optimistic.id))
-      alert('Information konnte nicht gespeichert werden.')
+      const message = e instanceof Error && e.message ? ` (${e.message})` : ''
+      alert(`Information konnte nicht gespeichert werden.${message}`)
     }
   }
 

@@ -313,9 +313,9 @@ export async function uploadInfoPdf(file: File): Promise<{ path: string; publicU
   })
 
   if (!response.ok) {
-    const error = await response.json()
+    const error = await response.json().catch(() => ({}))
     console.error('Failed to upload PDF:', error)
-    throw new Error('Failed to upload PDF')
+    throw new Error(error.details || error.error || 'Failed to upload PDF')
   }
 
   const result = await response.json()
@@ -748,9 +748,9 @@ export async function uploadTechnikPdf(file: File): Promise<{ path: string; publ
   })
 
   if (!response.ok) {
-    const error = await response.json()
+    const error = await response.json().catch(() => ({}))
     console.error('Failed to upload PDF:', error)
-    throw new Error('Failed to upload PDF')
+    throw new Error(error.details || error.error || 'Failed to upload PDF')
   }
 
   const result = await response.json()
