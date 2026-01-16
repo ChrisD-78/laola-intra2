@@ -41,7 +41,8 @@ const InfoForm = ({ onAddInfo }: InfoFormProps) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      if (file.type === 'application/pdf') {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      if (isPdf) {
         setSelectedFile(file)
       } else {
         alert('Bitte wählen Sie nur PDF-Dateien aus.')
