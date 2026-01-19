@@ -63,9 +63,32 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const adminUser = searchParams.get('admin_user')
+    const isAdmin = searchParams.get('is_admin') === 'true'
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    if (!isAdmin || !adminUser) {
+      return NextResponse.json(
+        { error: 'Admin rights required' },
+        { status: 403 }
+      )
+    }
+
+    const adminResult = await sql`
+      SELECT is_admin
+      FROM users
+      WHERE display_name = ${adminUser} OR username = ${adminUser}
+      LIMIT 1
+    `
+
+    if (adminResult.length === 0 || !adminResult[0].is_admin) {
+      return NextResponse.json(
+        { error: 'Admin rights required' },
+        { status: 403 }
+      )
     }
 
     await sql`DELETE FROM dashboard_infos WHERE id = ${id}`

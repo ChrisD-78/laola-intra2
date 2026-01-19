@@ -23,7 +23,7 @@ interface InfoItem {
 
 export default function Dashboard() {
   const { getTaskStats, getTasksByStatus } = useTasks()
-  const { isAdmin } = useAuth()
+  const { isAdmin, currentUser } = useAuth()
   const taskStats = getTaskStats()
   const recentTasks = getTasksByStatus('Offen').slice(0, 3)
   
@@ -145,10 +145,14 @@ export default function Dashboard() {
   }
 
   const removeInfo = async (id: string) => {
+    if (!isAdmin) {
+      alert('Nur Admins dürfen Informationen löschen.')
+      return
+    }
     const prev = currentInfos
     setCurrentInfos(prev.filter(info => info.id !== id))
     try {
-      await deleteDashboardInfo(id)
+      await deleteDashboardInfo(id, currentUser, isAdmin)
     } catch (e) {
       console.error('Delete dashboard info failed', e)
       setCurrentInfos(prev)
@@ -422,13 +426,15 @@ export default function Dashboard() {
                     ✏️
                   </button>
                 )}
-                <button
-                  onClick={() => removeInfo(info.id)}
-                  className="text-blue-400 hover:text-blue-600 transition-colors p-1"
-                  title="Information entfernen"
-                >
-                  🗑️
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => removeInfo(info.id)}
+                    className="text-blue-400 hover:text-blue-600 transition-colors p-1"
+                    title="Information entfernen"
+                  >
+                    🗑️
+                  </button>
+                )}
               </div>
             </div>
           ))}

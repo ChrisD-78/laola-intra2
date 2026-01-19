@@ -295,8 +295,17 @@ export async function createDashboardInfo(info: Omit<DashboardInfoRecord, 'id' |
   return response.json()
 }
 
-export async function deleteDashboardInfo(id: string) {
-  const response = await fetch(`/api/dashboard-infos?id=${id}`, {
+export async function deleteDashboardInfo(
+  id: string,
+  adminUser?: string | null,
+  isAdmin = false
+) {
+  const params = new URLSearchParams({ id })
+  params.set('is_admin', isAdmin ? 'true' : 'false')
+  if (adminUser) {
+    params.set('admin_user', adminUser)
+  }
+  const response = await fetch(`/api/dashboard-infos?${params.toString()}`, {
     method: 'DELETE'
   })
   if (!response.ok) throw new Error('Failed to delete dashboard info')
