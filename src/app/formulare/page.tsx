@@ -379,20 +379,28 @@ export default function Formulare() {
     { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
   ]
 
+  const tableSubmissions = isAdmin
+    ? submissions
+    : submissions.filter(sub => sub.type === 'stoermeldung')
+
+  const tableFormTypes = isAdmin
+    ? formTypes
+    : formTypes.filter(formType => formType.value === '' || formType.value === 'stoermeldung')
+
   // Berechne Anzahl der Einreichungen pro Formulartyp
   const getSubmissionCount = (type: string) => {
     if (type === '') {
-      return submissions.length
+      return tableSubmissions.length
     }
-    return submissions.filter(sub => sub.type === type).length
+    return tableSubmissions.filter(sub => sub.type === type).length
   }
 
   // Berechne Anzahl der Einreichungen pro Status
   const getStatusCount = (status: string) => {
     if (status === '') {
-      return submissions.length
+      return tableSubmissions.length
     }
-    return submissions.filter(sub => sub.status === status).length
+    return tableSubmissions.filter(sub => sub.status === status).length
   }
 
   // Toggle-Funktionalität für Formular-Filter
@@ -426,7 +434,7 @@ export default function Formulare() {
   ]
 
   // Filter submissions based on selected filters
-  const filteredSubmissions = submissions.filter((submission) => {
+  const filteredSubmissions = tableSubmissions.filter((submission) => {
     const matchesStatus = !filterStatus || submission.status === filterStatus
     const matchesType = !filterType || submission.type === filterType
     return matchesStatus && matchesType
@@ -657,7 +665,7 @@ export default function Formulare() {
             
             {/* Formular-Typ Kacheln */}
             <div className="flex flex-wrap gap-2">
-              {formTypes.map((formType) => {
+              {tableFormTypes.map((formType) => {
                 const count = getSubmissionCount(formType.value)
                 const isSelected = filterType === formType.value
                 return (
