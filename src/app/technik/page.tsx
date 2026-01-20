@@ -933,14 +933,14 @@ export default function Technik() {
             </div>
             
             <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
-              {/* Bild PDF */}
+              {/* Bild Datei */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bild (Als PDF) hinterlegen
+                  Bild (PDF/JPG/PNG) hinterlegen
                 </label>
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setFormData({ ...formData, bildFile: e.target.files?.[0] || null })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
@@ -1289,10 +1289,10 @@ export default function Technik() {
             </div>
             
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
-              {/* Bild PDF */}
+              {/* Bild Datei */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bild (Als PDF) hinterlegen
+                  Bild (PDF/JPG/PNG) hinterlegen
                 </label>
                 {editFormData.existingBildUrl && (
                   <p className="text-xs text-gray-600 mb-2">
@@ -1301,7 +1301,7 @@ export default function Technik() {
                 )}
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setEditFormData({ ...editFormData, bildFile: e.target.files?.[0] || null })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />

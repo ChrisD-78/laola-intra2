@@ -758,8 +758,8 @@ export async function uploadTechnikPdf(file: File): Promise<{ path: string; publ
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
-    console.error('Failed to upload PDF:', error)
-    throw new Error(error.details || error.error || 'Failed to upload PDF')
+    console.error('Failed to upload file:', error)
+    throw new Error(error.details || error.error || 'Failed to upload file')
   }
 
   const result = await response.json()

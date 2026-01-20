@@ -13,9 +13,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-    if (!isPdf) {
-      return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 })
+    const lowerName = file.name.toLowerCase()
+    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf')
+    const isJpg = file.type === 'image/jpeg' || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')
+    const isPng = file.type === 'image/png' || lowerName.endsWith('.png')
+    if (!isPdf && !isJpg && !isPng) {
+      return NextResponse.json(
+        { error: 'Only PDF or JPG/PNG images are allowed' },
+        { status: 400 }
+      )
     }
 
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -42,9 +48,9 @@ export async function POST(request: NextRequest) {
       name: file.name
     })
   } catch (error) {
-    console.error('Failed to upload PDF:', error)
+    console.error('Failed to upload file:', error)
     return NextResponse.json(
-      { error: 'Failed to upload PDF', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to upload file', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
