@@ -99,7 +99,7 @@ export default function Chat() {
         setGroups(dbGroups.map(g => ({ 
           id: g.id as string, 
           name: g.name, 
-          members: [], 
+          members: (g.members as string[]) || [], 
           createdBy: g.created_by, 
           createdAt: g.created_at || new Date().toISOString(), 
           description: g.description || undefined 
@@ -265,13 +265,22 @@ export default function Chat() {
 
     ;(async () => {
       try {
+        const memberList = Array.from(new Set([...selectedGroupMembers, authUser]))
         const createdGroup = await createChatGroup(
           newGroupName.trim(),
           newGroupDescription.trim() || '',
-          authUser
+          authUser,
+          memberList
         )
         const groupId = createdGroup.id as string
-        setGroups(prev => [{ id: groupId, name: newGroupName.trim(), members: [...selectedGroupMembers, authUser], createdBy: authUser, createdAt: new Date().toISOString(), description: newGroupDescription.trim() || undefined }, ...prev])
+        setGroups(prev => [{
+          id: groupId,
+          name: createdGroup.name || newGroupName.trim(),
+          members: (createdGroup.members as string[]) || memberList,
+          createdBy: createdGroup.created_by || authUser,
+          createdAt: createdGroup.created_at || new Date().toISOString(),
+          description: createdGroup.description || newGroupDescription.trim() || undefined
+        }, ...prev])
         setNewGroupName('')
         setNewGroupDescription('')
         setSelectedGroupMembers([])

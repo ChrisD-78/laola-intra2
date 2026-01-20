@@ -464,11 +464,16 @@ export async function getChatGroups() {
   return response.json()
 }
 
-export async function createChatGroup(name: string, description: string, createdBy: string) {
+export async function createChatGroup(
+  name: string,
+  description: string,
+  createdBy: string,
+  members: string[]
+) {
   const response = await fetch('/api/chat/groups', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, description, created_by: createdBy })
+    body: JSON.stringify({ name, description, created_by: createdBy, members })
   })
   if (!response.ok) throw new Error('Failed to create chat group')
   return response.json()
