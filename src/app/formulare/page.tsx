@@ -9,6 +9,9 @@ import ArbeitsunfallForm from '@/components/ArbeitsunfallForm'
 import FeedbackForm from '@/components/FeedbackForm'
 import StundenkorrekturForm from '@/components/StundenkorrekturForm'
 import RettungsuebungForm from '@/components/RettungsuebungForm'
+import KassenplatzChecklisteForm from '@/components/KassenplatzChecklisteForm'
+import LeistungsnachweisAzubiForm from '@/components/LeistungsnachweisAzubiForm'
+import DienstkleidungForm from '@/components/DienstkleidungForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof, uploadProofPdf } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -159,6 +162,12 @@ export default function Formulare() {
         return `Name: ${data.name}, Datum: ${data.datum}, Zeit: ${data.uhrzeitVon} - ${data.uhrzeitBis}, Grund: ${data.grund}`
       case 'rettungsuebung':
         return `Teilnehmer: ${data.vorname} ${data.nachname}, Bad: ${data.nameDesBades}, Abnahme-Datum: ${data.abnehmendeDatum || 'n/a'}`
+      case 'kassenplatz_checkliste':
+        return `Checkliste Kassenplätze – ${data.datum || 'ohne Datum'}`
+      case 'leistungsnachweis_azubi':
+        return `Leistungsnachweis Azubi – ${data.auszubildende || 'ohne Name'}`
+      case 'dienstkleidung':
+        return `Dienstkleidung – ${data.mitarbeiter || 'ohne Name'}`
       default:
         return 'Formular eingereicht'
     }
@@ -350,6 +359,9 @@ export default function Formulare() {
       case 'feedback': return 'Feedback'
       case 'stundenkorrektur': return 'Stundenkorrektur'
       case 'rettungsuebung': return 'Rettungsübung'
+      case 'kassenplatz_checkliste': return 'Checkliste Kassenplätze'
+      case 'leistungsnachweis_azubi': return 'Leistungsnachweis Azubi'
+      case 'dienstkleidung': return 'Ausgabe Dienstkleidung'
       default: return type
     }
   }
@@ -364,6 +376,9 @@ export default function Formulare() {
       case 'feedback': return '💬'
       case 'stundenkorrektur': return '⏰'
       case 'rettungsuebung': return '🛟'
+      case 'kassenplatz_checkliste': return '✅'
+      case 'leistungsnachweis_azubi': return '📋'
+      case 'dienstkleidung': return '👕'
       default: return '📝'
     }
   }
@@ -376,7 +391,10 @@ export default function Formulare() {
     { value: 'kassenabrechnung', label: 'Kassenabrechnung', icon: '💰' },
     { value: 'arbeitsunfall', label: 'Arbeitsunfall', icon: '🏥' },
     { value: 'feedback', label: 'Feedback', icon: '💬' },
-    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' }
+    { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' },
+    { value: 'kassenplatz_checkliste', label: 'Checkliste Kassenplätze', icon: '✅' },
+    { value: 'leistungsnachweis_azubi', label: 'Leistungsnachweis Azubi', icon: '📋' },
+    { value: 'dienstkleidung', label: 'Ausgabe Dienstkleidung', icon: '👕' }
   ]
 
   const tableSubmissions = isAdmin
@@ -439,6 +457,12 @@ export default function Formulare() {
     const matchesType = !filterType || submission.type === filterType
     return matchesStatus && matchesType
   })
+  const kassenplatzSubmissions = submissions.filter(
+    submission => submission.type === 'kassenplatz_checkliste'
+  )
+  const dienstkleidungSubmissions = submissions.filter(
+    submission => submission.type === 'dienstkleidung'
+  )
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
@@ -575,6 +599,60 @@ export default function Formulare() {
             </p>
             <button 
               onClick={() => setOpenForm('kassenabrechnung')}
+              className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">✅</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Checkliste der Kassenplätze
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Tägliche Checkliste für die Kassenplätze
+            </p>
+            <button
+              onClick={() => setOpenForm('kassenplatz_checkliste')}
+              className="w-full px-4 py-2.5 text-base bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">📋</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Leistungsnachweis Azubi
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Schwimmzeiten und Leistungen der Auszubildenden dokumentieren
+            </p>
+            <button
+              onClick={() => setOpenForm('leistungsnachweis_azubi')}
+              className="w-full px-4 py-2.5 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">👕</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Ausgabe Dienstkleidung
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Dokumentation der ausgegebenen Dienstkleidung
+            </p>
+            <button
+              onClick={() => setOpenForm('dienstkleidung')}
               className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
               Formular öffnen
@@ -1070,6 +1148,27 @@ export default function Formulare() {
         isOpen={openForm === 'kassenabrechnung'}
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('kassenabrechnung', data)}
+      />
+
+      <KassenplatzChecklisteForm
+        isOpen={openForm === 'kassenplatz_checkliste'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('kassenplatz_checkliste', data)}
+        submissions={kassenplatzSubmissions}
+      />
+
+      <LeistungsnachweisAzubiForm
+        isOpen={openForm === 'leistungsnachweis_azubi'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('leistungsnachweis_azubi', data)}
+      />
+
+      <DienstkleidungForm
+        isOpen={openForm === 'dienstkleidung'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('dienstkleidung', data)}
+        submissions={dienstkleidungSubmissions}
+        isAdmin={isAdmin}
       />
       
       <ArbeitsunfallForm

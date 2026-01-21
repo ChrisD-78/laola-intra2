@@ -492,15 +492,28 @@ export default function Chat() {
 
   const markGroupAsRead = async (groupId: string) => {
     if (!authUser) return
-    // FIRST: Get unread messages BEFORE updating state
-    const unreadMessages = allMessages.filter(msg => 
-      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
-    )
+    let unreadMessages: ChatMessageRecord[] = []
+
+    // FIRST: Load unread group messages from DB (allMessages doesn't include groups)
+    try {
+      const dbMessages = await getGroupMessages(groupId)
+      unreadMessages = dbMessages.filter(
+        msg => msg.sender_id !== authUser && !msg.is_read
+      )
+    } catch (e) {
+      console.error('❌ Load group messages failed:', e)
+      return
+    }
+
+    if (unreadMessages.length === 0) {
+      refreshUnreadCount()
+      return
+    }
     
     // SECOND: Update database
     try {
       for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id, true)
+        await updateChatMessageStatus(msg.id as string, true)
       }
       console.log(`✅ Marked ${unreadMessages.length} group messages as read in database`)
     } catch (e) {
@@ -510,12 +523,6 @@ export default function Chat() {
     
     // THIRD: Update local state only after successful DB update
     setMessages(prev => prev.map(msg => 
-      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
-        ? { ...msg, isRead: true }
-        : msg
-    ))
-    
-    setAllMessages(prev => prev.map(msg => 
       msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
         ? { ...msg, isRead: true }
         : msg

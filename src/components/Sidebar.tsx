@@ -24,7 +24,7 @@ const Sidebar = () => {
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: '🏠' },
-    { href: '/schichtplan', label: 'Schichtplan', icon: '📅' },
+    ...(isAdmin ? [{ href: '/schichtplan', label: 'Schichtplan', icon: '📅' }] : []),
     { href: '/aufgaben', label: 'Aufgaben', icon: '📋' },
     { href: '/wiederkehrende-aufgaben', label: 'Wiederkehrende Aufgaben', icon: '🔄' },
     { href: '/dokumente', label: 'Dokumente', icon: '📄' },

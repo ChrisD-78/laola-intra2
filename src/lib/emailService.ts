@@ -274,6 +274,148 @@ Diese E-Mail wurde automatisch generiert.
   }
 }
 
+export const createLeistungsnachweisEmail = (data: {
+  datum: string
+  auszubildende: string
+  ausbilder: string
+  schwimmen: {
+    kraul50m: string
+    brust50m: string
+    freistil100m: string
+    ruecken200m: string
+    gesamtzeit: string
+    bemerkungen: string
+  }
+  zusaetze: {
+    kleiderschwimmen300m: string
+    abschleppen50m: string
+    streckentauchen35m: string
+    zeitschwimmen100m: string
+    kopfsprung3m: string
+    wettkampftechnik50m: string
+  }
+}) => {
+  const currentDate = new Date().toLocaleString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const recipients = ['kirstin.kreusch@landau.de', 'jonas.jooss@landau.de']
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Leistungsnachweis Azubi</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 700px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 28px; text-align: center; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: bold; }
+        .content { padding: 24px; }
+        .field { margin-bottom: 16px; }
+        .field-label { font-weight: bold; color: #374151; margin-bottom: 4px; display: block; }
+        .field-value { background: #f9fafb; padding: 10px; border-radius: 6px; border-left: 4px solid #2563eb; }
+        .section { margin-top: 24px; }
+        .section h2 { font-size: 16px; margin: 0 0 10px; color: #111827; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        th { background: #f3f4f6; font-weight: 600; }
+        .footer { background: #f8fafc; padding: 16px; text-align: center; color: #6b7280; font-size: 13px; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 Leistungsnachweis Azubi</h1>
+          <p style="margin: 8px 0 0 0; opacity: 0.9;">Laola Intranet System</p>
+        </div>
+        <div class="content">
+          <div class="field">
+            <span class="field-label">Datum</span>
+            <div class="field-value">${data.datum || '-'}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Auszubildende/r</span>
+            <div class="field-value">${data.auszubildende || '-'}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Ausbilder/in</span>
+            <div class="field-value">${data.ausbilder || '-'}</div>
+          </div>
+
+          <div class="section">
+            <h2>400 m Schwimmen (max. 12 Minuten)</h2>
+            <table>
+              <tr><th>Kraul 50 m</th><td>${data.schwimmen.kraul50m || '-'}</td></tr>
+              <tr><th>Brust 50 m</th><td>${data.schwimmen.brust50m || '-'}</td></tr>
+              <tr><th>Freistil 100 m</th><td>${data.schwimmen.freistil100m || '-'}</td></tr>
+              <tr><th>Rücken 200 m</th><td>${data.schwimmen.ruecken200m || '-'}</td></tr>
+              <tr><th>Gesamtzeit</th><td>${data.schwimmen.gesamtzeit || '-'}</td></tr>
+              <tr><th>Bemerkungen</th><td>${data.schwimmen.bemerkungen || '-'}</td></tr>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2>Weitere Prüfungsleistungen</h2>
+            <table>
+              <tr><th>Kleiderschwimmen 300 m (max. 8 Min.)</th><td>${data.zusaetze.kleiderschwimmen300m || '-'}</td></tr>
+              <tr><th>Abschleppen 50 m (max. 2 Min.)</th><td>${data.zusaetze.abschleppen50m || '-'}</td></tr>
+              <tr><th>Streckentauchen 35 m</th><td>${data.zusaetze.streckentauchen35m || '-'}</td></tr>
+              <tr><th>Zeitschwimmen 100 m (max. 1:30)</th><td>${data.zusaetze.zeitschwimmen100m || '-'}</td></tr>
+              <tr><th>Kopfsprung aus 3 m Höhe</th><td>${data.zusaetze.kopfsprung3m || '-'}</td></tr>
+              <tr><th>Wettkampftechnik Start/Wende 50 m</th><td>${data.zusaetze.wettkampftechnik50m || '-'}</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="footer">
+          <p>Automatisch gesendet am ${currentDate}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+Leistungsnachweis Azubi
+=======================
+
+Datum: ${data.datum || '-'}
+Auszubildende/r: ${data.auszubildende || '-'}
+Ausbilder/in: ${data.ausbilder || '-'}
+
+400 m Schwimmen (max. 12 Minuten)
+- Kraul 50 m: ${data.schwimmen.kraul50m || '-'}
+- Brust 50 m: ${data.schwimmen.brust50m || '-'}
+- Freistil 100 m: ${data.schwimmen.freistil100m || '-'}
+- Rücken 200 m: ${data.schwimmen.ruecken200m || '-'}
+- Gesamtzeit: ${data.schwimmen.gesamtzeit || '-'}
+- Bemerkungen: ${data.schwimmen.bemerkungen || '-'}
+
+Weitere Prüfungsleistungen
+- Kleiderschwimmen 300 m (max. 8 Min.): ${data.zusaetze.kleiderschwimmen300m || '-'}
+- Abschleppen 50 m (max. 2 Min.): ${data.zusaetze.abschleppen50m || '-'}
+- Streckentauchen 35 m: ${data.zusaetze.streckentauchen35m || '-'}
+- Zeitschwimmen 100 m (max. 1:30): ${data.zusaetze.zeitschwimmen100m || '-'}
+- Kopfsprung aus 3 m Höhe: ${data.zusaetze.kopfsprung3m || '-'}
+- Wettkampftechnik Start/Wende 50 m: ${data.zusaetze.wettkampftechnik50m || '-'}
+
+Gesendet am ${currentDate}
+  `
+
+  return {
+    to: recipients,
+    subject: `Leistungsnachweis Azubi – ${data.auszubildende || 'Unbekannt'}`,
+    html,
+    text
+  }
+}
+
 // Generische E-Mail-Funktion für alle Formular-Einträge
 export const createFormSubmissionEmail = (formData: {
   type: string
