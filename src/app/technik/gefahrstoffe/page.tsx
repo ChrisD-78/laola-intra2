@@ -1115,9 +1115,23 @@ export default function Gefahrstoffe() {
                   Sicherheitsdatenblatt (PDF)
                 </label>
                 {editFormData.existingSicherheitsdatenblattUrl && (
-                  <p className="text-xs text-gray-600 mb-2">
-                    Aktuelles PDF: {editFormData.existingSicherheitsdatenblattName || 'Vorhanden'}
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+                    <span>Aktuelles PDF: {editFormData.existingSicherheitsdatenblattName || 'Vorhanden'}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditFormData({
+                          ...editFormData,
+                          existingSicherheitsdatenblattUrl: '',
+                          existingSicherheitsdatenblattName: '',
+                          sicherheitsdatenblattFile: null
+                        })
+                      }
+                      className="text-red-600 hover:text-red-800 underline"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
                 )}
                 <input
                   type="file"
@@ -1135,9 +1149,23 @@ export default function Gefahrstoffe() {
                   Betriebsanweisung LA OLA (PDF)
                 </label>
                 {editFormData.existingBetriebsanweisungLaolaUrl && (
-                  <p className="text-xs text-gray-600 mb-2">
-                    Aktuelles PDF: {editFormData.existingBetriebsanweisungLaolaName || 'Vorhanden'}
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+                    <span>Aktuelles PDF: {editFormData.existingBetriebsanweisungLaolaName || 'Vorhanden'}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditFormData({
+                          ...editFormData,
+                          existingBetriebsanweisungLaolaUrl: '',
+                          existingBetriebsanweisungLaolaName: '',
+                          betriebsanweisungLaolaFile: null
+                        })
+                      }
+                      className="text-red-600 hover:text-red-800 underline"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
                 )}
                 <input
                   type="file"
@@ -1155,9 +1183,23 @@ export default function Gefahrstoffe() {
                   Betriebsanweisung Freibad (PDF)
                 </label>
                 {editFormData.existingBetriebsanweisungFreibadUrl && (
-                  <p className="text-xs text-gray-600 mb-2">
-                    Aktuelles PDF: {editFormData.existingBetriebsanweisungFreibadName || 'Vorhanden'}
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+                    <span>Aktuelles PDF: {editFormData.existingBetriebsanweisungFreibadName || 'Vorhanden'}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditFormData({
+                          ...editFormData,
+                          existingBetriebsanweisungFreibadUrl: '',
+                          existingBetriebsanweisungFreibadName: '',
+                          betriebsanweisungFreibadFile: null
+                        })
+                      }
+                      className="text-red-600 hover:text-red-800 underline"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
                 )}
                 <input
                   type="file"
