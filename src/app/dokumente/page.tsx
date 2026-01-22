@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import DokumentUploadForm from '@/components/DokumentUploadForm'
 import { getDocuments, getDocumentsFiltered, insertDocument, uploadDocumentFile, updateDocument, deleteDocumentById, DocumentRecord } from '@/lib/db'
+import { useAuth } from '@/components/AuthProvider'
 
 interface Document {
   id: string
@@ -21,6 +22,7 @@ interface Document {
 
 export default function Dokumente() {
   const [documents, setDocuments] = useState<Document[]>([])
+  const { isAdmin } = useAuth()
 
   useEffect(() => {
     const load = async () => {
@@ -146,19 +148,15 @@ export default function Dokumente() {
   }
 
   const deleteDocument = async (documentId: string) => {
-    const pass = prompt('Bitte Passwort eingeben:')
-    if (pass === 'bl') {
-      const prev = documents
-      setDocuments(prev.filter(doc => doc.id !== documentId))
-      try {
-        await deleteDocumentById(documentId)
-      } catch (e) {
-        console.error('Delete document failed', e)
-        setDocuments(prev)
-        alert('Dokument konnte nicht gelöscht werden.')
-      }
-    } else if (pass !== null) {
-      alert('Falsches Passwort')
+    if (!isAdmin) return
+    const prev = documents
+    setDocuments(prev.filter(doc => doc.id !== documentId))
+    try {
+      await deleteDocumentById(documentId)
+    } catch (e) {
+      console.error('Delete document failed', e)
+      setDocuments(prev)
+      alert('Dokument konnte nicht gelöscht werden.')
     }
   }
 
@@ -387,13 +385,15 @@ export default function Dokumente() {
                   >
                     ✏️
                   </button>
-                  <button 
-                    className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    onClick={() => deleteDocument(document.id)}
-                    title="Dokument löschen"
-                  >
-                    🗑️
-                  </button>
+                  {isAdmin && (
+                    <button 
+                      className="flex-1 sm:flex-none p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                      onClick={() => deleteDocument(document.id)}
+                      title="Dokument löschen"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
