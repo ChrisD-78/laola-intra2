@@ -8,7 +8,16 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch (error) {
+      console.error('Failed to parse form data:', error)
+      return NextResponse.json(
+        { error: 'Invalid form data', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 400 }
+      )
+    }
     const file = formData.get('file') as File
 
     if (!file) {
@@ -28,6 +37,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${timestamp}-${safeName}`
 
     const token = process.env.BLOB_READ_WRITE_TOKEN
+    let blobError: string | null = null
     if (token) {
       try {
         const blob = await put(`documents/${fileName}`, file, {
@@ -43,32 +53,33 @@ export async function POST(request: NextRequest) {
           name: file.name
         })
       } catch (error) {
+        blobError = error instanceof Error ? error.message : 'Unknown error'
         console.error('Blob upload failed:', error)
-        if (process.env.NODE_ENV === 'production') {
-          return NextResponse.json(
-            { error: 'Failed to upload document', details: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500 }
-          )
-        }
       }
-    } else if (process.env.NODE_ENV === 'production') {
+    } else {
+      blobError = 'BLOB_READ_WRITE_TOKEN is not set'
+    }
+
+    try {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
+      await mkdir(uploadDir, { recursive: true })
+      const buffer = Buffer.from(await file.arrayBuffer())
+      await writeFile(path.join(uploadDir, fileName), buffer)
+
+      return NextResponse.json({
+        path: `/uploads/documents/${fileName}`,
+        publicUrl: `/uploads/documents/${fileName}`,
+        size: file.size,
+        name: file.name
+      })
+    } catch (error) {
+      const localError = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Local upload failed:', error)
       return NextResponse.json(
-        { error: 'Blob token missing', details: 'BLOB_READ_WRITE_TOKEN is not set' },
+        { error: 'Failed to upload document', details: `Blob: ${blobError || 'n/a'} | Local: ${localError}` },
         { status: 500 }
       )
     }
-
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
-    await mkdir(uploadDir, { recursive: true })
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeFile(path.join(uploadDir, fileName), buffer)
-
-    return NextResponse.json({
-      path: `/uploads/documents/${fileName}`,
-      publicUrl: `/uploads/documents/${fileName}`,
-      size: file.size,
-      name: file.name
-    })
   } catch (error) {
     console.error('Failed to upload document:', error)
     return NextResponse.json(

@@ -678,9 +678,16 @@ export async function uploadDocumentFile(file: File): Promise<{ path: string; pu
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    console.error('Failed to upload document:', error)
-    throw new Error(error.details || error.error || 'Failed to upload document')
+    const text = await response.text()
+    let errorData: { error?: string; details?: string } = {}
+    try {
+      errorData = text ? JSON.parse(text) : {}
+    } catch {
+      errorData = {}
+    }
+    console.error('Failed to upload document:', errorData || text)
+    const message = errorData.details || errorData.error || text || `Failed to upload document (status ${response.status})`
+    throw new Error(message)
   }
 
   const result = await response.json()
