@@ -68,6 +68,8 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
     }
   }
 
+  const MAX_FILE_SIZE_MB = 50
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -76,6 +78,10 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
       if (file.type === 'application/pdf' || file.type.startsWith('image/') || file.type.includes('document')) {
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+          alert(`Die Datei ist zu groß. Maximal erlaubt: ${MAX_FILE_SIZE_MB} MB.`)
+          return
+        }
         setSelectedFile(file)
       }
     }
@@ -83,7 +89,15 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0])
+      const file = e.target.files[0]
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        alert(`Die Datei ist zu groß. Maximal erlaubt: ${MAX_FILE_SIZE_MB} MB.`)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        return
+      }
+      setSelectedFile(file)
     }
   }
 
@@ -253,7 +267,7 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
                         Datei hierher ziehen oder klicken zum Auswählen
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
-                        Unterstützt: PDF, Bilder, Dokumente (max. 10MB)
+                        Unterstützt: PDF, Bilder, Dokumente (max. 50MB)
                       </p>
                     </div>
                     <button

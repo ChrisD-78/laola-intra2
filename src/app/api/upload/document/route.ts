@@ -15,6 +15,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    const MAX_FILE_SIZE_MB = 50
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'File too large', details: `Max ${MAX_FILE_SIZE_MB}MB` },
+        { status: 413 }
+      )
+    }
+
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const fileName = `${timestamp}-${safeName}`
