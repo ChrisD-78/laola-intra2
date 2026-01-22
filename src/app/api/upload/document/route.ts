@@ -27,37 +27,45 @@ export async function POST(request: NextRequest) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const fileName = `${timestamp}-${safeName}`
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json(
-          { error: 'Blob token missing', details: 'BLOB_READ_WRITE_TOKEN is not set' },
-          { status: 500 }
-        )
+    const token = process.env.BLOB_READ_WRITE_TOKEN
+    if (token) {
+      try {
+        const blob = await put(`documents/${fileName}`, file, {
+          access: 'public',
+          token,
+          addRandomSuffix: false
+        })
+
+        return NextResponse.json({
+          path: blob.pathname,
+          publicUrl: blob.url,
+          size: file.size,
+          name: file.name
+        })
+      } catch (error) {
+        console.error('Blob upload failed:', error)
+        if (process.env.NODE_ENV === 'production') {
+          return NextResponse.json(
+            { error: 'Failed to upload document', details: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+          )
+        }
       }
-
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
-      await mkdir(uploadDir, { recursive: true })
-      const buffer = Buffer.from(await file.arrayBuffer())
-      await writeFile(path.join(uploadDir, fileName), buffer)
-
-      return NextResponse.json({
-        path: `/uploads/documents/${fileName}`,
-        publicUrl: `/uploads/documents/${fileName}`,
-        size: file.size,
-        name: file.name
-      })
+    } else if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: 'Blob token missing', details: 'BLOB_READ_WRITE_TOKEN is not set' },
+        { status: 500 }
+      )
     }
 
-    // Upload to Vercel Blob
-    const blob = await put(`documents/${fileName}`, file, {
-      access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      addRandomSuffix: false
-    })
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
+    await mkdir(uploadDir, { recursive: true })
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await writeFile(path.join(uploadDir, fileName), buffer)
 
     return NextResponse.json({
-      path: blob.pathname,
-      publicUrl: blob.url,
+      path: `/uploads/documents/${fileName}`,
+      publicUrl: `/uploads/documents/${fileName}`,
       size: file.size,
       name: file.name
     })
