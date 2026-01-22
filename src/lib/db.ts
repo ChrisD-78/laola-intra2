@@ -678,9 +678,9 @@ export async function uploadDocumentFile(file: File): Promise<{ path: string; pu
   })
 
   if (!response.ok) {
-    const error = await response.json()
+    const error = await response.json().catch(() => ({}))
     console.error('Failed to upload document:', error)
-    throw new Error('Failed to upload document')
+    throw new Error(error.details || error.error || 'Failed to upload document')
   }
 
   const result = await response.json()

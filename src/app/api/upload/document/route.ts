@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
+import { mkdir, writeFile } from 'fs/promises'
+import path from 'path'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,11 +15,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const fileName = `${timestamp}-${safeName}`
+
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json(
+          { error: 'Blob token missing', details: 'BLOB_READ_WRITE_TOKEN is not set' },
+          { status: 500 }
+        )
+      }
+
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
+      await mkdir(uploadDir, { recursive: true })
+      const buffer = Buffer.from(await file.arrayBuffer())
+      await writeFile(path.join(uploadDir, fileName), buffer)
+
+      return NextResponse.json({
+        path: `/uploads/documents/${fileName}`,
+        publicUrl: `/uploads/documents/${fileName}`,
+        size: file.size,
+        name: file.name
+      })
+    }
+
     // Upload to Vercel Blob
-    const blob = await put(`documents/${file.name}`, file, {
+    const blob = await put(`documents/${fileName}`, file, {
       access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN,
-      addRandomSuffix: true, // Prevent duplicates
+      addRandomSuffix: false
     })
 
     return NextResponse.json({
