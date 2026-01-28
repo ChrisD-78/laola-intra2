@@ -39,44 +39,46 @@ export async function POST(request: NextRequest) {
 
     const submission = result[0]
 
-    // E-Mail-Benachrichtigung senden
-    try {
-      console.log('📧 Sende E-Mail-Benachrichtigung für Formular-Eintrag:', submission.id)
-      console.log('📧 Formular-Typ:', submission.type)
-      console.log('📧 Titel:', submission.title)
-      
-      const emailData = createFormSubmissionEmail({
-        type: submission.type,
-        title: submission.title,
-        description: submission.description,
-        submittedBy: submission.submitted_by,
-        formData: submission.form_data
-      })
+    // E-Mail-Benachrichtigung senden (außer bei Formularen mit PDF-Upload im Client)
+    if (submission.type !== 'schulung_unterweisung') {
+      try {
+        console.log('📧 Sende E-Mail-Benachrichtigung für Formular-Eintrag:', submission.id)
+        console.log('📧 Formular-Typ:', submission.type)
+        console.log('📧 Titel:', submission.title)
+        
+        const emailData = createFormSubmissionEmail({
+          type: submission.type,
+          title: submission.title,
+          description: submission.description,
+          submittedBy: submission.submitted_by,
+          formData: submission.form_data
+        })
 
-      console.log('📧 E-Mail-Empfänger:', emailData.to)
-      console.log('📧 E-Mail-Betreff:', emailData.subject)
+        console.log('📧 E-Mail-Empfänger:', emailData.to)
+        console.log('📧 E-Mail-Betreff:', emailData.subject)
 
-      const emailResult = await sendEmailToMultiple(emailData)
-      
-      if (emailResult.success) {
-        console.log('✅ E-Mail-Benachrichtigung erfolgreich gesendet')
-        if (emailResult.details) {
-          console.log('📊 E-Mail-Details:', {
-            erfolgreich: emailResult.details.successful,
-            fehlgeschlagen: emailResult.details.failed,
-            fehler: emailResult.details.errors
-          })
+        const emailResult = await sendEmailToMultiple(emailData)
+        
+        if (emailResult.success) {
+          console.log('✅ E-Mail-Benachrichtigung erfolgreich gesendet')
+          if (emailResult.details) {
+            console.log('📊 E-Mail-Details:', {
+              erfolgreich: emailResult.details.successful,
+              fehlgeschlagen: emailResult.details.failed,
+              fehler: emailResult.details.errors
+            })
+          }
+        } else {
+          console.error('❌ E-Mail-Benachrichtigung fehlgeschlagen:', emailResult.error)
+          if (emailResult.details) {
+            console.error('📊 E-Mail-Fehler-Details:', emailResult.details)
+          }
+          // E-Mail-Fehler nicht an Client weiterleiten, da Formular-Eintrag erfolgreich war
         }
-      } else {
-        console.error('❌ E-Mail-Benachrichtigung fehlgeschlagen:', emailResult.error)
-        if (emailResult.details) {
-          console.error('📊 E-Mail-Fehler-Details:', emailResult.details)
-        }
+      } catch (emailError) {
+        console.error('❌ Fehler beim Senden der E-Mail-Benachrichtigung:', emailError)
         // E-Mail-Fehler nicht an Client weiterleiten, da Formular-Eintrag erfolgreich war
       }
-    } catch (emailError) {
-      console.error('❌ Fehler beim Senden der E-Mail-Benachrichtigung:', emailError)
-      // E-Mail-Fehler nicht an Client weiterleiten, da Formular-Eintrag erfolgreich war
     }
 
     return NextResponse.json(submission, { status: 201 })

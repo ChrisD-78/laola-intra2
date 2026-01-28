@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 
 export async function POST(request: NextRequest) {
   try {
-    const { to, subject, html, text } = await request.json()
+    const { to, subject, html, text, attachments } = await request.json()
 
     // Überprüfe Umgebungsvariablen
     const emailUser = process.env.EMAIL_USER
@@ -48,12 +48,33 @@ export async function POST(request: NextRequest) {
     }
 
     // E-Mail-Optionen
+    const normalizedAttachments = Array.isArray(attachments)
+      ? attachments.map((attachment: {
+        filename: string
+        content: string
+        contentType?: string
+        encoding?: string
+      }) => {
+        const rawContent = typeof attachment.content === 'string' ? attachment.content : ''
+        const content = rawContent.startsWith('data:')
+          ? rawContent.split(',')[1] || ''
+          : rawContent
+        return {
+          filename: attachment.filename,
+          content,
+          contentType: attachment.contentType || 'application/octet-stream',
+          encoding: attachment.encoding || 'base64'
+        }
+      })
+      : undefined
+
     const mailOptions = {
       from: emailUser,
       to: to,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      attachments: normalizedAttachments
     }
 
     // E-Mail senden

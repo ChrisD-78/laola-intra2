@@ -12,6 +12,7 @@ import RettungsuebungForm from '@/components/RettungsuebungForm'
 import KassenplatzChecklisteForm from '@/components/KassenplatzChecklisteForm'
 import LeistungsnachweisAzubiForm from '@/components/LeistungsnachweisAzubiForm'
 import DienstkleidungForm from '@/components/DienstkleidungForm'
+import SchulungUnterweisungForm from '@/components/SchulungUnterweisungForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof, uploadProofPdf } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -168,6 +169,10 @@ export default function Formulare() {
         return `Leistungsnachweis Azubi – ${data.auszubildende || 'ohne Name'}`
       case 'dienstkleidung':
         return `Dienstkleidung – ${data.mitarbeiter || 'ohne Name'}`
+      case 'schulung_unterweisung':
+        return `Schulung / Unterweisung – ${Array.isArray(data.teilnehmer) && data.teilnehmer.length > 0
+          ? data.teilnehmer.map((participant: { vorname?: string; nachname?: string }) => `${participant.vorname || ''} ${participant.nachname || ''}`.trim()).join(', ')
+          : 'ohne Teilnehmer'}`
       default:
         return 'Formular eingereicht'
     }
@@ -362,6 +367,7 @@ export default function Formulare() {
       case 'kassenplatz_checkliste': return 'Checkliste Kassenplätze'
       case 'leistungsnachweis_azubi': return 'Leistungsnachweis Azubi'
       case 'dienstkleidung': return 'Ausgabe Dienstkleidung'
+      case 'schulung_unterweisung': return 'Schulung / Unterweisung'
       default: return type
     }
   }
@@ -379,6 +385,7 @@ export default function Formulare() {
       case 'kassenplatz_checkliste': return '✅'
       case 'leistungsnachweis_azubi': return '📋'
       case 'dienstkleidung': return '👕'
+      case 'schulung_unterweisung': return '📚'
       default: return '📝'
     }
   }
@@ -394,7 +401,8 @@ export default function Formulare() {
     { value: 'stundenkorrektur', label: 'Stundenkorrektur', icon: '⏰' },
     { value: 'kassenplatz_checkliste', label: 'Checkliste Kassenplätze', icon: '✅' },
     { value: 'leistungsnachweis_azubi', label: 'Leistungsnachweis Azubi', icon: '📋' },
-    { value: 'dienstkleidung', label: 'Ausgabe Dienstkleidung', icon: '👕' }
+    { value: 'dienstkleidung', label: 'Ausgabe Dienstkleidung', icon: '👕' },
+    { value: 'schulung_unterweisung', label: 'Schulung / Unterweisung', icon: '📚' }
   ]
 
   const tableSubmissions = isAdmin
@@ -462,6 +470,9 @@ export default function Formulare() {
   )
   const dienstkleidungSubmissions = submissions.filter(
     submission => submission.type === 'dienstkleidung'
+  )
+  const schulungUnterweisungSubmissions = submissions.filter(
+    submission => submission.type === 'schulung_unterweisung'
   )
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -654,6 +665,24 @@ export default function Formulare() {
             <button
               onClick={() => setOpenForm('dienstkleidung')}
               className="w-full px-4 py-2.5 text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">📚</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Schulung / Unterweisung
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Dokumentation von Schulungen und Unterweisungen
+            </p>
+            <button
+              onClick={() => setOpenForm('schulung_unterweisung')}
+              className="w-full px-4 py-2.5 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -1168,6 +1197,14 @@ export default function Formulare() {
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('dienstkleidung', data)}
         submissions={dienstkleidungSubmissions}
+        isAdmin={isAdmin}
+      />
+
+      <SchulungUnterweisungForm
+        isOpen={openForm === 'schulung_unterweisung'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('schulung_unterweisung', data)}
+        submissions={schulungUnterweisungSubmissions}
         isAdmin={isAdmin}
       />
       

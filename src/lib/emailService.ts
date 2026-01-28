@@ -1,8 +1,16 @@
+interface EmailAttachment {
+  filename: string
+  content: string
+  contentType?: string
+  encoding?: string
+}
+
 interface EmailData {
   to: string
   subject: string
   html: string
   text: string
+  attachments?: EmailAttachment[]
 }
 
 export const sendEmail = async (emailData: EmailData): Promise<{ success: boolean; error?: string }> => {
@@ -411,6 +419,127 @@ Gesendet am ${currentDate}
   return {
     to: recipients,
     subject: `Leistungsnachweis Azubi – ${data.auszubildende || 'Unbekannt'}`,
+    html,
+    text
+  }
+}
+
+export const createSchulungUnterweisungEmail = (data: {
+  durchgefuehrtVon: string
+  datum: string
+  schulungsinhalte: string
+  teilnehmer: Array<{
+    vorname: string
+    nachname: string
+    bestaetigungTeilnahme: boolean
+  }>
+}) => {
+  const currentDate = new Date().toLocaleString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const recipients = [
+    'kirstin.kreusch@landau.de',
+    'jonas.jooss@landau.de',
+    'lisa.schnagl@landau.de'
+  ]
+
+  const schulungsinhalte = data.schulungsinhalte?.trim() || 'Nicht angegeben'
+  const teilnehmerListe = data.teilnehmer.length > 0
+    ? data.teilnehmer.map((participant, index) => {
+      const name = `${participant.vorname} ${participant.nachname}`.trim() || 'Unbekannt'
+      const status = participant.bestaetigungTeilnahme ? 'Teilnahme bestätigt' : 'Nicht bestätigt'
+      return `${index + 1}. ${name} (${status})`
+    }).join('<br>')
+    : 'Nicht angegeben'
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Schulung / Unterweisung</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: bold; }
+        .content { padding: 30px; }
+        .field { margin-bottom: 18px; }
+        .field-label { font-weight: bold; color: #374151; margin-bottom: 5px; display: block; }
+        .field-value { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid #2563eb; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+        .note { background: #eff6ff; padding: 12px; border-radius: 6px; border-left: 4px solid #60a5fa; margin-bottom: 18px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📚 Schulung / Unterweisung</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Laola Intranet System</p>
+        </div>
+        <div class="content">
+          <div class="note">
+            Der Nachweis als PDF ist dieser E-Mail beigefügt.
+          </div>
+          <div class="field">
+            <span class="field-label">Durchgeführt von</span>
+            <div class="field-value">${data.durchgefuehrtVon}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Datum</span>
+            <div class="field-value">${data.datum}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Schulungsinhalte</span>
+            <div class="field-value">${schulungsinhalte.replace(/\n/g, '<br>')}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Teilnehmer/in</span>
+            <div class="field-value">${teilnehmerListe}</div>
+          </div>
+          <div class="field">
+            <span class="field-label">Gesendet am</span>
+            <div class="field-value">${currentDate}</div>
+          </div>
+        </div>
+        <div class="footer">
+          <p><strong>Laola Intranet System</strong></p>
+          <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf diese E-Mail.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+Schulung / Unterweisung
+=======================
+
+Durchgeführt von: ${data.durchgefuehrtVon}
+Datum: ${data.datum}
+Schulungsinhalte:
+${schulungsinhalte}
+Teilnehmer/innen:
+${data.teilnehmer.length > 0
+  ? data.teilnehmer.map((participant, index) => {
+    const name = `${participant.vorname} ${participant.nachname}`.trim() || 'Unbekannt'
+    const status = participant.bestaetigungTeilnahme ? 'Teilnahme bestätigt' : 'Nicht bestätigt'
+    return `${index + 1}. ${name} (${status})`
+  }).join('\n')
+  : 'Nicht angegeben'}
+
+Gesendet am ${currentDate}
+  `
+
+  return {
+    to: recipients,
+    subject: `Schulung / Unterweisung – ${data.datum}`,
     html,
     text
   }
