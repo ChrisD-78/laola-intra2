@@ -214,7 +214,28 @@ export default function Dashboard() {
         if (success) {
           setPushEnabled(true)
         } else {
-          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.')
+          const checks: string[] = []
+          const isHttps = window.location.protocol === 'https:'
+          const hasServiceWorker = 'serviceWorker' in navigator
+          const hasPushManager = 'PushManager' in window
+          const hasNotification = 'Notification' in window
+
+          if (!isHttps) checks.push('❌ HTTPS erforderlich (iOS/Safari)')
+          if (!hasServiceWorker) checks.push('❌ Service Worker nicht verfügbar')
+          if (!hasPushManager) checks.push('❌ Push Manager nicht verfügbar')
+          if (!hasNotification) checks.push('❌ Notification API nicht verfügbar')
+
+          try {
+            const keyRes = await fetch('/api/push/vapid-public-key')
+            if (!keyRes.ok) {
+              checks.push('❌ VAPID Public Key fehlt')
+            }
+          } catch {
+            checks.push('❌ VAPID Public Key nicht erreichbar')
+          }
+
+          const details = checks.length > 0 ? `\n\n${checks.join('\n')}` : ''
+          alert(`Push-Benachrichtigungen konnten nicht aktiviert werden.${details}`)
         }
       }
     } catch (error) {

@@ -320,6 +320,22 @@ Digitale Formulare für verschiedene Anträge und Meldungen.
 
 - Dokumentationstabelle unterhalb des Formulars ist **nur für Admins** sichtbar.
 
+### Push-Benachrichtigungen auf dem Handy (iOS/Android)
+
+**Voraussetzungen (iOS/Safari):**
+- iOS **16.4+**
+- Safari (Web‑Push wird von Safari unterstützt)
+- Seite muss über **HTTPS** geöffnet sein
+
+**Aktivieren:**
+1. Öffnen Sie das Intranet im Browser (iOS: Safari).
+2. Tippen Sie im Dashboard auf **„Push an“**.
+3. Bestätigen Sie die Benachrichtigungsabfrage.
+
+**Testen:**
+1. Eine neue „Aktuelle Information“ anlegen.
+2. Das Handy sollte die Push‑Nachricht anzeigen.
+
 ---
 
 ## 🎓 Schulungen & Quiz
