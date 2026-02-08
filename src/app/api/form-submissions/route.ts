@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
 
     const submission = result[0]
 
-    // E-Mail-Benachrichtigung senden (außer bei Formularen mit PDF-Upload im Client)
-    if (submission.type !== 'schulung_unterweisung') {
+    // E-Mail-Benachrichtigung senden (außer bei Formularen mit eigener Mail-Logik)
+    if (submission.type !== 'schulung_unterweisung' && submission.type !== 'stundenkorrektur') {
       try {
         console.log('📧 Sende E-Mail-Benachrichtigung für Formular-Eintrag:', submission.id)
         console.log('📧 Formular-Typ:', submission.type)

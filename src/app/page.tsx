@@ -9,6 +9,7 @@ import { useTasks } from "@/contexts/TaskContext"
 import DashboardInfoPopup from "@/components/DashboardInfoPopup"
 import { useAuth } from "@/components/AuthProvider"
 import Calendar from "@/components/Calendar"
+import { PushNotificationService } from '@/lib/pushNotifications'
 
 interface InfoItem {
   id: string
@@ -32,6 +33,9 @@ export default function Dashboard() {
   const [editingInfo, setEditingInfo] = useState<InfoItem | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushService, setPushService] = useState<PushNotificationService | null>(null)
+  const [pushInitializing, setPushInitializing] = useState(true)
 
   const formatDate = (dateString: string): string => {
     // Konvertiere das Datum in das Format: TT.MM.JJJJ (ohne Uhrzeit)
@@ -84,8 +88,8 @@ export default function Dashboard() {
         }))
         setCurrentInfos(mapped)
 
-        // Prüfe auf Popup-Informationen
-        const popupInfos = mapped.filter(info => info.isPopup)
+        // Prüfe auf Popup-Informationen (alle Infos)
+        const popupInfos = mapped
         if (popupInfos.length > 0) {
           // Zeige die neueste Popup-Info, die noch nicht dismissed wurde
           const dismissedPopups = JSON.parse(localStorage.getItem('dismissedPopups') || '[]')
@@ -99,6 +103,31 @@ export default function Dashboard() {
       }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    const initPush = async () => {
+      try {
+        setPushInitializing(true)
+        const service = PushNotificationService.getInstance()
+        const initialized = await service.initialize()
+        if (initialized) {
+          setPushService(service)
+          const isSubscribed = await service.isSubscribed()
+          setPushEnabled(isSubscribed)
+        } else {
+          setPushService(service)
+        }
+      } catch (error) {
+        console.error('Fehler bei Push Notification Initialisierung:', error)
+        const service = PushNotificationService.getInstance()
+        setPushService(service)
+      } finally {
+        setPushInitializing(false)
+      }
+    }
+
+    initPush()
   }, [])
 
   const addNewInfo = async (title: string, content: string, pdfFile?: File, isPopup?: boolean) => {
@@ -157,6 +186,40 @@ export default function Dashboard() {
       console.error('Delete dashboard info failed', e)
       setCurrentInfos(prev)
       alert('Information konnte nicht gelöscht werden.')
+    }
+  }
+
+  const togglePushNotifications = async () => {
+    if (pushInitializing) {
+      alert('Push-Benachrichtigungen werden noch initialisiert. Bitte warten Sie einen Moment.')
+      return
+    }
+
+    let service = pushService
+    if (!service) {
+      service = PushNotificationService.getInstance()
+      setPushService(service)
+    }
+
+    try {
+      if (pushEnabled) {
+        const success = await service.unsubscribe()
+        if (success) {
+          setPushEnabled(false)
+        } else {
+          alert('Fehler beim Deaktivieren der Push-Benachrichtigungen.')
+        }
+      } else {
+        const success = await service.subscribe(currentUser || undefined)
+        if (success) {
+          setPushEnabled(true)
+        } else {
+          alert('Push-Benachrichtigungen konnten nicht aktiviert werden.')
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Toggle Push Notifications:', error)
+      alert('Fehler beim Ändern der Push-Benachrichtigungseinstellungen.')
     }
   }
 
@@ -367,7 +430,30 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <div className="flex-1"></div>
+            <div className="flex-1 flex items-center gap-3">
+              <button
+                onClick={togglePushNotifications}
+                disabled={pushInitializing}
+                className="px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+                style={{
+                  background: pushEnabled ? '#10b981' : '#6b7280',
+                  color: 'white',
+                  opacity: pushInitializing ? 0.6 : 1,
+                  cursor: pushInitializing ? 'wait' : 'pointer'
+                }}
+                title={pushInitializing
+                  ? 'Push-Benachrichtigungen werden initialisiert...'
+                  : pushEnabled
+                    ? 'Push-Benachrichtigungen deaktivieren'
+                    : 'Push-Benachrichtigungen aktivieren'}
+              >
+                {pushInitializing
+                  ? '⏳ Initialisiere...'
+                  : pushEnabled
+                    ? '🔔 Push an'
+                    : '🔕 Push aus'}
+              </button>
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 text-center">
               Aktuelle Informationen
             </h2>

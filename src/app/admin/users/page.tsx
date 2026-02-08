@@ -63,6 +63,14 @@ export default function AdminUsersPage() {
   const [roleError, setRoleError] = useState<string | null>(null)
   const [roleSuccess, setRoleSuccess] = useState<string | null>(null)
 
+  // E-Mail-Änderungsdialog
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [userToEditEmail, setUserToEditEmail] = useState<User | null>(null)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null)
+
   // Prüfe Admin-Rechte
   useEffect(() => {
     if (isLoggedIn && !isAdmin) {
@@ -242,6 +250,60 @@ export default function AdminUsersPage() {
     setUserToEdit(null)
     setRoleError(null)
     setRoleSuccess(null)
+  }
+
+  const handleOpenEmailModal = (user: User) => {
+    setUserToEditEmail(user)
+    setNewEmail(user.email || '')
+    setEmailError(null)
+    setEmailSuccess(null)
+    setShowEmailModal(true)
+  }
+
+  const handleCloseEmailModal = () => {
+    setShowEmailModal(false)
+    setUserToEditEmail(null)
+    setNewEmail('')
+    setEmailError(null)
+    setEmailSuccess(null)
+  }
+
+  const handleUpdateEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userToEditEmail) return
+
+    setEmailLoading(true)
+    setEmailError(null)
+    setEmailSuccess(null)
+
+    try {
+      const response = await fetch(`/api/users/${userToEditEmail.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: userToEditEmail.role,
+          is_active: userToEditEmail.is_active,
+          email: newEmail.trim() || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setEmailSuccess(data.message)
+        await loadUsers()
+        setTimeout(() => {
+          handleCloseEmailModal()
+        }, 2000)
+      } else {
+        setEmailError(data.error || 'Fehler beim Aktualisieren der E-Mail')
+      }
+    } catch (err) {
+      console.error('Failed to update email:', err)
+      setEmailError('Netzwerkfehler - Bitte versuchen Sie es erneut')
+    } finally {
+      setEmailLoading(false)
+    }
   }
 
   const handleUpdateRole = async (e: React.FormEvent) => {
@@ -594,6 +656,13 @@ export default function AdminUsersPage() {
                               👤
                             </button>
                             <button
+                              onClick={() => handleOpenEmailModal(user)}
+                              className="text-green-600 hover:text-green-900 font-medium"
+                              title="E-Mail bearbeiten"
+                            >
+                              📧
+                            </button>
+                            <button
                               onClick={() => handleOpenPasswordModal(user)}
                               className="text-blue-600 hover:text-blue-900 font-medium"
                               title="Passwort zurücksetzen"
@@ -731,6 +800,65 @@ export default function AdminUsersPage() {
                       type="button"
                       onClick={handleCloseRoleModal}
                       disabled={roleLoading}
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* E-Mail-Änderungsdialog */}
+          {showEmailModal && userToEditEmail && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  📧 E-Mail bearbeiten
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  E-Mail für <strong>{userToEditEmail.display_name}</strong> hinzufügen oder ändern:
+                </p>
+
+                <form onSubmit={handleUpdateEmail} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      E-Mail-Adresse
+                    </label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="z.B. max.mustermann@example.com"
+                    />
+                  </div>
+
+                  {emailError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                      <p className="text-red-700 text-sm">{emailError}</p>
+                    </div>
+                  )}
+
+                  {emailSuccess && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="text-green-700 text-sm">{emailSuccess}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      disabled={emailLoading}
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {emailLoading ? 'Wird gespeichert...' : 'E-Mail speichern'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCloseEmailModal}
+                      disabled={emailLoading}
                       className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Abbrechen

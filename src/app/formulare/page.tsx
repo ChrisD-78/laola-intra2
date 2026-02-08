@@ -468,6 +468,9 @@ export default function Formulare() {
   const kassenplatzSubmissions = submissions.filter(
     submission => submission.type === 'kassenplatz_checkliste'
   )
+  const wassermessungSubmissions = submissions.filter(
+    submission => submission.type === 'wassermessung'
+  )
   const dienstkleidungSubmissions = submissions.filter(
     submission => submission.type === 'dienstkleidung'
   )
@@ -919,40 +922,50 @@ export default function Formulare() {
                     <div className="text-xs text-gray-900 mt-1 break-words">{submission.description}</div>
                   </td>
                   <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
-                    <select
-                      value={submission.status}
-                      onChange={async (e) => {
-                        const newStatus = e.target.value
-                        try {
-                          const response = await fetch(`/api/form-submissions/${submission.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: newStatus })
-                          })
+                    {submission.type === 'stoermeldung' ? (
+                      <select
+                        value={submission.status}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value
+                          try {
+                            const response = await fetch(`/api/form-submissions/${submission.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: newStatus })
+                            })
 
-                          if (response.ok) {
-                            // Update local state
-                            setSubmissions(prev => prev.map(s => 
-                              s.id === submission.id ? { ...s, status: newStatus } : s
-                            ))
-                          } else {
+                            if (response.ok) {
+                              // Update local state
+                              setSubmissions(prev => prev.map(s => 
+                                s.id === submission.id ? { ...s, status: newStatus } : s
+                              ))
+                            } else {
+                              alert('Fehler beim Aktualisieren des Status')
+                            }
+                          } catch (error) {
+                            console.error('Failed to update status:', error)
                             alert('Fehler beim Aktualisieren des Status')
                           }
-                        } catch (error) {
-                          console.error('Failed to update status:', error)
-                          alert('Fehler beim Aktualisieren des Status')
-                        }
-                      }}
-                      className={`px-2 py-1 text-xs font-bold rounded-lg border-2 cursor-pointer ${
+                        }}
+                        className={`px-2 py-1 text-xs font-bold rounded-lg border-2 cursor-pointer ${
+                          submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-900 border-green-300' :
+                          submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-900 border-yellow-300' :
+                          'bg-blue-100 text-blue-900 border-blue-300'
+                        }`}
+                      >
+                        <option value="Eingegangen">Eingegangen</option>
+                        <option value="In Bearbeitung">In Bearbeitung</option>
+                        <option value="Abgeschlossen">Abgeschlossen</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-lg border-2 ${
                         submission.status === 'Abgeschlossen' ? 'bg-green-100 text-green-900 border-green-300' :
                         submission.status === 'In Bearbeitung' ? 'bg-yellow-100 text-yellow-900 border-yellow-300' :
                         'bg-blue-100 text-blue-900 border-blue-300'
-                      }`}
-                    >
-                      <option value="Eingegangen">Eingegangen</option>
-                      <option value="In Bearbeitung">In Bearbeitung</option>
-                      <option value="Abgeschlossen">Abgeschlossen</option>
-                    </select>
+                      }`}>
+                        {submission.status}
+                      </span>
+                    )}
                   </td>
                   <td className="hidden sm:table-cell px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {submission.submittedBy}
@@ -1159,6 +1172,7 @@ export default function Formulare() {
         isOpen={openForm === 'wassermessung'}
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('wassermessung', data)}
+        submissions={wassermessungSubmissions}
       />
       
       <RutschenkontrolleForm

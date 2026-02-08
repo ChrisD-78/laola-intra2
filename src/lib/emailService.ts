@@ -1021,6 +1021,7 @@ export const createHoursCorrectionEmail = (correctionData: {
   uhrzeitVon: string
   uhrzeitBis: string
   grund: string
+  confirmUrl?: string
 }) => {
   const currentDate = new Date().toLocaleString('de-DE', {
     year: 'numeric',
@@ -1050,6 +1051,8 @@ export const createHoursCorrectionEmail = (correctionData: {
         .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
         .section { margin: 25px 0; padding: 20px; background: #F9FAFB; border-radius: 6px; }
         .section-title { font-size: 16px; font-weight: bold; color: #1F2937; margin-bottom: 15px; border-bottom: 2px solid #7C3AED; padding-bottom: 8px; }
+        .cta { text-align: center; margin: 30px 0 10px 0; }
+        .cta a { display: inline-block; background: #10B981; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; }
       </style>
     </head>
     <body>
@@ -1121,6 +1124,14 @@ export const createHoursCorrectionEmail = (correctionData: {
               <li>Ggf. Dokumentation anpassen</li>
             </ul>
           </div>
+
+          ${correctionData.confirmUrl ? `
+          <div class="cta">
+            <a href="${correctionData.confirmUrl}" target="_blank" rel="noopener noreferrer">
+              Stundenkorrektur durchgeführt
+            </a>
+          </div>
+          ` : ''}
         </div>
 
         <div class="footer">
@@ -1157,13 +1168,15 @@ ${correctionData.grund}
 EINGEREICHT VON: ${correctionData.name}
 EINGEGANGEN AM: ${currentDate}
 
+${correctionData.confirmUrl ? `\nStundenkorrektur durchgeführt:\n${correctionData.confirmUrl}\n` : ''}
+
 ---
 LA OLA Intranet System
 Diese E-Mail wurde automatisch generiert.
   `
 
   return {
-    to: 'christof.drost@landau.de, kirstin.kreusch@landau.de',
+    to: 'kirstin.kreusch@landau.de',
     subject: `⏰ [STUNDENKORREKTUR] ${correctionData.name} - ${new Date(correctionData.datum).toLocaleDateString('de-DE')}`,
     html,
     text

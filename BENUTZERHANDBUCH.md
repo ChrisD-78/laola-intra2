@@ -19,9 +19,18 @@ Willkommen im LA OLA Intranet! Dieses Handbuch führt Sie durch alle Funktionen 
 11. [Benutzerverwaltung (nur für Admins)](#benutzerverwaltung-nur-für-admins)
 12. [Häufige Fragen](#häufige-fragen)
 
----
-
 ## 🚀 Erste Schritte
+
+### 🆕 Aktuelle Neuerungen
+
+- **Wassermessungen:** Automatische Berechnung von „Chlor gebunden“ und neue Historie mit Messgerätediagrammen + animierten Liniendiagrammen. Becken‑Filter jetzt als Kacheln.
+- **Formulare:** Neue Formulare (Checkliste Kassenplätze, Leistungsnachweis Azubi, Ausgabe Dienstkleidung, Schulung/Unterweisung). Statusänderung in der Tabelle nur bei **Störmeldung**.
+- **Stundenkorrektur:** Automatische E‑Mail an Kirstin Kreusch mit Bestätigungs‑Button „Stundenkorrektur durchgeführt“. Bestätigung wird an die E‑Mail des Mitarbeiters gesendet.
+- **Dokumente:** Upload‑Limit erhöht (50 MB). Löschen nur für Admins.
+- **Technik:** Geräte‑Bilder jetzt auch als JPG/PNG. Gefahrstoffe‑Dokumente können in der Bearbeitung entfernt/ersetzt werden.
+- **Chat:** Gruppen erscheinen korrekt nach Erstellung; „gelesen“ wird zuverlässig aktualisiert.
+- **Schichtplan:** Aktuell nur für Admins sichtbar.
+- **Benutzerverwaltung:** E‑Mail kann nachträglich pro Benutzer hinterlegt werden.
 
 ### Anmeldung
 
@@ -73,11 +82,17 @@ Das Dashboard ist Ihre Startseite und zeigt eine Übersicht aller wichtigen Info
 4. Optional: Als Popup markieren (erscheint beim nächsten Login)
 5. Klicken Sie auf **"Speichern"**
 
+### Informationen löschen (nur für Admins)
+
+- Aktuelle Informationen können nur von Admins gelöscht werden.
+
 ---
 
 ## 📅 Schichtplan
 
 Der Schichtplan zeigt Ihre Dienstzeiten und die Schichten aller Mitarbeiter.
+
+**Hinweis:** Der Schichtplan ist aktuell nur für Admins sichtbar.
 
 ### Ansichten
 
@@ -244,6 +259,12 @@ Zentrale Verwaltung aller wichtigen Dokumente und Dateien.
    - **Tags:** Optional - fügen Sie Tags hinzu (getrennt durch Kommas)
 3. Klicken Sie auf **"Hochladen"**
 
+**Upload‑Limit:** Maximal 50 MB pro Datei.
+
+### Dokumente löschen (nur für Admins)
+
+- Die Löschfunktion ist ausschließlich für Admins sichtbar.
+
 ---
 
 ## 📝 Formulare
@@ -254,7 +275,12 @@ Digitale Formulare für verschiedene Anträge und Meldungen.
 
 - **Feedback-Formular:** Rückmeldungen und Vorschläge
 - **Unfallmeldung:** Unfälle dokumentieren
-- **Weitere Formulare:** Je nach Bedarf
+- **Wassermessung:** Messwerte inkl. Historie
+- **Stundenkorrektur:** Korrekturantrag mit Bestätigung per E‑Mail
+- **Checkliste Kassenplätze**
+- **Leistungsnachweis Azubi**
+- **Ausgabe Dienstkleidung**
+- **Schulung / Unterweisung**
 
 ### Formular ausfüllen
 
@@ -271,6 +297,28 @@ Digitale Formulare für verschiedene Anträge und Meldungen.
 - **Erledigt:** Das Formular wurde abgeschlossen
 
 **Hinweis:** Sie können den Status Ihrer eingereichten Formulare in der Übersicht sehen.
+
+**Störmeldung:** Der Status kann in der Tabelle „Alle Formulareinreichungen“ direkt geändert werden.
+
+### Wassermessung – Besonderheiten
+
+- **Chlor gebunden** wird automatisch aus **Gesamt – Frei** berechnet.
+- **Cl‑frei** wird je nach Becken farblich bewertet.
+- **Historie:** Button „Historie“ öffnet ein Fenster mit Messgerätediagrammen (aktuelle Werte) und animierten Liniendiagrammen. Zeitraum‑Auswahl möglich.
+
+### Stundenkorrektur – Bestätigung
+
+- Nach dem Absenden erhält **Kirstin Kreusch** eine E‑Mail mit einem Button **„Stundenkorrektur durchgeführt“**.
+- Die Bestätigung wird automatisch an die E‑Mail des Mitarbeiters gesendet, sofern in der Benutzerverwaltung hinterlegt.
+
+### Schulung / Unterweisung
+
+- Mehrere Teilnehmer können hinzugefügt werden.
+- Der Nachweis wird als PDF per E‑Mail versendet.
+
+### Ausgabe Dienstkleidung
+
+- Dokumentationstabelle unterhalb des Formulars ist **nur für Admins** sichtbar.
 
 ---
 
@@ -384,7 +432,7 @@ Klicken Sie einfach auf die Spaltenüberschrift, um zu sortieren.
    - Nächste Prüfung
    - Bemerkungen
    - Status
-3. Optional: Bild oder Prüfbericht hochladen
+3. Optional: Bild oder Prüfbericht hochladen (PDF/JPG/PNG)
 4. Klicken Sie auf **"Speichern"**
 
 ### Neue Prüfung anlegen (nur für Admins)
@@ -392,6 +440,10 @@ Klicken Sie einfach auf die Spaltenüberschrift, um zu sortieren.
 1. Klicken Sie auf **"Neue Prüfung anlegen"**
 2. Füllen Sie alle Felder aus
 3. Klicken Sie auf **"Anlegen"**
+
+### Gefahrstoffe – Dokumente
+
+- Sicherheitsdatenblätter und Betriebsanweisungen können im Bearbeiten‑Dialog **ersetzt** oder **entfernt** werden.
 
 ---
 
@@ -431,6 +483,8 @@ Kommunizieren Sie mit Kollegen über den integrierten Chat.
 2. Geben Sie Ihre Nachricht ein
 3. Klicken Sie auf **"Senden"**
 4. Alle Gruppenmitglieder erhalten die Nachricht
+
+**Hinweis:** Neue Gruppen erscheinen sofort in der Liste. Gelesene Nachrichten werden korrekt als gelesen markiert.
 
 ### Chat-Funktionen
 
@@ -479,6 +533,12 @@ Verwalten Sie Benutzer und deren Berechtigungen.
    - Benutzer aktivieren/deaktivieren
    - Passwort zurücksetzen
 4. Klicken Sie auf **"Speichern"**
+
+### E‑Mail nachträglich hinterlegen
+
+1. Klicken Sie in der Benutzerliste auf das **📧‑Symbol**
+2. Tragen Sie die E‑Mail‑Adresse ein oder ändern Sie sie
+3. Klicken Sie auf **"E‑Mail speichern"**
 
 ### Benutzer deaktivieren
 

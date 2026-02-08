@@ -39,7 +39,15 @@ const StundenkorrekturForm = ({ isOpen, onClose, onSubmit }: StundenkorrekturFor
     
     try {
       // E-Mail erstellen und versenden
-      const emailData = createHoursCorrectionEmail(formData)
+      const confirmParams = new URLSearchParams({
+        name: formData.name,
+        datum: formData.datum,
+        uhrzeitVon: formData.uhrzeitVon,
+        uhrzeitBis: formData.uhrzeitBis,
+        grund: formData.grund
+      })
+      const confirmUrl = `${window.location.origin}/api/stundenkorrektur/confirm?${confirmParams.toString()}`
+      const emailData = createHoursCorrectionEmail({ ...formData, confirmUrl })
       const result = await sendEmail(emailData)
       
       if (result.success) {

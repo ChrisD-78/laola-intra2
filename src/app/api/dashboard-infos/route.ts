@@ -40,6 +40,24 @@ export async function POST(request: NextRequest) {
     `
     
     console.log('Insert successful:', result[0])
+
+    try {
+      const baseUrl = request.nextUrl.origin
+      const snippet = typeof content === 'string' ? content : ''
+      await fetch(`${baseUrl}/api/push/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title || 'Aktuelle Information',
+          body: snippet.length > 120 ? `${snippet.slice(0, 117)}...` : snippet,
+          url: '/',
+          icon: '/favicon-96x96.png'
+        })
+      })
+    } catch (pushError) {
+      console.error('Push notification failed:', pushError)
+    }
+
     return NextResponse.json(result[0], { status: 201 })
   } catch (error) {
     console.error('=== DASHBOARD INFO CREATE ERROR ===')
