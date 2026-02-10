@@ -419,7 +419,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                 <input
                   type="number"
                   id="phWert"
-                  step="0.1"
+                  step="0.01"
                   min="6.0"
                   max="8.5"
                   value={formData.phWert}
@@ -437,7 +437,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                 <input
                   type="number"
                   id="chlorWert"
-                  step="0.1"
+                  step="0.01"
                   min="0.0"
                   max="3.0"
                   value={formData.chlorWert}
@@ -462,7 +462,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                 <input
                   type="number"
                   id="chlorWertGesamt"
-                  step="0.1"
+                  step="0.01"
                   min="0.0"
                   max="5.0"
                   value={formData.chlorWertGesamt}
@@ -487,7 +487,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                 <input
                   type="number"
                   id="chlorWertGebunden"
-                  step="0.1"
+                  step="0.01"
                   min="0.0"
                   max="2.0"
                   value={formData.chlorWertGebunden}
@@ -524,7 +524,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                   type="number"
                   id="temperatur"
                   step="0.1"
-                  min="20"
+                  min="9"
                   max="40"
                   value={formData.temperatur}
                   onChange={(e) => setFormData({...formData, temperatur: e.target.value})}
