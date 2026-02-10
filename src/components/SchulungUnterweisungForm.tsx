@@ -96,6 +96,18 @@ const blobToBase64 = (blob: Blob): Promise<string> => new Promise((resolve, reje
   reader.readAsDataURL(blob)
 })
 
+const formatDate = (dateString: string): string => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) {
+    return dateString
+  }
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}.${month}.${year}`
+}
+
 const SchulungUnterweisungForm = ({
   isOpen,
   onClose,
@@ -115,6 +127,62 @@ const SchulungUnterweisungForm = ({
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const tableRows = useMemo(() => submissions || [], [submissions])
+
+  const exportTableAsPdf = async () => {
+    const jsPDFModule = await import('jspdf')
+    const jsPDF = jsPDFModule.default || jsPDFModule
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const marginX = 40
+    const lineHeight = 14
+    let y = 50
+
+    doc.setFontSize(16)
+    doc.setFont(undefined, 'bold')
+    doc.text('Schulung / Unterweisung – Nachweise', marginX, y)
+    y += 24
+    doc.setFontSize(11)
+    doc.setFont(undefined, 'normal')
+
+    const headers = ['Datum', 'Teilnehmer/in', 'Schulungsinhalte']
+    const colWidths = [90, 170, pageWidth - marginX * 2 - 260]
+
+    const drawRow = (cells: string[], bold = false) => {
+      if (y > 780) {
+        doc.addPage()
+        y = 50
+      }
+      doc.setFont(undefined, bold ? 'bold' : 'normal')
+      let x = marginX
+      cells.forEach((cell, index) => {
+        const width = colWidths[index]
+        const lines = doc.splitTextToSize(cell || '-', width)
+        lines.forEach((line: string, lineIndex: number) => {
+          doc.text(line, x, y + lineIndex * lineHeight)
+        })
+        const cellHeight = Math.max(lines.length * lineHeight, lineHeight)
+        x += width
+        y = Math.max(y, y + cellHeight - lineHeight)
+      })
+      y += lineHeight + 6
+    }
+
+    drawRow(headers, true)
+    tableRows.forEach((row) => {
+      const participants = row.formData.teilnehmer.length > 0
+        ? row.formData.teilnehmer
+          .map((participant) => `${participant.vorname} ${participant.nachname}`.trim())
+          .join(', ')
+        : '-'
+      drawRow([
+        formatDate(row.formData.datum),
+        participants,
+        row.formData.schulungsinhalte || '-'
+      ])
+    })
+
+    doc.save(`Schulung_Nachweise_${new Date().toISOString().slice(0, 10)}.pdf`)
+  }
 
   const updateTeilnehmer = (index: number, update: Partial<SchulungUnterweisungFormData['teilnehmer'][number]>) => {
     setFormData((prev) => {
@@ -343,36 +411,43 @@ const SchulungUnterweisungForm = ({
           {isAdmin && (
             <div className="px-6 pb-6">
               <div className="border-t border-gray-200 pt-4">
-                <h4 className="text-base font-semibold text-gray-900 mb-3">
-                  Nachweise
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-base font-semibold text-gray-900">
+                    Nachweise
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={exportTableAsPdf}
+                    className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    PDF exportieren
+                  </button>
+                </div>
                 <div className="overflow-x-auto border border-gray-200 rounded-lg">
                   <table className="min-w-full text-sm">
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-4 py-2 text-left font-semibold text-gray-900">Datum</th>
                         <th className="px-4 py-2 text-left font-semibold text-gray-900">Teilnehmer/in</th>
-                        <th className="px-4 py-2 text-left font-semibold text-gray-900">Thema</th>
-                        <th className="px-4 py-2 text-left font-semibold text-gray-900">Schulungen</th>
+                        <th className="px-4 py-2 text-left font-semibold text-gray-900">Schulungsinhalte</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {tableRows.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="px-4 py-3 text-center text-sm text-gray-600">
+                          <td colSpan={3} className="px-4 py-3 text-center text-sm text-gray-600">
                             Keine Nachweise vorhanden.
                           </td>
                         </tr>
                       ) : (
                         tableRows.map((row) => (
                           <tr key={row.id}>
-                            <td className="px-4 py-2 text-gray-900">{row.formData.datum}</td>
+                            <td className="px-4 py-2 text-gray-900">{formatDate(row.formData.datum)}</td>
                             <td className="px-4 py-2 text-gray-900">
                               {row.formData.teilnehmer.length > 0
                                 ? row.formData.teilnehmer.map((participant) => `${participant.vorname} ${participant.nachname}`.trim()).join(', ')
                                 : '-'}
                             </td>
-                            <td className="px-4 py-2 text-gray-900">{row.formData.thema}</td>
                             <td className="px-4 py-2 text-gray-900 whitespace-pre-wrap">
                               {row.formData.schulungsinhalte || '-'}
                             </td>

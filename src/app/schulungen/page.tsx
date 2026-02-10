@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof } from '@/lib/db'
+import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof, getFormSubmissions } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 import QuizOverview from '@/components/QuizOverview'
 
@@ -30,6 +30,7 @@ interface CompletedSchulung {
   category: string
   instructor: string
   duration: string
+  source?: 'internal' | 'unterweisung'
 }
 
 export default function Schulungen() {
@@ -106,6 +107,7 @@ export default function Schulungen() {
 
   // Load completed trainings from Supabase
   const [completedSchulungen, setCompletedSchulungen] = useState<CompletedSchulung[]>([])
+  const [unterweisungOverview, setUnterweisungOverview] = useState<CompletedSchulung[]>([])
 
   useEffect(() => {
     const loadCompletedTrainings = async () => {
@@ -121,7 +123,8 @@ export default function Schulungen() {
           score: training.score,
           category: training.category,
           instructor: training.instructor,
-          duration: training.duration
+          duration: training.duration,
+          source: 'internal'
         }))
         setCompletedSchulungen(mapped)
       } catch (error) {
@@ -129,6 +132,43 @@ export default function Schulungen() {
       }
     }
     loadCompletedTrainings()
+  }, [])
+
+  useEffect(() => {
+    const loadUnterweisungNachweise = async () => {
+      try {
+        const data = await getFormSubmissions()
+        const mapped: CompletedSchulung[] = data
+          .filter((submission) => submission.type === 'schulung_unterweisung')
+          .map((submission) => {
+            const formData = submission.form_data as Record<string, any>
+            const teilnehmerList = Array.isArray(formData.teilnehmer)
+              ? formData.teilnehmer.map((participant: { vorname?: string; nachname?: string }) =>
+                `${participant.vorname || ''} ${participant.nachname || ''}`.trim()
+              ).filter(Boolean)
+              : []
+            const participants = teilnehmerList.length > 0 ? teilnehmerList.join(', ') : '-'
+            const inhalte = typeof formData.schulungsinhalte === 'string' ? formData.schulungsinhalte.trim() : ''
+            const schulungTitle = inhalte || 'Schulung / Unterweisung'
+            return {
+              id: `unterweisung_${submission.id}`,
+              schulungId: null,
+              schulungTitle,
+              participantName: participants,
+              participantSurname: '',
+              completedDate: (formData.datum as string) || submission.submitted_at || '',
+              category: 'Unterweisungen',
+              instructor: (formData.durchgefuehrtVon as string) || '-',
+              duration: '-',
+              source: 'unterweisung'
+            }
+          })
+        setUnterweisungOverview(mapped)
+      } catch (error) {
+        console.error('Error loading unterweisung submissions:', error)
+      }
+    }
+    loadUnterweisungNachweise()
   }, [])
 
   // Load external proofs from Supabase
@@ -433,7 +473,9 @@ export default function Schulungen() {
 
   const handleExportOverviewPdf = () => {
     const rows = getFilteredOverviewSchulungen().map(item => {
-      const participant = `${item.participantName} ${item.participantSurname}`
+      const participant = item.participantSurname
+        ? `${item.participantName} ${item.participantSurname}`
+        : item.participantName
       return `<tr>
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.schulungTitle}</td>
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${participant}</td>
@@ -481,10 +523,9 @@ export default function Schulungen() {
   }
 
   const getFilteredOverviewSchulungen = () => {
-    // Nur interne Schulungen (mit Schulungs-ID) in der Übersicht anzeigen
-    const internalCompletions = completedSchulungen.filter(completed => !!completed.schulungId)
+    const overviewRows = [...completedSchulungen, ...unterweisungOverview]
 
-    const filtered = internalCompletions.filter(completed => {
+    const filtered = overviewRows.filter(completed => {
       const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
       const matchesParticipant = !overviewFilters.instructor || 
         `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
@@ -494,8 +535,9 @@ export default function Schulungen() {
         completed.instructor.toLowerCase().includes(overviewFilters.instructorName.toLowerCase())
       
       // Date filtering for completed date
-      const matchesDateFrom = !overviewFilters.dateFrom || completed.completedDate >= overviewFilters.dateFrom
-      const matchesDateTo = !overviewFilters.dateTo || completed.completedDate <= overviewFilters.dateTo
+      const completedDate = completed.completedDate || ''
+      const matchesDateFrom = !overviewFilters.dateFrom || completedDate >= overviewFilters.dateFrom
+      const matchesDateTo = !overviewFilters.dateTo || completedDate <= overviewFilters.dateTo
       
       return matchesCategory && matchesParticipant && matchesTitle && matchesInstructor && matchesDateFrom && matchesDateTo
     })
@@ -506,11 +548,11 @@ export default function Schulungen() {
       
       switch (sortBy) {
         case 'date':
-          comparison = a.completedDate.localeCompare(b.completedDate)
+          comparison = (a.completedDate || '').localeCompare(b.completedDate || '')
           break
         case 'participant':
-          const nameA = `${a.participantName} ${a.participantSurname}`
-          const nameB = `${b.participantName} ${b.participantSurname}`
+          const nameA = `${a.participantName} ${a.participantSurname}`.trim()
+          const nameB = `${b.participantName} ${b.participantSurname}`.trim()
           comparison = nameA.localeCompare(nameB)
           break
         case 'title':
@@ -1407,7 +1449,7 @@ export default function Schulungen() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {getFilteredOverviewSchulungen().length} von {completedSchulungen.filter(c => !!c.schulungId).length} abgelegte Schulungen
+                      {getFilteredOverviewSchulungen().length} von {completedSchulungen.length + unterweisungOverview.length} abgelegte Schulungen
                     </h3>
                     <p className="text-sm text-gray-600">
                       {overviewFilters.category || overviewFilters.instructor || overviewFilters.title || overviewFilters.instructorName || overviewFilters.dateFrom || overviewFilters.dateTo ? 'Gefilterte Ergebnisse' : 'Alle abgelegten Schulungen'}
@@ -1532,7 +1574,9 @@ export default function Schulungen() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {completed.participantName} {completed.participantSurname}
+                              {completed.participantSurname
+                                ? `${completed.participantName} ${completed.participantSurname}`
+                                : completed.participantName}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -1548,7 +1592,7 @@ export default function Schulungen() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {completed.completedDate}
                           </td>
-                          {isAdmin && (
+                          {isAdmin && completed.source !== 'unterweisung' && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               <button
                                 onClick={() => setShowDeleteCompletedConfirm(completed)}
