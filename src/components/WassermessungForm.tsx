@@ -506,8 +506,8 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                   type="number"
                   id="redox"
                   step="1"
-                  min="400"
-                  max="800"
+                  min="0"
+                  max="1000"
                   value={formData.redox}
                   onChange={(e) => setFormData({...formData, redox: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
