@@ -23,8 +23,7 @@ export async function PATCH(
     const result = await sql`
       UPDATE form_submissions
       SET 
-        status = ${status},
-        updated_at = NOW()
+        status = ${status}
       WHERE id = ${id}
       RETURNING *
     `
