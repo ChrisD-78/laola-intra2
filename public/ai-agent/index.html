@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI-Assistent für Business</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: white;
+            opacity: 0.95;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lola-card {
+            background: var(--card-bg);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            margin: 0 auto 2rem;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+
+        .lola-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .lola-icon {
+            font-size: 3.5rem;
+            animation: float 3s ease-in-out infinite;
+            margin-bottom: 0.75rem;
+        }
+
+        .lola-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .lola-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .lola-chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 1rem;
+            min-height: 200px;
+        }
+
+        .lola-message {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .lola-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .lola-message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .lola-message.user .lola-message-avatar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+        }
+
+        .lola-message.lola .lola-message-avatar {
+            background: linear-gradient(135deg, #ffb6c1 0%, #ffc0cb 100%);
+        }
+
+        .lola-message-content {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #ffffff;
+            line-height: 1.5;
+            max-width: 75%;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .lola-message.lola .lola-message-content {
+            padding-right: 2.5rem;
+        }
+
+        .lola-speak-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 182, 193, 0.3);
+            color: #ffb6c1;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+
+        .lola-speak-btn:hover {
+            background: rgba(255, 182, 193, 0.5);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .lola-speak-btn.speaking {
+            background: rgba(255, 182, 193, 0.7);
+            opacity: 1;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .lola-message.user .lola-message-content {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            color: white;
+        }
+
+        .lola-typing {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 0.75rem;
+            width: fit-content;
+        }
+
+        .lola-typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            animation: typing 1.4s infinite;
+        }
+
+        .lola-typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .lola-typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .lola-input-area {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .lola-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .lola-input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            line-height: 1.5;
+        }
+
+        .lola-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .lola-input:focus {
+            outline: none;
+            border-color: #ffb6c1;
+            box-shadow: 0 0 0 3px rgba(255, 182, 193, 0.2);
+        }
+
+        .lola-input-actions {
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lola-voice-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lola-voice-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+        }
+
+        .lola-voice-btn.listening {
+            animation: pulse 1.5s ease-in-out infinite;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .lola-send-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ffb6c1 0%, #ffc0cb 100%);
+            color: #333;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .lola-send-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
+        }
+
+        .lola-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1rem 3rem;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-color);
+        }
+
+        .app-card:hover::before {
+            opacity: 1;
+        }
+
+        .app-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-card:nth-child(1) .app-icon {
+            animation-delay: 0s;
+        }
+
+        .app-card:nth-child(2) .app-icon {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .app-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-features li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .app-features li::before {
+            content: '✓';
+            color: var(--success-color);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .app-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .features-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin: 0 1rem 2rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .feature-text h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .feature-text p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 640px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .lola-card {
+                padding: 1.5rem;
+            }
+
+            .lola-icon {
+                font-size: 3rem;
+            }
+
+            .lola-title {
+                font-size: 1.5rem;
+            }
+
+            .lola-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .lola-chat-container {
+                max-height: 300px;
+                min-height: 150px;
+            }
+
+            .lola-message-content {
+                max-width: 85%;
+                font-size: 0.9rem;
+            }
+
+            .app-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .app-icon {
+                font-size: 4rem;
+            }
+
+            .app-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-section">
+            <h1 class="hero-title">🤖 KI-Assistent für Business</h1>
+            <p class="hero-subtitle">Professionelle E-Mail-Bearbeitung und Meeting-Protokollierung</p>
+        </div>
+
+        <!-- Lola AI Agent -->
+        <div style="padding: 0 1rem;">
+            <div class="lola-card">
+                <div class="lola-header">
+                    <div class="lola-icon">💬</div>
+                    <h2 class="lola-title">Lola - Dein persönlicher KI-Assistent</h2>
+                    <p class="lola-subtitle">Dein intelligenter Helfer für den Arbeitsalltag</p>
+                </div>
+
+                <div class="lola-chat-container" id="lolaChatMessages">
+                    <!-- Nachrichten werden hier eingefügt -->
+                </div>
+
+                <div class="lola-input-area">
+                    <div class="lola-input-wrapper">
+                        <textarea 
+                            id="lolaInput" 
+                            class="lola-input" 
+                            placeholder="Schreibe deine Frage... oder nutze das Mikrofon"
+                            rows="1"
+                        ></textarea>
+                        <div class="lola-input-actions">
+                            <button id="lolaVoiceBtn" class="lola-voice-btn" title="Spracheingabe">
+                                🎤
+                            </button>
+                            <button id="lolaSendBtn" class="lola-send-btn" title="Senden">
+                                ➤
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-grid">
+            <!-- E-Mail Assistent -->
+            <a href="email.html" class="app-card">
+                <div class="app-icon">📧</div>
+                <h2 class="app-title">E-Mail Assistent</h2>
+                <p class="app-description">
+                    Intelligente E-Mail-Bearbeitung mit KI-Unterstützung für professionelle Geschäftskommunikation
+                </p>
+                <ul class="app-features">
+                    <li>Automatische Antworterstellung</li>
+                    <li>Sprachsteuerung & Diktat</li>
+                    <li>Direkter E-Mail-Versand</li>
+                    <li>24/7 automatische Verarbeitung</li>
+                </ul>
+                <div class="app-badge">✨ Powered by GPT-4</div>
+            </a>
+
+            <!-- Meeting Protokoll -->
+            <a href="meeting.html" class="app-card">
+                <div class="app-icon">🎙️</div>
+                <h2 class="app-title">Meeting-Protokoll</h2>
+                <p class="app-description">
+                    Nehmen Sie Meetings auf und lassen Sie automatisch professionelle Protokolle erstellen
+                </p>
+                <ul class="app-features">
+                    <li>Audio-Aufnahme im Browser</li>
+                    <li>Automatische Transkription</li>
+                    <li>KI-Protokollerstellung</li>
+                    <li>Bearbeitbar & versendbar</li>
+                </ul>
+                <div class="app-badge">🎤 Mit Whisper AI</div>
+            </a>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="features-section">
+            <h2 style="color: var(--text-color); text-align: center; margin-bottom: 1.5rem;">
+                🌟 Alles in einer App
+            </h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">
+                        <h3>KI-gestützt</h3>
+                        <p>OpenAI GPT-4 für höchste Qualität</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-text">
+                        <h3>Mobiloptimiert</h3>
+                        <p>Funktioniert perfekt auf allen Geräten</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎤</div>
+                    <div class="feature-text">
+                        <h3>Sprachsteuerung</h3>
+                        <p>Diktat und Sprachbefehle</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-text">
+                        <h3>Sicher & Privat</h3>
+                        <p>Ihre Daten bleiben geschützt</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-text">
+                        <h3>Blitzschnell</h3>
+                        <p>Serverless-Architektur</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💰</div>
+                    <div class="feature-text">
+                        <h3>Kosteneffizient</h3>
+                        <p>Nutzt kostenlose Tiers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Entwickelt für professionelle deutschsprachige Geschäftskommunikation</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.9;">
+                💡 E-Mails an laola@baederbook.de werden automatisch verarbeitet
+            </p>
+        </footer>
+    </div>
+
+    <script src="voice.js"></script>
+    <script>
+        // Lola Chat Interface
+        const lolaChatMessages = document.getElementById('lolaChatMessages');
+        const lolaInput = document.getElementById('lolaInput');
+        const lolaSendBtn = document.getElementById('lolaSendBtn');
+        const lolaVoiceBtn = document.getElementById('lolaVoiceBtn');
+
+        // Deutsche Frauenstimme finden
+        let lolaVoice = null;
+        function findLolaVoice() {
+            if (!window.speechSynthesis) return null;
+            
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) return null;
+            
+            // Filtere deutsche Stimmen
+            const germanVoices = voices.filter(v => 
+                v.lang.startsWith('de') || 
+                v.lang.includes('German') ||
+                v.name.toLowerCase().includes('german') ||
+                v.name.toLowerCase().includes('deutsch')
+            );
+            
+            if (germanVoices.length === 0) {
+                return voices[0];
+            }
+            
+            const femaleVoices = germanVoices.filter(v => 
+                v.gender === 'female' || 
+                v.name.toLowerCase().includes('anna') ||
+                v.name.toLowerCase().includes('helga') ||
+                v.name.toLowerCase().includes('maria') ||
+                v.name.toLowerCase().includes('sarah')
+            );
+            
+            if (femaleVoices.length > 0) {
+                const naturalVoice = femaleVoices.find(v => 
+                    v.name.toLowerCase().includes('natural') ||
+                    v.name.toLowerCase().includes('online') ||
+                    v.name.toLowerCase().includes('neural')
+                );
+                if (naturalVoice) return naturalVoice;
+                
+                return femaleVoices[0];
+            }
+            
+            return germanVoices[0];
+        }
+
+        // Stimmen laden
+        if (window.speechSynthesis) {
+            lolaVoice = findLolaVoice();
+            
+            window.speechSynthesis.onvoiceschanged = () => {
+                lolaVoice = findLolaVoice();
+            };
+        }
+
+        // Auto-resize textarea
+        lolaInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Enter zum Senden, Shift+Enter für neue Zeile
+        lolaInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendLolaMessage();
+            }
+        });
+
+        // Senden-Button
+        lolaSendBtn.addEventListener('click', sendLolaMessage);
+
+        // Funktion zum Entfernen von Emojis aus Text
+        function removeEmojis(text) {
+            return text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu, '').trim();
+        }
+
+        // Funktion zur Korrektur der Aussprache von "LA OLA"
+        function fixPronunciation(text) {
+            let fixed = text;
+            const replacement = 'laaaaa olaaaaa';
+            fixed = fixed.replace(/\bLA\s+OLA\b/gi, replacement);
+            fixed = fixed.replace(/\bLA\s*OLA\b/gi, replacement);
+            fixed = fixed.replace(/LA\s+OLA/gi, replacement);
+            fixed = fixed.replace(/LA\s*OLA/gi, replacement);
+            fixed = fixed.replace(/L\s*A\s+O\s*L\s*A/gi, replacement);
+            fixed = fixed.replace(/LA\s*OLA/gi, replacement);
+            return fixed;
+        }
+
+        // Funktion zum Vorlesen mit deutscher Frauenstimme
+        function speakLolaMessage(text, button) {
+            if (!window.speechSynthesis) {
+                console.warn('Speech Synthesis nicht verfügbar');
+                return;
+            }
+
+            let cleanText = removeEmojis(text);
+            cleanText = fixPronunciation(cleanText);
+
+            lolaVoice = findLolaVoice();
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'de-DE';
+            utterance.rate = 0.85;
+            utterance.pitch = 1.2;
+            utterance.volume = 0.9;
+
+            if (lolaVoice) {
+                utterance.voice = lolaVoice;
+            }
+
+            utterance.onstart = () => {
+                if (button) {
+                    button.classList.add('speaking');
+                    button.textContent = '⏸';
+                }
+            };
+
+            utterance.onend = () => {
+                if (button) {
+                    button.classList.remove('speaking');
+                    button.textContent = '🔊';
+                }
+            };
+
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                if (button) {
+                    button.classList.remove('speaking');
+                    button.textContent = '🔊';
+                }
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Funktion zum Stoppen der Sprachausgabe
+        function stopLolaSpeaking(button) {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                if (button) {
+                    button.classList.remove('speaking');
+                    button.textContent = '🔊';
+                }
+            }
+        }
+
+        // Sprachsteuerung
+        if (typeof voiceAssistant !== 'undefined' && voiceAssistant && voiceAssistant.isAvailable()) {
+            lolaVoiceBtn.addEventListener('click', () => {
+                if (voiceAssistant.isListening) {
+                    voiceAssistant.stopListening();
+                    lolaVoiceBtn.classList.remove('listening');
+                    lolaVoiceBtn.textContent = '🎤';
+                    return;
+                }
+
+                voiceAssistant.startListening('dictate', {
+                    onStart: () => {
+                        lolaVoiceBtn.classList.add('listening');
+                        lolaVoiceBtn.textContent = '⏺️';
+                    },
+                    onResult: (transcript) => {
+                        lolaInput.value = transcript;
+                        lolaInput.style.height = 'auto';
+                        lolaInput.style.height = Math.min(lolaInput.scrollHeight, 120) + 'px';
+                        setTimeout(() => sendLolaMessage(), 500);
+                    },
+                    onEnd: () => {
+                        lolaVoiceBtn.classList.remove('listening');
+                        lolaVoiceBtn.textContent = '🎤';
+                    },
+                    onError: (error) => {
+                        lolaVoiceBtn.classList.remove('listening');
+                        lolaVoiceBtn.textContent = '🎤';
+                    }
+                });
+            });
+        } else {
+            lolaVoiceBtn.disabled = true;
+            lolaVoiceBtn.style.opacity = '0.5';
+            lolaVoiceBtn.title = 'Spracherkennung nicht verfügbar';
+        }
+
+        // Nachricht senden
+        async function sendLolaMessage() {
+            const message = lolaInput.value.trim();
+            
+            if (!message) {
+                return;
+            }
+
+            // User-Nachricht anzeigen
+            addLolaMessage(message, 'user');
+            lolaInput.value = '';
+            lolaInput.style.height = 'auto';
+            
+            // Loading-Indikator
+            const loadingId = showLolaTyping();
+            
+            // Buttons deaktivieren
+            lolaSendBtn.disabled = true;
+            lolaVoiceBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/ai-agent/lola-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Fehler bei der Kommunikation mit Lola');
+                }
+
+                const data = await response.json();
+                
+                // Loading entfernen
+                removeLolaTyping(loadingId);
+                
+                // Lola-Antwort anzeigen (mit Vorlesen-Button)
+                addLolaMessage(data.response, 'lola');
+                
+            } catch (error) {
+                console.error('Fehler:', error);
+                removeLolaTyping(loadingId);
+                const errorMsg = 'Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+                addLolaMessage(errorMsg, 'lola');
+            } finally {
+                lolaSendBtn.disabled = false;
+                lolaVoiceBtn.disabled = false;
+            }
+        }
+
+        // Nachricht zum Chat hinzufügen
+        function addLolaMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `lola-message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'lola-message-avatar';
+            avatar.textContent = sender === 'user' ? '👤' : '💬';
+            
+            const content = document.createElement('div');
+            content.className = 'lola-message-content';
+            content.textContent = text;
+            
+            // Vorlesen-Button nur für Lola-Nachrichten
+            if (sender === 'lola' && window.speechSynthesis) {
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'lola-speak-btn';
+                speakBtn.textContent = '🔊';
+                speakBtn.title = 'Antwort vorlesen';
+                speakBtn.setAttribute('aria-label', 'Antwort vorlesen');
+                
+                // Event Listener für Vorlesen-Button
+                speakBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isSpeaking = speakBtn.classList.contains('speaking');
+                    
+                    if (isSpeaking) {
+                        stopLolaSpeaking(speakBtn);
+                    } else {
+                        speakLolaMessage(text, speakBtn);
+                    }
+                });
+                
+                content.appendChild(speakBtn);
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            lolaChatMessages.appendChild(messageDiv);
+            
+            lolaChatMessages.scrollTop = lolaChatMessages.scrollHeight;
+        }
+
+        // Typing-Indikator anzeigen
+        function showLolaTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'lola-message lola';
+            typingDiv.id = 'lola-typing-indicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'lola-message-avatar';
+            avatar.textContent = '💬';
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'lola-typing';
+            indicator.innerHTML = '<div class="lola-typing-dot"></div><div class="lola-typing-dot"></div><div class="lola-typing-dot"></div>';
+            
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(indicator);
+            
+            lolaChatMessages.appendChild(typingDiv);
+            lolaChatMessages.scrollTop = lolaChatMessages.scrollHeight;
+            
+            return 'lola-typing-indicator';
+        }
+
+        // Typing-Indikator entfernen
+        function removeLolaTyping(id) {
+            const indicator = document.getElementById(id);
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Initiale Begrüßung
+        setTimeout(() => {
+            const welcomeMsg = 'Hallo Christof! 👋 Ich bin Lola, dein persönlicher Assistent. Ich helfe dir gerne bei Fragen zu LA OLA, dem Freibad Landau oder bei anderen geschäftlichen Anliegen. Wie kann ich dir heute helfen?';
+            addLolaMessage(welcomeMsg, 'lola');
+        }, 500);
+    </script>
+</body>
+</html>

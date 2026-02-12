@@ -88,8 +88,8 @@ export default function Dashboard() {
         }))
         setCurrentInfos(mapped)
 
-        // Prüfe auf Popup-Informationen (alle Infos)
-        const popupInfos = mapped
+        // Prüfe auf Popup-Informationen (nur markierte)
+        const popupInfos = mapped.filter(info => info.isPopup)
         if (popupInfos.length > 0) {
           // Zeige die neueste Popup-Info, die noch nicht dismissed wurde
           const dismissedPopups = JSON.parse(localStorage.getItem('dismissedPopups') || '[]')

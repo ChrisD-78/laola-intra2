@@ -17,7 +17,8 @@ Willkommen im LA OLA Intranet! Dieses Handbuch führt Sie durch alle Funktionen 
 9. [Technik](#technik)
 10. [Chat](#chat)
 11. [Benutzerverwaltung (nur für Admins)](#benutzerverwaltung-nur-für-admins)
-12. [Häufige Fragen](#häufige-fragen)
+12. [Rollen & Berechtigungen (Übersicht)](#rollen--berechtigungen-übersicht)
+13. [Häufige Fragen](#häufige-fragen)
 
 ## 🚀 Erste Schritte
 
@@ -555,6 +556,62 @@ Verwalten Sie Benutzer und deren Berechtigungen.
 1. Klicken Sie in der Benutzerliste auf das **📧‑Symbol**
 2. Tragen Sie die E‑Mail‑Adresse ein oder ändern Sie sie
 3. Klicken Sie auf **"E‑Mail speichern"**
+
+---
+
+## ✅ Rollen & Berechtigungen (Übersicht)
+
+### Rollen
+
+- **Admin:** Vollzugriff auf alle Bereiche, Benutzerverwaltung und Löschfunktionen
+- **Teamleiter:** Erweiterte Rechte im Schichtplan (sofern sichtbar)
+- **Technik:** Standardrechte, Schwerpunkt Technikbereich
+- **Benutzer:** Standardrechte für alle Mitarbeiter
+
+### Sichtbarkeit & Aktionen (Auszug)
+
+- **Dashboard – Aktuelle Informationen**
+  - **Alle:** Infos sehen, Popups erhalten
+  - **Admin:** Infos erstellen, bearbeiten, löschen
+
+- **Schichtplan**
+  - **Aktuell sichtbar:** nur **Admins** (Sidebar)
+  - **Teamleiter:** Admin‑Ansicht im Schichtplan (wenn Zugriff besteht)
+
+- **Dokumente**
+  - **Alle:** Dokumente ansehen und herunterladen
+  - **Admin:** Dokumente hochladen und löschen
+
+- **Formulare – Alle Formulareinreichungen**
+  - **Admin:** sieht alle Formulare
+  - **Nicht‑Admin:** sieht nur **Störmeldung**
+  - **Status ändern:** nur **Störmeldung** in der Tabelle
+
+- **Formulare mit Admin‑Tabelle**
+  - **Ausgabe Dienstkleidung:** Nachweis‑Tabelle nur Admins
+  - **Schulung / Unterweisung:** Nachweise‑Tabelle nur Admins
+  - **Checkliste Kassenplätze:** Nachweise‑Tabelle nur Admins
+
+- **Technik**
+  - **Admin:** Prüfgeräte anlegen/bearbeiten, Dateien hochladen (PDF/JPG/PNG)
+  - **Gefahrstoffe:** Dokumente im Bearbeiten‑Dialog entfernen/ersetzen (Admin)
+
+### E‑Mail‑Benachrichtigungen aus Formularen
+
+- **Stundenkorrektur**
+  - **Empfänger:** `kirstin.kreusch@landau.de`
+  - **Bestätigungs‑Button:** „Stundenkorrektur durchgeführt“
+  - **Bestätigungsmail:** an die E‑Mail des Mitarbeiters (aus Benutzerverwaltung)
+
+- **Leistungsnachweis Azubi**
+  - **Empfänger:** `kirstin.kreusch@landau.de`, `jonas.jooss@landau.de`
+
+- **Schulung / Unterweisung**
+  - **Empfänger:** `kirstin.kreusch@landau.de`, `jonas.jooss@landau.de`, `lisa.schnagl@landau.de`
+  - **Anhang:** PDF‑Nachweis
+
+- **Weitere Formulare**
+  - Erzeugen ggf. interne System‑Benachrichtigungen; bei Bedarf wird die Empfängerliste angepasst.
 
 ### Benutzer deaktivieren
 
