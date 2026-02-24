@@ -1,9 +1,435 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof, getFormSubmissions } from '@/lib/db'
+import { useState, useEffect, useRef } from 'react'
+import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, updateTrainingInstructor, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof, getFormSubmissions } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 import QuizOverview from '@/components/QuizOverview'
+
+const ERSTUNTERWEISUNG_26_TITLE = 'Erstunterweisung 26'
+
+/** Referent für „Erstunterweisung 26“ / „Stadtbadholding“ immer Christof Drost. */
+function getDisplayInstructor(title: string, instructor: string): string {
+  const t = (title || '').trim()
+  const i = (instructor || '').trim()
+  const isErst26 =
+    t === ERSTUNTERWEISUNG_26_TITLE ||
+    t.startsWith('Erstunterweisung 26') ||
+    (t.includes('Erstunterweisung') && t.includes('26')) ||
+    i.includes('Stadtbadholding')
+  return isErst26 ? 'Christof Drost' : i
+}
+
+type SchulungStep =
+  | { title: string; type: 'content'; content: string }
+  | { title: string; type: 'materials'; content: string }
+  | { title: string; type: 'opening-hours'; content?: string }
+  | { title: string; type: 'content-sections'; intro?: string; sections: Array<{ heading: string; body: string[] }>; linkText?: string; linkUrl?: string; footer?: string }
+  | { title: string; type: 'quiz'; content?: string; questions: Array<{ question: string; options: string[]; correctIndex: number; explanation: string }> }
+  | { title: string; type: 'confirmation'; content: string }
+
+const buildErstunterweisungSteps = (participantName: string, participantSurname: string): SchulungStep[] => ([
+  {
+    title: 'Willkommen im Team',
+    type: 'content',
+    content: `Herzlich willkommen bei der Stadtbadholding Landau in der Pfalz GmbH! Als Mitarbeiter im Freizeitbad LA OLA tragen Sie dazu bei, dass unsere Gäste sich wohlfühlen und sicher sind.
+
+Diese moderne Erstunterweisung vermittelt Ihnen die wesentlichen Infos zu Sicherheit, Abläufen und Verantwortung – in klarer, ansprechender Form mit integrierten interaktiven Quizzes und visuellen Elementen für besseres Lernen.
+
+Wir haben sie mit aktuellen Best Practices aus DGUV-Regeln und Branchenempfehlungen aktualisiert, um sie praxisnah und nutzerfreundlich zu gestalten. Am Ende jeder Sektion finden Sie ein Quiz zur Selbstüberprüfung.`
+  },
+  {
+    title: 'Unternehmensüberblick',
+    type: 'content',
+    content: `Die Stadtbadholding Landau umfasst Bereiche wie Freizeitbad LA OLA, Jugendstil-Festhalle, Jugendarbeit, Messestandort und mehr.
+
+Mit 49% Beteiligung an der SH-Service GmbH (Soziales und Kindergärten) und Energieversorgung Südwest AG fördern wir ein breites Spektrum an Dienstleistungen.
+
+Unsere Kernwerte: Sicherheit, Teamgeist und Nachhaltigkeit.`
+  },
+  {
+    title: 'Quiz: Unternehmensüberblick',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Welche Beteiligung hat die Holding an der SH-Service GmbH?',
+        options: ['25%', '49%', '100%'],
+        correctIndex: 1,
+        explanation: '49% Beteiligung – unterstützt soziale und kinderbezogene Dienste.'
+      },
+      {
+        question: 'LA OLA ist der einzige Bereich der Holding.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Es gibt weitere Bereiche wie Festhalle, Jugendarbeit usw.'
+      },
+      {
+        question: 'Welche AG ist mit Energieversorgung verbunden?',
+        options: ['EnergieSüdWest AG', 'Nordost AG'],
+        correctIndex: 0,
+        explanation: 'EnergieSüdWest AG.'
+      },
+      {
+        question: 'Wie viele Bereiche umfasst die Holding primär?',
+        options: ['Nur Freizeitbad', 'Mehrere Bereiche', 'Zwei Bereiche'],
+        correctIndex: 1,
+        explanation: 'Es gibt mehrere Bereiche, z.B. Freizeitbad, Festhalle, Jugendarbeit.'
+      }
+    ]
+  },
+  {
+    title: 'Öffnungszeiten und Tarife',
+    type: 'opening-hours'
+  },
+  {
+    title: 'Quiz: Öffnungszeiten und Tarife',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Wann schließt LA OLA freitags?',
+        options: ['22:00', '23:00', '21:00'],
+        correctIndex: 1,
+        explanation: 'Freitags 10:00–23:00 (bitte immer aktuelle Infos prüfen).'
+      },
+      {
+        question: 'Kinder bis 5 Jahre zahlen 3,00 € Mo–Fr für 120 Min.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 0,
+        explanation: 'Richtig – Wasserwelt inkl. Textilsauna (Mo–Fr).'
+      },
+      {
+        question: 'Wie viel kostet eine Tageskarte für Erwachsene Sa/So in der Wasserwelt?',
+        options: ['11,50 €', '13,00 €', '25,00 €'],
+        correctIndex: 1,
+        explanation: '13,00 € (Sa/So/Feiertag).'
+      },
+      {
+        question: 'Wo prüfen Sie die aktuellen Zeiten?',
+        options: ['www.la-ola.de', 'Aushang in der Umkleide', 'Private Notizen'],
+        correctIndex: 0,
+        explanation: 'Aktuellste Infos im Intranet oder auf www.la-ola.de.'
+      }
+    ]
+  },
+  {
+    title: 'Sicherheit und Verantwortung',
+    type: 'content',
+    content: `Jeder hat Rechte und Pflichten: Melden Sie Gefahren, nutzen Sie PSA (z.B. Schutzkleidung bei Chemikalien).
+Vorgesetzte sorgen für sichere Arbeitsmittel und Umweltschutz. Basierend auf DGUV-Regeln ist regelmäßige Unterweisung Pflicht.
+
+Wichtige Telefonnummern:
+Betriebsleiter – Christof Drost – 0162-2803619
+Leitung Backoffice – Kirstin Kreusch – 0162-2719965
+Betriebsarzt – Frau Dr. Nemminger – 06341-929600
+Fachkraft für Arbeitssicherheit – Herr Timo Ziegler – 06341/3980-00
+Sicherheit – Herr Jonas Joos`
+  },
+  {
+    title: 'Quiz: Sicherheit und Verantwortung',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Wer ist für den sicheren Zustand von Arbeitsmitteln verantwortlich?',
+        options: ['Nur Mitarbeiter', 'Vorgesetzte', 'Alle'],
+        correctIndex: 1,
+        explanation: 'Vorgesetzte wählen und prüfen PSA, basierend auf DGUV.'
+      },
+      {
+        question: 'Jeder hat das Recht, Gefahren zu melden.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 0,
+        explanation: 'Richtig – und es ist auch Pflicht.'
+      },
+      {
+        question: 'Sie sehen eine defekte Leitung – was tun Sie?',
+        options: ['Ignorieren', 'Vorgesetzten melden', 'Selbst reparieren'],
+        correctIndex: 1,
+        explanation: 'Melden – verhindert Unfälle.'
+      }
+    ]
+  },
+  {
+    title: 'Grundlagen des Arbeitsschutzes',
+    type: 'content',
+    content: `Arbeitsschutz ist Teamarbeit: Geschäftsführung, Vorgesetzte und Mitarbeiter teilen die Verantwortung.
+Jeder muss Gefahren erkennen, melden und beseitigen – gesetzlich im ArbSchG und DGUV-Vorschrift 1.
+
+Pflichten: Sicheres Verhalten, Arbeitsmittel richtig nutzen, PSA nutzen, Umweltschutz beachten.
+Rechte: Sofortige Beseitigung von Gefahren fordern.
+Vorgesetzte: Sicherheit und Gesundheit gewährleisten, PSA auswählen.`
+  },
+  {
+    title: 'Quiz: Grundlagen des Arbeitsschutzes',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Arbeitsschutz ist nur Aufgabe der Geschäftsführung.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – gemeinsame Verantwortung.'
+      },
+      {
+        question: 'Was tun bei Gefahr?',
+        options: ['Ignorieren', 'Melden', 'Allein beheben'],
+        correctIndex: 1,
+        explanation: 'Melden – Pflicht und Recht.'
+      },
+      {
+        question: 'Was bedeutet PSA?',
+        options: ['Persönliche Schutzausrüstung', 'Prüf-Sicherheits-Anweisung', 'Personal-Sicherheits-Archiv'],
+        correctIndex: 0,
+        explanation: 'PSA = Persönliche Schutzausrüstung.'
+      }
+    ]
+  },
+  {
+    title: 'Arbeitszeiten und Pausen',
+    type: 'content',
+    content: `Arbeitszeiten richten sich nach dem Schichtplan im Intranet.
+Schichtbeispiele: Frühschicht 06:00–15:00, Spätschicht 14:45–22:30.
+
+Pausen:
+- >6 Std.: 30 Min. (2x15)
+- >8 Std.: 45 Min. (3x15)
+
+Dies reduziert Ermüdungsrisiken, empfohlen in DGUV-Information 207-018.`
+  },
+  {
+    title: 'Quiz: Arbeitszeiten und Pausen',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Wie lange Pause bei >6 Stunden?',
+        options: ['15 Min.', '30 Min.', '45 Min.'],
+        correctIndex: 1,
+        explanation: '30 Minuten, aufteilbar in 2x15.'
+      },
+      {
+        question: 'Schichtplan ist im Intranet.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 0,
+        explanation: 'Richtig.'
+      },
+      {
+        question: 'Sie arbeiten 9 Stunden – Pausendauer?',
+        options: ['30 Min.', '45 Min.', '60 Min.'],
+        correctIndex: 1,
+        explanation: '45 Minuten in 15-Min.-Blöcken.'
+      }
+    ]
+  },
+  {
+    title: 'Unfallprävention und -meldung',
+    type: 'content',
+    content: `Stolpern, Rutschen und Stürzen sind häufigste Ursachen. Prävention durch Sauberkeit und Achtsamkeit.
+
+Checkliste:
+- Wege frei von Stolperstellen
+- Material nicht in Wegen
+- Kabel sicher verlegt
+- Böden sauber, Rutschgefahren beseitigt
+- Rutschfestes Schuhwerk
+
+Arbeitsunfall-Definition (DGUV 107-001): Unfall bei versicherter Tätigkeit, innerer Zusammenhang.
+
+Meldung:
+- Beinahe-Unfall: Eintragen im Vordruck
+- Ohne Arztbesuch: Eintragen im Vordruck
+- >3 Ausfalltage: Meldung an Berufsgenossenschaft (Unfallkasse RLP) – Meldung erfolgt digital über das entsprechende Formular`
+  },
+  {
+    title: 'Quiz: Unfallprävention',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Häufigste Unfallursache?',
+        options: ['Stolpern/Rutschen', 'Brand', 'Stromschlag'],
+        correctIndex: 0,
+        explanation: 'Stolpern/Rutschen laut DGUV-Statistiken.'
+      },
+      {
+        question: 'Eigenwirtschaftliche Tätigkeiten sind versichert.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – nur betriebliche Tätigkeiten.'
+      },
+      {
+        question: 'Beinahe-Unfall – was tun?',
+        options: ['Ignorieren', 'Eintragen im Vordruck', 'Nur mündlich berichten'],
+        correctIndex: 1,
+        explanation: 'Eintragen im Vordruck.'
+      }
+    ]
+  },
+  {
+    title: 'Gefahrenstoffe & elektrische Geräte',
+    type: 'content',
+    content: `Betriebsanweisungen enthalten: Anwendung, Gefahren, Schutz, Störungen, Unfälle, Entsorgung, Folgen.
+
+Elektrische Geräte: Nur geprüfte nutzen, Schäden melden, Instandsetzung durch Fachkraft.
+
+Chlor (DGUV 213-040): Bei Sirene Schichtführer verständigen, Bad gegen Wind evakuieren, Feuerwehr + Betriebsleitung rufen, Roten Ordner übergeben, Raum nicht betreten.
+
+PSA:
+- Chemikalien: Handschuhe, Schutzbrille
+- Elektrisch: Isolierte Werkzeuge
+- Allgemein: Rutschfeste Schuhe`
+  },
+  {
+    title: 'Quiz: Gefahrenstoffe',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Was tun bei Chlorgas-Sirene?',
+        options: ['Ignorieren', 'Schichtführer verständigen', 'Raum betreten'],
+        correctIndex: 1,
+        explanation: 'Schichtführer verständigen, evakuieren, Feuerwehr informieren.'
+      },
+      {
+        question: 'Beschädigte Leitungen nutzen.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – melden, nicht nutzen.'
+      },
+      {
+        question: 'PSA für Chemikalien?',
+        options: ['Nur Schuhe', 'Handschuhe/Brille', 'Keine'],
+        correctIndex: 1,
+        explanation: 'Handschuhe und Schutzbrille.'
+      }
+    ]
+  },
+  {
+    title: 'Feuer- und Notfallmaßnahmen',
+    type: 'content',
+    content: `Feuerlöschen (DGUV 107-001):
+- Notruf absetzen
+- In Windrichtung angreifen
+- Flächen von vorn, Tropfbrände von oben
+- Mehrere Löscher einsetzen, Wiederentzündung beachten
+- Löscher nachfüllen
+
+Nicht löschbar: Selbstschutz, Notruf, Wege frei, Türen schließen, Sammelplatz aufsuchen, Zufahrt freihalten.
+
+Erste Hilfe: Material in Schwimmhallen, Technikräumen etc.
+Fluchtwege: Siehe Lageplan – regelmäßig prüfen.`
+  },
+  {
+    title: 'Quiz: Feuer & Notfall',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Wie angreifen bei Feuer?',
+        options: ['Gegen Windrichtung', 'In Windrichtung', 'Egal'],
+        correctIndex: 1,
+        explanation: 'In Windrichtung angreifen.'
+      },
+      {
+        question: 'Notausgänge abschließen.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – Notausgänge müssen frei sein.'
+      },
+      {
+        question: 'Tropfbrände löschen?',
+        options: ['Von unten', 'Von oben'],
+        correctIndex: 1,
+        explanation: 'Von oben löschen.'
+      }
+    ]
+  },
+  {
+    title: 'Heben und Tragen',
+    type: 'content',
+    content: `Nutzen Sie Hilfsmittel. Richtige Technik:
+1) Beine spreizen, Knie beugen, Rücken gerade.
+2) Körpernah halten, nicht ruckartig.
+3) Verdrehen vermeiden.
+
+Das reduziert Rückenschäden.`
+  },
+  {
+    title: 'Quiz: Heben & Tragen',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Erster Schritt beim Heben?',
+        options: ['Rücken krümmen', 'Knie beugen, Rücken gerade', 'Ruckartig anheben'],
+        correctIndex: 1,
+        explanation: 'Knie beugen und Rücken gerade halten.'
+      },
+      {
+        question: 'Ruckartig heben ist ok.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – Verletzungsrisiko.'
+      },
+      {
+        question: 'Warum körpernah halten?',
+        options: ['Bessere Kontrolle', 'Sieht besser aus', 'Ist egal'],
+        correctIndex: 0,
+        explanation: 'Bessere Kontrolle und geringere Belastung.'
+      }
+    ]
+  },
+  {
+    title: 'Alkohol- und Drogenverbot',
+    type: 'content',
+    content: `Absolutes Verbot während Arbeit und Pausen (BGV A1 §15 (2)). Beeinflussung kann Versicherungsschutz kosten.`
+  },
+  {
+    title: 'Quiz: Alkohol & Drogen',
+    type: 'quiz',
+    questions: [
+      {
+        question: 'Gilt das Verbot auch in Pausen?',
+        options: ['Ja', 'Nein'],
+        correctIndex: 0,
+        explanation: 'Ja – Sicherheit für alle.'
+      },
+      {
+        question: 'Alkoholunfall ist immer versichert.',
+        options: ['Richtig', 'Falsch'],
+        correctIndex: 1,
+        explanation: 'Falsch – Versicherungsschutz kann entfallen.'
+      }
+    ]
+  },
+  {
+    title: 'Weitere Infos & Modernisierungen',
+    type: 'content-sections',
+    intro: 'Damit bei uns alles reibungslos läuft, hier die wichtigsten Infos für deinen Arbeitsalltag:',
+    sections: [
+      {
+        heading: 'Ordnung & Sauberkeit',
+        body: ['Bitte halte deinen Arbeitsplatz stets sauber und ordentlich. Essen und Trinken ist ausschließlich in den Pausenräumen erlaubt.']
+      },
+      {
+        heading: 'Dein wichtigstes Werkzeug: Unser Intranet',
+        body: [
+          'Alle aktuellen Informationen, Neuigkeiten und Änderungen findest du täglich aktualisiert auf unserer Intranetseite.',
+          'Schau dort regelmäßig rein – du verpasst sonst wichtige Infos!'
+        ]
+      },
+      {
+        heading: 'Hinweis',
+        body: ['Diese Unterweisung wird jährlich aktualisiert und an aktuelle Gegebenheiten angepasst.']
+      }
+    ],
+    linkText: 'www.laola.baederbook.de',
+    linkUrl: 'https://www.laola.baederbook.de',
+    footer: 'Bei Fragen stehen wir dir jederzeit gerne zur Verfügung. Wir freuen uns auf eine tolle Zusammenarbeit mit dir!'
+  },
+  {
+    title: 'Willkommen im Team LA OLA',
+    type: 'content',
+    content: 'Willkommen im Team LA OLA – schön, dass du nun ein Teil unserer Familie bist!'
+  },
+  {
+    title: 'Bestätigung',
+    type: 'confirmation',
+    content: `Herzlichen Glückwunsch ${participantName} ${participantSurname}! Sie haben die Unterweisung abgeschlossen. Bitte bestätigen Sie, dass Sie die Inhalte verstanden haben.`
+  }
+])
 
 interface Schulung {
   id: string
@@ -74,6 +500,7 @@ export default function Schulungen() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [loading, setLoading] = useState(true)
   const [quizCount, setQuizCount] = useState(0)
+  const hasSeededErstunterweisung = useRef(false)
 
   // Load trainings from Supabase
   const [schulungen, setSchulungen] = useState<Schulung[]>([])
@@ -82,7 +509,7 @@ export default function Schulungen() {
     const loadTrainings = async () => {
       try {
         const data = await getTrainings()
-        const mapped: Schulung[] = data.map((training) => ({
+        const mapTraining = (training: any): Schulung => ({
           id: training.id,
           title: training.title,
           description: training.description,
@@ -90,12 +517,50 @@ export default function Schulungen() {
           duration: training.duration,
           status: training.status,
           date: training.date,
-          instructor: training.instructor,
+          instructor: getDisplayInstructor(training.title, training.instructor || ''),
           pdfUrl: training.pdf_url,
           videoUrl: training.video_url,
           thumbnail: training.thumbnail || '📚'
-        }))
+        })
+        const mapped: Schulung[] = data.map(mapTraining)
         setSchulungen(mapped)
+
+        // Referent in DB korrigieren, falls noch „Stadtbadholding Landau“ steht
+        const erst26 = data.find(
+          (t: { title?: string; instructor?: string }) =>
+            (t.title === ERSTUNTERWEISUNG_26_TITLE || (t.title && t.title.includes('Erstunterweisung') && t.title.includes('26'))) &&
+            t.instructor !== 'Christof Drost' &&
+            t.id
+        )
+        if (erst26) {
+          try {
+            await updateTrainingInstructor(erst26.id, 'Christof Drost')
+            const refreshed = await getTrainings()
+            setSchulungen(refreshed.map(mapTraining))
+          } catch {
+            // Anzeige bleibt über getDisplayInstructor/displayReferent korrekt
+          }
+        }
+
+        if (!hasSeededErstunterweisung.current && !mapped.some((t) => t.title === ERSTUNTERWEISUNG_26_TITLE)) {
+          hasSeededErstunterweisung.current = true
+          try {
+            await insertTraining({
+              title: ERSTUNTERWEISUNG_26_TITLE,
+              description: 'Moderne Erstunterweisung mit interaktiven Quizfragen und praxisnahen Inhalten.',
+              category: 'Unterweisungen',
+              duration: 'ca. 60 Min.',
+              status: 'Verfügbar',
+              date: new Date().toISOString().split('T')[0],
+              instructor: 'Christof Drost',
+              thumbnail: '🛡️'
+            })
+            const refreshed = await getTrainings()
+            setSchulungen(refreshed.map(mapTraining))
+          } catch (seedError) {
+            console.error('Failed to seed Erstunterweisung 26:', seedError)
+          }
+        }
       } catch (error) {
         console.error('Error loading trainings:', error)
       } finally {
@@ -480,7 +945,7 @@ export default function Schulungen() {
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.schulungTitle}</td>
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${participant}</td>
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.category}</td>
-        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.instructor}</td>
+        <td style=\"padding:8px;border:1px solid #e5e7eb;\">${getDisplayInstructor(item.schulungTitle, item.instructor)}</td>
         <td style=\"padding:8px;border:1px solid #e5e7eb;\">${item.completedDate}</td>
       </tr>`
     }).join('')
@@ -576,7 +1041,15 @@ export default function Schulungen() {
     }
   }
 
-  const SchulungCard = ({ schulung }: { schulung: Schulung }) => (
+  const SchulungCard = ({ schulung }: { schulung: Schulung }) => {
+    const rawReferent = schulung.instructor ?? ''
+    const cardReferent =
+      rawReferent.includes('Stadtbadholding') ||
+      schulung.title === ERSTUNTERWEISUNG_26_TITLE ||
+      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('26'))
+        ? 'Christof Drost'
+        : rawReferent
+    return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -586,7 +1059,7 @@ export default function Schulungen() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">{schulung.title}</h3>
-              <p className="text-sm text-gray-600">{schulung.instructor}</p>
+              <p className="text-sm text-gray-600">{cardReferent}</p>
             </div>
           </div>
       </div>
@@ -652,7 +1125,8 @@ export default function Schulungen() {
         </div>
                 </div>
               </div>
-  )
+    )
+  }
 
   const CreateSchulungForm = () => {
     const [formData, setFormData] = useState({
@@ -889,13 +1363,274 @@ export default function Schulungen() {
     const [participantSurname, setParticipantSurname] = useState('')
     const [showNameForm, setShowNameForm] = useState(true)
     const [confirmationChecked, setConfirmationChecked] = useState(false)
+    const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
 
-    const steps = [
-      { title: 'Einführung', content: `Willkommen zur Schulung: ${schulung.title}. Hallo ${participantName} ${participantSurname}!` },
-      { title: 'Theorie', content: schulung.description },
-      { title: 'Materialien', content: 'Hier finden Sie alle wichtigen Unterlagen und Videos.' },
-      { title: 'Bestätigung', content: `Herzlichen Glückwunsch ${participantName}! Sie haben die Schulung erfolgreich abgeschlossen. Bitte bestätigen Sie, dass Sie die Schulungsinhalte verstanden haben.` }
+    const isErstunterweisung = schulung.title === ERSTUNTERWEISUNG_26_TITLE
+    const rawRef = schulung.instructor ?? ''
+    const displayReferent =
+      rawRef.includes('Stadtbadholding') ||
+      isErstunterweisung ||
+      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('26'))
+        ? 'Christof Drost'
+        : rawRef
+    const defaultSteps: SchulungStep[] = [
+      { title: 'Einführung', type: 'content', content: `Willkommen zur Schulung: ${schulung.title}. Hallo ${participantName} ${participantSurname}!` },
+      { title: 'Theorie', type: 'content', content: schulung.description },
+      { title: 'Materialien', type: 'materials', content: 'Hier finden Sie alle wichtigen Unterlagen und Videos.' },
+      { title: 'Bestätigung', type: 'confirmation', content: `Herzlichen Glückwunsch ${participantName}! Sie haben die Schulung erfolgreich abgeschlossen. Bitte bestätigen Sie, dass Sie die Schulungsinhalte verstanden haben.` }
     ]
+    const steps = isErstunterweisung ? buildErstunterweisungSteps(participantName, participantSurname) : defaultSteps
+
+    const imageMap: Record<string, Array<{ src: string; alt: string }>> = {
+      'Willkommen im Team': [
+        { src: '/unterweisung/la-ola-freizeitbad.png', alt: 'Freizeitbad LA OLA' },
+        { src: '/unterweisung/la-ola-wellenbecken.png', alt: 'Wellenbecken' }
+      ],
+      'Öffnungszeiten und Tarife': [
+        { src: '/unterweisung/oeffnungszeiten-schild.png', alt: 'Öffnungszeiten am Eingang' }
+      ],
+      'Gefahrenstoffe & elektrische Geräte': [
+        { src: '/unterweisung/electrical-warning.png', alt: 'Elektrische Sicherheit' }
+      ],
+      'Heben und Tragen': [
+        { src: '/unterweisung/heben-und-tragen.png', alt: 'Richtiges Heben und Tragen' }
+      ],
+      'Weitere Infos & Modernisierungen': [
+        { src: '/unterweisung/la-ola-rutsche.png', alt: 'Rutsche' },
+        { src: '/unterweisung/la-ola-sauna.png', alt: 'Saunabereich' }
+      ]
+    }
+
+    const renderOpeningHours = () => (
+      <div className="space-y-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Öffnungszeiten (Stand Februar 2026)</h4>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600">
+                <th className="py-2">Wochentag</th>
+                <th className="py-2">Uhrzeit</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-900">
+              <tr className="border-t border-gray-200">
+                <td className="py-2">Montag bis Donnerstag</td>
+                <td className="py-2">10:00 - 22:00 Uhr</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-2">Freitag</td>
+                <td className="py-2">10:00 - 23:00 Uhr</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-2">Samstag</td>
+                <td className="py-2">10:00 - 22:00 Uhr</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-2">Sonn- & Feiertag</td>
+                <td className="py-2">10:00 - 21:00 Uhr</td>
+              </tr>
+            </tbody>
+          </table>
+          <ul className="mt-4 text-xs text-gray-600 space-y-1">
+            <li>- Bade- und Saunazeit endet 30 Minuten vor Schließung.</li>
+            <li>- Montags: Damensauna (außer Feiertagen).</li>
+            <li>- Textilsauna nur am Wochenende geöffnet.</li>
+            <li>- Gastronomie hat separate Zeiten (z.B. Mo–Do nur Sauna-Bereich 13:00–20:00; in Ferien erweiterte Zeiten).</li>
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Wasserwelt inkl. Textilsauna</h4>
+            <div className="text-xs text-gray-500 mb-2">Mo–Fr</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600">
+                  <th className="py-1">Kategorie</th>
+                  <th className="py-1">120 Min</th>
+                  <th className="py-1">Tageskarte</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-900">
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Erwachsene</td>
+                  <td className="py-1">8,00 €</td>
+                  <td className="py-1">11,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder ab 6, Schüler, Jugendliche, Studierende</td>
+                  <td className="py-1">5,50 €</td>
+                  <td className="py-1">8,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder 1-5 Jahre</td>
+                  <td className="py-1">3,00 €</td>
+                  <td className="py-1">4,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Unter 1 Jahr</td>
+                  <td className="py-1">kostenfrei</td>
+                  <td className="py-1">kostenfrei</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Wasserwelt inkl. Textilsauna</h4>
+            <div className="text-xs text-gray-500 mb-2">Sa/So/Feiertag</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600">
+                  <th className="py-1">Kategorie</th>
+                  <th className="py-1">120 Min</th>
+                  <th className="py-1">Tageskarte</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-900">
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Erwachsene</td>
+                  <td className="py-1">9,50 €</td>
+                  <td className="py-1">13,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder ab 6, Schüler, Jugendliche, Studierende</td>
+                  <td className="py-1">7,00 €</td>
+                  <td className="py-1">9,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder 1-5 Jahre</td>
+                  <td className="py-1">4,50 €</td>
+                  <td className="py-1">5,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Unter 1 Jahr</td>
+                  <td className="py-1">kostenfrei</td>
+                  <td className="py-1">kostenfrei</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Wasserwelt + Saunalandschaft</h4>
+            <div className="text-xs text-gray-500 mb-2">Mo–Fr</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600">
+                  <th className="py-1">Kategorie</th>
+                  <th className="py-1">120 Min</th>
+                  <th className="py-1">Tageskarte</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-900">
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Erwachsene</td>
+                  <td className="py-1">20,00 €</td>
+                  <td className="py-1">23,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder ab 6, Schüler, Jugendliche, Studierende</td>
+                  <td className="py-1">17,50 €</td>
+                  <td className="py-1">20,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder bis 5 Jahre</td>
+                  <td className="py-1">15,00 €</td>
+                  <td className="py-1">16,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Unter 1 Jahr</td>
+                  <td className="py-1">kostenfrei</td>
+                  <td className="py-1">kostenfrei</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Wasserwelt + Saunalandschaft</h4>
+            <div className="text-xs text-gray-500 mb-2">Sa/So/Feiertag</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600">
+                  <th className="py-1">Kategorie</th>
+                  <th className="py-1">120 Min</th>
+                  <th className="py-1">Tageskarte</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-900">
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Erwachsene</td>
+                  <td className="py-1">21,50 €</td>
+                  <td className="py-1">25,00 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder ab 6, Schüler, Jugendliche, Studierende</td>
+                  <td className="py-1">19,00 €</td>
+                  <td className="py-1">21,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Kinder bis 5 Jahre</td>
+                  <td className="py-1">16,50 €</td>
+                  <td className="py-1">17,50 €</td>
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="py-1">Unter 1 Jahr</td>
+                  <td className="py-1">kostenfrei</td>
+                  <td className="py-1">kostenfrei</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Ermäßigungen</h4>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600">
+                <th className="py-1">Tarif</th>
+                <th className="py-1">Details</th>
+                <th className="py-1">Rabatt</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-900">
+              <tr className="border-t border-gray-200">
+                <td className="py-1">Familientageskarte Wasserwelt (ohne Sauna)</td>
+                <td className="py-1">2 Erwachsene + min. 1 Kind</td>
+                <td className="py-1">20%</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-1">Menschen mit Behinderung ab GdB 50</td>
+                <td className="py-1">Nur Wasserwelt</td>
+                <td className="py-1">20%</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-1">Geldwertkarte ab 250€</td>
+                <td className="py-1">Nur an Kasse</td>
+                <td className="py-1">5%</td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-1">Geldwertkarte ab 500€</td>
+                <td className="py-1">Nur an Kasse</td>
+                <td className="py-1">10%</td>
+              </tr>
+            </tbody>
+          </table>
+          <ul className="mt-3 text-xs text-gray-600 space-y-1">
+            <li>- Keine Kumulierung von Rabatten; gilt für Familien, Alleinerziehende, gleichgeschlechtliche Paare.</li>
+            <li>- Kinder in Sauna nur mit Erwachsenen.</li>
+            <li>- Gutscheine 3 Jahre gültig.</li>
+            <li>- Geburtstagskinder: freier Eintritt Wasserwelt am Geburtstag.</li>
+          </ul>
+        </div>
+      </div>
+    )
+
+    const currentStepData = steps[currentStep]
 
     const handleNameSubmit = (e: React.FormEvent) => {
       e.preventDefault()
@@ -961,7 +1696,7 @@ export default function Schulungen() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{schulung.title}</h2>
-                  <p className="text-gray-600">Referent: {schulung.instructor}</p>
+                  <p className="text-gray-600">Referent: {displayReferent}</p>
                 </div>
               </div>
               <button 
@@ -1029,32 +1764,143 @@ export default function Schulungen() {
                 </div>
 
                 {/* Step Indicator */}
-                <div className="flex justify-between">
-                  {steps.map((step, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        index <= currentStep 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <span className="text-xs text-gray-600 mt-1">{step.title}</span>
-                    </div>
-                  ))}
+                <div className="flex justify-between gap-6">
+                  {steps
+                    .slice(
+                      Math.max(0, Math.min(currentStep - 2, Math.max(0, steps.length - 5))),
+                      Math.max(0, Math.min(currentStep - 2, Math.max(0, steps.length - 5))) + 5
+                    )
+                    .map((step, idx) => {
+                      const windowStart = Math.max(0, Math.min(currentStep - 2, Math.max(0, steps.length - 5)))
+                      const absoluteIndex = windowStart + idx
+                      return (
+                        <div key={absoluteIndex} className="flex flex-col items-center flex-1 min-w-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            absoluteIndex <= currentStep 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {absoluteIndex + 1}
+                          </div>
+                          <span className="text-[11px] leading-tight text-gray-700 mt-2 text-center break-words min-h-[28px]">
+                            {step.title}
+                          </span>
+                        </div>
+                      )
+                    })}
                 </div>
 
                 {/* Content */}
                 <div className="bg-gray-50 p-6 rounded-lg">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                    {steps[currentStep].title}
+                    {currentStepData.title}
                   </h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    {steps[currentStep].content}
-                  </p>
+                  {currentStepData.type === 'content' && (
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {currentStepData.content}
+                    </div>
+                  )}
+
+                  {currentStepData.type === 'content-sections' && (
+                    <div className="space-y-5 text-gray-700">
+                      {currentStepData.intro ? (
+                        <p className="leading-relaxed">{currentStepData.intro}</p>
+                      ) : null}
+
+                      {currentStepData.sections.map((section) => (
+                        <div key={section.heading} className="space-y-2">
+                          <div className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                            {section.heading}
+                          </div>
+                          {section.body.map((line, idx) => (
+                            <p key={`${section.heading}-${idx}`} className="leading-relaxed">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      ))}
+
+                      {currentStepData.linkUrl && currentStepData.linkText ? (
+                        <div className="pt-1">
+                          <a
+                            href={currentStepData.linkUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center text-blue-700 font-semibold hover:text-blue-800"
+                          >
+                            {currentStepData.linkText}
+                          </a>
+                        </div>
+                      ) : null}
+
+                      {currentStepData.footer ? (
+                        <p className="leading-relaxed">{currentStepData.footer}</p>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {currentStepData.type === 'opening-hours' && renderOpeningHours()}
+
+                  {currentStepData.type === 'quiz' && (
+                    <div className="space-y-5">
+                      {currentStepData.content && (
+                        <div className="text-gray-700 whitespace-pre-wrap">
+                          {currentStepData.content}
+                        </div>
+                      )}
+                      {currentStepData.questions.map((question, qIndex) => {
+                        const answerKey = `${currentStep}_${qIndex}`
+                        const selected = quizAnswers[answerKey]
+                        const isCorrect = selected === question.correctIndex
+                        return (
+                          <div key={answerKey} className="bg-white border border-gray-200 rounded-lg p-4">
+                            <div className="text-sm font-semibold text-gray-900 mb-3">
+                              {qIndex + 1}. {question.question}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {question.options.map((option, optionIndex) => {
+                                const isSelected = selected === optionIndex
+                                return (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => setQuizAnswers(prev => ({ ...prev, [answerKey]: optionIndex }))}
+                                    className={`px-3 py-2 rounded-lg text-sm border text-left transition-colors ${
+                                      isSelected
+                                        ? isCorrect
+                                          ? 'bg-green-100 border-green-300 text-green-900'
+                                          : 'bg-red-100 border-red-300 text-red-900'
+                                        : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    {option}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {selected !== undefined && (
+                              <div className={`mt-3 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                {isCorrect ? '✅ Richtig' : '❌ Falsch'} – {question.explanation}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {imageMap[currentStepData.title]?.length ? (
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {imageMap[currentStepData.title].map((image) => (
+                        <div key={image.src} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                          <img src={image.src} alt={image.alt} className="w-full h-auto object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
 
                   {/* Materialien anzeigen */}
-                  {currentStep === 2 && (
+                  {currentStepData.type === 'materials' && (
                     <div className="mt-6 space-y-4">
                       {schulung.pdfUrl ? (
                         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
@@ -1111,7 +1957,7 @@ export default function Schulungen() {
                   )}
 
                   {/* Bestätigungskästchen im letzten Schritt */}
-                  {currentStep === 3 && (
+                  {currentStep === steps.length - 1 && (
                     <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-start space-x-3">
                         <input
@@ -1196,7 +2042,7 @@ export default function Schulungen() {
           </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{schulung.title}</h2>
-                <p className="text-gray-600">Referent: {schulung.instructor}</p>
+                <p className="text-gray-600">Referent: {getDisplayInstructor(schulung.title, schulung.instructor)}</p>
           </div>
         </div>
             <button 
@@ -1587,7 +2433,7 @@ export default function Schulungen() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {completed.instructor}
+                            {getDisplayInstructor(completed.schulungTitle, completed.instructor)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {completed.completedDate}

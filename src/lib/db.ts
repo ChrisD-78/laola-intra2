@@ -528,6 +528,16 @@ export async function insertTraining(training: Omit<TrainingRecord, 'id' | 'crea
   return response.json()
 }
 
+export async function updateTrainingInstructor(id: string, instructor: string) {
+  const response = await fetch('/api/trainings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, instructor })
+  })
+  if (!response.ok) throw new Error('Failed to update training')
+  return response.json()
+}
+
 export async function deleteTrainingById(id: string) {
   const response = await fetch(`/api/trainings?id=${id}`, {
     method: 'DELETE'

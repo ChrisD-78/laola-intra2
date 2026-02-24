@@ -73,6 +73,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH update training (z. B. Referent korrigieren)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, instructor } = body
+    if (!id || instructor === undefined) {
+      return NextResponse.json({ error: 'ID and instructor are required' }, { status: 400 })
+    }
+    const result = await sql`
+      UPDATE trainings SET instructor = ${instructor}, updated_at = now() WHERE id = ${id}
+      RETURNING *
+    `
+    if (!result?.length) {
+      return NextResponse.json({ error: 'Training not found' }, { status: 404 })
+    }
+    return NextResponse.json(result[0])
+  } catch (error) {
+    console.error('Failed to update training:', error)
+    return NextResponse.json(
+      { error: 'Failed to update training' },
+      { status: 500 }
+    )
+  }
+}
+
 // DELETE training
 export async function DELETE(request: NextRequest) {
   try {

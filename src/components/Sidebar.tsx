@@ -15,7 +15,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleAIAgentClick = () => {
-    window.location.href = '/ai-agent'
+    window.open('https://cdagent.netlify.app', '_blank', 'noopener,noreferrer')
     setIsMobileMenuOpen(false)
   }
 
