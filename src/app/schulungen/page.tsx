@@ -5,18 +5,18 @@ import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, upda
 import { useAuth } from '@/components/AuthProvider'
 import QuizOverview from '@/components/QuizOverview'
 
-const ERSTUNTERWEISUNG_26_TITLE = 'Erstunterweisung 26'
+const ERSTUNTERWEISUNG_2026_TITLE = 'Erstunterweisung 2026'
 
-/** Referent für „Erstunterweisung 26“ / „Stadtbadholding“ immer Christof Drost. */
+/** Referent für „Erstunterweisung 2026“ / „Stadtbadholding“ immer Christof Drost. */
 function getDisplayInstructor(title: string, instructor: string): string {
   const t = (title || '').trim()
   const i = (instructor || '').trim()
-  const isErst26 =
-    t === ERSTUNTERWEISUNG_26_TITLE ||
-    t.startsWith('Erstunterweisung 26') ||
-    (t.includes('Erstunterweisung') && t.includes('26')) ||
+  const isErst2026 =
+    t === ERSTUNTERWEISUNG_2026_TITLE ||
+    t.startsWith('Erstunterweisung 2026') ||
+    (t.includes('Erstunterweisung') && t.includes('2026')) ||
     i.includes('Stadtbadholding')
-  return isErst26 ? 'Christof Drost' : i
+  return isErst2026 ? 'Christof Drost' : i
 }
 
 type SchulungStep =
@@ -528,7 +528,7 @@ export default function Schulungen() {
         // Referent in DB korrigieren, falls noch „Stadtbadholding Landau“ steht
         const erst26 = data.find(
           (t: { title?: string; instructor?: string }) =>
-            (t.title === ERSTUNTERWEISUNG_26_TITLE || (t.title && t.title.includes('Erstunterweisung') && t.title.includes('26'))) &&
+            (t.title === ERSTUNTERWEISUNG_2026_TITLE || (t.title && t.title.includes('Erstunterweisung') && t.title.includes('2026'))) &&
             t.instructor !== 'Christof Drost' &&
             t.id
         )
@@ -542,11 +542,11 @@ export default function Schulungen() {
           }
         }
 
-        if (!hasSeededErstunterweisung.current && !mapped.some((t) => t.title === ERSTUNTERWEISUNG_26_TITLE)) {
+        if (!hasSeededErstunterweisung.current && !mapped.some((t) => t.title === ERSTUNTERWEISUNG_2026_TITLE)) {
           hasSeededErstunterweisung.current = true
           try {
             await insertTraining({
-              title: ERSTUNTERWEISUNG_26_TITLE,
+              title: ERSTUNTERWEISUNG_2026_TITLE,
               description: 'Moderne Erstunterweisung mit interaktiven Quizfragen und praxisnahen Inhalten.',
               category: 'Unterweisungen',
               duration: 'ca. 60 Min.',
@@ -558,7 +558,7 @@ export default function Schulungen() {
             const refreshed = await getTrainings()
             setSchulungen(refreshed.map(mapTraining))
           } catch (seedError) {
-            console.error('Failed to seed Erstunterweisung 26:', seedError)
+            console.error('Failed to seed Erstunterweisung 2026:', seedError)
           }
         }
       } catch (error) {
@@ -1045,8 +1045,8 @@ export default function Schulungen() {
     const rawReferent = schulung.instructor ?? ''
     const cardReferent =
       rawReferent.includes('Stadtbadholding') ||
-      schulung.title === ERSTUNTERWEISUNG_26_TITLE ||
-      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('26'))
+      schulung.title === ERSTUNTERWEISUNG_2026_TITLE ||
+      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('2026'))
         ? 'Christof Drost'
         : rawReferent
     return (
@@ -1365,12 +1365,12 @@ export default function Schulungen() {
     const [confirmationChecked, setConfirmationChecked] = useState(false)
     const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
 
-    const isErstunterweisung = schulung.title === ERSTUNTERWEISUNG_26_TITLE
+    const isErstunterweisung = schulung.title === ERSTUNTERWEISUNG_2026_TITLE
     const rawRef = schulung.instructor ?? ''
     const displayReferent =
       rawRef.includes('Stadtbadholding') ||
       isErstunterweisung ||
-      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('26'))
+      (typeof schulung.title === 'string' && schulung.title.includes('Erstunterweisung') && schulung.title.includes('2026'))
         ? 'Christof Drost'
         : rawRef
     const defaultSteps: SchulungStep[] = [
