@@ -139,6 +139,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
     bemerkungen: '',
     durchgefuehrtVon: currentUser || 'Unbekannt'
   })
+  const [pendingMeasurements, setPendingMeasurements] = useState<WassermessungData[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [historyRange, setHistoryRange] = useState<HistoryRange>('30')
   const [historyBecken, setHistoryBecken] = useState('')
@@ -219,9 +220,72 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
     return Array.from(unique)
   }, [historyRows])
 
+  const validateMeasurement = (data: WassermessungData) => {
+    return (
+      data.becken.trim() &&
+      data.phWert.trim() &&
+      data.chlorWert.trim() &&
+      data.chlorWertGesamt.trim() &&
+      data.chlorWertGebunden.trim() &&
+      data.redox.trim() &&
+      data.temperatur.trim() &&
+      data.datum.trim() &&
+      data.zeit.trim() &&
+      data.durchgefuehrtVon.trim()
+    )
+  }
+
+  const resetMeasurementFields = () => {
+    setFormData((prev) => ({
+      ...prev,
+      becken: '',
+      phWert: '',
+      chlorWert: '',
+      chlorWertGesamt: '',
+      chlorWertGebunden: '',
+      redox: '',
+      temperatur: '',
+      bemerkungen: ''
+    }))
+  }
+
+  const handleAddBecken = () => {
+    if (!validateMeasurement(formData)) {
+      alert('Bitte alle Pflichtfelder für das Becken ausfüllen, bevor Sie es hinzufügen.')
+      return
+    }
+    setPendingMeasurements((prev) => [...prev, formData])
+    resetMeasurementFields()
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    const entries: WassermessungData[] = [...pendingMeasurements]
+
+    const hasCurrentValues =
+      formData.becken.trim() ||
+      formData.phWert.trim() ||
+      formData.chlorWert.trim() ||
+      formData.chlorWertGesamt.trim() ||
+      formData.chlorWertGebunden.trim() ||
+      formData.redox.trim() ||
+      formData.temperatur.trim()
+
+    if (hasCurrentValues) {
+      if (!validateMeasurement(formData)) {
+        alert('Bitte alle Pflichtfelder für das aktuelle Becken ausfüllen oder die Felder leeren.')
+        return
+      }
+      entries.push(formData)
+    }
+
+    if (entries.length === 0) {
+      alert('Bitte mindestens ein Becken erfassen, bevor Sie die Messung speichern.')
+      return
+    }
+
+    entries.forEach((entry) => onSubmit(entry))
+    setPendingMeasurements([])
     onClose()
     // Reset form
     setFormData({
@@ -242,6 +306,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
   const handleClose = () => {
     onClose()
     setShowHistory(false)
+    setPendingMeasurements([])
     // Reset form
     setFormData({
       becken: '',
@@ -341,7 +406,8 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
           </div>
           
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            {/* Kopf-Daten */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="becken" className="block text-sm font-medium text-gray-900 mb-2">
@@ -411,127 +477,135 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                   required
                 />
               </div>
-              
-              <div>
-                <label htmlFor="phWert" className="block text-sm font-medium text-gray-900 mb-2">
-                  pH-Wert *
-                </label>
-                <input
-                  type="number"
-                  id="phWert"
-                  step="0.01"
-                  min="6.0"
-                  max="8.5"
-                  value={formData.phWert}
-                  onChange={(e) => setFormData({...formData, phWert: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="z.B. 7.2"
-                  required
-                />
+            </div>
+
+            {/* Messwerte in Tabellen-Layout nebeneinander */}
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+              <div className="text-xs font-medium text-gray-600 mb-3">
+                Messwerte (aktuelles Becken)
               </div>
-              
-              <div>
-                <label htmlFor="chlorWert" className="block text-sm font-medium text-gray-900 mb-2">
-                  Chlor-Wert (mg/l) *
-                </label>
-                <input
-                  type="number"
-                  id="chlorWert"
-                  step="0.01"
-                  min="0.0"
-                  max="3.0"
-                  value={formData.chlorWert}
-                  onChange={(e) => {
-                    const nextFree = e.target.value
-                    setFormData({
-                      ...formData,
-                      chlorWert: nextFree,
-                      chlorWertGebunden: computeBoundChlor(formData.chlorWertGesamt, nextFree)
-                    })
-                  }}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${Number.isFinite(freeChlorValue) ? (isFreeChlorGreen ? 'text-green-600' : 'text-gray-900') : 'text-gray-900'}`}
-                  placeholder="z.B. 0.8"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="chlorWertGesamt" className="block text-sm font-medium text-gray-900 mb-2">
-                  Chlor-Wert-Gesamt (mg/l) *
-                </label>
-                <input
-                  type="number"
-                  id="chlorWertGesamt"
-                  step="0.01"
-                  min="0.0"
-                  max="5.0"
-                  value={formData.chlorWertGesamt}
-                  onChange={(e) => {
-                    const nextTotal = e.target.value
-                    setFormData({
-                      ...formData,
-                      chlorWertGesamt: nextTotal,
-                      chlorWertGebunden: computeBoundChlor(nextTotal, formData.chlorWert)
-                    })
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="z.B. 1.2"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="chlorWertGebunden" className="block text-sm font-medium text-gray-900 mb-2">
-                  Chlor-Wert-Gebunden (mg/l) *
-                </label>
-                <input
-                  type="number"
-                  id="chlorWertGebunden"
-                  step="0.01"
-                  min="0.0"
-                  max="2.0"
-                  value={formData.chlorWertGebunden}
-                  readOnly
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isBoundChlorHigh ? 'text-red-600' : 'text-gray-900'}`}
-                  placeholder="z.B. 0.4"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="redox" className="block text-sm font-medium text-gray-900 mb-2">
-                  Redox (mV) *
-                </label>
-                <input
-                  type="number"
-                  id="redox"
-                  step="1"
-                  min="0"
-                  max="1000"
-                  value={formData.redox}
-                  onChange={(e) => setFormData({...formData, redox: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="z.B. 650"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="temperatur" className="block text-sm font-medium text-gray-900 mb-2">
-                  Wassertemperatur (°C) *
-                </label>
-                <input
-                  type="number"
-                  id="temperatur"
-                  step="0.1"
-                  min="9"
-                  max="40"
-                  value={formData.temperatur}
-                  onChange={(e) => setFormData({...formData, temperatur: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="z.B. 28.5"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="phWert" className="block text-xs font-medium text-gray-900 mb-1">
+                    pH-Wert *
+                  </label>
+                  <input
+                    type="number"
+                    id="phWert"
+                    step="0.01"
+                    min="6.0"
+                    max="8.5"
+                    value={formData.phWert}
+                    onChange={(e) => setFormData({...formData, phWert: e.target.value})}
+                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="z.B. 7.2"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="chlorWert" className="block text-xs font-medium text-gray-900 mb-1">
+                    Chlor-Wert (mg/l) *
+                  </label>
+                  <input
+                    type="number"
+                    id="chlorWert"
+                    step="0.01"
+                    min="0.0"
+                    max="3.0"
+                    value={formData.chlorWert}
+                    onChange={(e) => {
+                      const nextFree = e.target.value
+                      setFormData({
+                        ...formData,
+                        chlorWert: nextFree,
+                        chlorWertGebunden: computeBoundChlor(formData.chlorWertGesamt, nextFree)
+                      })
+                    }}
+                    className={`w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${Number.isFinite(freeChlorValue) ? (isFreeChlorGreen ? 'text-green-600' : 'text-gray-900') : 'text-gray-900'}`}
+                    placeholder="z.B. 0.8"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="chlorWertGesamt" className="block text-xs font-medium text-gray-900 mb-1">
+                    Chlor-Wert-Gesamt (mg/l) *
+                  </label>
+                  <input
+                    type="number"
+                    id="chlorWertGesamt"
+                    step="0.01"
+                    min="0.0"
+                    max="5.0"
+                    value={formData.chlorWertGesamt}
+                    onChange={(e) => {
+                      const nextTotal = e.target.value
+                      setFormData({
+                        ...formData,
+                        chlorWertGesamt: nextTotal,
+                        chlorWertGebunden: computeBoundChlor(nextTotal, formData.chlorWert)
+                      })
+                    }}
+                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="z.B. 1.2"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="chlorWertGebunden" className="block text-xs font-medium text-gray-900 mb-1">
+                    Chlor-Wert-Gebunden (mg/l) *
+                  </label>
+                  <input
+                    type="number"
+                    id="chlorWertGebunden"
+                    step="0.01"
+                    min="0.0"
+                    max="2.0"
+                    value={formData.chlorWertGebunden}
+                    readOnly
+                    className={`w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${isBoundChlorHigh ? 'text-red-600' : 'text-gray-900'}`}
+                    placeholder="z.B. 0.4"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="redox" className="block text-xs font-medium text-gray-900 mb-1">
+                    Redox (mV) *
+                  </label>
+                  <input
+                    type="number"
+                    id="redox"
+                    step="1"
+                    min="0"
+                    max="1000"
+                    value={formData.redox}
+                    onChange={(e) => setFormData({...formData, redox: e.target.value})}
+                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="z.B. 650"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="temperatur" className="block text-xs font-medium text-gray-900 mb-1">
+                    Wassertemperatur (°C) *
+                  </label>
+                  <input
+                    type="number"
+                    id="temperatur"
+                    step="0.1"
+                    min="9"
+                    max="40"
+                    value={formData.temperatur}
+                    onChange={(e) => setFormData({...formData, temperatur: e.target.value})}
+                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="z.B. 28.5"
+                    required
+                  />
+                </div>
               </div>
             </div>
             
@@ -549,21 +623,69 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
               />
             </div>
             
-            {/* Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Messung speichern
-              </button>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-              >
-                Abbrechen
-              </button>
+            {/* Pending measurements Übersicht + Buttons */}
+            <div className="space-y-4 pt-4">
+              {pendingMeasurements.length > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-3">
+                  <div className="text-xs font-semibold text-blue-800 mb-2">
+                    Bereits erfasste Becken (werden mit gespeichert):
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-[11px] text-gray-800">
+                      <thead>
+                        <tr className="bg-blue-100 text-blue-900">
+                          <th className="px-2 py-1 text-left font-semibold">Becken</th>
+                          <th className="px-2 py-1 text-left font-semibold">pH</th>
+                          <th className="px-2 py-1 text-left font-semibold">Cl-frei</th>
+                          <th className="px-2 py-1 text-left font-semibold">Cl-gesamt</th>
+                          <th className="px-2 py-1 text-left font-semibold">Cl-gebunden</th>
+                          <th className="px-2 py-1 text-left font-semibold">Redox</th>
+                          <th className="px-2 py-1 text-left font-semibold">Temp.</th>
+                          <th className="px-2 py-1 text-left font-semibold">Datum</th>
+                          <th className="px-2 py-1 text-left font-semibold">Zeit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingMeasurements.map((m, idx) => (
+                          <tr key={`${m.becken}-${m.datum}-${m.zeit}-${idx}`} className="border-t border-blue-100">
+                            <td className="px-2 py-1">{m.becken}</td>
+                            <td className="px-2 py-1">{m.phWert}</td>
+                            <td className="px-2 py-1">{m.chlorWert}</td>
+                            <td className="px-2 py-1">{m.chlorWertGesamt}</td>
+                            <td className="px-2 py-1">{m.chlorWertGebunden}</td>
+                            <td className="px-2 py-1">{m.redox}</td>
+                            <td className="px-2 py-1">{m.temperatur}</td>
+                            <td className="px-2 py-1 whitespace-nowrap">{m.datum}</td>
+                            <td className="px-2 py-1 whitespace-nowrap">{m.zeit}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddBecken}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                >
+                  Weiteres Becken hinzufügen
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Messung speichern
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  Abbrechen
+                </button>
+              </div>
             </div>
             <div className="pt-2">
               <button

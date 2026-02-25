@@ -40,7 +40,7 @@ Wir haben sie mit aktuellen Best Practices aus DGUV-Regeln und Branchenempfehlun
   {
     title: 'Unternehmensüberblick',
     type: 'content',
-    content: `Die Stadtbadholding Landau umfasst Bereiche wie Freizeitbad LA OLA, Jugendstil-Festhalle, Jugendarbeit, Messestandort und mehr.
+    content: `Die Stadtholding Landau umfasst Bereiche wie Freizeitbad LA OLA, Freibad Landau, Jugendstil-Festhalle, Altes Kaufhaus, Messegelände, Kindergärten, Stadtleben Landau.
 
 Mit 49% Beteiligung an der SH-Service GmbH (Soziales und Kindergärten) und Energieversorgung Südwest AG fördern wir ein breites Spektrum an Dienstleistungen.
 
@@ -498,6 +498,11 @@ export default function Schulungen() {
   })
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'title' | 'category'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [showPdfExportModal, setShowPdfExportModal] = useState(false)
+  const [pdfExportSort, setPdfExportSort] = useState<'title' | 'participant' | 'category'>('title')
+  const [pdfExportTitle, setPdfExportTitle] = useState('')
+  const [pdfExportDateFrom, setPdfExportDateFrom] = useState('')
+  const [pdfExportDateTo, setPdfExportDateTo] = useState('')
   const [loading, setLoading] = useState(true)
   const [quizCount, setQuizCount] = useState(0)
   const hasSeededErstunterweisung = useRef(false)
@@ -936,8 +941,61 @@ export default function Schulungen() {
     }
   }
 
-  const handleExportOverviewPdf = () => {
-    const rows = getFilteredOverviewSchulungen().map(item => {
+  const getOverviewForPdfExport = (sortByPdf: 'title' | 'participant' | 'category', dateFrom: string, dateTo: string, titleFilter: string) => {
+    const overviewRows = [...completedSchulungen, ...unterweisungOverview]
+
+    const filtered = overviewRows.filter(completed => {
+      // Gleiche Filter wie in der Tabelle (Kategorie, Teilnehmer, Titel, Referent)
+      const matchesCategory = !overviewFilters.category || completed.category === overviewFilters.category
+      const matchesParticipant = !overviewFilters.instructor || 
+        `${completed.participantName} ${completed.participantSurname}`.toLowerCase().includes(overviewFilters.instructor.toLowerCase())
+      const matchesTitleTable = !overviewFilters.title || 
+        completed.schulungTitle.toLowerCase().includes(overviewFilters.title.toLowerCase())
+      const matchesInstructor = !overviewFilters.instructorName || 
+        completed.instructor.toLowerCase().includes(overviewFilters.instructorName.toLowerCase())
+
+      // Zeitraum nur aus den PDF-Einstellungen (Modal)
+      const completedDate = completed.completedDate || ''
+      const matchesFrom = !dateFrom || completedDate >= dateFrom
+      const matchesTo = !dateTo || completedDate <= dateTo
+      const matchesTitlePdf = !titleFilter || completed.schulungTitle === titleFilter
+
+      return matchesCategory && matchesParticipant && matchesTitleTable && matchesInstructor && matchesFrom && matchesTo && matchesTitlePdf
+    })
+
+    return filtered.sort((a, b) => {
+      let comparison = 0
+      switch (sortByPdf) {
+        case 'title': {
+          const tA = (a.schulungTitle || '').toLowerCase()
+          const tB = (b.schulungTitle || '').toLowerCase()
+          comparison = tA.localeCompare(tB, 'de-DE')
+          break
+        }
+        case 'participant': {
+          // Nach Teilnehmer-Name sortieren (Vorname Nachname)
+          const nameA = `${a.participantName || ''} ${a.participantSurname || ''}`.trim().toLowerCase()
+          const nameB = `${b.participantName || ''} ${b.participantSurname || ''}`.trim().toLowerCase()
+          comparison = nameA.localeCompare(nameB, 'de-DE')
+          break
+        }
+        case 'category': {
+          const cA = (a.category || '').toLowerCase()
+          const cB = (b.category || '').toLowerCase()
+          comparison = cA.localeCompare(cB, 'de-DE')
+          break
+        }
+      }
+      return comparison
+    })
+  }
+
+  const handleExportOverviewPdf = (sortByPdf?: 'title' | 'participant' | 'category', dateFrom?: string, dateTo?: string, titleFilter?: string) => {
+    const items = sortByPdf !== undefined
+      ? getOverviewForPdfExport(sortByPdf, dateFrom || '', dateTo || '', titleFilter || '')
+      : getFilteredOverviewSchulungen()
+
+    const rows = items.map(item => {
       const participant = item.participantSurname
         ? `${item.participantName} ${item.participantSurname}`
         : item.participantName
@@ -950,6 +1008,16 @@ export default function Schulungen() {
       </tr>`
     }).join('')
 
+    const zeitraumText = (dateFrom || dateTo)
+      ? `Zeitraum: ${dateFrom || '…'} bis ${dateTo || '…'}`
+      : ''
+    const sortLabel = sortByPdf === 'participant'
+      ? 'Sortierung: Teilnehmer'
+      : sortByPdf === 'category'
+        ? 'Sortierung: Kategorie'
+        : sortByPdf === 'title'
+          ? 'Sortierung: Schulung'
+          : ''
     const html = `<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"/>
       <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
       <title>Schulungsübersicht – Export</title>
@@ -962,8 +1030,12 @@ export default function Schulungen() {
         tbody td{padding:8px;border:1px solid #e5e7eb}
       </style>
     </head><body>
+      <div style=\"margin-bottom:16px;display:flex;align-items:center;gap:8px;\">
+        <img src=\"/stadtholding-logo.png\" alt=\"Stadtholding Landau\" style=\"height:40px;\" />
+        <span style=\"font-size:14px;color:#6b7280;\">Stadtholding Landau</span>
+      </div>
       <h1>Schulungsübersicht – Export</h1>
-      <div class=\"meta\">Generiert am ${new Date().toLocaleString('de-DE')}</div>
+      <div class=\"meta\">Generiert am ${new Date().toLocaleString('de-DE')}${zeitraumText ? ` · ${zeitraumText}` : ''}${sortLabel ? ` · ${sortLabel}` : ''}</div>
       <table>
         <thead>
           <tr>
@@ -985,6 +1057,11 @@ export default function Schulungen() {
       w.document.write(html)
       w.document.close()
     }
+  }
+
+  const handleConfirmPdfExport = () => {
+    handleExportOverviewPdf(pdfExportSort, pdfExportDateFrom, pdfExportDateTo, pdfExportTitle)
+    setShowPdfExportModal(false)
   }
 
   const getFilteredOverviewSchulungen = () => {
@@ -1646,7 +1723,7 @@ export default function Schulungen() {
         setIsCompleted(true)
         // Save completed training to Supabase
         try {
-          insertCompletedTraining({
+          await insertCompletedTraining({
             training_id: schulung.id,
             training_title: schulung.title,
             participant_name: participantName,
@@ -1658,8 +1735,6 @@ export default function Schulungen() {
             duration: schulung.duration,
             completed_by: `${participantName} ${participantSurname}`
           })
-          
-          // Update local state
           const newCompletedTraining: CompletedSchulung = {
             id: Date.now().toString(),
             schulungId: schulung.id,
@@ -1673,6 +1748,7 @@ export default function Schulungen() {
             duration: schulung.duration
           }
           setCompletedSchulungen(prev => [newCompletedTraining, ...prev])
+          setShowSchulungViewer(null)
         } catch (error) {
           console.error('Error saving completed training:', error)
         }
@@ -2315,7 +2391,7 @@ export default function Schulungen() {
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                   <div className="text-sm text-gray-600">Gefilterte Ergebnisse exportieren</div>
                   <button
-                    onClick={handleExportOverviewPdf}
+                    onClick={() => setShowPdfExportModal(true)}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
                   >
                     ⬇️ Übersicht als PDF
@@ -2471,6 +2547,83 @@ export default function Schulungen() {
                   </div>
                 )}
               </div>
+
+              {/* Modal: PDF-Export – Sortierung, Zeitraum & einzelne Schulung */}
+              {showPdfExportModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Übersicht als PDF</h3>
+                    <p className="text-sm text-gray-600 mb-4">Sortierung, Zeitraum und ggf. einzelne Schulung für den PDF-Export wählen.</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nur eine Schulung exportieren (optional)</label>
+                        <select
+                          value={pdfExportTitle}
+                          onChange={(e) => setPdfExportTitle(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                        >
+                          <option value="">Alle Schulungen</option>
+                          {Array.from(new Set([...completedSchulungen, ...unterweisungOverview].map(c => c.schulungTitle)))
+                            .sort((a, b) => a.localeCompare(b, 'de-DE'))
+                            .map(title => (
+                              <option key={title} value={title}>{title}</option>
+                            ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Sortierung nach</label>
+                        <select
+                          value={pdfExportSort}
+                          onChange={(e) => setPdfExportSort(e.target.value as 'title' | 'participant' | 'category')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                        >
+                          <option value="title">Schulung</option>
+                          <option value="participant">Teilnehmer</option>
+                          <option value="category">Kategorie</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Zeitraum (Datum)</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Von</label>
+                            <input
+                              type="date"
+                              value={pdfExportDateFrom}
+                              onChange={(e) => setPdfExportDateFrom(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Bis</label>
+                            <input
+                              type="date"
+                              value={pdfExportDateTo}
+                              onChange={(e) => setPdfExportDateTo(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Leer = alle Daten</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-6">
+                      <button
+                        onClick={() => setShowPdfExportModal(false)}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Abbrechen
+                      </button>
+                      <button
+                        onClick={handleConfirmPdfExport}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        PDF erstellen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Schulungsnachweise Zusatz-Tabelle */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
