@@ -1716,7 +1716,7 @@ export default function Schulungen() {
       }
     }
 
-    const handleNext = () => {
+    const handleNext = async () => {
       if (currentStep < steps.length - 1) {
         setCurrentStep(currentStep + 1)
       } else {
