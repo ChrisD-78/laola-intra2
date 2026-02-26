@@ -124,30 +124,59 @@ const Gauge = ({
   )
 }
 
+const BETRIEBSBEGINN_BECKEN = [
+  'Schwimmerbecken',
+  'Lehrschwimmbecken',
+  'Wellenbecken',
+  'Rutschenbecken',
+  'Kinderbecken 1',
+  'Kinderbecken 2',
+  'Whirlpool',
+  'Thermalbecken'
+] as const
+
+const HALLENMESSUNG_BECKEN = [
+  'Sauna Whirlpool',
+  'Sauna Außenbecken',
+  'Sauna Außenbecken warm',
+  'Sauna Außenbecken kalt'
+] as const
+
+type BeckenRowValues = {
+  temperatur: string
+  phWert: string
+  chlorWert: string
+  chlorWertGesamt: string
+  redox: string
+}
+
+const emptyRow = (): BeckenRowValues => ({
+  temperatur: '',
+  phWert: '',
+  chlorWert: '',
+  chlorWertGesamt: '',
+  redox: ''
+})
+
 const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: WassermessungFormProps) => {
   const { currentUser } = useAuth()
-  const [formData, setFormData] = useState<WassermessungData>({
-    becken: '',
-    phWert: '',
-    chlorWert: '',
-    chlorWertGesamt: '',
-    chlorWertGebunden: '',
-    redox: '',
-    temperatur: '',
-    datum: new Date().toISOString().split('T')[0],
-    zeit: new Date().toTimeString().slice(0, 5),
-    bemerkungen: '',
-    durchgefuehrtVon: currentUser || 'Unbekannt'
+  const [datum, setDatum] = useState(new Date().toISOString().split('T')[0])
+  const [zeit, setZeit] = useState(new Date().toTimeString().slice(0, 5))
+  const [durchgefuehrtVon, setDurchgefuehrtVon] = useState(currentUser || 'Unbekannt')
+  const [bemerkungen, setBemerkungen] = useState('')
+  const [betriebsbeginnRows, setBetriebsbeginnRows] = useState<Record<string, BeckenRowValues>>(() => {
+    const o: Record<string, BeckenRowValues> = {}
+    BETRIEBSBEGINN_BECKEN.forEach((b) => { o[b] = emptyRow() })
+    return o
   })
-  const [pendingMeasurements, setPendingMeasurements] = useState<WassermessungData[]>([])
+  const [hallenmessungRows, setHallenmessungRows] = useState<Record<string, BeckenRowValues>>(() => {
+    const o: Record<string, BeckenRowValues> = {}
+    HALLENMESSUNG_BECKEN.forEach((b) => { o[b] = emptyRow() })
+    return o
+  })
   const [showHistory, setShowHistory] = useState(false)
   const [historyRange, setHistoryRange] = useState<HistoryRange>('30')
   const [historyBecken, setHistoryBecken] = useState('')
-
-  const freeChlorValue = Number.parseFloat(formData.chlorWert)
-  const boundChlorValue = Number.parseFloat(formData.chlorWertGebunden)
-  const isFreeChlorGreen = isFreeChlorInRange(formData.becken, freeChlorValue)
-  const isBoundChlorHigh = Number.isFinite(boundChlorValue) && boundChlorValue > 0.2
 
   const computeBoundChlor = (totalRaw: string, freeRaw: string) => {
     const total = Number.parseFloat(totalRaw)
@@ -220,117 +249,180 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
     return Array.from(unique)
   }, [historyRows])
 
-  const validateMeasurement = (data: WassermessungData) => {
-    return (
-      data.becken.trim() &&
-      data.phWert.trim() &&
-      data.chlorWert.trim() &&
-      data.chlorWertGesamt.trim() &&
-      data.chlorWertGebunden.trim() &&
-      data.redox.trim() &&
-      data.temperatur.trim() &&
-      data.datum.trim() &&
-      data.zeit.trim() &&
-      data.durchgefuehrtVon.trim()
-    )
-  }
-
-  const resetMeasurementFields = () => {
-    setFormData((prev) => ({
-      ...prev,
-      becken: '',
-      phWert: '',
-      chlorWert: '',
-      chlorWertGesamt: '',
-      chlorWertGebunden: '',
-      redox: '',
-      temperatur: '',
-      bemerkungen: ''
-    }))
-  }
-
-  const handleAddBecken = () => {
-    if (!validateMeasurement(formData)) {
-      alert('Bitte alle Pflichtfelder für das Becken ausfüllen, bevor Sie es hinzufügen.')
-      return
+  const rowToEntry = (becken: string, row: BeckenRowValues): WassermessungData => {
+    const chlorGebunden = computeBoundChlor(row.chlorWertGesamt, row.chlorWert)
+    return {
+      becken,
+      phWert: row.phWert,
+      chlorWert: row.chlorWert,
+      chlorWertGesamt: row.chlorWertGesamt,
+      chlorWertGebunden: chlorGebunden,
+      redox: row.redox,
+      temperatur: row.temperatur,
+      datum,
+      zeit,
+      bemerkungen,
+      durchgefuehrtVon
     }
-    setPendingMeasurements((prev) => [...prev, formData])
-    resetMeasurementFields()
   }
+
+  const isRowFilled = (row: BeckenRowValues) =>
+    row.temperatur.trim() !== '' ||
+    row.phWert.trim() !== '' ||
+    row.chlorWert.trim() !== '' ||
+    row.chlorWertGesamt.trim() !== '' ||
+    row.redox.trim() !== ''
+
+  const isRowComplete = (row: BeckenRowValues) =>
+    row.temperatur.trim() !== '' &&
+    row.phWert.trim() !== '' &&
+    row.chlorWert.trim() !== '' &&
+    row.chlorWertGesamt.trim() !== '' &&
+    row.redox.trim() !== ''
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const entries: WassermessungData[] = [...pendingMeasurements]
+    const entries: WassermessungData[] = []
+    const allBecken = [...BETRIEBSBEGINN_BECKEN, ...HALLENMESSUNG_BECKEN]
 
-    const hasCurrentValues =
-      formData.becken.trim() ||
-      formData.phWert.trim() ||
-      formData.chlorWert.trim() ||
-      formData.chlorWertGesamt.trim() ||
-      formData.chlorWertGebunden.trim() ||
-      formData.redox.trim() ||
-      formData.temperatur.trim()
-
-    if (hasCurrentValues) {
-      if (!validateMeasurement(formData)) {
-        alert('Bitte alle Pflichtfelder für das aktuelle Becken ausfüllen oder die Felder leeren.')
+    for (const becken of allBecken) {
+      const row = betriebsbeginnRows[becken] ?? hallenmessungRows[becken]
+      if (!row) continue
+      if (isRowFilled(row) && !isRowComplete(row)) {
+        alert(`Bitte alle Wasserwerte für "${becken}" ausfüllen oder die Zeile leeren.`)
         return
       }
-      entries.push(formData)
+      if (isRowComplete(row)) {
+        entries.push(rowToEntry(becken, row))
+      }
     }
 
     if (entries.length === 0) {
-      alert('Bitte mindestens ein Becken erfassen, bevor Sie die Messung speichern.')
+      alert('Bitte mindestens eine Zeile (alle Werte pro Becken) ausfüllen.')
       return
     }
 
     entries.forEach((entry) => onSubmit(entry))
-    setPendingMeasurements([])
     onClose()
-    // Reset form
-    setFormData({
-      becken: '',
-      phWert: '',
-      chlorWert: '',
-      chlorWertGesamt: '',
-      chlorWertGebunden: '',
-      redox: '',
-      temperatur: '',
-      datum: new Date().toISOString().split('T')[0],
-      zeit: new Date().toTimeString().slice(0, 5),
-      bemerkungen: '',
-      durchgefuehrtVon: currentUser || 'Unbekannt'
+    setBetriebsbeginnRows(() => {
+      const o: Record<string, BeckenRowValues> = {}
+      BETRIEBSBEGINN_BECKEN.forEach((b) => { o[b] = emptyRow() })
+      return o
     })
+    setHallenmessungRows(() => {
+      const o: Record<string, BeckenRowValues> = {}
+      HALLENMESSUNG_BECKEN.forEach((b) => { o[b] = emptyRow() })
+      return o
+    })
+    setDatum(new Date().toISOString().split('T')[0])
+    setZeit(new Date().toTimeString().slice(0, 5))
+    setBemerkungen('')
   }
 
   const handleClose = () => {
     onClose()
     setShowHistory(false)
-    setPendingMeasurements([])
-    // Reset form
-    setFormData({
-      becken: '',
-      phWert: '',
-      chlorWert: '',
-      chlorWertGesamt: '',
-      chlorWertGebunden: '',
-      redox: '',
-      temperatur: '',
-      datum: new Date().toISOString().split('T')[0],
-      zeit: new Date().toTimeString().slice(0, 5),
-      bemerkungen: '',
-      durchgefuehrtVon: currentUser || 'Unbekannt'
+    setBetriebsbeginnRows(() => {
+      const o: Record<string, BeckenRowValues> = {}
+      BETRIEBSBEGINN_BECKEN.forEach((b) => { o[b] = emptyRow() })
+      return o
     })
+    setHallenmessungRows(() => {
+      const o: Record<string, BeckenRowValues> = {}
+      HALLENMESSUNG_BECKEN.forEach((b) => { o[b] = emptyRow() })
+      return o
+    })
+    setDatum(new Date().toISOString().split('T')[0])
+    setZeit(new Date().toTimeString().slice(0, 5))
+    setBemerkungen('')
   }
 
   const handleToggleHistory = () => {
-    setShowHistory((prev) => {
-      const next = !prev
-      if (next && formData.becken && !historyBecken) {
-        setHistoryBecken(formData.becken)
-      }
-      return next
-    })
+    setShowHistory((prev) => !prev)
+  }
+
+  const updateBetriebsbeginn = (becken: string, field: keyof BeckenRowValues, value: string) => {
+    setBetriebsbeginnRows((prev) => ({ ...prev, [becken]: { ...prev[becken], [field]: value } }))
+  }
+
+  const updateHallenmessung = (becken: string, field: keyof BeckenRowValues, value: string) => {
+    setHallenmessungRows((prev) => ({ ...prev, [becken]: { ...prev[becken], [field]: value } }))
+  }
+
+  const renderTableRow = (
+    becken: string,
+    row: BeckenRowValues,
+    update: (becken: string, field: keyof BeckenRowValues, value: string) => void
+  ) => {
+    const clGeb = computeBoundChlor(row.chlorWertGesamt, row.chlorWert)
+    return (
+      <tr key={becken} className="border-t border-gray-200">
+        <td className="sticky left-0 z-10 bg-white py-2 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+          {becken}
+        </td>
+        <td className="px-1 py-1 align-middle text-center">
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="40"
+            value={row.temperatur}
+            onChange={(e) => update(becken, 'temperatur', e.target.value)}
+            className="w-28 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+            placeholder="–"
+          />
+        </td>
+        <td className="px-1 py-1 align-middle text-center">
+          <input
+            type="number"
+            step="0.01"
+            min="6"
+            max="8.5"
+            value={row.phWert}
+            onChange={(e) => update(becken, 'phWert', e.target.value)}
+            className="w-28 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+            placeholder="–"
+          />
+        </td>
+        <td className="px-1 py-1 align-middle text-center">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="3"
+            value={row.chlorWert}
+            onChange={(e) => update(becken, 'chlorWert', e.target.value)}
+            className="w-28 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+            placeholder="–"
+          />
+        </td>
+        <td className="px-1 py-1 align-middle text-center">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="5"
+            value={row.chlorWertGesamt}
+            onChange={(e) => update(becken, 'chlorWertGesamt', e.target.value)}
+            className="w-28 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+            placeholder="–"
+          />
+        </td>
+        <td className="px-1 py-1 text-sm text-gray-500 w-12 align-middle text-center">{clGeb || '–'}</td>
+        <td className="px-1 py-1 align-middle text-center">
+          <input
+            type="number"
+            step="1"
+            min="0"
+            max="1000"
+            value={row.redox}
+            onChange={(e) => update(becken, 'redox', e.target.value)}
+            className="w-28 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+            placeholder="–"
+          />
+        </td>
+      </tr>
+    )
   }
 
   const renderChlorTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
@@ -386,7 +478,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
       
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[100vw] max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -407,292 +499,69 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
           
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Kopf-Daten */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Gemeinsame Kopf-Daten */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="becken" className="block text-sm font-medium text-gray-900 mb-2">
-                  Becken *
-                </label>
-                <select
-                  id="becken"
-                  value={formData.becken}
-                  onChange={(e) => setFormData({...formData, becken: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Becken auswählen</option>
-                  <option value="Schwimmerbecken">Schwimmerbecken</option>
-                  <option value="Lehrschwimmbecken">Lehrschwimmbecken</option>
-                  <option value="Wellenbecken">Wellenbecken</option>
-                  <option value="Rutschenbecken">Rutschenbecken</option>
-                  <option value="Kinderbecken 1">Kinderbecken 1</option>
-                  <option value="Kinderbecken 2">Kinderbecken 2</option>
-                  <option value="Thermalbecken">Thermalbecken</option>
-                  <option value="HWP Halle">HWP Halle</option>
-                  <option value="Sauna Außenbecken">Sauna Außenbecken</option>
-                  <option value="Sauna Außenbecken warm">Sauna Außenbecken warm</option>
-                  <option value="Sauna Außenbecken kalt">Sauna Außenbecken kalt</option>
-                  <option value="HWP Sauna">HWP Sauna</option>
-                </select>
+                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-1">Datum *</label>
+                <input type="date" id="datum" value={datum} onChange={(e) => setDatum(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
               </div>
-              
               <div>
-                <label htmlFor="datum" className="block text-sm font-medium text-gray-900 mb-2">
-                  Datum *
-                </label>
-                <input
-                  type="date"
-                  id="datum"
-                  value={formData.datum}
-                  onChange={(e) => setFormData({...formData, datum: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-1">Zeit *</label>
+                <input type="time" id="zeit" value={zeit} onChange={(e) => setZeit(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
               </div>
-              
               <div>
-                <label htmlFor="zeit" className="block text-sm font-medium text-gray-900 mb-2">
-                  Zeit *
-                </label>
-                <input
-                  type="time"
-                  id="zeit"
-                  value={formData.zeit}
-                  onChange={(e) => setFormData({...formData, zeit: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-900 mb-2">
-                  Durchgeführt von *
-                </label>
-                <input
-                  type="text"
-                  id="durchgefuehrtVon"
-                  value={formData.durchgefuehrtVon}
-                  onChange={(e) => setFormData({...formData, durchgefuehrtVon: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+                <label htmlFor="durchgefuehrtVon" className="block text-sm font-medium text-gray-900 mb-1">Durchgeführt von *</label>
+                <input type="text" id="durchgefuehrtVon" value={durchgefuehrtVon} onChange={(e) => setDurchgefuehrtVon(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
               </div>
             </div>
 
-            {/* Messwerte in Tabellen-Layout nebeneinander */}
-            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
-              <div className="text-xs font-medium text-gray-600 mb-3">
-                Messwerte (aktuelles Becken)
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="phWert" className="block text-xs font-medium text-gray-900 mb-1">
-                    pH-Wert *
-                  </label>
-                  <input
-                    type="number"
-                    id="phWert"
-                    step="0.01"
-                    min="6.0"
-                    max="8.5"
-                    value={formData.phWert}
-                    onChange={(e) => setFormData({...formData, phWert: e.target.value})}
-                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="z.B. 7.2"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="chlorWert" className="block text-xs font-medium text-gray-900 mb-1">
-                    Chlor-Wert (mg/l) *
-                  </label>
-                  <input
-                    type="number"
-                    id="chlorWert"
-                    step="0.01"
-                    min="0.0"
-                    max="3.0"
-                    value={formData.chlorWert}
-                    onChange={(e) => {
-                      const nextFree = e.target.value
-                      setFormData({
-                        ...formData,
-                        chlorWert: nextFree,
-                        chlorWertGebunden: computeBoundChlor(formData.chlorWertGesamt, nextFree)
-                      })
-                    }}
-                    className={`w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${Number.isFinite(freeChlorValue) ? (isFreeChlorGreen ? 'text-green-600' : 'text-gray-900') : 'text-gray-900'}`}
-                    placeholder="z.B. 0.8"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="chlorWertGesamt" className="block text-xs font-medium text-gray-900 mb-1">
-                    Chlor-Wert-Gesamt (mg/l) *
-                  </label>
-                  <input
-                    type="number"
-                    id="chlorWertGesamt"
-                    step="0.01"
-                    min="0.0"
-                    max="5.0"
-                    value={formData.chlorWertGesamt}
-                    onChange={(e) => {
-                      const nextTotal = e.target.value
-                      setFormData({
-                        ...formData,
-                        chlorWertGesamt: nextTotal,
-                        chlorWertGebunden: computeBoundChlor(nextTotal, formData.chlorWert)
-                      })
-                    }}
-                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="z.B. 1.2"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="chlorWertGebunden" className="block text-xs font-medium text-gray-900 mb-1">
-                    Chlor-Wert-Gebunden (mg/l) *
-                  </label>
-                  <input
-                    type="number"
-                    id="chlorWertGebunden"
-                    step="0.01"
-                    min="0.0"
-                    max="2.0"
-                    value={formData.chlorWertGebunden}
-                    readOnly
-                    className={`w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${isBoundChlorHigh ? 'text-red-600' : 'text-gray-900'}`}
-                    placeholder="z.B. 0.4"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="redox" className="block text-xs font-medium text-gray-900 mb-1">
-                    Redox (mV) *
-                  </label>
-                  <input
-                    type="number"
-                    id="redox"
-                    step="1"
-                    min="0"
-                    max="1000"
-                    value={formData.redox}
-                    onChange={(e) => setFormData({...formData, redox: e.target.value})}
-                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="z.B. 650"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="temperatur" className="block text-xs font-medium text-gray-900 mb-1">
-                    Wassertemperatur (°C) *
-                  </label>
-                  <input
-                    type="number"
-                    id="temperatur"
-                    step="0.1"
-                    min="9"
-                    max="40"
-                    value={formData.temperatur}
-                    onChange={(e) => setFormData({...formData, temperatur: e.target.value})}
-                    className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="z.B. 28.5"
-                    required
-                  />
-                </div>
+            {/* Tabelle: alle Becken (Bad + Sauna) – erste Spalte fixiert, Rest scrollbar */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900">Beckenübersicht</div>
+              <div className="relative max-h-80 w-full overflow-x-auto overflow-y-auto">
+                <table className="min-w-[1200px] text-sm">
+                  <thead className="sticky top-0 z-20 bg-gray-50">
+                    <tr className="text-gray-700">
+                      <th className="sticky left-0 z-30 bg-gray-50 px-2 py-2 text-left font-medium">
+                        Becken
+                      </th>
+                      <th className="px-1 py-2 text-center font-medium">Temp</th>
+                      <th className="px-1 py-2 text-center font-medium">pH-Wert</th>
+                      <th className="px-1 py-2 text-center font-medium">Cl frei</th>
+                      <th className="px-1 py-2 text-center font-medium">Cl ges.</th>
+                      <th className="px-1 py-2 text-center font-medium">Cl geb</th>
+                      <th className="px-1 py-2 text-center font-medium">Redox</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    {[...BETRIEBSBEGINN_BECKEN, ...HALLENMESSUNG_BECKEN].map((becken) => {
+                      const row = betriebsbeginnRows[becken] ?? hallenmessungRows[becken] ?? emptyRow()
+                      const update =
+                        (BETRIEBSBEGINN_BECKEN as readonly string[]).includes(becken)
+                          ? updateBetriebsbeginn
+                          : updateHallenmessung
+                      return renderTableRow(becken, row, update)
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-900 mb-2">
-                Bemerkungen
-              </label>
-              <textarea
-                id="bemerkungen"
-                value={formData.bemerkungen}
-                onChange={(e) => setFormData({...formData, bemerkungen: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Besondere Beobachtungen, Auffälligkeiten oder Maßnahmen..."
-              />
+              <label htmlFor="bemerkungen" className="block text-sm font-medium text-gray-900 mb-1">Bemerkungen</label>
+              <textarea id="bemerkungen" value={bemerkungen} onChange={(e) => setBemerkungen(e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Besondere Beobachtungen, Auffälligkeiten..." />
             </div>
-            
-            {/* Pending measurements Übersicht + Buttons */}
-            <div className="space-y-4 pt-4">
-              {pendingMeasurements.length > 0 && (
-                <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-3">
-                  <div className="text-xs font-semibold text-blue-800 mb-2">
-                    Bereits erfasste Becken (werden mit gespeichert):
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-[11px] text-gray-800">
-                      <thead>
-                        <tr className="bg-blue-100 text-blue-900">
-                          <th className="px-2 py-1 text-left font-semibold">Becken</th>
-                          <th className="px-2 py-1 text-left font-semibold">pH</th>
-                          <th className="px-2 py-1 text-left font-semibold">Cl-frei</th>
-                          <th className="px-2 py-1 text-left font-semibold">Cl-gesamt</th>
-                          <th className="px-2 py-1 text-left font-semibold">Cl-gebunden</th>
-                          <th className="px-2 py-1 text-left font-semibold">Redox</th>
-                          <th className="px-2 py-1 text-left font-semibold">Temp.</th>
-                          <th className="px-2 py-1 text-left font-semibold">Datum</th>
-                          <th className="px-2 py-1 text-left font-semibold">Zeit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pendingMeasurements.map((m, idx) => (
-                          <tr key={`${m.becken}-${m.datum}-${m.zeit}-${idx}`} className="border-t border-blue-100">
-                            <td className="px-2 py-1">{m.becken}</td>
-                            <td className="px-2 py-1">{m.phWert}</td>
-                            <td className="px-2 py-1">{m.chlorWert}</td>
-                            <td className="px-2 py-1">{m.chlorWertGesamt}</td>
-                            <td className="px-2 py-1">{m.chlorWertGebunden}</td>
-                            <td className="px-2 py-1">{m.redox}</td>
-                            <td className="px-2 py-1">{m.temperatur}</td>
-                            <td className="px-2 py-1 whitespace-nowrap">{m.datum}</td>
-                            <td className="px-2 py-1 whitespace-nowrap">{m.zeit}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddBecken}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                >
-                  Weiteres Becken hinzufügen
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Messung speichern
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-                >
-                  Abbrechen
-                </button>
-              </div>
+
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                Messung speichern
+              </button>
+              <button type="button" onClick={handleClose} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                Abbrechen
+              </button>
             </div>
             <div className="pt-2">
-              <button
-                type="button"
-                onClick={handleToggleHistory}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-              >
+              <button type="button" onClick={handleToggleHistory} className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
                 Historie
               </button>
             </div>
