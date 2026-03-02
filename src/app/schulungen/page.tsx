@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { insertExternalProof, uploadProofPdf, getTrainings, insertTraining, updateTrainingInstructor, deleteTrainingById, getCompletedTrainings, insertCompletedTraining, uploadTrainingFile, getProofs, deleteCompletedTraining, deleteProof, getFormSubmissions } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 import QuizOverview from '@/components/QuizOverview'
+import Gefaehrdungsbeurteilung from '@/components/Gefaehrdungsbeurteilung'
 
 const ERSTUNTERWEISUNG_2026_TITLE = 'Erstunterweisung 2026'
 
@@ -461,7 +462,7 @@ interface CompletedSchulung {
 
 export default function Schulungen() {
   const { isAdmin } = useAuth()
-  const [activeTab, setActiveTab] = useState<'available' | 'overview' | 'quiz'>('available')
+  const [activeTab, setActiveTab] = useState<'available' | 'overview' | 'quiz' | 'gefaehrdungsbeurteilung'>('available')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedSchulung, setSelectedSchulung] = useState<Schulung | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Schulung | null>(null)
@@ -689,6 +690,7 @@ export default function Schulungen() {
     { name: 'Schulungen', icon: '🎓', color: 'bg-blue-100 text-blue-800', count: getCategoryCount('Schulungen') },
     { name: 'Gastronomie', icon: '🍽️', color: 'bg-green-100 text-green-800', count: getCategoryCount('Gastronomie') },
     { name: 'Kursverlaufspläne', icon: '📅', color: 'bg-purple-100 text-purple-800', count: getCategoryCount('Kursverlaufspläne') },
+    { name: 'Gefährdungsbeurteilung', icon: '⚠️', color: 'bg-orange-100 text-orange-800', count: 1, isSpecial: true },
     { name: 'Quiz', icon: '🎯', color: 'bg-yellow-100 text-yellow-800', count: quizCount, isSpecial: true }
   ]
 
@@ -780,9 +782,11 @@ export default function Schulungen() {
   }
 
   const handleCategoryFilter = (categoryName: string) => {
-    // Spezialbehandlung für Quiz-Kachel
+    // Spezialbehandlung für Quiz- und Gefährdungsbeurteilung-Kachel
     if (categoryName === 'Quiz') {
       setActiveTab('quiz')
+    } else if (categoryName === 'Gefährdungsbeurteilung') {
+      setActiveTab('gefaehrdungsbeurteilung')
     } else {
       setSelectedCategory(categoryName)
     }
@@ -2250,15 +2254,16 @@ export default function Schulungen() {
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex space-x-8 px-6 overflow-x-auto">
             {[
               { id: 'available', label: 'Verfügbare Schulungen', count: schulungen.length },
-              { id: 'overview', label: 'Schulungsübersicht', count: null }
+              { id: 'overview', label: 'Schulungsübersicht', count: null },
+              { id: 'gefaehrdungsbeurteilung', label: 'Gefährdungsbeurteilung', count: null }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id as 'available' | 'overview' | 'quiz')
+                  setActiveTab(tab.id as 'available' | 'overview' | 'quiz' | 'gefaehrdungsbeurteilung')
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
@@ -2281,14 +2286,18 @@ export default function Schulungen() {
           {activeTab === 'available' && (
             <div className="space-y-6">
               {/* Kategorien */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                 {categories.map((category) => (
                   <div key={category.name} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="text-center">
                       <span className="text-3xl mb-2 block">{category.icon}</span>
                       <h3 className="font-semibold text-gray-900">{category.name}</h3>
                       <p className="text-sm text-gray-600 mt-1">
-                        {category.name === 'Quiz' ? `${category.count} Quizze` : `${category.count} Schulungen`}
+                        {category.name === 'Quiz'
+                          ? `${category.count} Quizze`
+                          : category.name === 'Gefährdungsbeurteilung'
+                            ? 'Gefährdungsbeurteilung'
+                            : `${category.count} Schulungen`}
                       </p>
                       <button 
                         onClick={() => handleCategoryFilter(category.name)}
@@ -2748,6 +2757,10 @@ export default function Schulungen() {
 
           {activeTab === 'quiz' && (
             <QuizOverview onBack={() => setActiveTab('available')} />
+          )}
+
+          {activeTab === 'gefaehrdungsbeurteilung' && (
+            <Gefaehrdungsbeurteilung onBack={() => setActiveTab('available')} />
           )}
 
         </div>

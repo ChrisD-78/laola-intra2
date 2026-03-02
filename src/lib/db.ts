@@ -16,7 +16,10 @@ export interface TaskRecord {
 
 export async function getTasks(): Promise<TaskRecord[]> {
   const response = await fetch('/api/tasks')
-  if (!response.ok) throw new Error('Failed to fetch tasks')
+  if (!response.ok) {
+    console.error('Failed to fetch tasks, returning empty list. Status:', response.status)
+    return []
+  }
   return response.json()
 }
 

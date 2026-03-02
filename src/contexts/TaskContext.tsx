@@ -61,7 +61,7 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
         }))
         setTasks(mapped)
       } catch (e) {
-        console.error('Load tasks failed', e)
+        console.warn('Load tasks failed, continuing with empty task list', e)
       }
     }
     load()
