@@ -17,7 +17,7 @@ export interface TaskRecord {
 export async function getTasks(): Promise<TaskRecord[]> {
   const response = await fetch('/api/tasks')
   if (!response.ok) {
-    console.error('Failed to fetch tasks, returning empty list. Status:', response.status)
+    console.warn('Failed to fetch tasks, returning empty list. Status:', response.status)
     return []
   }
   return response.json()
@@ -885,6 +885,73 @@ export async function deleteGefahrstoff(id: string) {
     const error = await response.json()
     console.error('Failed to delete gefahrstoff:', error)
     throw new Error('Failed to delete gefahrstoff')
+  }
+  return response.json()
+}
+
+// =====================
+// Betriebsanweisungen Maschinen
+// =====================
+export interface MaschinenBetriebsanweisungRecord {
+  id?: string
+  name: string
+  hersteller?: string
+  standort?: string
+  anlage?: string
+  bemerkung?: string
+  pdf_url?: string
+  pdf_name?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export async function getMaschinenBetriebsanweisungen(): Promise<MaschinenBetriebsanweisungRecord[]> {
+  const response = await fetch('/api/technik/betriebsanweisungen-maschinen')
+  if (!response.ok) throw new Error('Failed to fetch betriebsanweisungen maschinen')
+  return response.json()
+}
+
+export async function createMaschinenBetriebsanweisung(
+  record: Omit<MaschinenBetriebsanweisungRecord, 'id' | 'created_at' | 'updated_at'>
+) {
+  const response = await fetch('/api/technik/betriebsanweisungen-maschinen', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record)
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    console.error('Failed to create betriebsanweisung maschine:', error)
+    throw new Error('Failed to create betriebsanweisung maschine')
+  }
+  return response.json()
+}
+
+export async function updateMaschinenBetriebsanweisung(
+  id: string,
+  partial: Partial<MaschinenBetriebsanweisungRecord>
+) {
+  const response = await fetch('/api/technik/betriebsanweisungen-maschinen', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...partial })
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    console.error('Failed to update betriebsanweisung maschine:', error)
+    throw new Error('Failed to update betriebsanweisung maschine')
+  }
+  return response.json()
+}
+
+export async function deleteMaschinenBetriebsanweisung(id: string) {
+  const response = await fetch(`/api/technik/betriebsanweisungen-maschinen?id=${id}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    console.error('Failed to delete betriebsanweisung maschine:', error)
+    throw new Error('Failed to delete betriebsanweisung maschine')
   }
   return response.json()
 }

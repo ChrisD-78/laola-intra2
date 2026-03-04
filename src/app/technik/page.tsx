@@ -529,6 +529,20 @@ export default function Technik() {
               <span>⚠️</span>
               <span>Gefahrstoffe</span>
             </Link>
+            <Link
+              href="/technik/betriebsanweisungen-maschinen"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center space-x-2"
+            >
+              <span>📄</span>
+              <span>Betriebsanweisungen Maschinen</span>
+            </Link>
+            <Link
+              href="/technik/brandschutz"
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center justify-center space-x-2"
+            >
+              <span>🔥</span>
+              <span>Brandschutz</span>
+            </Link>
           </div>
         </div>
       </div>
