@@ -114,13 +114,11 @@ export default function Chat() {
         const response = await fetch('/api/users')
         const data = await response.json()
         if (data.success && Array.isArray(data.users)) {
-          const adminUsers: User[] = data.users
-            .filter((u: any) => u.is_active)
-            .map((u: any) => ({
-              id: u.display_name,
-              name: u.display_name,
-              isOnline: false
-            }))
+          const adminUsers: User[] = data.users.map((u: any) => ({
+            id: u.display_name,
+            name: u.display_name,
+            isOnline: false
+          }))
 
           setUsers(prev => {
             const existingIds = new Set(prev.map(u => u.id))
