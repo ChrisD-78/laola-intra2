@@ -18,6 +18,7 @@ interface MaschinenBA {
   hersteller?: string
   standort?: string
   anlage?: string
+  naechste_pruefung?: string
   bemerkung?: string
   pdf_url?: string
   pdf_name?: string
@@ -51,6 +52,7 @@ export default function BetriebsanweisungenMaschinen() {
     hersteller: string
     standort: string
     anlage: string
+    naechste_pruefung: string
     bemerkung: string
     pdfFile: File | null
   }>({
@@ -58,6 +60,7 @@ export default function BetriebsanweisungenMaschinen() {
     hersteller: '',
     standort: '',
     anlage: '',
+    naechste_pruefung: '',
     bemerkung: '',
     pdfFile: null
   })
@@ -68,6 +71,7 @@ export default function BetriebsanweisungenMaschinen() {
     hersteller: string
     standort: string
     anlage: string
+    naechste_pruefung: string
     bemerkung: string
     existingPdfUrl: string
     existingPdfName: string
@@ -78,11 +82,31 @@ export default function BetriebsanweisungenMaschinen() {
     hersteller: '',
     standort: '',
     anlage: '',
+    naechste_pruefung: '',
     bemerkung: '',
     existingPdfUrl: '',
     existingPdfName: '',
     pdfFile: null
   })
+
+  const getDueStatusClass = (dueDateString?: string) => {
+    if (!dueDateString) return ''
+    const dueDate = new Date(dueDateString)
+    if (Number.isNaN(dueDate.getTime())) return ''
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const diffMs = dueDate.getTime() - today.getTime()
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+    if (diffDays < 0) {
+      // überfällig
+      return 'bg-red-50'
+    }
+    if (diffDays <= 30) {
+      // innerhalb 30 Tage vor Fälligkeit
+      return 'bg-yellow-50'
+    }
+    return ''
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -95,6 +119,7 @@ export default function BetriebsanweisungenMaschinen() {
             hersteller: r.hersteller || '',
             standort: r.standort || '',
             anlage: r.anlage || '',
+            naechste_pruefung: r.naechste_pruefung || '',
             bemerkung: r.bemerkung || '',
             pdf_url: r.pdf_url || undefined,
             pdf_name: r.pdf_name || undefined
@@ -125,6 +150,7 @@ export default function BetriebsanweisungenMaschinen() {
         hersteller: formData.hersteller || undefined,
         standort: formData.standort || undefined,
         anlage: formData.anlage || undefined,
+        naechste_pruefung: formData.naechste_pruefung || undefined,
         bemerkung: formData.bemerkung || undefined,
         pdf_url: pdfUrl,
         pdf_name: pdfName
@@ -137,6 +163,7 @@ export default function BetriebsanweisungenMaschinen() {
           hersteller: r.hersteller || '',
           standort: r.standort || '',
           anlage: r.anlage || '',
+          naechste_pruefung: r.naechste_pruefung || '',
           bemerkung: r.bemerkung || '',
           pdf_url: r.pdf_url || undefined,
           pdf_name: r.pdf_name || undefined
@@ -148,6 +175,7 @@ export default function BetriebsanweisungenMaschinen() {
         hersteller: '',
         standort: '',
         anlage: '',
+        naechste_pruefung: '',
         bemerkung: '',
         pdfFile: null
       })
@@ -175,6 +203,7 @@ export default function BetriebsanweisungenMaschinen() {
         hersteller: editFormData.hersteller || undefined,
         standort: editFormData.standort || undefined,
         anlage: editFormData.anlage || undefined,
+        naechste_pruefung: editFormData.naechste_pruefung || undefined,
         bemerkung: editFormData.bemerkung || undefined,
         pdf_url: pdfUrl || undefined,
         pdf_name: pdfName || undefined
@@ -187,6 +216,7 @@ export default function BetriebsanweisungenMaschinen() {
           hersteller: r.hersteller || '',
           standort: r.standort || '',
           anlage: r.anlage || '',
+          naechste_pruefung: r.naechste_pruefung || '',
           bemerkung: r.bemerkung || '',
           pdf_url: r.pdf_url || undefined,
           pdf_name: r.pdf_name || undefined
@@ -265,6 +295,9 @@ export default function BetriebsanweisungenMaschinen() {
                   Anlage
                 </th>
                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
+                  Nächste Prüfung
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                   Bemerkung
                 </th>
                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
@@ -287,11 +320,17 @@ export default function BetriebsanweisungenMaschinen() {
                 </tr>
               ) : (
                 eintraege.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
+                  <tr
+                    key={entry.id}
+                    className={`hover:bg-gray-50 ${getDueStatusClass(entry.naechste_pruefung)}`}
+                  >
                     <td className="px-4 py-2 text-gray-900">{entry.name}</td>
                     <td className="px-4 py-2 text-gray-900">{entry.hersteller || '-'}</td>
                     <td className="px-4 py-2 text-gray-900">{entry.standort || '-'}</td>
                     <td className="px-4 py-2 text-gray-900">{entry.anlage || '-'}</td>
+                    <td className="px-4 py-2 text-gray-900">
+                      {entry.naechste_pruefung || '-'}
+                    </td>
                     <td className="px-4 py-2 text-gray-900">{entry.bemerkung || '-'}</td>
                     <td className="px-4 py-2">
                       {entry.pdf_url ? (
@@ -413,6 +452,22 @@ export default function BetriebsanweisungenMaschinen() {
                 />
               </div>
               <div>
+                <label className="block font-medium text-gray-700 mb-1">
+                  Nächste Prüfung fällig am
+                </label>
+                <input
+                  type="date"
+                  value={formData.naechste_pruefung}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      naechste_pruefung: e.target.value
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
                 <label className="block font-medium text-gray-700 mb-1">Bemerkung</label>
                 <textarea
                   value={formData.bemerkung}
@@ -519,6 +574,22 @@ export default function BetriebsanweisungenMaschinen() {
                   value={editFormData.anlage}
                   onChange={(e) =>
                     setEditFormData((prev) => ({ ...prev, anlage: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">
+                  Nächste Prüfung fällig am
+                </label>
+                <input
+                  type="date"
+                  value={editFormData.naechste_pruefung}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      naechste_pruefung: e.target.value
+                    }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />

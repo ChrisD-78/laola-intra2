@@ -917,6 +917,7 @@ export interface MaschinenBetriebsanweisungRecord {
   hersteller?: string
   standort?: string
   anlage?: string
+  naechste_pruefung?: string
   bemerkung?: string
   pdf_url?: string
   pdf_name?: string

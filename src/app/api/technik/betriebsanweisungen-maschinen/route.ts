@@ -13,6 +13,7 @@ export async function GET() {
         hersteller,
         standort,
         anlage,
+        naechste_pruefung,
         bemerkung,
         pdf_url,
         pdf_name,
@@ -35,7 +36,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, hersteller, standort, anlage, bemerkung, pdf_url, pdf_name } = body
+    const { name, hersteller, standort, anlage, naechste_pruefung, bemerkung, pdf_url, pdf_name } = body
 
     const result = await sql`
       INSERT INTO technik_betriebsanweisungen_maschinen (
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
         hersteller,
         standort,
         anlage,
+        naechste_pruefung,
         bemerkung,
         pdf_url,
         pdf_name
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
         ${hersteller || null},
         ${standort || null},
         ${anlage || null},
+        ${naechste_pruefung || null},
         ${bemerkung || null},
         ${pdf_url || null},
         ${pdf_name || null}
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, name, hersteller, standort, anlage, bemerkung, pdf_url, pdf_name } = body
+    const { id, name, hersteller, standort, anlage, naechste_pruefung, bemerkung, pdf_url, pdf_name } = body
 
     const result = await sql`
       UPDATE technik_betriebsanweisungen_maschinen
@@ -81,6 +84,7 @@ export async function PATCH(request: NextRequest) {
         hersteller = ${hersteller || null},
         standort = ${standort || null},
         anlage = ${anlage || null},
+        naechste_pruefung = ${naechste_pruefung || null},
         bemerkung = ${bemerkung || null},
         pdf_url = ${pdf_url || null},
         pdf_name = ${pdf_name || null},
