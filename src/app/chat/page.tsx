@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
-import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord } from '@/lib/db'
+import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord, ChatUserRecord } from '@/lib/db'
 
 interface Message {
   id: string
@@ -66,34 +66,29 @@ export default function Chat() {
   const [profileName, setProfileName] = useState('')
 
 
-  // Initial load of users/groups from Supabase
+  // Initial load of users/groups from Chat-DB
   useEffect(() => {
     const load = async () => {
       try {
-        const [dbUsers, dbGroups] = await Promise.all([
+        const [dbChatUsers, dbGroups] = await Promise.all([
           getChatUsers(),
           getChatGroups(),
         ])
-        // Merge DB users with local seed users
-        if (dbUsers.length > 0) {
-          // Use DB users but merge with local seed users
-          const seedUserIds = users.map(u => u.id)
-          const dbUsersMapped = dbUsers.map(u => ({ 
+        // Merge Chat-DB-User mit lokalen Seed-Usern
+        if (dbChatUsers.length > 0) {
+          const dbUsersMapped: User[] = (dbChatUsers as ChatUserRecord[]).map(u => ({ 
             id: u.id, 
             name: u.name, 
             isOnline: u.is_online, 
             avatar: u.avatar || undefined 
           }))
-          
-          // Add seed users that aren't in DB yet
-          const mergedUsers = [...dbUsersMapped]
-          users.forEach(seedUser => {
-            if (!dbUsersMapped.find(u => u.id === seedUser.id)) {
-              mergedUsers.push(seedUser)
-            }
+
+          const mergedById: Record<string, User> = {}
+          ;[...users, ...dbUsersMapped].forEach(u => {
+            mergedById[u.id] = { ...(mergedById[u.id] || {}), ...u }
           })
-          
-          setUsers(mergedUsers as User[])
+
+          setUsers(Object.values(mergedById))
         }
         // Groups loaded from DB
         setGroups(dbGroups.map(g => ({ 
@@ -111,15 +106,44 @@ export default function Chat() {
     load()
   }, [])
 
+  // Zusätzliche Benutzer aus der Benutzerverwaltung laden,
+  // damit alle angelegten Mitarbeiter im Chat auswählbar sind
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      try {
+        const response = await fetch('/api/users')
+        const data = await response.json()
+        if (data.success && Array.isArray(data.users)) {
+          const adminUsers: User[] = data.users
+            .filter((u: any) => u.is_active)
+            .map((u: any) => ({
+              id: u.display_name,
+              name: u.display_name,
+              isOnline: false
+            }))
+
+          setUsers(prev => {
+            const existingIds = new Set(prev.map(u => u.id))
+            const toAdd = adminUsers.filter(u => !existingIds.has(u.id))
+            return [...prev, ...toAdd]
+          })
+        }
+      } catch (e) {
+        console.warn('Chat: Benutzer aus Benutzerverwaltung konnten nicht geladen werden', e)
+      }
+    }
+
+    loadAdminUsers()
+  }, [])
+
   // Auto-login mit dem aktuell angemeldeten Benutzer
   useEffect(() => {
     if (authUser) {
-      // Upsert user in Supabase (online)
+      // Upsert user in Chat-User-Tabelle (online)
       const user = users.find(u => u.id === authUser)
       upsertChatUser({ 
         id: authUser, 
         name: user?.name || authUser, 
-        is_online: true, 
         avatar: user?.avatar || null 
       }).catch(() => {})
       

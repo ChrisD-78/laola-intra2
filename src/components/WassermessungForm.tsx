@@ -53,6 +53,12 @@ const isFreeChlorInRange = (becken: string, value: number) => {
   return value >= 0.3 && value <= 0.6
 }
 
+const isPhOutOfRange = (value: number | null | undefined) => {
+  if (!Number.isFinite(value as number)) return false
+  const v = value as number
+  return v < 6.5 || v > 7.2
+}
+
 const clamp = (value: number, min: number, max: number) => {
   if (!Number.isFinite(value)) return min
   return Math.min(max, Math.max(min, value))
@@ -466,6 +472,14 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
     return <circle cx={cx} cy={cy} r={4} fill={color} stroke="#ffffff" strokeWidth={1} />
   }
 
+  const phDot = (props: { cx?: number; cy?: number; payload?: any }) => {
+    const { cx, cy, payload } = props
+    if (!payload || !Number.isFinite(payload.phWert)) return null
+    const outOfRange = isPhOutOfRange(payload.phWert)
+    const color = outOfRange ? '#dc2626' : '#0ea5e9'
+    return <circle cx={cx} cy={cy} r={4} fill={color} stroke="#ffffff" strokeWidth={1} />
+  }
+
   if (!isOpen) return null
 
   return (
@@ -623,7 +637,13 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                         unit=""
                         min={6}
                         max={8}
-                        color="#0ea5e9"
+                        color={
+                          isPhOutOfRange(
+                            Number.isFinite(latestRow.phWert) ? latestRow.phWert : null
+                          )
+                            ? '#dc2626'
+                            : '#0ea5e9'
+                        }
                       />
                       <Gauge
                         label="Redox"
@@ -753,6 +773,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                               dataKey="phWert"
                               name="pH"
                               stroke="#0ea5e9"
+                              dot={phDot}
                               isAnimationActive
                               animationDuration={800}
                             />

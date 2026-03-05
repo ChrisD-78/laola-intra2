@@ -433,6 +433,13 @@ export async function insertExternalProof(proof: Omit<ExternalProofRecord, 'id' 
 // =====================
 // Chat Functions
 // =====================
+export interface ChatUserRecord {
+  id: string
+  name: string
+  is_online: boolean
+  avatar?: string | null
+}
+
 export interface ChatMessageRecord {
   id?: string
   sender_id: string
@@ -445,17 +452,21 @@ export interface ChatMessageRecord {
   created_at?: string
 }
 
-export async function upsertChatUser(userId: string, name: string, avatar?: string) {
+export async function upsertChatUser(user: { id: string; name: string; avatar?: string | null }) {
   const response = await fetch('/api/chat/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: userId, name, avatar })
+    body: JSON.stringify({
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar ?? null
+    })
   })
   if (!response.ok) throw new Error('Failed to upsert chat user')
   return response.json()
 }
 
-export async function getChatUsers() {
+export async function getChatUsers(): Promise<ChatUserRecord[]> {
   try {
     const response = await fetch('/api/chat/users')
     if (!response.ok) {
