@@ -37,6 +37,10 @@ export default function Brandschutz() {
   )
   const [cardFile, setCardFile] = useState<File | null>(null)
 
+  // Historie je Kachel
+  const [cardHistory, setCardHistory] = useState<FormSubmissionRecord[]>([])
+  const [cardHistoryLoading, setCardHistoryLoading] = useState(false)
+
   // Aktueller Status je Kachel (aus gespeicherten Formularen)
   const [cardStatuses, setCardStatuses] = useState<
     Record<string, 'offen' | 'in Bearbeitung' | 'erledigt'>
@@ -178,6 +182,13 @@ export default function Brandschutz() {
     }
   ]
 
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return date.toLocaleDateString('de-DE')
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -240,7 +251,7 @@ export default function Brandschutz() {
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {section.cards.map((text, idx) => (
-                (() => {
+              (() => {
                   const cardKey = `${section.num}|${text}`
                   const status = cardStatuses[cardKey]
                   const baseBg =
@@ -256,6 +267,27 @@ export default function Brandschutz() {
                       key={text}
                       type="button"
                       onClick={() => {
+                        // Sonderfall: erste Kachel "Beratung in allen Fragen ..."
+                        if (
+                          section.num === '01' &&
+                          text.startsWith(
+                            'Beratung in allen Fragen des vorbeugenden, organisatorischen und abwehrenden Brandschutzes.'
+                          )
+                        ) {
+                          router.push('/technik/brandschutz/beratung')
+                          return
+                        }
+
+                        // Sonderfall: zweite Kachel "Mitwirkung bei Gefährdungsbeurteilungen …"
+                        if (
+                          section.num === '01' &&
+                          text.startsWith(
+                            'Mitwirkung bei Gefährdungsbeurteilungen – insbesondere zu Brandgefährdungen nach ArbSchG.'
+                          )
+                        ) {
+                          router.push('/technik/brandschutz/mitwirkung-gefaehrdungsbeurteilungen')
+                          return
+                        }
                         setActiveCardForm({
                           sectionNum: section.num,
                           sectionTitle: section.title,
@@ -266,8 +298,34 @@ export default function Brandschutz() {
                         setCardDetails('')
                         setCardStatus(status || 'offen')
                         setCardNotes('')
-                      setCardLocation('Freizeitbad LA OLA')
-                      setCardFile(null)
+                        setCardLocation('Freizeitbad LA OLA')
+                        setCardFile(null)
+
+                        // Historie für diese Kachel laden
+                        setCardHistory([])
+                        setCardHistoryLoading(true)
+                        ;(async () => {
+                          try {
+                            const submissions = await getFormSubmissions()
+                            const filtered = submissions
+                              .filter(
+                                (s: FormSubmissionRecord) =>
+                                  s.type === 'technik-brandschutz' &&
+                                  (s.form_data as any)?.sectionNum === section.num &&
+                                  (s.form_data as any)?.cardText === text
+                              )
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.submitted_at || b.created_at || '').getTime() -
+                                  new Date(a.submitted_at || a.created_at || '').getTime()
+                              )
+                            setCardHistory(filtered)
+                          } catch (error) {
+                            console.warn('Brandschutz: Historie für Kachel konnte nicht geladen werden', error)
+                          } finally {
+                            setCardHistoryLoading(false)
+                          }
+                        })()
                       }}
                       className={`text-left rounded-xl p-4 flex flex-col gap-3 border shadow-sm hover:shadow-md transition ${baseBg}`}
                     >
@@ -498,6 +556,67 @@ export default function Brandschutz() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   />
                 </div>
+              </div>
+              <div className="flex-1 min-h-0 border-t border-gray-200 pt-3 mt-1 overflow-y-auto">
+                <h4 className="text-xs font-semibold text-gray-800 mb-2">
+                  Gespeicherte Einträge zu dieser Kachel
+                </h4>
+                {cardHistoryLoading ? (
+                  <p className="text-xs text-gray-500">Lade Einträge…</p>
+                ) : cardHistory.length === 0 ? (
+                  <p className="text-xs text-gray-500">
+                    Für diese Kachel wurden bisher noch keine Einträge gespeichert.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {cardHistory.map((entry) => {
+                      const data = (entry.form_data || {}) as any
+                      const hasPdf = !!data.pdf_url
+                      return (
+                        <div
+                          key={entry.id}
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-xs flex flex-col gap-1 bg-gray-50"
+                        >
+                          <div className="flex flex-wrap items-center gap-2 justify-between">
+                            <span className="font-semibold">
+                              {formatDate(entry.submitted_at || entry.created_at)} ·{' '}
+                              {data.standort || 'ohne Standort'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">
+                              Status: {data.status || entry.status || 'offen'}
+                            </span>
+                          </div>
+                          {data.verantwortliche_person && (
+                            <p className="text-gray-700">
+                              Verantwortliche Person: {data.verantwortliche_person}
+                            </p>
+                          )}
+                          {data.details && (
+                            <p className="text-gray-700 line-clamp-2">
+                              Details: {data.details}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {hasPdf && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const url = String(data.pdf_url)
+                                  if (url) {
+                                    window.open(url, '_blank', 'noopener,noreferrer')
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-600 text-white text-[11px] hover:bg-emerald-700"
+                              >
+                                📄 PDF öffnen{data.pdf_name ? ` (${data.pdf_name})` : ''}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button

@@ -456,9 +456,17 @@ export async function upsertChatUser(userId: string, name: string, avatar?: stri
 }
 
 export async function getChatUsers() {
-  const response = await fetch('/api/chat/users')
-  if (!response.ok) throw new Error('Failed to fetch chat users')
-  return response.json()
+  try {
+    const response = await fetch('/api/chat/users')
+    if (!response.ok) {
+      console.warn('Failed to fetch chat users, returning empty list. Status:', response.status)
+      return []
+    }
+    return response.json()
+  } catch (error) {
+    console.warn('Failed to fetch chat users (network or server error), returning empty list.', error)
+    return []
+  }
 }
 
 export async function getChatGroups() {
