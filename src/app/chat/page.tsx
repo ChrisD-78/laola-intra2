@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
 import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord, ChatUserRecord } from '@/lib/db'
@@ -618,16 +619,22 @@ export default function Chat() {
           <p className="text-xs text-white/80 mt-2">Angemeldet als: {authUser}</p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons / Kacheln */}
         <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6">
-          <div className="flex justify-center space-x-2">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <button
               onClick={() => setShowProfileSettings(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
               title="Profil bearbeiten"
             >
               ⚙️ Profil
             </button>
+            <Link
+              href="/chat/pinnwand"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-blue-100 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-200 transition-colors shadow-sm"
+            >
+              📌 Pinnwand
+            </Link>
           </div>
         </div>
 

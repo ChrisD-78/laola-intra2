@@ -453,6 +453,17 @@ export interface ChatMessageRecord {
   created_at?: string
 }
 
+export interface ChatPinnwandEntryRecord {
+  id?: string
+  title: string
+  date?: string
+  category: string
+  image_url?: string
+  image_name?: string
+  created_by: string
+  created_at?: string
+}
+
 export async function upsertChatUser(user: { id: string; name: string; avatar?: string | null }) {
   const response = await fetch('/api/chat/users', {
     method: 'POST',
@@ -531,6 +542,34 @@ export async function updateChatMessageStatus(messageId: string, isRead: boolean
     body: JSON.stringify({ messageId, isRead, readerId })
   })
   if (!response.ok) throw new Error('Failed to update message status')
+  return response.json()
+}
+
+export async function getChatPinnwandEntries(): Promise<ChatPinnwandEntryRecord[]> {
+  const response = await fetch('/api/chat/pinnwand')
+  if (!response.ok) {
+    console.warn(
+      'Failed to fetch pinnwand entries, returning empty list. Status:',
+      response.status
+    )
+    return []
+  }
+  return response.json()
+}
+
+export async function createChatPinnwandEntry(
+  entry: Omit<ChatPinnwandEntryRecord, 'id' | 'created_at'>
+) {
+  const response = await fetch('/api/chat/pinnwand', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    console.error('Failed to create pinnwand entry:', error)
+    throw new Error('Failed to create pinnwand entry')
+  }
   return response.json()
 }
 

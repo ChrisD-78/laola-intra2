@@ -174,6 +174,24 @@ CREATE INDEX IF NOT EXISTS idx_chat_message_reads_message
 CREATE INDEX IF NOT EXISTS idx_chat_message_reads_user
   ON chat_message_reads (user_id, read_at DESC);
 
+-- Chat Pinnwand Einträge
+CREATE TABLE IF NOT EXISTS chat_pinnwand_entries (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  date DATE,
+  category VARCHAR(50) NOT NULL,
+  image_url TEXT,
+  image_name VARCHAR(255),
+  created_by VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_created_at
+  ON chat_pinnwand_entries (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_category
+  ON chat_pinnwand_entries (category);
+
 -- ==============================================
 -- INDEXES FOR PERFORMANCE
 -- ==============================================
