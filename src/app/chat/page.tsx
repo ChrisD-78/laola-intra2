@@ -74,21 +74,22 @@ export default function Chat() {
           getChatUsers(),
           getChatGroups(),
         ])
-        // Merge Chat-DB-User mit lokalen Seed-Usern
+        // Merge Chat-DB-User mit bereits vorhandenen Usern (Seed + evtl. Admin-Benutzer)
         if (dbChatUsers.length > 0) {
-          const dbUsersMapped: User[] = (dbChatUsers as ChatUserRecord[]).map(u => ({ 
-            id: u.id, 
-            name: u.name, 
-            isOnline: u.is_online, 
-            avatar: u.avatar || undefined 
+          const dbUsersMapped: User[] = (dbChatUsers as ChatUserRecord[]).map(u => ({
+            id: u.id,
+            name: u.name,
+            isOnline: u.is_online,
+            avatar: u.avatar || undefined,
           }))
 
-          const mergedById: Record<string, User> = {}
-          ;[...users, ...dbUsersMapped].forEach(u => {
-            mergedById[u.id] = { ...(mergedById[u.id] || {}), ...u }
+          setUsers(prev => {
+            const mergedById: Record<string, User> = {}
+            ;[...prev, ...dbUsersMapped].forEach(u => {
+              mergedById[u.id] = { ...(mergedById[u.id] || {}), ...u }
+            })
+            return Object.values(mergedById)
           })
-
-          setUsers(Object.values(mergedById))
         }
         // Groups loaded from DB
         setGroups(dbGroups.map(g => ({ 
