@@ -10,23 +10,44 @@ export async function GET(request: NextRequest) {
     const user1 = searchParams.get('user1')
     const user2 = searchParams.get('user2')
     const groupId = searchParams.get('groupId')
+    const forUser = searchParams.get('forUser') // optional: für wen werden die Lesebestätigungen geladen
 
     let messages
 
     if (groupId) {
-      // Get group messages
+      // Get group messages inkl. Lesebestätigungen
       messages = await sql`
-        SELECT * FROM chat_messages 
-        WHERE group_id = ${groupId}
-        ORDER BY created_at ASC
+        SELECT 
+          m.*,
+          COALESCE(
+            (
+              SELECT array_agg(r.user_id)
+              FROM chat_message_reads r
+              WHERE r.message_id = m.id
+            ),
+            ARRAY[]::VARCHAR[]
+          ) AS read_by
+        FROM chat_messages m
+        WHERE m.group_id = ${groupId}
+        ORDER BY m.created_at ASC
       `
     } else if (user1 && user2) {
-      // Get direct messages between two users
+      // Get direct messages zwischen zwei Benutzern inkl. Lesebestätigungen
       messages = await sql`
-        SELECT * FROM chat_messages 
-        WHERE (sender_id = ${user1} AND recipient_id = ${user2})
-           OR (sender_id = ${user2} AND recipient_id = ${user1})
-        ORDER BY created_at ASC
+        SELECT 
+          m.*,
+          COALESCE(
+            (
+              SELECT array_agg(r.user_id)
+              FROM chat_message_reads r
+              WHERE r.message_id = m.id
+            ),
+            ARRAY[]::VARCHAR[]
+          ) AS read_by
+        FROM chat_messages m
+        WHERE (m.sender_id = ${user1} AND m.recipient_id = ${user2})
+           OR (m.sender_id = ${user2} AND m.recipient_id = ${user1})
+        ORDER BY m.created_at ASC
       `
     } else {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
@@ -72,13 +93,34 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { messageId, isRead } = body
+    const { messageId, isRead, readerId } = body
 
+    if (!messageId || typeof isRead !== 'boolean' || !readerId) {
+      return NextResponse.json(
+        { error: 'Missing required fields (messageId, isRead, readerId)' },
+        { status: 400 }
+      )
+    }
+
+    // Für Direktnachrichten: is_read-Flag in der Nachricht selbst setzen,
+    // für Gruppennachrichten bleibt is_read unverändert und es wird nur
+    // der Leseeintrag pro Benutzer erfasst.
     const result = await sql`
       UPDATE chat_messages 
-      SET is_read = ${isRead}
+      SET is_read = CASE 
+        WHEN group_id IS NULL THEN ${isRead}
+        ELSE is_read
+      END
       WHERE id = ${messageId}
       RETURNING *
+    `
+
+    // Lese-Bestätigung pro Benutzer speichern
+    await sql`
+      INSERT INTO chat_message_reads (message_id, user_id)
+      VALUES (${messageId}, ${readerId})
+      ON CONFLICT (message_id, user_id)
+      DO UPDATE SET read_at = NOW()
     `
 
     return NextResponse.json(result[0])

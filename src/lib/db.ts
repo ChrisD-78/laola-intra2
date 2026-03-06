@@ -449,6 +449,7 @@ export interface ChatMessageRecord {
   image_url?: string
   image_name?: string
   is_read: boolean
+  read_by?: string[]
   created_at?: string
 }
 
@@ -523,11 +524,11 @@ export async function sendChatMessage(message: Omit<ChatMessageRecord, 'id' | 'c
   return response.json()
 }
 
-export async function updateChatMessageStatus(messageId: string, isRead: boolean) {
+export async function updateChatMessageStatus(messageId: string, isRead: boolean, readerId: string) {
   const response = await fetch('/api/chat/messages', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messageId, isRead })
+    body: JSON.stringify({ messageId, isRead, readerId })
   })
   if (!response.ok) throw new Error('Failed to update message status')
   return response.json()

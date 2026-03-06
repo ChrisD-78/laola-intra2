@@ -159,6 +159,21 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Chat Message Reads Table (Lesebestätigungen pro Benutzer)
+CREATE TABLE IF NOT EXISTS chat_message_reads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  message_id UUID REFERENCES chat_messages(id) ON DELETE CASCADE,
+  user_id VARCHAR(255) NOT NULL,
+  read_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (message_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_message_reads_message
+  ON chat_message_reads (message_id);
+
+CREATE INDEX IF NOT EXISTS idx_chat_message_reads_user
+  ON chat_message_reads (user_id, read_at DESC);
+
 -- ==============================================
 -- INDEXES FOR PERFORMANCE
 -- ==============================================

@@ -15,6 +15,7 @@ interface Message {
   isRead: boolean
   imageUrl?: string
   imageName?: string
+  readBy?: string[]
 }
 
 interface User {
@@ -178,7 +179,8 @@ export default function Chat() {
           timestamp: msg.created_at || new Date().toISOString(),
           isRead: msg.is_read,
           imageUrl: msg.image_url || undefined,
-          imageName: msg.image_name || undefined
+          imageName: msg.image_name || undefined,
+          readBy: msg.read_by || []
         }))
         
         setMessages(localMessages)
@@ -215,7 +217,8 @@ export default function Chat() {
           timestamp: msg.created_at || new Date().toISOString(),
           isRead: msg.is_read,
           imageUrl: msg.image_url || undefined,
-          imageName: msg.image_name || undefined
+          imageName: msg.image_name || undefined,
+          readBy: msg.read_by || []
         }))
         
         // Only update if messages have changed
@@ -488,7 +491,7 @@ export default function Chat() {
     // SECOND: Update database
     try {
       for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id, true)
+        await updateChatMessageStatus(msg.id, true, authUser)
       }
       console.log(`✅ Marked ${unreadMessages.length} messages as read in database`)
     } catch (e) {
@@ -536,7 +539,7 @@ export default function Chat() {
     // SECOND: Update database
     try {
       for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id as string, true)
+        await updateChatMessageStatus(msg.id as string, true, authUser)
       }
       console.log(`✅ Marked ${unreadMessages.length} group messages as read in database`)
     } catch (e) {
@@ -684,6 +687,7 @@ export default function Chat() {
                               isRead: m.is_read,
                               imageUrl: m.image_url || undefined,
                               imageName: m.image_name || undefined,
+                              readBy: m.read_by || [],
                             }))
                             setMessages(mapped)
                           }).catch(() => {})
@@ -773,6 +777,7 @@ export default function Chat() {
                               isRead: m.is_read,
                               imageUrl: m.image_url || undefined,
                               imageName: m.image_name || undefined,
+                              readBy: m.read_by || [],
                             }))
                             setMessages(mapped)
                           }).catch(() => {})
@@ -911,11 +916,46 @@ export default function Chat() {
                           {message.content && (
                             <p className="text-sm">{message.content}</p>
                           )}
-                          <p className={`text-xs mt-1 ${
-                            message.sender === authUser ? 'text-blue-100' : 'text-gray-500'
-                          }`}>
-                            {formatTime(message.timestamp)}
-                          </p>
+                          <div className="mt-1 flex flex-col space-y-0.5">
+                            <p
+                              className={`text-xs ${
+                                message.sender === authUser ? 'text-blue-100' : 'text-gray-500'
+                              }`}
+                            >
+                              {formatTime(message.timestamp)}
+                            </p>
+                            {/* Lesebestätigung Direkt- und Gruppenchat */}
+                            {message.sender === authUser && (
+                              <>
+                                {message.groupId ? (
+                                  message.readBy && message.readBy.filter(id => id !== authUser).length > 0 && (
+                                    <p
+                                      className={`text-[11px] ${
+                                        message.sender === authUser ? 'text-blue-100/80' : 'text-gray-500'
+                                      }`}
+                                    >
+                                      Gelesen von:{' '}
+                                      {message.readBy
+                                        ?.filter(id => id !== authUser)
+                                        .map(id => users.find(u => u.id === id)?.name || id)
+                                        .join(', ')}
+                                    </p>
+                                  )
+                                ) : (
+                                  message.readBy &&
+                                  message.readBy.length > 0 && (
+                                    <p
+                                      className={`text-[11px] ${
+                                        message.sender === authUser ? 'text-blue-100/80' : 'text-gray-500'
+                                      }`}
+                                    >
+                                      Gelesen
+                                    </p>
+                                  )
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
