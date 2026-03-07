@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
@@ -66,6 +66,8 @@ export default function Chat() {
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [profileName, setProfileName] = useState('')
+  const [showSidebar, setShowSidebar] = useState(true)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
 
   // Initial load of users/groups from Chat-DB
@@ -192,6 +194,11 @@ export default function Chat() {
     
     loadMessages()
   }, [authUser, selectedRecipient, selectedGroup])
+
+  // Nach unten scrollen, damit die letzte (neueste) Nachricht sichtbar ist
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, selectedRecipient, selectedGroup])
 
   // Real-time polling for new messages (every 3 seconds)
   useEffect(() => {
@@ -638,9 +645,13 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* User List */}
-          <div className="bg-white rounded-lg shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* User List – wird ausgeblendet, wenn ein Chat gewählt ist; Zurück-Button blendet wieder ein */}
+          <div
+            className={`bg-white rounded-lg shadow-sm ${
+              showSidebar ? 'w-full lg:max-w-[360px] lg:min-w-[280px]' : 'hidden'
+            }`}
+          >
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
@@ -681,6 +692,7 @@ export default function Chat() {
                         onClick={() => {
                           setSelectedRecipient(user.id)
                           setSelectedGroup('')
+                          setShowSidebar(false)
                           markAsRead(user.id)
                           // Load direct messages from DB
                           getDirectMessages(authUser, user.id).then(dbMsgs => {
@@ -771,6 +783,7 @@ export default function Chat() {
                         onClick={() => {
                           setSelectedGroup(group.id)
                           setSelectedRecipient('')
+                          setShowSidebar(false)
                           markGroupAsRead(group.id)
                           // Load group messages from DB
                           getGroupMessages(group.id).then(dbMsgs => {
@@ -828,12 +841,21 @@ export default function Chat() {
           </div>
 
           {/* Chat Area */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm flex flex-col">
+          <div className="flex-1 min-w-0 bg-white rounded-lg shadow-sm flex flex-col">
             {selectedRecipient || selectedGroup ? (
               <>
-                {/* Chat Header */}
+                {/* Chat Header mit Zurück-Button */}
                 <div className="p-4 border-b border-gray-200">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowSidebar(true)}
+                      className="shrink-0 p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                      title="Chats anzeigen"
+                    >
+                      ← Zurück
+                    </button>
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {selectedRecipient ? (
                       <>
                         {getUserAvatar(selectedRecipient) ? (
@@ -875,10 +897,11 @@ export default function Chat() {
                         </div>
                       </>
                     )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Messages */}
+                {/* Messages – Scroll-Anker am Ende für letzte Nachricht */}
                 <div className="flex-1 p-4 overflow-y-auto max-h-64 lg:max-h-96">
                   <div className="space-y-4">
                     {getCurrentMessages().map(message => (
@@ -966,6 +989,7 @@ export default function Chat() {
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
                 </div>
 

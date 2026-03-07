@@ -89,6 +89,9 @@ export default function PinnwandPage() {
   const [regKleidergroesse, setRegKleidergroesse] = useState('')
   const [isSavingReg, setIsSavingReg] = useState(false)
 
+  // Admin: alle Anmeldungen zu einem Event in Tabelle anzeigen
+  const [viewRegistrationsEvent, setViewRegistrationsEvent] = useState<PinnwandEvent | null>(null)
+
   const visibleEntries =
     filter === 'all' ? entries : entries.filter((e) => e.category === filter)
 
@@ -449,17 +452,38 @@ export default function PinnwandPage() {
                       📅 Event
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mb-3">{formatDate(ev.event_date)}</p>
-                  <p className="text-xs text-gray-600 mb-3">
+                  <p className="text-xs text-gray-500 mb-2">{formatDate(ev.event_date)}</p>
+                  <p className="text-xs font-medium text-gray-600 mb-1">
                     {regs.length} Anmeldung{regs.length !== 1 ? 'en' : ''}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => openRegisterModal(ev)}
-                    className="mt-auto inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-1.5 text-xs sm:text-sm font-semibold text-green-950 shadow-sm hover:bg-green-400 transition-colors"
-                  >
-                    Jetzt anmelden
-                  </button>
+                  {regs.length > 0 && (
+                    <ul className="text-xs text-gray-700 mb-3 space-y-0.5 list-none pl-0">
+                      {regs.map((r) => (
+                        <li key={r.id || `${r.participant_name}-${r.created_by}`}>
+                          • {r.participant_name}
+                          {r.kleidergroesse ? ` (Gr. ${r.kleidergroesse})` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="mt-auto flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openRegisterModal(ev)}
+                      className="w-full inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-1.5 text-xs sm:text-sm font-semibold text-green-950 shadow-sm hover:bg-green-400 transition-colors"
+                    >
+                      Jetzt anmelden
+                    </button>
+                    {isAdmin && regs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setViewRegistrationsEvent(ev)}
+                        className="w-full inline-flex items-center justify-center rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100 transition-colors"
+                      >
+                        Alle Anmeldungen anzeigen
+                      </button>
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -788,6 +812,64 @@ export default function PinnwandPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Admin: Tabelle aller Anmeldungen zu einem Event */}
+        {viewRegistrationsEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 sm:py-10">
+            <div className="w-full max-w-2xl max-h-[90vh] rounded-2xl bg-white shadow-2xl flex flex-col">
+              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 shrink-0">
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                    Anmeldungen: {viewRegistrationsEvent.title}
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatDate(viewRegistrationsEvent.event_date)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewRegistrationsEvent(null)}
+                  className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="overflow-auto px-4 py-4 sm:px-6">
+                {(registrationsByEventId[viewRegistrationsEvent.id] || []).length === 0 ? (
+                  <p className="text-sm text-gray-500">Keine Anmeldungen für dieses Event.</p>
+                ) : (
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="pb-2 pr-4 font-semibold text-gray-700">Name</th>
+                        <th className="pb-2 pr-4 font-semibold text-gray-700">Kleidergröße</th>
+                        <th className="pb-2 font-semibold text-gray-700">Angemeldet von</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(registrationsByEventId[viewRegistrationsEvent.id] || []).map((r) => (
+                        <tr key={r.id || `${r.participant_name}-${r.created_by}`} className="border-b border-gray-100">
+                          <td className="py-2 pr-4 text-gray-900">{r.participant_name}</td>
+                          <td className="py-2 pr-4 text-gray-600">{r.kleidergroesse || '–'}</td>
+                          <td className="py-2 text-gray-600">{r.created_by}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              <div className="shrink-0 border-t border-gray-200 px-4 py-3 sm:px-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setViewRegistrationsEvent(null)}
+                  className="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Schließen
+                </button>
+              </div>
             </div>
           </div>
         )}
