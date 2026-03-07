@@ -5,8 +5,13 @@ import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
   ChatPinnwandEntryRecord,
+  ChatPinnwandEventRecord,
   createChatPinnwandEntry,
+  createChatPinnwandEvent,
+  createChatPinnwandRegistration,
   getChatPinnwandEntries,
+  getChatPinnwandEvents,
+  getChatPinnwandRegistrations,
 } from '@/lib/db'
 
 type PinnwandCategory = 'event' | 'team' | 'projekt' | 'feier' | 'sonstiges'
@@ -20,6 +25,21 @@ interface PinnwandEntry {
   imageUrl?: string | null
   imageName?: string | null
   createdBy?: string
+}
+
+interface PinnwandEvent {
+  id: string
+  title: string
+  event_date: string
+  createdBy?: string
+}
+
+interface EventRegistration {
+  id: string
+  event_id: string
+  participant_name: string
+  kleidergroesse?: string
+  created_by: string
 }
 
 const CATEGORY_LABEL: Record<PinnwandCategory, string> = {
@@ -39,9 +59,11 @@ const CATEGORY_EMOJI: Record<PinnwandCategory, string> = {
 }
 
 export default function PinnwandPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, isAdmin } = useAuth()
 
   const [entries, setEntries] = useState<PinnwandEntry[]>([])
+  const [events, setEvents] = useState<PinnwandEvent[]>([])
+  const [registrationsByEventId, setRegistrationsByEventId] = useState<Record<string, EventRegistration[]>>({})
   const [filter, setFilter] = useState<PinnwandFilter>('all')
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -55,27 +77,68 @@ export default function PinnwandPage() {
 
   const [previewEntry, setPreviewEntry] = useState<PinnwandEntry | null>(null)
 
+  // Event anlegen (nur Admin)
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
+  const [eventTitle, setEventTitle] = useState('')
+  const [eventDate, setEventDate] = useState('')
+  const [isSavingEvent, setIsSavingEvent] = useState(false)
+
+  // Anmeldung für Event (jeder Mitarbeiter)
+  const [registerEvent, setRegisterEvent] = useState<PinnwandEvent | null>(null)
+  const [regName, setRegName] = useState('')
+  const [regKleidergroesse, setRegKleidergroesse] = useState('')
+  const [isSavingReg, setIsSavingReg] = useState(false)
+
   const visibleEntries =
     filter === 'all' ? entries : entries.filter((e) => e.category === filter)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const rows = await getChatPinnwandEntries()
-        if (!rows || rows.length === 0) return
+        const [rows, eventRows] = await Promise.all([
+          getChatPinnwandEntries(),
+          getChatPinnwandEvents(),
+        ])
 
-        const mapped: PinnwandEntry[] = rows.map((row: ChatPinnwandEntryRecord) => ({
-          id: row.id as string,
-          title: row.title,
-          date: row.date || undefined,
-          category: (row.category as PinnwandCategory) || 'event',
-          imageUrl: row.image_url || undefined,
-          imageName: row.image_name || undefined,
-          createdBy: row.created_by,
-        }))
-        setEntries(mapped)
+        if (rows && rows.length > 0) {
+          const mapped: PinnwandEntry[] = rows.map((row: ChatPinnwandEntryRecord) => ({
+            id: row.id as string,
+            title: row.title,
+            date: row.date || undefined,
+            category: (row.category as PinnwandCategory) || 'event',
+            imageUrl: row.image_url || undefined,
+            imageName: row.image_name || undefined,
+            createdBy: row.created_by,
+          }))
+          setEntries(mapped)
+        }
+
+        if (eventRows && eventRows.length > 0) {
+          const evList: PinnwandEvent[] = eventRows.map((e: ChatPinnwandEventRecord) => ({
+            id: e.id as string,
+            title: e.title,
+            event_date: e.event_date,
+            createdBy: e.created_by,
+          }))
+          setEvents(evList)
+
+          const regs: Record<string, EventRegistration[]> = {}
+          await Promise.all(
+            evList.map(async (ev) => {
+              const list = await getChatPinnwandRegistrations(ev.id)
+              regs[ev.id] = list.map((r: { id?: string; event_id: string; participant_name: string; kleidergroesse?: string; created_by: string }) => ({
+                id: r.id as string,
+                event_id: r.event_id,
+                participant_name: r.participant_name,
+                kleidergroesse: r.kleidergroesse,
+                created_by: r.created_by,
+              }))
+            })
+          )
+          setRegistrationsByEventId(regs)
+        }
       } catch (e) {
-        console.warn('Pinnwand: Einträge konnten nicht geladen werden', e)
+        console.warn('Pinnwand: Einträge/Events konnten nicht geladen werden', e)
       }
     }
     load()
@@ -166,6 +229,78 @@ export default function PinnwandPage() {
     setIsSaving(false)
   }
 
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isSavingEvent || !eventTitle.trim() || !eventDate) return
+    setIsSavingEvent(true)
+    try {
+      const created = await createChatPinnwandEvent({
+        title: eventTitle.trim(),
+        event_date: eventDate,
+        created_by: currentUser || 'Admin',
+      })
+      setEvents((prev) => [
+        ...prev,
+        { id: created.id as string, title: created.title, event_date: created.event_date, createdBy: created.created_by },
+      ])
+      setRegistrationsByEventId((prev) => ({ ...prev, [created.id as string]: [] }))
+      setIsCreateEventOpen(false)
+      setEventTitle('')
+      setEventDate('')
+    } catch (err) {
+      console.error('Event konnte nicht erstellt werden', err)
+      alert('Event konnte nicht erstellt werden. Bitte später erneut versuchen.')
+    } finally {
+      setIsSavingEvent(false)
+    }
+  }
+
+  const openRegisterModal = (event: PinnwandEvent) => {
+    setRegisterEvent(event)
+    setRegName(currentUser || '')
+    setRegKleidergroesse('')
+  }
+
+  const resetRegisterModal = () => {
+    setRegisterEvent(null)
+    setRegName('')
+    setRegKleidergroesse('')
+    setIsSavingReg(false)
+  }
+
+  const handleSubmitRegistration = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!registerEvent || isSavingReg || !regName.trim()) return
+    setIsSavingReg(true)
+    try {
+      await createChatPinnwandRegistration({
+        event_id: registerEvent.id,
+        participant_name: regName.trim(),
+        kleidergroesse: regKleidergroesse.trim() || undefined,
+        created_by: currentUser || 'Unbekannt',
+      })
+      setRegistrationsByEventId((prev) => ({
+        ...prev,
+        [registerEvent.id]: [
+          ...(prev[registerEvent.id] || []),
+          {
+            id: '',
+            event_id: registerEvent.id,
+            participant_name: regName.trim(),
+            kleidergroesse: regKleidergroesse.trim() || undefined,
+            created_by: currentUser || 'Unbekannt',
+          },
+        ],
+      }))
+      resetRegisterModal()
+    } catch (err) {
+      console.error('Anmeldung fehlgeschlagen', err)
+      alert('Anmeldung konnte nicht gespeichert werden. Bitte später erneut versuchen.')
+    } finally {
+      setIsSavingReg(false)
+    }
+  }
+
   const formatDate = (value?: string) => {
     if (!value) return ''
     try {
@@ -221,6 +356,16 @@ export default function PinnwandPage() {
                   <span>📌</span>
                   <span>Foto pinnen</span>
                 </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateEventOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-400 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-green-950 shadow-sm hover:bg-green-300 transition-colors"
+                  >
+                    <span>📅</span>
+                    <span>Event anlegen</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -289,6 +434,35 @@ export default function PinnwandPage() {
                 📸 Jetzt ein Foto pinnen
               </button>
             </div>
+
+            {/* Event-Karten (Anmeldungen) */}
+            {events.map((ev) => {
+              const regs = registrationsByEventId[ev.id] || []
+              return (
+                <div
+                  key={ev.id}
+                  className="h-full rounded-xl bg-white shadow-sm border border-green-100 p-4 flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="text-base font-semibold text-gray-900">{ev.title}</h3>
+                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800">
+                      📅 Event
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">{formatDate(ev.event_date)}</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    {regs.length} Anmeldung{regs.length !== 1 ? 'en' : ''}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => openRegisterModal(ev)}
+                    className="mt-auto inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-1.5 text-xs sm:text-sm font-semibold text-green-950 shadow-sm hover:bg-green-400 transition-colors"
+                  >
+                    Jetzt anmelden
+                  </button>
+                </div>
+              )
+            })}
 
             {/* Einträge */}
             {visibleEntries.map((entry) => (
@@ -455,6 +629,162 @@ export default function PinnwandPage() {
                     <span>
                       {isSaving ? 'Wird gespeichert…' : 'An die Pinnwand pinnen'}
                     </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Event anlegen (nur Admin) */}
+        {isCreateEventOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 sm:py-10">
+            <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Event anlegen
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreateEventOpen(false)
+                    setEventTitle('')
+                    setEventDate('')
+                  }}
+                  className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleCreateEvent} className="px-4 py-4 sm:px-6 sm:py-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Event
+                  </label>
+                  <input
+                    type="text"
+                    value={eventTitle}
+                    onChange={(e) => setEventTitle(e.target.value)}
+                    placeholder="z.B. Sommerfest 2026"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Datum
+                  </label>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreateEventOpen(false)
+                      setEventTitle('')
+                      setEventDate('')
+                    }}
+                    className="inline-flex items-center rounded-lg border border-gray-300 px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingEvent || !eventTitle.trim() || !eventDate}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingEvent ? 'Wird erstellt…' : 'Event anlegen'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Anmeldung für Event (Datum, Event, Name, Kleidergröße) */}
+        {registerEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 sm:py-10">
+            <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Anmeldung für Event
+                </h2>
+                <button
+                  type="button"
+                  onClick={resetRegisterModal}
+                  className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleSubmitRegistration} className="px-4 py-4 sm:px-6 sm:py-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Datum
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={formatDate(registerEvent.event_date)}
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Event
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={registerEvent.title}
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="Ihr Name"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1.5">
+                    Kleidergröße (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={regKleidergroesse}
+                    onChange={(e) => setRegKleidergroesse(e.target.value)}
+                    placeholder="z.B. M, L, 42"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={resetRegisterModal}
+                    className="inline-flex items-center rounded-lg border border-gray-300 px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingReg || !regName.trim()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingReg ? 'Wird gesendet…' : 'Anmelden'}
                   </button>
                 </div>
               </form>

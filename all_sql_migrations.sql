@@ -192,6 +192,31 @@ CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_created_at
 CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_category
   ON chat_pinnwand_entries (category);
 
+-- Chat Pinnwand Events (von Admin angelegt, für Anmeldungen)
+CREATE TABLE IF NOT EXISTS chat_pinnwand_events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  event_date DATE NOT NULL,
+  created_by VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_events_date
+  ON chat_pinnwand_events (event_date DESC);
+
+-- Chat Pinnwand Event-Anmeldungen (jeder Mitarbeiter)
+CREATE TABLE IF NOT EXISTS chat_pinnwand_event_registrations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES chat_pinnwand_events(id) ON DELETE CASCADE,
+  participant_name VARCHAR(255) NOT NULL,
+  kleidergroesse VARCHAR(50),
+  created_by VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_pinnwand_registrations_event
+  ON chat_pinnwand_event_registrations (event_id);
+
 -- ==============================================
 -- INDEXES FOR PERFORMANCE
 -- ==============================================

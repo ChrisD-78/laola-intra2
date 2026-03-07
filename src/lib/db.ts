@@ -573,6 +573,79 @@ export async function createChatPinnwandEntry(
   return response.json()
 }
 
+// Pinnwand Events (Admin legt Events an)
+export interface ChatPinnwandEventRecord {
+  id?: string
+  title: string
+  event_date: string
+  created_by: string
+  created_at?: string
+}
+
+export async function getChatPinnwandEvents(): Promise<ChatPinnwandEventRecord[]> {
+  const response = await fetch('/api/chat/pinnwand/events')
+  if (!response.ok) {
+    console.warn('Failed to fetch pinnwand events, returning empty list. Status:', response.status)
+    return []
+  }
+  return response.json()
+}
+
+export async function createChatPinnwandEvent(
+  event: Omit<ChatPinnwandEventRecord, 'id' | 'created_at'>
+) {
+  const response = await fetch('/api/chat/pinnwand/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: event.title,
+      event_date: event.event_date,
+      created_by: event.created_by,
+    }),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    console.error('Failed to create pinnwand event:', err)
+    throw new Error('Failed to create pinnwand event')
+  }
+  return response.json()
+}
+
+// Pinnwand Event-Anmeldungen (jeder Mitarbeiter)
+export interface ChatPinnwandRegistrationRecord {
+  id?: string
+  event_id: string
+  participant_name: string
+  kleidergroesse?: string
+  created_by: string
+  created_at?: string
+}
+
+export async function getChatPinnwandRegistrations(eventId: string): Promise<ChatPinnwandRegistrationRecord[]> {
+  const response = await fetch(`/api/chat/pinnwand/registrations?event_id=${encodeURIComponent(eventId)}`)
+  if (!response.ok) {
+    console.warn('Failed to fetch pinnwand registrations, returning empty list. Status:', response.status)
+    return []
+  }
+  return response.json()
+}
+
+export async function createChatPinnwandRegistration(
+  data: Omit<ChatPinnwandRegistrationRecord, 'id' | 'created_at'>
+) {
+  const response = await fetch('/api/chat/pinnwand/registrations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    console.error('Failed to create pinnwand registration:', err)
+    throw new Error('Failed to create pinnwand registration')
+  }
+  return response.json()
+}
+
 // =====================
 // Trainings Additional
 // =====================
