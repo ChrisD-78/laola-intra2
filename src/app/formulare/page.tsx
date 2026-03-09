@@ -1326,6 +1326,18 @@ export default function Formulare() {
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('wassermessung', data)}
         submissions={wassermessungSubmissions}
+        onUpdateBemerkungen={(id, bemerkungen) => {
+          setSubmissions(prev =>
+            prev.map((sub) =>
+              sub.id === id
+                ? {
+                    ...sub,
+                    formData: { ...sub.formData, bemerkungen },
+                  }
+                : sub
+            )
+          )
+        }}
       />
       
       <RutschenkontrolleForm

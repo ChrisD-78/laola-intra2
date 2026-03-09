@@ -112,3 +112,43 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
+
+// PATCH: Update einzelne Felder der Formulardaten (z.B. Bemerkungen)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, bemerkungen } = body as { id?: string; bemerkungen?: string }
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    // Nur das Feld "bemerkungen" im JSON aktualisieren, andere Daten bleiben unverändert
+    const result = await sql`
+      UPDATE form_submissions
+      SET form_data = jsonb_set(
+        form_data::jsonb,
+        '{bemerkungen}',
+        to_jsonb(${bemerkungen ?? ''}),
+        true
+      )
+      WHERE id = ${id}
+      RETURNING *
+    `
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Form submission not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(result[0])
+  } catch (error) {
+    console.error('Failed to update form submission:', error)
+    return NextResponse.json(
+      { error: 'Failed to update form submission' },
+      { status: 500 }
+    )
+  }
+}

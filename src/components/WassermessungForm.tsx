@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts'
+import { updateFormSubmissionRemark } from '@/lib/db'
 
 interface WassermessungFormProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ interface WassermessungFormProps {
     submittedAt: string
     formData: Partial<WassermessungData>
   }>
+  onUpdateBemerkungen?: (id: string, bemerkungen: string) => void
 }
 
 interface WassermessungData {
@@ -38,7 +40,7 @@ interface WassermessungData {
   durchgefuehrtVon: string
 }
 
-type HistoryRange = '7' | '30' | '90' | '365' | 'all'
+type HistoryRange = 'tagesaktuell' | '7' | '30' | '90' | '365' | 'all'
 
 const isHwpBecken = (becken: string) => {
   const normalized = becken.toLowerCase().replace(/\s|-/g, '')
@@ -164,7 +166,7 @@ const emptyRow = (): BeckenRowValues => ({
   redox: ''
 })
 
-const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: WassermessungFormProps) => {
+const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions, onUpdateBemerkungen }: WassermessungFormProps) => {
   const { currentUser } = useAuth()
   const [datum, setDatum] = useState(new Date().toISOString().split('T')[0])
   const [zeit, setZeit] = useState(new Date().toTimeString().slice(0, 5))
@@ -183,6 +185,9 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
   const [showHistory, setShowHistory] = useState(false)
   const [historyRange, setHistoryRange] = useState<HistoryRange>('30')
   const [historyBecken, setHistoryBecken] = useState('')
+  const [editRemarkId, setEditRemarkId] = useState<string | null>(null)
+  const [editRemarkText, setEditRemarkText] = useState('')
+  const [isSavingRemark, setIsSavingRemark] = useState(false)
 
   const computeBoundChlor = (totalRaw: string, freeRaw: string) => {
     const total = Number.parseFloat(totalRaw)
@@ -209,7 +214,8 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
           chlorWertGesamt: Number.parseFloat(String(data.chlorWertGesamt ?? '')),
           chlorWertGebunden: Number.parseFloat(String(data.chlorWertGebunden ?? '')),
           redox: Number.parseFloat(String(data.redox ?? '')),
-          temperatur: Number.parseFloat(String(data.temperatur ?? ''))
+          temperatur: Number.parseFloat(String(data.temperatur ?? '')),
+          bemerkungen: String(data.bemerkungen ?? '')
         }
       })
       .filter((row) => Number.isFinite(row.timestamp))
@@ -217,14 +223,20 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
   }, [submissions])
 
   const filteredHistoryRows = useMemo(() => {
+    let rows = historyRows.filter((row) => {
+      if (historyBecken && row.becken !== historyBecken) return false
+      return true
+    })
+    if (historyRange === 'tagesaktuell') {
+      return rows.slice(-3)
+    }
     const now = Date.now()
     const rangeDays = historyRange === 'all' ? null : Number.parseInt(historyRange, 10)
     const minTimestamp = rangeDays ? now - rangeDays * 24 * 60 * 60 * 1000 : null
-    return historyRows.filter((row) => {
-      if (historyBecken && row.becken !== historyBecken) return false
-      if (minTimestamp && row.timestamp < minTimestamp) return false
-      return true
-    })
+    if (minTimestamp) {
+      rows = rows.filter((row) => row.timestamp >= minTimestamp)
+    }
+    return rows
   }, [historyRows, historyRange, historyBecken])
 
   const chartData = useMemo(() => {
@@ -254,6 +266,35 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
     const unique = new Set(historyRows.map((row) => row.becken).filter(Boolean))
     return Array.from(unique)
   }, [historyRows])
+
+  const startEditRemark = (rowId: string, currentRemark: string) => {
+    setEditRemarkId(rowId)
+    setEditRemarkText(currentRemark || '')
+  }
+
+  const cancelEditRemark = () => {
+    setEditRemarkId(null)
+    setEditRemarkText('')
+  }
+
+  const saveRemark = async () => {
+    if (!editRemarkId) return
+    try {
+      setIsSavingRemark(true)
+      const updated = await updateFormSubmissionRemark(editRemarkId, editRemarkText.trim())
+      const newRemark =
+        (updated?.form_data as { bemerkungen?: string } | undefined)?.bemerkungen ??
+        editRemarkText.trim()
+      onUpdateBemerkungen?.(editRemarkId, newRemark)
+      setEditRemarkId(null)
+      setEditRemarkText('')
+    } catch (error) {
+      console.error('Bemerkung konnte nicht aktualisiert werden', error)
+      alert('Bemerkung konnte nicht gespeichert werden. Bitte später erneut versuchen.')
+    } finally {
+      setIsSavingRemark(false)
+    }
+  }
 
   const rowToEntry = (becken: string, row: BeckenRowValues): WassermessungData => {
     const chlorGebunden = computeBoundChlor(row.chlorWertGesamt, row.chlorWert)
@@ -670,13 +711,13 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                   <div />
                   <div className="flex flex-col gap-3">
                     <div>
-                      <div className="text-xs font-medium text-gray-600 mb-2">Becken</div>
+                      <div className="text-xs font-medium text-gray-900 mb-2">Becken</div>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => setHistoryBecken('')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            historyBecken === '' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            historyBecken === '' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'
                           }`}
                         >
                           Alle Becken
@@ -687,7 +728,7 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                             type="button"
                             onClick={() => setHistoryBecken(becken)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              historyBecken === becken ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                              historyBecken === becken ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'
                             }`}
                           >
                             {becken}
@@ -696,12 +737,13 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                       </div>
                     </div>
                     <div className="sm:self-end">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Zeitraum</label>
+                      <label className="block text-xs font-medium text-gray-900 mb-1">Zeitraum</label>
                       <select
                         value={historyRange}
                         onChange={(e) => setHistoryRange(e.target.value as HistoryRange)}
-                        className="w-full sm:w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        className="w-full sm:w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
                       >
+                        <option value="tagesaktuell">Tagesaktuell (letzte 3)</option>
                         <option value="7">Letzte 7 Tage</option>
                         <option value="30">Letzte 30 Tage</option>
                         <option value="90">Letzte 90 Tage</option>
@@ -710,6 +752,87 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions }: Wassermes
                       </select>
                     </div>
                   </div>
+                </div>
+
+                {/* Bemerkungen-Liste passend zum gewählten Zeitraum/Becken */}
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">
+                    Bemerkungen zu Messungen
+                  </h5>
+                  {filteredHistoryRows.length === 0 ? (
+                    <p className="text-sm text-gray-600">
+                      Keine Messwerte für die gewählte Auswahl vorhanden.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredHistoryRows.map((row) => (
+                        <div
+                          key={row.id}
+                          className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                            <div>
+                              <p className="text-xs font-medium text-gray-900">
+                                {new Date(row.timestamp).toLocaleString('de-DE', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                              {row.becken && (
+                                <p className="text-xs text-gray-600">
+                                  Becken: {row.becken}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => startEditRemark(row.id, row.bemerkungen)}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 transition-colors"
+                              >
+                                {row.bemerkungen ? 'Bemerkung bearbeiten' : 'Bemerkung hinzufügen'}
+                              </button>
+                            </div>
+                          </div>
+                          {editRemarkId === row.id ? (
+                            <div className="space-y-2">
+                              <textarea
+                                value={editRemarkText}
+                                onChange={(e) => setEditRemarkText(e.target.value)}
+                                rows={2}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500"
+                                placeholder="Bemerkungen zur Messung eintragen…"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={cancelEditRemark}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                  Abbrechen
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={saveRemark}
+                                  disabled={isSavingRemark}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {isSavingRemark ? 'Speichert…' : 'Speichern'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                              {row.bemerkungen || 'Keine Bemerkungen vorhanden.'}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {chartData.length === 0 ? (

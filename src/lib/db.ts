@@ -362,6 +362,20 @@ export async function createFormSubmission(submission: Omit<FormSubmissionRecord
   return insertFormSubmission(submission)
 }
 
+export async function updateFormSubmissionRemark(id: string, bemerkungen: string) {
+  const response = await fetch('/api/form-submissions', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, bemerkungen }),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Failed to update form submission remark:', error)
+    throw new Error('Failed to update form submission remark')
+  }
+  return response.json()
+}
+
 // =====================
 // External Proofs
 // =====================
