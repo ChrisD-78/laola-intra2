@@ -754,86 +754,88 @@ const WassermessungForm = ({ isOpen, onClose, onSubmit, submissions, onUpdateBem
                   </div>
                 </div>
 
-                {/* Bemerkungen-Liste passend zum gewählten Zeitraum/Becken */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">
-                    Bemerkungen zu Messungen
-                  </h5>
-                  {filteredHistoryRows.length === 0 ? (
-                    <p className="text-sm text-gray-600">
-                      Keine Messwerte für die gewählte Auswahl vorhanden.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {filteredHistoryRows.map((row) => (
-                        <div
-                          key={row.id}
-                          className="border border-gray-200 rounded-lg p-3 bg-gray-50"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                            <div>
-                              <p className="text-xs font-medium text-gray-900">
-                                {new Date(row.timestamp).toLocaleString('de-DE', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </p>
-                              {row.becken && (
-                                <p className="text-xs text-gray-600">
-                                  Becken: {row.becken}
+                {/* Bemerkungen-Liste nur bei Auswahl \"Tagesaktuell\" sichtbar */}
+                {historyRange === 'tagesaktuell' && (
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3">
+                      Bemerkungen zu Messungen
+                    </h5>
+                    {filteredHistoryRows.length === 0 ? (
+                      <p className="text-sm text-gray-600">
+                        Keine Messwerte für die gewählte Auswahl vorhanden.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredHistoryRows.map((row) => (
+                          <div
+                            key={row.id}
+                            className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                              <div>
+                                <p className="text-xs font-medium text-gray-900">
+                                  {new Date(row.timestamp).toLocaleString('de-DE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
                                 </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => startEditRemark(row.id, row.bemerkungen)}
-                                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 transition-colors"
-                              >
-                                {row.bemerkungen ? 'Bemerkung bearbeiten' : 'Bemerkung hinzufügen'}
-                              </button>
-                            </div>
-                          </div>
-                          {editRemarkId === row.id ? (
-                            <div className="space-y-2">
-                              <textarea
-                                value={editRemarkText}
-                                onChange={(e) => setEditRemarkText(e.target.value)}
-                                rows={2}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500"
-                                placeholder="Bemerkungen zur Messung eintragen…"
-                              />
-                              <div className="flex justify-end gap-2">
+                                {row.becken && (
+                                  <p className="text-xs text-gray-600">
+                                    Becken: {row.becken}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={cancelEditRemark}
-                                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                                  onClick={() => startEditRemark(row.id, row.bemerkungen)}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 transition-colors"
                                 >
-                                  Abbrechen
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={saveRemark}
-                                  disabled={isSavingRemark}
-                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  {isSavingRemark ? 'Speichert…' : 'Speichern'}
+                                  {row.bemerkungen ? 'Bemerkung bearbeiten' : 'Bemerkung hinzufügen'}
                                 </button>
                               </div>
                             </div>
-                          ) : (
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                              {row.bemerkungen || 'Keine Bemerkungen vorhanden.'}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                            {editRemarkId === row.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editRemarkText}
+                                  onChange={(e) => setEditRemarkText(e.target.value)}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Bemerkungen zur Messung eintragen…"
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditRemark}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    Abbrechen
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={saveRemark}
+                                    disabled={isSavingRemark}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {isSavingRemark ? 'Speichert…' : 'Speichern'}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                {row.bemerkungen || 'Keine Bemerkungen vorhanden.'}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {chartData.length === 0 ? (
                   <div className="text-sm text-gray-600 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4">
