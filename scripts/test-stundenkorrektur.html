@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Stundenkorrektur-Formular</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #7C3AED; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #6D28D9; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Stundenkorrektur-Formular</h1>
+    <p>Dieses Formular testet die E-Mail-Funktionalität für das Stundenkorrektur-Formular.</p>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="Test-Benutzer" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="datum">Datum:</label>
+            <input type="date" id="datum" name="datum" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="uhrzeitVon">Uhrzeit von:</label>
+            <input type="time" id="uhrzeitVon" name="uhrzeitVon" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="uhrzeitBis">Uhrzeit bis:</label>
+            <input type="time" id="uhrzeitBis" name="uhrzeitBis" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="grund">Grund der Stundenkorrektur:</label>
+            <textarea id="grund" name="grund" rows="3" required>Test-Grund für Stundenkorrektur</textarea>
+        </div>
+        
+        <button type="submit">⏰ Test Stundenkorrektur senden</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        // Setze heutiges Datum
+        document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+        
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>📧 Sende Test Stundenkorrektur...</p>';
+            
+            try {
+                const response = await fetch('/api/form-submissions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'stundenkorrektur',
+                        title: `Stundenkorrektur - ${data.name}`,
+                        description: `Name: ${data.name}, Datum: ${data.datum}, Zeit: ${data.uhrzeitVon} - ${data.uhrzeitBis}, Grund: ${data.grund}`,
+                        status: 'Eingegangen',
+                        form_data: data,
+                        submitted_by: data.name
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Test Stundenkorrektur erfolgreich!</h3>
+                            <p><strong>ID:</strong> ${result.id}</p>
+                            <p><strong>Typ:</strong> ${result.type}</p>
+                            <p><strong>Titel:</strong> ${result.title}</p>
+                            <p><strong>Status:</strong> ${result.status}</p>
+                            <p><strong>Zeitstempel:</strong> ${new Date(result.submitted_at).toLocaleString('de-DE')}</p>
+                            <p><strong>📧 E-Mail-Benachrichtigung:</strong> Sollte automatisch an kirstin.kreusch@landau.de gesendet worden sein.</p>
+                            <p><strong>⚠️ Wichtig:</strong> Überprüfen Sie das E-Mail-Postfach von kirstin.kreusch@landau.de</p>
+                        </div>
+                    `;
+                } else {
+                    const error = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Fehler beim Senden</h3>
+                            <p><strong>Fehler:</strong> ${error.error || 'Unbekannter Fehler'}</p>
+                            <p><strong>Details:</strong> ${error.details || 'Keine Details verfügbar'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Netzwerkfehler</h3>
+                        <p><strong>Fehler:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

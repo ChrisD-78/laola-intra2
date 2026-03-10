@@ -351,15 +351,35 @@ export default function Chat() {
     setProfileAvatar(null)
   }
 
-  const saveProfile = (e: React.FormEvent) => {
+  const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!profileName.trim() || !authUser) return
 
-    setUsers(prev => prev.map(user => 
-      user.id === authUser 
-        ? { ...user, name: profileName.trim(), avatar: profileAvatar || undefined }
-        : user
-    ))
+    const newName = profileName.trim()
+    const newAvatar = profileAvatar || null
+
+    // Lokalen Zustand aktualisieren, damit die Änderung sofort sichtbar ist
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === authUser
+          ? { ...user, name: newName, avatar: newAvatar || undefined }
+          : user
+      )
+    )
+
+    // Änderung auch in der Chat-User-Tabelle speichern,
+    // damit alle Kollegen das Profilbild sehen
+    try {
+      await upsertChatUser({
+        id: authUser,
+        name: newName,
+        avatar: newAvatar,
+      })
+    } catch (error) {
+      console.error('Profil konnte nicht im Chat gespeichert werden', error)
+      // Falls der Request fehlschlägt, bleibt zumindest der lokale Zustand erhalten
+    }
+
     setShowProfileSettings(false)
   }
 

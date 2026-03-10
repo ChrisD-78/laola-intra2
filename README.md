@@ -90,6 +90,22 @@ Ein modernes und benutzerfreundliches Intranet-Portal für Mitarbeiter des Freiz
 - **Formulare**: Digitale Formulare für verschiedene Anträge
 - **Schulungen**: Verwaltung von Schulungen und Weiterbildungen
 
+## 📁 Projektstruktur (Überblick)
+
+| Ordner/Datei | Inhalt |
+|--------------|--------|
+| **`sql/`** | Alle SQL-Skripte (Migrationen, Tabellen). Hauptdatei: `sql/all_sql_migrations.sql` |
+| **`docs/`** | Dokumentation: `ALLE_ANLEITUNGEN.md`, `BENUTZERHANDBUCH.md` |
+| **`scripts/`** | Hilfsskripte (VAPID-Keys, E-Mail-Test, Test-HTML) |
+| **`src/app/`** | Next.js App Router: Seiten (`page.tsx`), Layouts, Routen |
+| **`src/app/api/`** | API-Routen (Backend) |
+| **`src/components/`** | Wiederverwendbare React-Komponenten (Formulare, UI) |
+| **`src/lib/`** | Hilfsfunktionen, DB-Zugriff (`db.ts`), E-Mail, Neon |
+| **`src/contexts/`** | React Context (Auth, Chat, Sidebar, Tasks) |
+| **`public/`** | Statische Dateien (Bilder, Uploads) |
+
+Ausführliche Anleitung: **`docs/ALLE_ANLEITUNGEN.md`** (Setup, Deployment, Fehlerbehebung).
+
 ## 🛠️ Technologie-Stack
 
 - **Frontend**: Next.js 14 (App Router)
