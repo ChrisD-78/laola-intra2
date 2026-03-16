@@ -23,20 +23,84 @@ interface DienstkleidungItem {
 interface DienstkleidungFormData {
   mitarbeiter: string
   datum: string
+  einsatzbereich: string
   items: DienstkleidungItem[]
-  unterschriftMitarbeiter: string
-  unterschriftLeitung: string
+  ausgabeDurch: string
 }
 
 const emptyItem: DienstkleidungItem = { artikel: '', anzahl: '', groesse: '' }
+
+type EinsatzbereichKey =
+  | 'fest_halle'
+  | 'aushilfe_halle'
+  | 'fest_sauna'
+  | 'aushilfe_sauna'
+  | 'fest_gastro'
+  | 'aushilfe_gastro'
+
+const EINSATZBEREICH_LABEL: Record<EinsatzbereichKey, string> = {
+  fest_halle: 'Festangestellte Halle',
+  aushilfe_halle: 'Aushilfen Halle / Rettungsschwimmer',
+  fest_sauna: 'Festangestellte Sauna / Vollzeit',
+  aushilfe_sauna: 'Aushilfen Sauna',
+  fest_gastro: 'Festangestellte Gastro',
+  aushilfe_gastro: 'Aushilfen Gastro',
+}
+
+const getDefaultItemsForBereich = (bereich: EinsatzbereichKey): DienstkleidungItem[] => {
+  switch (bereich) {
+    case 'fest_halle':
+      return [
+        { artikel: 'Rotes Shirt', anzahl: '5', groesse: '' },
+        { artikel: 'Kurze Hose', anzahl: '3', groesse: '' },
+        { artikel: 'Jacke', anzahl: '1', groesse: '' },
+        { artikel: 'Gummistiefel', anzahl: '1', groesse: '' },
+        { artikel: 'Kilt', anzahl: '2', groesse: '' },
+        { artikel: 'Reinigungsshirt', anzahl: '2', groesse: '' },
+      ]
+    case 'aushilfe_halle':
+      return [
+        { artikel: 'Rotes Shirt', anzahl: '2', groesse: '' },
+        { artikel: 'Shorts', anzahl: '2', groesse: '' },
+        { artikel: 'Gummistiefel', anzahl: '1', groesse: '' },
+        { artikel: 'Kilt (bei Saunaeinsatz)', anzahl: '1', groesse: '' },
+        { artikel: 'Reinigungsshirt', anzahl: '1', groesse: '' },
+      ]
+    case 'fest_sauna':
+      return [
+        { artikel: 'Rotes Shirt', anzahl: '5', groesse: '' },
+        { artikel: 'Shorts', anzahl: '3', groesse: '' },
+        { artikel: 'Jacke', anzahl: '1', groesse: '' },
+        { artikel: 'Gummistiefel', anzahl: '1', groesse: '' },
+        { artikel: 'Kilt', anzahl: '2', groesse: '' },
+      ]
+    case 'aushilfe_sauna':
+      return [
+        { artikel: 'Rotes Shirt', anzahl: '2', groesse: '' },
+        { artikel: 'Shorts', anzahl: '2', groesse: '' },
+        { artikel: 'Kilt', anzahl: '2', groesse: '' },
+        { artikel: 'Gummistiefel', anzahl: '1', groesse: '' },
+        { artikel: 'Jacke', anzahl: '1', groesse: '' },
+      ]
+    case 'fest_gastro':
+      return [
+        { artikel: 'Schwarzes Shirt', anzahl: '4', groesse: '' },
+        { artikel: 'Jacke', anzahl: '1', groesse: '' },
+      ]
+    case 'aushilfe_gastro':
+      return [{ artikel: 'Schwarzes Shirt', anzahl: '2', groesse: '' }]
+    default:
+      return [{ ...emptyItem }]
+  }
+}
 
 const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }: DienstkleidungFormProps) => {
   const [formData, setFormData] = useState<DienstkleidungFormData>({
     mitarbeiter: '',
     datum: new Date().toISOString().split('T')[0],
+    einsatzbereich: '',
     items: [{ ...emptyItem }],
-    unterschriftMitarbeiter: '',
-    unterschriftLeitung: ''
+    ausgabeDurch: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const tableRows = useMemo(() => submissions || [], [submissions])
@@ -49,9 +113,9 @@ const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }:
       setFormData({
         mitarbeiter: '',
         datum: new Date().toISOString().split('T')[0],
+        einsatzbereich: '',
         items: [{ ...emptyItem }],
-        unterschriftMitarbeiter: '',
-        unterschriftLeitung: ''
+        ausgabeDurch: ''
       })
     } finally {
       setIsSubmitting(false)
@@ -130,6 +194,45 @@ const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }:
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Einsatzbereich *
+              </label>
+              <select
+                value={formData.einsatzbereich}
+                onChange={(e) => {
+                  const value = e.target.value as EinsatzbereichKey | ''
+                  if (!value) {
+                    setFormData({ ...formData, einsatzbereich: '', items: [{ ...emptyItem }] })
+                  } else {
+                    setFormData({
+                      ...formData,
+                      einsatzbereich: value,
+                      items: getDefaultItemsForBereich(value),
+                    })
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Bitte wählen…</option>
+                {(
+                  [
+                    'fest_halle',
+                    'aushilfe_halle',
+                    'fest_sauna',
+                    'aushilfe_sauna',
+                    'fest_gastro',
+                    'aushilfe_gastro',
+                  ] as EinsatzbereichKey[]
+                ).map((key) => (
+                  <option key={key} value={key}>
+                    {EINSATZBEREICH_LABEL[key]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-semibold text-gray-900">
@@ -202,31 +305,17 @@ const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }:
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Unterschrift Mitarbeiter/in
-                </label>
-                <input
-                  type="text"
-                  value={formData.unterschriftMitarbeiter}
-                  onChange={(e) => setFormData({ ...formData, unterschriftMitarbeiter: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Unterschrift BU/stellv. BL
-                </label>
-                <input
-                  type="text"
-                  value={formData.unterschriftLeitung}
-                  onChange={(e) => setFormData({ ...formData, unterschriftLeitung: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Name"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Ausgabe durch:
+              </label>
+              <input
+                type="text"
+                value={formData.ausgabeDurch}
+                onChange={(e) => setFormData({ ...formData, ausgabeDurch: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Name der ausgebenden Person"
+              />
             </div>
 
             <div className="flex justify-end">
@@ -252,6 +341,7 @@ const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }:
                       <tr>
                         <th className="px-4 py-2 text-left font-semibold text-gray-900">Datum</th>
                         <th className="px-4 py-2 text-left font-semibold text-gray-900">Mitarbeiter/in</th>
+                        <th className="px-4 py-2 text-left font-semibold text-gray-900">Einsatzbereich</th>
                         <th className="px-4 py-2 text-left font-semibold text-gray-900">Dienstkleidung</th>
                       </tr>
                     </thead>
@@ -279,6 +369,12 @@ const DienstkleidungForm = ({ isOpen, onClose, onSubmit, submissions, isAdmin }:
                                 {data.datum || submission.submittedAt?.split('T')[0]}
                               </td>
                               <td className="px-4 py-2 text-gray-900">{data.mitarbeiter || '—'}</td>
+                              <td className="px-4 py-2 text-gray-900 whitespace-nowrap">
+                                {data.einsatzbereich
+                                  ? EINSATZBEREICH_LABEL[data.einsatzbereich as EinsatzbereichKey] ||
+                                    data.einsatzbereich
+                                  : '—'}
+                              </td>
                               <td className="px-4 py-2 text-gray-900">{items || '—'}</td>
                             </tr>
                           )

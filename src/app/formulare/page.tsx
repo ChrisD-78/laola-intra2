@@ -14,6 +14,7 @@ import LeistungsnachweisAzubiForm from '@/components/LeistungsnachweisAzubiForm'
 import DienstkleidungForm from '@/components/DienstkleidungForm'
 import SchulungUnterweisungForm from '@/components/SchulungUnterweisungForm'
 import ChecklisteEHForm from '@/components/ChecklisteEHForm'
+import BetriebstagebuchForm from '@/components/BetriebstagebuchForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof, uploadProofPdf } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -276,6 +277,8 @@ export default function Formulare() {
     switch (type) {
       case 'wassermessung':
         return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l, Chlor-Gesamt: ${data.chlorWertGesamt} mg/l, Chlor-Gebunden: ${data.chlorWertGebunden} mg/l, Redox: ${data.redox} mV`
+      case 'betriebstagebuch':
+        return `Betriebstagebuch – Datum: ${data.datum || '-'}, Wochentag: ${data.wochentag || '-'}, Schichtführung Früh: ${data.personal?.frueh?.schichtfuehrung || '-'}, Schichtführung Spät: ${data.personal?.spaet?.schichtfuehrung || '-'}`
       case 'rutschenkontrolle':
         return `Sicherheit: ${data.sicherheitscheck}, Funktion: ${data.funktionspruefung}`
       case 'stoermeldung':
@@ -498,6 +501,7 @@ export default function Formulare() {
       case 'dienstkleidung': return 'Ausgabe Dienstkleidung'
       case 'schulung_unterweisung': return 'Schulung / Unterweisung'
       case 'checkliste_eh': return 'Checkliste EH'
+      case 'betriebstagebuch': return 'Betriebstagebuch'
       default: return type
     }
   }
@@ -517,6 +521,7 @@ export default function Formulare() {
       case 'dienstkleidung': return '👕'
       case 'schulung_unterweisung': return '📚'
       case 'checkliste_eh': return '🩹'
+      case 'betriebstagebuch': return '📒'
       default: return '📝'
     }
   }
@@ -534,7 +539,8 @@ export default function Formulare() {
     { value: 'leistungsnachweis_azubi', label: 'Leistungsnachweis Azubi', icon: '📋' },
     { value: 'dienstkleidung', label: 'Ausgabe Dienstkleidung', icon: '👕' },
     { value: 'schulung_unterweisung', label: 'Schulung / Unterweisung', icon: '📚' },
-    { value: 'checkliste_eh', label: 'Checkliste EH', icon: '🩹' }
+    { value: 'checkliste_eh', label: 'Checkliste EH', icon: '🩹' },
+    { value: 'betriebstagebuch', label: 'Betriebstagebuch', icon: '📒' }
   ]
 
   const tableSubmissions = isAdmin
@@ -602,6 +608,9 @@ export default function Formulare() {
   )
   const wassermessungSubmissions = submissions.filter(
     submission => submission.type === 'wassermessung'
+  )
+  const betriebstagebuchSubmissions = submissions.filter(
+    submission => submission.type === 'betriebstagebuch'
   )
   const dienstkleidungSubmissions = submissions.filter(
     submission => submission.type === 'dienstkleidung'
@@ -857,6 +866,24 @@ export default function Formulare() {
             <button 
               onClick={() => setOpenForm('checkliste_eh')}
               className="w-full px-4 py-2.5 text-base bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">📒</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Betriebstagebuch
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Schicht- und Messwerte sowie Vorkommnisse dokumentieren
+            </p>
+            <button
+              onClick={() => setOpenForm('betriebstagebuch')}
+              className="w-full px-4 py-2.5 text-base bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -1415,6 +1442,13 @@ export default function Formulare() {
         isOpen={openForm === 'checkliste_eh'}
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('checkliste_eh', data)}
+      />
+
+      <BetriebstagebuchForm
+        isOpen={openForm === 'betriebstagebuch'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('betriebstagebuch', data)}
+        submissions={betriebstagebuchSubmissions}
       />
     </div>
   )
