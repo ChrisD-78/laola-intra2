@@ -2,6 +2,16 @@
 
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 type Shift = 'frueh' | 'spaet'
 type TimeSlot = 'betriebsbeginn' | 'betriebsmitte' | 'betriebsende'
@@ -339,6 +349,37 @@ export default function BetriebstagebuchForm({
     return historyRows.find((r) => r.id === selectedHistoryId) || null
   }, [selectedHistoryId, historyRows])
 
+  // Letzte 5 Messungen für Wasserwerte (Schwimmerbecken Halle, Betriebsbeginn)
+  const historyWaterChartData = useMemo(() => {
+    const PRIMARY_POOL: WaterPoolKey = 'schwimmer'
+    const SLOT: TimeSlot = 'betriebsbeginn'
+    return historyRows
+      .slice(0, 5)
+      .reverse()
+      .map((r) => {
+        const data = r.data as any
+        const section = data?.wasserwerteHalle?.[PRIMARY_POOL]?.[SLOT] || {}
+        return {
+          label: r.datum || new Date(r.submittedAt).toLocaleDateString('de-DE'),
+          temp: Number(section.temp ?? NaN),
+          ph: Number(section.ph ?? NaN),
+          clFrei: Number(section.clFrei ?? NaN),
+          clGes: Number(section.clGes ?? NaN),
+          clGeb: Number(section.clGeb ?? NaN),
+          redox: Number(section.redox ?? NaN),
+        }
+      })
+      .filter(
+        (row) =>
+          Number.isFinite(row.temp) ||
+          Number.isFinite(row.ph) ||
+          Number.isFinite(row.clFrei) ||
+          Number.isFinite(row.clGes) ||
+          Number.isFinite(row.clGeb) ||
+          Number.isFinite(row.redox),
+      )
+  }, [historyRows])
+
   const formatValue = (value: unknown) => {
     if (value === null || value === undefined) return '—'
     if (typeof value === 'boolean') return value ? 'Ja' : 'Nein'
@@ -561,19 +602,19 @@ export default function BetriebstagebuchForm({
 
           {/* Wasserwerte Halle & Sauna */}
           <div className="border border-gray-200 rounded-xl p-4 space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col items-center gap-3 mb-2">
               <h3 className="text-lg font-semibold text-gray-900">Wasserwerte</h3>
-              <div className="flex flex-wrap gap-3">
-                <div className="inline-flex rounded-full bg-gray-100 p-1">
+              <div className="flex justify-center">
+                <div className="inline-flex rounded-full bg-gray-100 p-1.5 shadow-sm">
                   {(['betriebsbeginn', 'betriebsmitte', 'betriebsende'] as TimeSlot[]).map((slot) => (
                     <button
                       key={slot}
                       type="button"
                       onClick={() => setSelectedTimeSlot(slot)}
-                      className={`px-3 py-0.5 text-xs font-medium rounded-full transition-colors ${
+                      className={`mx-1 px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
                         selectedTimeSlot === slot
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-transparent text-gray-700 hover:bg-white'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white text-gray-700 hover:bg-blue-50'
                       }`}
                     >
                       {timeSlotLabel[slot]}
@@ -906,6 +947,73 @@ export default function BetriebstagebuchForm({
               </div>
 
               <div className="p-6 overflow-y-auto space-y-6">
+                {historyWaterChartData.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3">
+                      Wasserwerte – letzte 5 Messungen (Schwimmerbecken Halle, Betriebsbeginn)
+                    </h5>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={historyWaterChartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="label" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="temp"
+                            name="Temperatur (°C)"
+                            stroke="#f97316"
+                            strokeWidth={2}
+                            dot
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="ph"
+                            name="pH-Wert"
+                            stroke="#0ea5e9"
+                            strokeWidth={2}
+                            dot
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="clFrei"
+                            name="Cl frei (mg/l)"
+                            stroke="#16a34a"
+                            strokeWidth={2}
+                            dot
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="clGes"
+                            name="Cl ges. (mg/l)"
+                            stroke="#7c3aed"
+                            strokeWidth={2}
+                            dot
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="clGeb"
+                            name="Cl geb. (mg/l)"
+                            stroke="#facc15"
+                            strokeWidth={2}
+                            dot
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="redox"
+                            name="Redox (mV)"
+                            stroke="#22c55e"
+                            strokeWidth={2}
+                            dot
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-gray-900">Alle Einträge</p>

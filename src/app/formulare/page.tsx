@@ -34,6 +34,140 @@ const blobToBase64 = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob)
   })
 
+const createBetriebstagebuchPdf = async (data: any): Promise<Blob> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const jsPDFModule = await import('jspdf')
+  const jsPDF = (jsPDFModule as any).default || jsPDFModule
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const marginX = 40
+  const lineHeight = 16
+  let y = 50
+
+  const addHeading = (text: string) => {
+    doc.setFontSize(16)
+    doc.setFont(undefined, 'bold')
+    doc.text(text, marginX, y)
+    y += 26
+    doc.setFont(undefined, 'normal')
+    doc.setFontSize(11)
+  }
+
+  const addLine = (label: string, value: string) => {
+    const content = `${label}: ${value || '-'}`
+    const lines = doc.splitTextToSize(content, pageWidth - marginX * 2)
+    lines.forEach((line: string) => {
+      if (y > 780) {
+        doc.addPage()
+        y = 50
+      }
+      doc.text(line, marginX, y)
+      y += lineHeight
+    })
+  }
+
+  const addSection = (title: string) => {
+    y += 8
+    if (y > 780) {
+      doc.addPage()
+      y = 50
+    }
+    doc.setFontSize(13)
+    doc.setFont(undefined, 'bold')
+    doc.text(title, marginX, y)
+    y += 20
+    doc.setFont(undefined, 'normal')
+    doc.setFontSize(11)
+  }
+
+  const date = data.datum || new Date().toISOString().split('T')[0]
+
+  addHeading('Betriebstagebuch Freizeitbad LA OLA')
+  addLine('Datum', date)
+  addLine('Wochentag', data.wochentag || '')
+
+  addSection('Personal / Einteilung')
+  addLine('Frühschicht – Schichtführung', data.personal?.frueh?.schichtfuehrung || '')
+  addLine('Frühschicht – 2. Aufsicht', data.personal?.frueh?.aufsicht2 || '')
+  addLine('Frühschicht – 3. Aufsicht', data.personal?.frueh?.aufsicht3 || '')
+  addLine('Frühschicht – Sauna', data.personal?.frueh?.sauna || '')
+  addLine('Frühschicht – Umkleide', data.personal?.frueh?.umkleide || '')
+  addLine('Frühschicht – Kasse', data.personal?.frueh?.kasse || '')
+  addLine('Spätschicht – Schichtführung', data.personal?.spaet?.schichtfuehrung || '')
+  addLine('Spätschicht – 2. Aufsicht', data.personal?.spaet?.aufsicht2 || '')
+  addLine('Spätschicht – 3. Aufsicht', data.personal?.spaet?.aufsicht3 || '')
+  addLine('Spätschicht – Sauna', data.personal?.spaet?.sauna || '')
+  addLine('Spätschicht – Umkleide', data.personal?.spaet?.umkleide || '')
+  addLine('Spätschicht – Kasse', data.personal?.spaet?.kasse || '')
+
+  const addWaterSection = (title: string, sectionData: any) => {
+    addSection(title)
+    const slots = ['betriebsbeginn', 'betriebsmitte', 'betriebsende'] as const
+    const fields: { key: keyof any; label: string }[] = [
+      { key: 'temp', label: 'Temp' },
+      { key: 'ph', label: 'pH' },
+      { key: 'clFrei', label: 'Cl frei' },
+      { key: 'clGes', label: 'Cl ges.' },
+      { key: 'clGeb', label: 'Cl geb.' },
+      { key: 'redox', label: 'Redox' },
+    ]
+    Object.entries(sectionData || {}).forEach(([becken, value]) => {
+      addLine(`Becken`, String(becken))
+      slots.forEach((slot) => {
+        const row = (value as any)?.[slot] || {}
+        const slotLabel =
+          slot === 'betriebsbeginn' ? 'Betriebsbeginn' : slot === 'betriebsmitte' ? 'Betriebsmitte' : 'Betriebsende'
+        addLine(`  ${slotLabel}`, '')
+        fields.forEach((f) => {
+          addLine(`    ${f.label}`, String(row[f.key] ?? ''))
+        })
+      })
+      y += 4
+    })
+  }
+
+  addWaterSection('Wasserwerte – Halle', data.wasserwerteHalle)
+  addWaterSection('Wasserwerte – Sauna', data.wasserwerteSauna)
+
+  addSection('Montag / Zusatz & Lufttemperatur')
+  addLine('Säurekapazität (mmol/l)', data.montag?.saeurekapazitaet || '')
+  addLine('Messwasserentnahmestellen reinigen', data.montag?.messwasserentnahmestellenReinigen ? 'Ja' : 'Nein')
+  addLine('Küvetten austauschen (montags)', data.montag?.kuvetteAustauschen ? 'Ja' : 'Nein')
+  addLine('Lufttemperatur innen (°C)', data.lufttemperatur?.innen || '')
+  addLine('Lufttemperatur außen (°C)', data.lufttemperatur?.aussen || '')
+
+  addSection('Reinigung')
+  addLine('Halle Früh', data.reinigung?.halleFrueh || '')
+  addLine('Halle Spät', data.reinigung?.halleSpaet || '')
+  addLine('Sauna Früh', data.reinigung?.saunaFrueh || '')
+  addLine('Sauna Spät', data.reinigung?.saunaSpaet || '')
+  addLine('Umkleide Früh', data.reinigung?.umkleideFrueh || '')
+  addLine('Umkleide Spät', data.reinigung?.umkleideSpaet || '')
+  addLine('Kasse Früh', data.reinigung?.kasseFrueh || '')
+  addLine('Kasse Spät', data.reinigung?.kasseSpaet || '')
+
+  addSection('Vorkommnisse')
+  addLine('Betriebsstörung / Vorkommnisse', data.betriebsstoerungVorkommnisse || '')
+  addLine('Behoben von', data.behobenVon || '')
+  addLine('Behoben um', data.behobenUm || '')
+
+  addSection('Druck UF')
+  addLine('1.1', data.druckUF?.['1.1'] || '')
+  addLine('1.2', data.druckUF?.['1.2'] || '')
+  addLine('2.1', data.druckUF?.['2.1'] || '')
+  addLine('2.2', data.druckUF?.['2.2'] || '')
+  addLine('2.3', data.druckUF?.['2.3'] || '')
+  addLine('2.4', data.druckUF?.['2.4'] || '')
+
+  addSection('Sonstiges')
+  addLine('Sonstiges', data.sonstiges || '')
+
+  addSection('Name')
+  addLine('Verantwortlicher Frühschicht', data.unterschrift?.verantwortlicherFrueh || '')
+  addLine('Verantwortlicher Spätschicht', data.unterschrift?.verantwortlicherSpaet || '')
+
+  return doc.output('blob')
+}
 const createChecklisteEhPdf = async (data: any): Promise<Blob> => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const jsPDFModule = await import('jspdf')
   const jsPDF = (jsPDFModule as any).default || jsPDFModule
@@ -240,6 +374,39 @@ export default function Formulare() {
       }
       
       setSubmissions([newSubmission, ...submissions])
+
+      if (type === 'betriebstagebuch') {
+        try {
+          const pdfBlob = await createBetriebstagebuchPdf(data)
+          const fileName = `Betriebstagebuch_LA-OLA_${(data.datum || new Date().toISOString().split('T')[0]).replace(/-/g, '')}.pdf`
+          const base64Content = await blobToBase64(pdfBlob)
+
+          const subject = `Betriebstagebuch Freizeitbad LA OLA – ${data.datum || new Date().toLocaleDateString('de-DE')}`
+          const plainText = `Betriebstagebuch Freizeitbad LA OLA\n\nDatum: ${data.datum || ''}\nWochentag: ${data.wochentag || ''}`
+
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: ['christof.drost@landau.de', 'kai.kokott@landau.de'],
+              subject,
+              text: plainText,
+              html: `<p><strong>Betriebstagebuch Freizeitbad LA OLA</strong><br/><strong>Datum:</strong> ${data.datum || ''}<br/><strong>Wochentag:</strong> ${data.wochentag || ''}</p><p>Das vollständige Betriebstagebuch ist als PDF im Anhang.</p>`,
+              attachments: [
+                {
+                  filename: fileName,
+                  content: base64Content,
+                  contentType: 'application/pdf',
+                  encoding: 'base64'
+                }
+              ]
+            })
+          })
+        } catch (e) {
+          console.error('Fehler beim Versenden des Betriebstagebuch-PDFs per E-Mail', e)
+          alert('Das Betriebstagebuch konnte nicht per E-Mail versendet werden. Bitte später erneut versuchen.')
+        }
+      }
 
       // Special handling for arbeitsunfall
       if (type === 'arbeitsunfall') {
