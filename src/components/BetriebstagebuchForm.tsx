@@ -391,7 +391,7 @@ export default function BetriebstagebuchForm({
           Number.isFinite(row.clGeb) ||
           Number.isFinite(row.redox),
       )
-  }, [historyRows])
+  }, [historyRows, historySelectedPoolKey])
 
   const formatValue = (value: unknown) => {
     if (value === null || value === undefined) return '—'
