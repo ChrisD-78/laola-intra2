@@ -50,6 +50,11 @@ const SAUNA_POOLS: Array<{ key: SaunaPoolKey; label: string }> = [
   { key: 'aussenKalt', label: 'Außenbecken kalt' },
 ]
 
+const HISTORY_POOLS = [
+  ...HALLEN_POOLS.map((p) => ({ scope: 'halle' as const, key: p.key, label: p.label })),
+  ...SAUNA_POOLS.map((p) => ({ scope: 'sauna' as const, key: p.key, label: p.label })),
+]
+
 const timeSlotLabel: Record<TimeSlot, string> = {
   betriebsbeginn: 'Betriebsbeginn',
   betriebsmitte: 'Betriebsmitte',
@@ -349,16 +354,24 @@ export default function BetriebstagebuchForm({
     return historyRows.find((r) => r.id === selectedHistoryId) || null
   }, [selectedHistoryId, historyRows])
 
-  // Letzte 5 Messungen für Wasserwerte (Schwimmerbecken Halle, Betriebsbeginn)
+  // Letzte 5 Messungen für Wasserwerte eines ausgewählten Beckens (Historie)
+  const [historySelectedPoolKey, setHistorySelectedPoolKey] = useState<string>(
+    HISTORY_POOLS[0]?.scope + ':' + HISTORY_POOLS[0]?.key,
+  )
+
   const historyWaterChartData = useMemo(() => {
-    const PRIMARY_POOL: WaterPoolKey = 'schwimmer'
+    if (!historySelectedPoolKey) return []
+    const [scope, key] = historySelectedPoolKey.split(':') as ['halle' | 'sauna', string]
     const SLOT: TimeSlot = 'betriebsbeginn'
     return historyRows
       .slice(0, 5)
       .reverse()
       .map((r) => {
         const data = r.data as any
-        const section = data?.wasserwerteHalle?.[PRIMARY_POOL]?.[SLOT] || {}
+        const section =
+          scope === 'halle'
+            ? data?.wasserwerteHalle?.[key as WaterPoolKey]?.[SLOT] || {}
+            : data?.wasserwerteSauna?.[key as SaunaPoolKey]?.[SLOT] || {}
         return {
           label: r.datum || new Date(r.submittedAt).toLocaleDateString('de-DE'),
           temp: Number(section.temp ?? NaN),
@@ -948,68 +961,148 @@ export default function BetriebstagebuchForm({
 
               <div className="p-6 overflow-y-auto space-y-6">
                 {historyWaterChartData.length > 0 && (
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h5 className="text-sm font-semibold text-gray-900 mb-3">
-                      Wasserwerte – letzte 5 Messungen (Schwimmerbecken Halle, Betriebsbeginn)
-                    </h5>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={historyWaterChartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="label" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="temp"
-                            name="Temperatur (°C)"
-                            stroke="#f97316"
-                            strokeWidth={2}
-                            dot
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="ph"
-                            name="pH-Wert"
-                            stroke="#0ea5e9"
-                            strokeWidth={2}
-                            dot
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="clFrei"
-                            name="Cl frei (mg/l)"
-                            stroke="#16a34a"
-                            strokeWidth={2}
-                            dot
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="clGes"
-                            name="Cl ges. (mg/l)"
-                            stroke="#7c3aed"
-                            strokeWidth={2}
-                            dot
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="clGeb"
-                            name="Cl geb. (mg/l)"
-                            stroke="#facc15"
-                            strokeWidth={2}
-                            dot
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="redox"
-                            name="Redox (mV)"
-                            stroke="#22c55e"
-                            strokeWidth={2}
-                            dot
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h5 className="text-sm font-semibold text-gray-900">
+                          Wasserwerte – letzte 5 Messungen (Betriebsbeginn)
+                        </h5>
+                        <p className="text-xs text-gray-600">
+                          Becken auswählen, um die Kurven anzusehen.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {HISTORY_POOLS.map((p) => {
+                          const key = `${p.scope}:${p.key}`
+                          const active = historySelectedPoolKey === key
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setHistorySelectedPoolKey(key)}
+                              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                                active
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50'
+                              }`}
+                            >
+                              {p.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Chlor-Werte */}
+                    <div>
+                      <h6 className="text-xs font-semibold text-gray-800 mb-2">Chlor-Werte (mg/l)</h6>
+                      <div className="h-52">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={historyWaterChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="clFrei"
+                              name="Cl frei"
+                              stroke="#16a34a"
+                              strokeWidth={2}
+                              dot
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="clGes"
+                              name="Cl ges."
+                              stroke="#7c3aed"
+                              strokeWidth={2}
+                              dot
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="clGeb"
+                              name="Cl geb."
+                              stroke="#facc15"
+                              strokeWidth={2}
+                              dot
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Redox */}
+                    <div>
+                      <h6 className="text-xs font-semibold text-gray-800 mb-2">Redox (mV)</h6>
+                      <div className="h-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={historyWaterChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="redox"
+                              name="Redox"
+                              stroke="#22c55e"
+                              strokeWidth={2}
+                              dot
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Temperatur */}
+                    <div>
+                      <h6 className="text-xs font-semibold text-gray-800 mb-2">Temperatur (°C)</h6>
+                      <div className="h-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={historyWaterChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="temp"
+                              name="Temperatur"
+                              stroke="#f97316"
+                              strokeWidth={2}
+                              dot
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* pH-Wert */}
+                    <div>
+                      <h6 className="text-xs font-semibold text-gray-800 mb-2">pH-Wert</h6>
+                      <div className="h-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={historyWaterChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="ph"
+                              name="pH"
+                              stroke="#0ea5e9"
+                              strokeWidth={2}
+                              dot
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 )}
