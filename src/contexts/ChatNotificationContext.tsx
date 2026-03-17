@@ -68,17 +68,21 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
 
           try {
             const dbMessages = await getDirectMessages(authUser, userId)
-            const localMessages: Message[] = dbMessages.map((msg: ChatMessageRecord) => ({
-              id: msg.id as string,
-              sender: msg.sender_id,
-              recipient: msg.recipient_id || undefined,
-              groupId: msg.group_id || undefined,
-              content: msg.content,
-              timestamp: msg.created_at || new Date().toISOString(),
-              isRead: msg.is_read,
-              imageUrl: msg.image_url || undefined,
-              imageName: msg.image_name || undefined
-            }))
+            const localMessages: Message[] = dbMessages.map((msg: ChatMessageRecord) => {
+              const readBy = (msg.read_by as string[] | null) || []
+              const isReadForUser = msg.is_read || readBy.includes(authUser)
+              return {
+                id: msg.id as string,
+                sender: msg.sender_id,
+                recipient: msg.recipient_id || undefined,
+                groupId: msg.group_id || undefined,
+                content: msg.content,
+                timestamp: msg.created_at || new Date().toISOString(),
+                isRead: isReadForUser,
+                imageUrl: msg.image_url || undefined,
+                imageName: msg.image_name || undefined
+              }
+            })
             allMessages.push(...localMessages)
           } catch (e) {
             // Ignore errors for individual users
@@ -98,17 +102,21 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
         for (const group of userGroups) {
           try {
             const dbMessages = await getGroupMessages(group.id)
-            const localMessages: Message[] = dbMessages.map((msg: ChatMessageRecord) => ({
-              id: msg.id as string,
-              sender: msg.sender_id,
-              recipient: msg.recipient_id || undefined,
-              groupId: msg.group_id || undefined,
-              content: msg.content,
-              timestamp: msg.created_at || new Date().toISOString(),
-              isRead: msg.is_read,
-              imageUrl: msg.image_url || undefined,
-              imageName: msg.image_name || undefined
-            }))
+            const localMessages: Message[] = dbMessages.map((msg: ChatMessageRecord) => {
+              const readBy = (msg.read_by as string[] | null) || []
+              const isReadForUser = msg.is_read || readBy.includes(authUser)
+              return {
+                id: msg.id as string,
+                sender: msg.sender_id,
+                recipient: msg.recipient_id || undefined,
+                groupId: msg.group_id || undefined,
+                content: msg.content,
+                timestamp: msg.created_at || new Date().toISOString(),
+                isRead: isReadForUser,
+                imageUrl: msg.image_url || undefined,
+                imageName: msg.image_name || undefined
+              }
+            })
             allMessages.push(...localMessages)
           } catch (e) {
             // Ignore errors for individual groups
