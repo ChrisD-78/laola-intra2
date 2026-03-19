@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import {
   CartesianGrid,
@@ -190,6 +190,7 @@ export default function BetriebstagebuchForm({
 
   const [showHistory, setShowHistory] = useState(false)
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null)
+  const detailsSectionRef = useRef<HTMLDivElement | null>(null)
 
   const today = new Date()
   const defaultDate = today.toISOString().split('T')[0]
@@ -355,8 +356,16 @@ export default function BetriebstagebuchForm({
 
   const selectedHistory = useMemo(() => {
     if (!selectedHistoryId) return null
-    return historyRows.find((r) => r.id === selectedHistoryId) || null
+    return historyRows.find((r) => String(r.id) === String(selectedHistoryId)) || null
   }, [selectedHistoryId, historyRows])
+
+  useEffect(() => {
+    if (!showHistory || !selectedHistoryId) return
+    const t = setTimeout(() => {
+      detailsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+    return () => clearTimeout(t)
+  }, [showHistory, selectedHistoryId])
 
   // Letzte 5 Messungen für Wasserwerte eines ausgewählten Beckens (Historie)
   const [historySelectedPoolKey, setHistorySelectedPoolKey] = useState<string>(
@@ -1222,10 +1231,12 @@ export default function BetriebstagebuchForm({
                             <td className="py-2 space-x-2">
                               <button
                                 type="button"
-                                onClick={() => setSelectedHistoryId(r.id)}
+                                onClick={() =>
+                                  setSelectedHistoryId((prev) => (prev === r.id ? null : r.id))
+                                }
                                 className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 transition-colors"
                               >
-                                Details
+                                {selectedHistoryId === r.id ? 'Details schließen' : 'Details'}
                               </button>
                               {index < 3 && (
                                 <button
@@ -1252,7 +1263,7 @@ export default function BetriebstagebuchForm({
                 </div>
 
                 {selectedHistory && (
-                  <div className="border border-gray-200 rounded-xl p-4">
+                  <div ref={detailsSectionRef} className="border border-gray-200 rounded-xl p-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900">Details (gruppiert)</h4>
