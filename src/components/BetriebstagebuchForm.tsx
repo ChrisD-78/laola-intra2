@@ -349,6 +349,10 @@ export default function BetriebstagebuchForm({
       .sort((a, b) => b.timestamp - a.timestamp)
   }, [submissions])
 
+  const lastThreeHistoryRows = useMemo(() => {
+    return historyRows.slice(0, 3)
+  }, [historyRows])
+
   const selectedHistory = useMemo(() => {
     if (!selectedHistoryId) return null
     return historyRows.find((r) => r.id === selectedHistoryId) || null
@@ -398,6 +402,87 @@ export default function BetriebstagebuchForm({
     if (typeof value === 'boolean') return value ? 'Ja' : 'Nein'
     const str = String(value).trim()
     return str === '' ? '—' : str
+  }
+
+  const loadHistoryEntryIntoForm = (entry: {
+    data: Partial<BetriebstagebuchData>
+  }) => {
+    const data = entry.data || {}
+
+    setDatum(data.datum || defaultDate)
+    setWochentag(data.wochentag || defaultWeekday)
+
+    setPersonal({
+      frueh: {
+        schichtfuehrung: data.personal?.frueh?.schichtfuehrung || '',
+        aufsicht2: data.personal?.frueh?.aufsicht2 || '',
+        aufsicht3: data.personal?.frueh?.aufsicht3 || '',
+        sauna: data.personal?.frueh?.sauna || '',
+        umkleide: data.personal?.frueh?.umkleide || '',
+        kasse: data.personal?.frueh?.kasse || '',
+      },
+      spaet: {
+        schichtfuehrung: data.personal?.spaet?.schichtfuehrung || '',
+        aufsicht2: data.personal?.spaet?.aufsicht2 || '',
+        aufsicht3: data.personal?.spaet?.aufsicht3 || '',
+        sauna: data.personal?.spaet?.sauna || '',
+        umkleide: data.personal?.spaet?.umkleide || '',
+        kasse: data.personal?.spaet?.kasse || '',
+      },
+    })
+
+    setWasserwerteHalle(
+      (data.wasserwerteHalle as Record<WaterPoolKey, WaterSection>) || makePoolMap(HALLEN_POOLS),
+    )
+    setWasserwerteSauna(
+      (data.wasserwerteSauna as Record<SaunaPoolKey, WaterSection>) || makePoolMap(SAUNA_POOLS),
+    )
+
+    setSaeurekapazitaet(data.montag?.saeurekapazitaet || '')
+    setMesswasserentnahmestellenReinigen(!!data.montag?.messwasserentnahmestellenReinigen)
+    setKuvetteAustauschen(!!data.montag?.kuvetteAustauschen)
+
+    setLuftInnen(data.lufttemperatur?.innen || '')
+    setLuftAussen(data.lufttemperatur?.aussen || '')
+
+    setReinigung({
+      halleFrueh: data.reinigung?.halleFrueh || '',
+      halleSpaet: data.reinigung?.halleSpaet || '',
+      saunaFrueh: data.reinigung?.saunaFrueh || '',
+      saunaSpaet: data.reinigung?.saunaSpaet || '',
+      umkleideFrueh: data.reinigung?.umkleideFrueh || '',
+      umkleideSpaet: data.reinigung?.umkleideSpaet || '',
+      kasseFrueh: data.reinigung?.kasseFrueh || '',
+      kasseSpaet: data.reinigung?.kasseSpaet || '',
+    })
+
+    setKontrollgang({
+      uhrzeit: data.kontrollgang?.uhrzeit || '',
+      handzeichen: data.kontrollgang?.handzeichen || '',
+    })
+
+    setBetriebsstoerungVorkommnisse(data.betriebsstoerungVorkommnisse || '')
+    setBehobenVon(data.behobenVon || '')
+    setBehobenUm(data.behobenUm || '')
+
+    setDruckUF({
+      '1.1': data.druckUF?.['1.1'] || '',
+      '1.2': data.druckUF?.['1.2'] || '',
+      '2.1': data.druckUF?.['2.1'] || '',
+      '2.2': data.druckUF?.['2.2'] || '',
+      '2.3': data.druckUF?.['2.3'] || '',
+      '2.4': data.druckUF?.['2.4'] || '',
+    })
+
+    setSonstiges(data.sonstiges || '')
+
+    setUnterschrift({
+      verantwortlicherFrueh: data.unterschrift?.verantwortlicherFrueh || currentUser || '',
+      verantwortlicherSpaet: data.unterschrift?.verantwortlicherSpaet || '',
+    })
+
+    setShowHistory(false)
+    setSelectedHistoryId(null)
   }
 
   const hasAnyWaterValue = (section: any) => {
@@ -1125,7 +1210,7 @@ export default function BetriebstagebuchForm({
                         </tr>
                       </thead>
                       <tbody>
-                        {historyRows.map((r) => (
+                        {historyRows.map((r, index) => (
                           <tr key={r.id} className="border-b border-gray-100">
                             <td className="py-2 pr-4 text-gray-900">{r.datum || '—'}</td>
                             <td className="py-2 pr-4 text-gray-700">{r.wochentag || '—'}</td>
@@ -1134,7 +1219,7 @@ export default function BetriebstagebuchForm({
                             <td className="py-2 pr-4 text-gray-600">
                               {new Date(r.submittedAt).toLocaleString('de-DE')}
                             </td>
-                            <td className="py-2">
+                            <td className="py-2 space-x-2">
                               <button
                                 type="button"
                                 onClick={() => setSelectedHistoryId(r.id)}
@@ -1142,6 +1227,15 @@ export default function BetriebstagebuchForm({
                               >
                                 Details
                               </button>
+                              {index < 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() => loadHistoryEntryIntoForm(r)}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-green-500 text-green-700 bg-white hover:bg-green-50 transition-colors"
+                                >
+                                  In Formular laden
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}
