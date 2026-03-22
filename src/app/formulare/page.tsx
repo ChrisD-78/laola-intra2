@@ -136,16 +136,6 @@ const createBetriebstagebuchPdf = async (data: any): Promise<Blob> => { // eslin
   addLine('Lufttemperatur innen (°C)', data.lufttemperatur?.innen || '')
   addLine('Lufttemperatur außen (°C)', data.lufttemperatur?.aussen || '')
 
-  addSection('Reinigung')
-  addLine('Halle Früh', data.reinigung?.halleFrueh || '')
-  addLine('Halle Spät', data.reinigung?.halleSpaet || '')
-  addLine('Sauna Früh', data.reinigung?.saunaFrueh || '')
-  addLine('Sauna Spät', data.reinigung?.saunaSpaet || '')
-  addLine('Umkleide Früh', data.reinigung?.umkleideFrueh || '')
-  addLine('Umkleide Spät', data.reinigung?.umkleideSpaet || '')
-  addLine('Kasse Früh', data.reinigung?.kasseFrueh || '')
-  addLine('Kasse Spät', data.reinigung?.kasseSpaet || '')
-
   addSection('Vorkommnisse')
   addLine('Betriebsstörung / Vorkommnisse', data.betriebsstoerungVorkommnisse || '')
   addLine('Behoben von', data.behobenVon || '')

@@ -94,6 +94,84 @@ const makePoolMap = <TKey extends string>(
   }, {} as Record<TKey, WaterSection>)
 }
 
+/** Cl geb. = Cl ges. − Cl frei (Komma oder Punkt als Dezimaltrenner) */
+const parseWaterNumber = (raw: string): number | null => {
+  const s = String(raw ?? '')
+    .trim()
+    .replace(/\s/g, '')
+    .replace(',', '.')
+  if (s === '') return null
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
+const formatClGebFromDiff = (diff: number): string => {
+  if (!Number.isFinite(diff)) return ''
+  const rounded = Math.round(diff * 1000) / 1000
+  return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 3 }).format(rounded)
+}
+
+const computeClGebString = (clFrei: string, clGes: string): string => {
+  const frei = parseWaterNumber(clFrei)
+  const ges = parseWaterNumber(clGes)
+  if (frei === null || ges === null) return ''
+  return formatClGebFromDiff(ges - frei)
+}
+
+const recalcWaterRow = (row: WaterRow): WaterRow => ({
+  ...row,
+  clGeb: computeClGebString(row.clFrei, row.clGes),
+})
+
+const recalcWaterSection = (section: WaterSection): WaterSection => ({
+  betriebsbeginn: recalcWaterRow(section.betriebsbeginn),
+  betriebsmitte: recalcWaterRow(section.betriebsmitte),
+  betriebsende: recalcWaterRow(section.betriebsende),
+})
+
+function mergeWaterPoolMap<TKey extends string>(
+  defaults: Record<TKey, WaterSection>,
+  incoming?: Partial<Record<TKey, WaterSection>>,
+): Record<TKey, WaterSection> {
+  const out = { ...defaults }
+  if (!incoming) return out
+  for (const key of Object.keys(defaults) as TKey[]) {
+    const inc = incoming[key]
+    if (!inc) continue
+    const def = defaults[key]
+    out[key] = {
+      betriebsbeginn: { ...def.betriebsbeginn, ...inc.betriebsbeginn },
+      betriebsmitte: { ...def.betriebsmitte, ...inc.betriebsmitte },
+      betriebsende: { ...def.betriebsende, ...inc.betriebsende },
+    }
+  }
+  return out
+}
+
+function normalizeAndRecalcPoolMap<TKey extends string>(
+  defaults: Record<TKey, WaterSection>,
+  incoming: Partial<Record<TKey, WaterSection>> | undefined,
+  poolKeys: TKey[],
+): Record<TKey, WaterSection> {
+  const merged = mergeWaterPoolMap(defaults, incoming)
+  const next = { ...merged }
+  for (const key of poolKeys) {
+    next[key] = recalcWaterSection(merged[key])
+  }
+  return next
+}
+
+function recalcEntirePoolMap<TKey extends string>(
+  map: Record<TKey, WaterSection>,
+  poolKeys: TKey[],
+): Record<TKey, WaterSection> {
+  const next = { ...map }
+  for (const key of poolKeys) {
+    next[key] = recalcWaterSection(map[key] ?? emptySection())
+  }
+  return next
+}
+
 export interface BetriebstagebuchData {
   datum: string
   wochentag: string
@@ -129,17 +207,6 @@ export interface BetriebstagebuchData {
   lufttemperatur: {
     innen: string
     aussen: string
-  }
-
-  reinigung: {
-    halleFrueh: string
-    halleSpaet: string
-    saunaFrueh: string
-    saunaSpaet: string
-    umkleideFrueh: string
-    umkleideSpaet: string
-    kasseFrueh: string
-    kasseSpaet: string
   }
 
   kontrollgang: {
@@ -280,16 +347,6 @@ export default function BetriebstagebuchForm({
     setKuvetteAustauschen(false)
     setLuftInnen('')
     setLuftAussen('')
-    setReinigung({
-      halleFrueh: '',
-      halleSpaet: '',
-      saunaFrueh: '',
-      saunaSpaet: '',
-      umkleideFrueh: '',
-      umkleideSpaet: '',
-      kasseFrueh: '',
-      kasseSpaet: '',
-    })
     setKontrollgang({ uhrzeit: '', handzeichen: '' })
     setBetriebsstoerungVorkommnisse('')
     setBehobenVon('')
@@ -318,16 +375,23 @@ export default function BetriebstagebuchForm({
     field: WaterFieldKey,
     value: string
   ) => {
-    sectionSetter((prev) => ({
-      ...prev,
-      [poolKey]: {
-        ...prev[poolKey],
-        [timeSlot]: {
-          ...prev[poolKey][timeSlot],
-          [field]: value,
+    sectionSetter((prev) => {
+      const prevRow = prev[poolKey][timeSlot]
+      let nextRow: WaterRow = { ...prevRow, [field]: value }
+      if (field === 'clFrei' || field === 'clGes') {
+        nextRow = {
+          ...nextRow,
+          clGeb: computeClGebString(nextRow.clFrei, nextRow.clGes),
+        }
+      }
+      return {
+        ...prev,
+        [poolKey]: {
+          ...prev[poolKey],
+          [timeSlot]: nextRow,
         },
-      },
-    }))
+      }
+    })
   }
 
   const historyRows = useMemo(() => {
@@ -349,10 +413,6 @@ export default function BetriebstagebuchForm({
       })
       .sort((a, b) => b.timestamp - a.timestamp)
   }, [submissions])
-
-  const lastThreeHistoryRows = useMemo(() => {
-    return historyRows.slice(0, 3)
-  }, [historyRows])
 
   const selectedHistory = useMemo(() => {
     if (!selectedHistoryId) return null
@@ -385,13 +445,22 @@ export default function BetriebstagebuchForm({
           scope === 'halle'
             ? data?.wasserwerteHalle?.[key as WaterPoolKey]?.[SLOT] || {}
             : data?.wasserwerteSauna?.[key as SaunaPoolKey]?.[SLOT] || {}
+        const freiN = parseWaterNumber(String(section.clFrei ?? ''))
+        const gesN = parseWaterNumber(String(section.clGes ?? ''))
+        let clGebChart: number
+        if (freiN !== null && gesN !== null) {
+          clGebChart = gesN - freiN
+        } else {
+          const stored = parseWaterNumber(String(section.clGeb ?? ''))
+          clGebChart = stored !== null ? stored : Number(section.clGeb ?? NaN)
+        }
         return {
           label: r.datum || new Date(r.submittedAt).toLocaleDateString('de-DE'),
           temp: Number(section.temp ?? NaN),
           ph: Number(section.ph ?? NaN),
           clFrei: Number(section.clFrei ?? NaN),
           clGes: Number(section.clGes ?? NaN),
-          clGeb: Number(section.clGeb ?? NaN),
+          clGeb: clGebChart,
           redox: Number(section.redox ?? NaN),
         }
       })
@@ -441,10 +510,18 @@ export default function BetriebstagebuchForm({
     })
 
     setWasserwerteHalle(
-      (data.wasserwerteHalle as Record<WaterPoolKey, WaterSection>) || makePoolMap(HALLEN_POOLS),
+      normalizeAndRecalcPoolMap(
+        makePoolMap(HALLEN_POOLS),
+        data.wasserwerteHalle as Partial<Record<WaterPoolKey, WaterSection>> | undefined,
+        HALLEN_POOLS.map((p) => p.key),
+      ),
     )
     setWasserwerteSauna(
-      (data.wasserwerteSauna as Record<SaunaPoolKey, WaterSection>) || makePoolMap(SAUNA_POOLS),
+      normalizeAndRecalcPoolMap(
+        makePoolMap(SAUNA_POOLS),
+        data.wasserwerteSauna as Partial<Record<SaunaPoolKey, WaterSection>> | undefined,
+        SAUNA_POOLS.map((p) => p.key),
+      ),
     )
 
     setSaeurekapazitaet(data.montag?.saeurekapazitaet || '')
@@ -453,17 +530,6 @@ export default function BetriebstagebuchForm({
 
     setLuftInnen(data.lufttemperatur?.innen || '')
     setLuftAussen(data.lufttemperatur?.aussen || '')
-
-    setReinigung({
-      halleFrueh: data.reinigung?.halleFrueh || '',
-      halleSpaet: data.reinigung?.halleSpaet || '',
-      saunaFrueh: data.reinigung?.saunaFrueh || '',
-      saunaSpaet: data.reinigung?.saunaSpaet || '',
-      umkleideFrueh: data.reinigung?.umkleideFrueh || '',
-      umkleideSpaet: data.reinigung?.umkleideSpaet || '',
-      kasseFrueh: data.reinigung?.kasseFrueh || '',
-      kasseSpaet: data.reinigung?.kasseSpaet || '',
-    })
 
     setKontrollgang({
       uhrzeit: data.kontrollgang?.uhrzeit || '',
@@ -522,7 +588,15 @@ export default function BetriebstagebuchForm({
                 <td className="py-2 pr-4 text-gray-900 whitespace-nowrap">{timeSlotLabel[slot]}</td>
                 {fields.map((f) => (
                   <td key={f} className="py-2 pr-4 text-gray-700">
-                    {formatValue(section?.[slot]?.[f])}
+                    {f === 'clGeb'
+                      ? (() => {
+                          const calc = computeClGebString(
+                            String(section?.[slot]?.clFrei ?? ''),
+                            String(section?.[slot]?.clGes ?? ''),
+                          )
+                          return calc !== '' ? calc : formatValue(section?.[slot]?.clGeb)
+                        })()
+                      : formatValue(section?.[slot]?.[f])}
                   </td>
                 ))}
               </tr>
@@ -557,19 +631,20 @@ export default function BetriebstagebuchForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    const halleKeys = HALLEN_POOLS.map((p) => p.key)
+    const saunaKeys = SAUNA_POOLS.map((p) => p.key)
     const payload: BetriebstagebuchData = {
       datum,
       wochentag,
       personal,
-      wasserwerteHalle,
-      wasserwerteSauna,
+      wasserwerteHalle: recalcEntirePoolMap(wasserwerteHalle, halleKeys),
+      wasserwerteSauna: recalcEntirePoolMap(wasserwerteSauna, saunaKeys),
       montag: {
         saeurekapazitaet,
         messwasserentnahmestellenReinigen,
         kuvetteAustauschen,
       },
       lufttemperatur: { innen: luftInnen, aussen: luftAussen },
-      reinigung,
       kontrollgang,
       betriebsstoerungVorkommnisse,
       behobenVon,
@@ -582,6 +657,13 @@ export default function BetriebstagebuchForm({
     onSubmit(payload)
     handleClose()
   }
+
+  /** Bei Betriebsmitte nur Schwimmer- und Lehrschwimmbecken; Sauna ausblenden */
+  const visibleHallePoolsForWater =
+    selectedTimeSlot === 'betriebsmitte'
+      ? HALLEN_POOLS.filter((p) => p.key === 'schwimmer' || p.key === 'lehrschwimm')
+      : HALLEN_POOLS
+  const showSaunaWaterPools = selectedTimeSlot !== 'betriebsmitte'
 
   if (!isOpen) return null
 
@@ -643,97 +725,114 @@ export default function BetriebstagebuchForm({
             </div>
           </div>
 
-          {/* Personal */}
-          <div className="border border-gray-200 rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal / Einteilung</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {(['frueh', 'spaet'] as Shift[]).map((shift) => (
-                <div key={shift} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                    {shift === 'frueh' ? 'Frühschicht' : 'Spätschicht'}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Schichtführung</label>
-                      <input
-                        value={personal[shift].schichtfuehrung}
-                        onChange={(e) => updatePersonal(shift, 'schichtfuehrung', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">2. Aufsicht</label>
-                      <input
-                        value={personal[shift].aufsicht2}
-                        onChange={(e) => updatePersonal(shift, 'aufsicht2', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">3. Aufsicht</label>
-                      <input
-                        value={personal[shift].aufsicht3}
-                        onChange={(e) => updatePersonal(shift, 'aufsicht3', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Sauna</label>
-                      <input
-                        value={personal[shift].sauna}
-                        onChange={(e) => updatePersonal(shift, 'sauna', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Umkleide</label>
-                      <input
-                        value={personal[shift].umkleide}
-                        onChange={(e) => updatePersonal(shift, 'umkleide', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Kasse</label>
-                      <input
-                        value={personal[shift].kasse}
-                        onChange={(e) => updatePersonal(shift, 'kasse', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Betriebszeit: steuert Wasserwerte + Sichtbarkeit Personal */}
+          <div className="flex flex-col items-center gap-2 py-1">
+            <p className="text-xs font-medium text-gray-500 text-center uppercase tracking-wide">
+              Messzeitpunkt / Schichtansicht
+            </p>
+            <div className="flex justify-center w-full">
+              <div className="inline-flex rounded-full bg-gray-100 p-1.5 shadow-sm">
+                {(['betriebsbeginn', 'betriebsmitte', 'betriebsende'] as TimeSlot[]).map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => setSelectedTimeSlot(slot)}
+                    className={`mx-1 px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+                      selectedTimeSlot === slot
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-white text-gray-700 hover:bg-blue-50'
+                    }`}
+                  >
+                    {timeSlotLabel[slot]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Personal – bei Betriebsmitte ausgeblendet; Beginn nur Früh, Ende nur Spät */}
+          {selectedTimeSlot !== 'betriebsmitte' && (
+            <div className="border border-gray-200 rounded-xl p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal / Einteilung</h3>
+              <div className="grid gap-6 grid-cols-1 max-w-2xl mx-auto">
+                {(
+                  selectedTimeSlot === 'betriebsende'
+                    ? (['spaet'] as Shift[])
+                    : (['frueh'] as Shift[])
+                ).map((shift) => (
+                  <div key={shift} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                      {shift === 'frueh' ? 'Frühschicht' : 'Spätschicht'}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Schichtführung</label>
+                        <input
+                          value={personal[shift].schichtfuehrung}
+                          onChange={(e) => updatePersonal(shift, 'schichtfuehrung', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">2. Aufsicht</label>
+                        <input
+                          value={personal[shift].aufsicht2}
+                          onChange={(e) => updatePersonal(shift, 'aufsicht2', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">3. Aufsicht</label>
+                        <input
+                          value={personal[shift].aufsicht3}
+                          onChange={(e) => updatePersonal(shift, 'aufsicht3', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Sauna</label>
+                        <input
+                          value={personal[shift].sauna}
+                          onChange={(e) => updatePersonal(shift, 'sauna', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Umkleide</label>
+                        <input
+                          value={personal[shift].umkleide}
+                          onChange={(e) => updatePersonal(shift, 'umkleide', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Kasse</label>
+                        <input
+                          value={personal[shift].kasse}
+                          onChange={(e) => updatePersonal(shift, 'kasse', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Wasserwerte Halle & Sauna */}
           <div className="border border-gray-200 rounded-xl p-4 space-y-6">
-            <div className="flex flex-col items-center gap-3 mb-2">
+            <div className="flex flex-col items-center gap-1 mb-2">
               <h3 className="text-lg font-semibold text-gray-900">Wasserwerte</h3>
-              <div className="flex justify-center">
-                <div className="inline-flex rounded-full bg-gray-100 p-1.5 shadow-sm">
-                  {(['betriebsbeginn', 'betriebsmitte', 'betriebsende'] as TimeSlot[]).map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedTimeSlot(slot)}
-                      className={`mx-1 px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
-                        selectedTimeSlot === slot
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 hover:bg-blue-50'
-                      }`}
-                    >
-                      {timeSlotLabel[slot]}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-sm text-gray-600">
+                Aktueller Messzeitpunkt:{' '}
+                <span className="font-semibold text-gray-800">{timeSlotLabel[selectedTimeSlot]}</span>
+              </p>
             </div>
 
             {/* Halle */}
             <div className="space-y-4">
-              {HALLEN_POOLS.map((pool) => (
+              {visibleHallePoolsForWater.map((pool) => (
                 <div key={pool.key} className="space-y-2">
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
@@ -746,20 +845,33 @@ export default function BetriebstagebuchForm({
                           <div key={field}>
                             <label className="block text-[11px] font-medium text-gray-600 mb-0.5">
                               {waterFieldLabel[field]}
+                              {field === 'clGeb' ? (
+                                <span className="block font-normal text-[9px] text-gray-500">ges. − frei</span>
+                              ) : null}
                             </label>
-                            <input
-                              value={wasserwerteHalle[pool.key][selectedTimeSlot][field]}
-                              onChange={(e) =>
-                                updateWater(
-                                  setWasserwerteHalle,
-                                  pool.key,
-                                  selectedTimeSlot,
-                                  field,
-                                  e.target.value
-                                )
-                              }
-                              className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
-                            />
+                            {field === 'clGeb' ? (
+                              <input
+                                readOnly
+                                tabIndex={-1}
+                                value={wasserwerteHalle[pool.key][selectedTimeSlot].clGeb}
+                                title="Cl geb. = Cl ges. − Cl frei (automatisch berechnet)"
+                                className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-200 rounded-md text-sm text-gray-800 bg-gray-100 cursor-default"
+                              />
+                            ) : (
+                              <input
+                                value={wasserwerteHalle[pool.key][selectedTimeSlot][field]}
+                                onChange={(e) =>
+                                  updateWater(
+                                    setWasserwerteHalle,
+                                    pool.key,
+                                    selectedTimeSlot,
+                                    field,
+                                    e.target.value,
+                                  )
+                                }
+                                className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
+                              />
+                            )}
                           </div>
                         ))}
                       </div>
@@ -774,7 +886,8 @@ export default function BetriebstagebuchForm({
               ))}
             </div>
 
-            {/* Sauna */}
+            {/* Sauna (bei Betriebsmitte ausgeblendet) */}
+            {showSaunaWaterPools && (
             <div className="space-y-4">
               {SAUNA_POOLS.map((pool) => (
                 <div key={pool.key} className="border border-gray-200 rounded-xl overflow-hidden">
@@ -788,20 +901,33 @@ export default function BetriebstagebuchForm({
                         <div key={field}>
                           <label className="block text-[11px] font-medium text-gray-600 mb-0.5">
                             {waterFieldLabel[field]}
+                            {field === 'clGeb' ? (
+                              <span className="block font-normal text-[9px] text-gray-500">ges. − frei</span>
+                            ) : null}
                           </label>
-                          <input
-                            value={wasserwerteSauna[pool.key][selectedTimeSlot][field]}
-                            onChange={(e) =>
-                              updateWater(
-                                setWasserwerteSauna,
-                                pool.key,
-                                selectedTimeSlot,
-                                field,
-                                e.target.value
-                              )
-                            }
-                            className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
-                          />
+                          {field === 'clGeb' ? (
+                            <input
+                              readOnly
+                              tabIndex={-1}
+                              value={wasserwerteSauna[pool.key][selectedTimeSlot].clGeb}
+                              title="Cl geb. = Cl ges. − Cl frei (automatisch berechnet)"
+                              className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-200 rounded-md text-sm text-gray-800 bg-gray-100 cursor-default"
+                            />
+                          ) : (
+                            <input
+                              value={wasserwerteSauna[pool.key][selectedTimeSlot][field]}
+                              onChange={(e) =>
+                                updateWater(
+                                  setWasserwerteSauna,
+                                  pool.key,
+                                  selectedTimeSlot,
+                                  field,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full max-w-[5rem] px-2 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -809,6 +935,7 @@ export default function BetriebstagebuchForm({
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Montag + Lufttemperatur */}
@@ -866,44 +993,6 @@ export default function BetriebstagebuchForm({
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Reinigung */}
-          <div className="border border-gray-200 rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reinigung</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {([
-                { label: 'Halle', fruehKey: 'halleFrueh', spaetKey: 'halleSpaet' },
-                { label: 'Sauna', fruehKey: 'saunaFrueh', spaetKey: 'saunaSpaet' },
-                { label: 'Umkleide', fruehKey: 'umkleideFrueh', spaetKey: 'umkleideSpaet' },
-                { label: 'Kasse', fruehKey: 'kasseFrueh', spaetKey: 'kasseSpaet' },
-              ] as Array<{ label: string; fruehKey: keyof BetriebstagebuchData['reinigung']; spaetKey: keyof BetriebstagebuchData['reinigung'] }>).map((row) => (
-                <div key={row.label} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                  <p className="text-sm font-semibold text-gray-900 mb-3">{row.label}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Früh</label>
-                      <input
-                        value={reinigung[row.fruehKey]}
-                        onChange={(e) => setReinigung((prev) => ({ ...prev, [row.fruehKey]: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Spät</label>
-                      <input
-                        value={reinigung[row.spaetKey]}
-                        onChange={(e) => setReinigung((prev) => ({ ...prev, [row.spaetKey]: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    *) siehe FZB-A-7.2.1.1 Reinigung der Bad-, Sanitär- und Saunaeinrichtungen
-                  </p>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -1368,21 +1457,6 @@ export default function BetriebstagebuchForm({
                           { label: 'Küvetten austauschen', value: selectedHistory.data?.montag?.kuvetteAustauschen },
                           { label: 'Lufttemperatur innen (°C)', value: selectedHistory.data?.lufttemperatur?.innen },
                           { label: 'Lufttemperatur außen (°C)', value: selectedHistory.data?.lufttemperatur?.aussen },
-                        ])}
-                      </div>
-
-                      {/* Reinigung */}
-                      <div>
-                        <h5 className="text-sm font-semibold text-gray-900 mb-2">Reinigung</h5>
-                        {renderKeyValueTable([
-                          { label: 'Halle Früh', value: selectedHistory.data?.reinigung?.halleFrueh },
-                          { label: 'Halle Spät', value: selectedHistory.data?.reinigung?.halleSpaet },
-                          { label: 'Sauna Früh', value: selectedHistory.data?.reinigung?.saunaFrueh },
-                          { label: 'Sauna Spät', value: selectedHistory.data?.reinigung?.saunaSpaet },
-                          { label: 'Umkleide Früh', value: selectedHistory.data?.reinigung?.umkleideFrueh },
-                          { label: 'Umkleide Spät', value: selectedHistory.data?.reinigung?.umkleideSpaet },
-                          { label: 'Kasse Früh', value: selectedHistory.data?.reinigung?.kasseFrueh },
-                          { label: 'Kasse Spät', value: selectedHistory.data?.reinigung?.kasseSpaet },
                         ])}
                       </div>
 
