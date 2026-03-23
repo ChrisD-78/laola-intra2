@@ -15,7 +15,9 @@ interface DokumentUploadFormProps {
 }
 
 const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
-  const { isAdmin } = useAuth()
+  const { isAdmin, userRole } = useAuth()
+  /** Admin und Teamleiter: Upload ohne Passwort-Modal (wie Admin) */
+  const canUploadWithoutPassword = isAdmin || userRole === 'Teamleiter'
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('Sicherheit')
@@ -116,8 +118,7 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   }
 
   const handleButtonClick = () => {
-    // Admin-Benutzer überspringen die Passwort-Abfrage
-    if (isAdmin) {
+    if (canUploadWithoutPassword) {
       setIsOpen(true)
     } else {
       setShowPasswordModal(true)
@@ -133,10 +134,13 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
         >
           📤 Dokument hochladen
           {isAdmin && <span className="text-xs bg-purple-500/50 px-2 py-0.5 rounded-full">Admin</span>}
+          {!isAdmin && userRole === 'Teamleiter' && (
+            <span className="text-xs bg-indigo-500/50 px-2 py-0.5 rounded-full">Teamleiter</span>
+          )}
         </button>
         
-        {/* Nur für Nicht-Admins: Passwort-Modal */}
-        {!isAdmin && (
+        {/* Nur ohne Berechtigung: Passwort-Modal */}
+        {!canUploadWithoutPassword && (
           <PasswordModal
             isOpen={showPasswordModal}
             onClose={() => setShowPasswordModal(false)}

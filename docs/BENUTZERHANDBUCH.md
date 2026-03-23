@@ -30,7 +30,7 @@ Willkommen im LA OLA Intranet! Dieses Handbuch führt Sie durch alle Funktionen 
 - **Wassermessungen (bestehend):** Automatische Berechnung von „Chlor gebunden“, Historie mit Messgerätediagrammen und Liniendiagrammen, Becken-Filter als Kacheln.
 - **Formulare:** Neue Formulare (Checkliste Kassenplätze, Leistungsnachweis Azubi, Ausgabe Dienstkleidung, Schulung/Unterweisung). Statusänderung in der Tabelle nur bei **Störmeldung**.
 - **Stundenkorrektur:** Automatische E‑Mail an Kirstin Kreusch mit Bestätigungs-Button „Stundenkorrektur durchgeführt“. Bestätigung wird an die E‑Mail des Mitarbeiters gesendet.
-- **Dokumente:** Upload-Limit 50 MB. Löschen nur für Admins.
+- **Dokumente:** Upload-Limit 50 MB. **Admin** und **Teamleiter** laden über **„Dokument hochladen“** ohne Zusatz-Passwort hoch; andere Rollen ggf. mit Passwortabfrage. Löschen nur für Admins.
 - **Technik:** Geräte-Bilder als JPG/PNG. Gefahrstoffe-Dokumente in der Bearbeitung entfernen/ersetzen.
 - **Chat:** Gruppen erscheinen korrekt; „gelesen“ wird zuverlässig aktualisiert.
 - **Schichtplan:** Aktuell nur für Admins sichtbar.
@@ -253,15 +253,17 @@ Zentrale Verwaltung aller wichtigen Dokumente und Dateien.
    - Dateigröße
 3. Klicken Sie auf **"Herunterladen"**, um die Datei zu speichern
 
-### Neues Dokument hochladen (nur für Admins)
+### Dokument hochladen (Admin & Teamleiter ohne Passwort)
 
-1. Klicken Sie auf **"Neues Dokument hochladen"**
+**Admin** und **Teamleiter** öffnen den Upload direkt mit **„Dokument hochladen“** (ohne zusätzliches Passwort). Andere Rollen werden ggf. zur Passwort-Eingabe aufgefordert.
+
+1. Klicken Sie auf **„Dokument hochladen“**
 2. Füllen Sie das Formular aus:
    - **Titel** und **Beschreibung**
    - **Kategorie:** Wählen Sie eine passende Kategorie
    - **Datei:** Wählen Sie die Datei aus (PDF, Word, etc.)
-   - **Tags:** Optional - fügen Sie Tags hinzu (getrennt durch Kommas)
-3. Klicken Sie auf **"Hochladen"**
+   - **Tags:** Optional – getrennt durch Kommas
+3. Klicken Sie auf **„Dokument hochladen“** (im Formular)
 
 **Upload‑Limit:** Maximal 50 MB pro Datei.
 
@@ -625,7 +627,8 @@ Verwalten Sie Benutzer und deren Berechtigungen.
 
 - **Dokumente**
   - **Alle:** Dokumente ansehen und herunterladen
-  - **Admin:** Dokumente hochladen und löschen
+  - **Admin** und **Teamleiter:** Dokumente hochladen (ohne Zusatz-Passwort)
+  - **Admin:** zusätzlich Dokumente löschen
 
 - **Formulare – Alle Formulareinreichungen**
   - **Admin:** sieht alle Formulare
@@ -713,7 +716,7 @@ Gehen Sie zu **"Aufgaben"** in der Seitenleiste. Sie sehen alle Aufgaben, die Ih
 
 ### Wie lade ich ein Dokument hoch?
 
-Nur Administratoren können Dokumente hochladen. Gehen Sie zu **"Dokumente"** und klicken Sie auf **"Neues Dokument hochladen"**.
+Gehen Sie zu **„Dokumente“** und klicken Sie auf **„Dokument hochladen“**. **Administratoren** und **Teamleiter** können ohne zusätzliches Passwort hochladen; andere Benutzer ggf. mit Passwortabfrage.
 
 ### Wie funktioniert der Chat?
 
@@ -725,6 +728,7 @@ Nur Administratoren können Dokumente hochladen. Gehen Sie zu **"Dokumente"** un
 ### Was bedeuten die verschiedenen Rollen?
 
 - **Admin:** Voller Zugriff auf alle Funktionen, kann Benutzer verwalten
+- **Teamleiter:** u. a. erweiterte Rechte (z. B. Technik-Bereich, Schichtplan, **Dokumente hochladen** ohne Zusatz-Passwort)
 - **Verwaltung:** Standard-Rechte für Verwaltungspersonal
 - **Technik:** Standard-Rechte für technisches Personal
 - **Benutzer:** Standard-Rechte für alle anderen Mitarbeiter

@@ -22,7 +22,7 @@ interface Document {
 
 export default function Dokumente() {
   const [documents, setDocuments] = useState<Document[]>([])
-  const { isAdmin } = useAuth()
+  const { isAdmin, currentUser } = useAuth()
 
   useEffect(() => {
     const load = async () => {
@@ -121,7 +121,7 @@ export default function Dokumente() {
         file_type: documentData.file.type,
         tags: documentData.tags,
         uploaded_at: new Date().toISOString(),
-        uploaded_by: 'Christof Drost',
+        uploaded_by: currentUser || 'Unbekannt',
         file_url: uploaded.publicUrl,
       })
       const fresh = await getDocuments()
