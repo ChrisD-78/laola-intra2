@@ -10,15 +10,14 @@ Willkommen im LA OLA Intranet! Dieses Handbuch führt Sie durch alle Funktionen 
 2. [Dashboard](#dashboard)
 3. [Schichtplan](#schichtplan)
 4. [Aufgaben](#aufgaben)
-5. [Wiederkehrende Aufgaben](#wiederkehrende-aufgaben)
-6. [Dokumente](#dokumente)
-7. [Formulare](#formulare)
-8. [Schulungen & Quiz](#schulungen--quiz)
-9. [Technik](#technik)
-10. [Chat](#chat)
-11. [Benutzerverwaltung (nur für Admins)](#benutzerverwaltung-nur-für-admins)
-12. [Rollen & Berechtigungen (Übersicht)](#rollen--berechtigungen-übersicht)
-13. [Häufige Fragen](#häufige-fragen)
+5. [Dokumente](#dokumente)
+6. [Formulare](#formulare)
+7. [Schulungen & Quiz](#schulungen--quiz)
+8. [Technik](#technik)
+9. [Chat](#chat)
+10. [Benutzerverwaltung (nur für Admins)](#benutzerverwaltung-nur-für-admins)
+11. [Rollen & Berechtigungen (Übersicht)](#rollen--berechtigungen-übersicht)
+12. [Häufige Fragen](#häufige-fragen)
 
 ## 🚀 Erste Schritte
 
@@ -198,36 +197,6 @@ Verwalten Sie Ihre Aufgaben und behalten Sie den Überblick über offene und erl
 
 - Nutzen Sie die Filter-Optionen, um Aufgaben nach Status, Priorität oder zugewiesener Person zu sortieren
 - Die Suche hilft Ihnen, schnell bestimmte Aufgaben zu finden
-
----
-
-## 🔄 Wiederkehrende Aufgaben
-
-Aufgaben, die regelmäßig anfallen (z.B. täglich, wöchentlich, monatlich).
-
-### Wiederkehrende Aufgabe erstellen
-
-1. Klicken Sie auf **"Neue wiederkehrende Aufgabe erstellen"**
-2. Füllen Sie das Formular aus:
-   - **Titel** und **Beschreibung**
-   - **Häufigkeit:** Täglich, Wöchentlich, Monatlich, Jährlich
-   - **Priorität:** Niedrig, Normal oder Hoch
-   - **Zugewiesen an:** Wählen Sie den Mitarbeiter
-   - **Startzeit:** Wann soll die Aufgabe zum ersten Mal fällig sein?
-3. Klicken Sie auf **"Aufgabe erstellen"**
-
-### Aufgabe als erledigt markieren
-
-1. Wenn eine wiederkehrende Aufgabe fällig ist, erscheint sie in der Liste
-2. Klicken Sie auf **"Als erledigt markieren"**
-3. Optional: Notizen hinzufügen
-4. Das System berechnet automatisch das nächste Fälligkeitsdatum
-
-### Wiederkehrende Aufgabe bearbeiten
-
-1. Klicken Sie auf die Aufgabe
-2. Ändern Sie die Details
-3. Sie können die Aufgabe auch **deaktivieren**, ohne sie zu löschen
 
 ---
 

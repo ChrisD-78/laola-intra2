@@ -5,14 +5,29 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
 import { useSidebar } from '@/contexts/SidebarContext'
-import { useState } from 'react'
+import { useTasks } from '@/contexts/TaskContext'
+import { useMemo, useState } from 'react'
+
+function namesMatch(a: string | null | undefined, b: string | null | undefined) {
+  return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase()
+}
 
 const Sidebar = () => {
   const pathname = usePathname()
   const { currentUser, logout, isAdmin, userRole } = useAuth()
   const { unreadCount, latestMessage } = useChatNotifications()
+  const { tasks } = useTasks()
   const { isCollapsed, toggleSidebar } = useSidebar()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const myOpenTaskCount = useMemo(() => {
+    if (!currentUser) return 0
+    return tasks.filter(
+      (t) =>
+        namesMatch(t.assignedTo, currentUser) &&
+        t.status !== 'Abgeschlossen'
+    ).length
+  }, [tasks, currentUser])
 
   // Prüfe, ob Benutzer Zugriff auf Technik-Bereich hat
   const hasTechnikAccess = isAdmin || userRole === 'Technik' || userRole === 'Teamleiter'
@@ -21,7 +36,6 @@ const Sidebar = () => {
     { href: '/', label: 'Dashboard', icon: '🏠' },
     ...(isAdmin ? [{ href: '/schichtplan', label: 'Schichtplan', icon: '📅' }] : []),
     { href: '/aufgaben', label: 'Aufgaben', icon: '📋' },
-    { href: '/wiederkehrende-aufgaben', label: 'Wiederkehrende Aufgaben', icon: '🔄' },
     { href: '/dokumente', label: 'Dokumente', icon: '📄' },
     { href: '/formulare', label: 'Formulare', icon: '📝' },
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
@@ -119,8 +133,12 @@ const Sidebar = () => {
           {navItems.map((item) => {
             const isActive = pathname === item.href
             const isChatLink = item.href === '/chat'
-            const showBadge = isChatLink && unreadCount > 0
-            
+            const isAufgabenLink = item.href === '/aufgaben'
+            const showChatBadge = isChatLink && unreadCount > 0
+            const showTaskBadge = isAufgabenLink && myOpenTaskCount > 0
+            const badgeCount = isChatLink ? unreadCount : isAufgabenLink ? myOpenTaskCount : 0
+            const showBadge = showChatBadge || showTaskBadge
+
             return (
               <li key={item.href}>
                 <Link
@@ -145,7 +163,7 @@ const Sidebar = () => {
                   </div>
                   {showBadge && (
                     <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-2 shadow-lg animate-pulse ring-2 ring-red-300 flex-shrink-0">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                      {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}
                 </Link>

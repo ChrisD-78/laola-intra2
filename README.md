@@ -85,7 +85,6 @@ Ein modernes und benutzerfreundliches Intranet-Portal für Mitarbeiter des Freiz
 
 - **Dashboard**: Übersicht über alle wichtigen Informationen und Aktivitäten
 - **Aufgaben**: Verwaltung offener und abgeschlossener Aufgaben
-- **Wiederkehrende Aufgaben**: Aufgaben, die regelmäßig anfallen
 - **Dokumente**: Zentrale Verwaltung aller wichtigen Unterlagen
 - **Formulare**: Digitale Formulare für verschiedene Anträge
 - **Schulungen**: Verwaltung von Schulungen und Weiterbildungen
@@ -174,18 +173,6 @@ CREATE TABLE tasks (
   due_date TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Wiederkehrende Aufgaben
-CREATE TABLE recurring_tasks (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  frequency TEXT CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
-  priority TEXT CHECK (priority IN ('low', 'medium', 'high')),
-  next_due TIMESTAMP,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Dokumente

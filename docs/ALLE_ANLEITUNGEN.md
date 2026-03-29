@@ -33,7 +33,7 @@
 ### Haupt-Features
 
 - ✅ Dashboard mit Übersicht
-- ✅ Aufgabenverwaltung (einzeln & wiederkehrend)
+- ✅ Aufgabenverwaltung
 - ✅ Dokumentenverwaltung
 - ✅ Formulare
 - ✅ Schulungen & Quiz-System

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import StaffSelect from '@/components/StaffSelect'
 
 interface AufgabenFormProps {
   onAddTask: (task: {
@@ -154,13 +155,13 @@ const AufgabenForm = ({ onAddTask }: AufgabenFormProps) => {
                 <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-2">
                   Zugewiesen an *
                 </label>
-                <input
-                  type="text"
+                <p className="text-xs text-gray-500 mb-1">
+                  Alle Mitarbeitenden aus der Benutzerverwaltung; inaktive Konten sind gekennzeichnet.
+                </p>
+                <StaffSelect
                   id="assignedTo"
                   value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Name des Mitarbeiters"
+                  onChange={setAssignedTo}
                   required
                 />
               </div>
