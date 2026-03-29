@@ -564,7 +564,6 @@ export const createFormSubmissionEmail = (formData: {
   // E-Mail-Empfänger basierend auf Formular-Typ
   const getEmailRecipients = (type: string): string[] => {
     switch (type.toLowerCase()) {
-      case 'wassermessung':
       case 'rutschenkontrolle':
       case 'stoermeldung':
       case 'kassenabrechnung':
@@ -585,7 +584,6 @@ export const createFormSubmissionEmail = (formData: {
   // Formular-Typ Labels
   const getFormTypeLabel = (type: string): string => {
     switch (type.toLowerCase()) {
-      case 'wassermessung': return '💧 Wassermessung'
       case 'rutschenkontrolle': return '🎢 Rutschenkontrolle'
       case 'stoermeldung': return '⚠️ Störmeldung'
       case 'kassenabrechnung': return '💰 Kassenabrechnung'
@@ -601,7 +599,6 @@ export const createFormSubmissionEmail = (formData: {
   // Formular-spezifische Farbe
   const getFormTypeColor = (type: string): string => {
     switch (type.toLowerCase()) {
-      case 'wassermessung': return '#3B82F6'
       case 'rutschenkontrolle': return '#10B981'
       case 'stoermeldung': return '#F59E0B'
       case 'kassenabrechnung': return '#8B5CF6'

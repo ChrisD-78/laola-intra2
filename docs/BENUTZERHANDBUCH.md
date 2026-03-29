@@ -26,8 +26,7 @@ Willkommen im LA OLA Intranet! Dieses Handbuch führt Sie durch alle Funktionen 
 
 - **Chat – Pinnwand:** Events mit Anmeldemöglichkeit. Admins legen Events an (Datum, Name); alle Mitarbeiter können sich anmelden (Name, optional Kleidergröße). Auf den Event-Karten werden die angemeldeten Namen angezeigt. Admins können alle Anmeldungen in einer Tabelle einsehen.
 - **Chat – Ansicht:** Beim Klick auf einen Chat-Partner wird die Namensliste ausgeblendet (mehr Platz für den Chat). Mit **„← Zurück“** erscheint die Liste wieder. Beim Öffnen eines Chats wird automatisch zur **letzten Nachricht** gescrollt.
-- **Wassermessung – Historie:** Neue Zeitraum-Option **„Tagesaktuell (letzte 3)“** für die letzten 3 Einträge. Besserer Kontrast auf Tablet/Handy (schwarze Schrift in der Auswahl). **Bemerkungen** werden nur bei „Tagesaktuell“ angezeigt und können dort nachträglich eingetragen oder bearbeitet werden.
-- **Wassermessungen (bestehend):** Automatische Berechnung von „Chlor gebunden“, Historie mit Messgerätediagrammen und Liniendiagrammen, Becken-Filter als Kacheln.
+- **Wasserwerte:** Die frühere eigenständige **Wassermessung** entfällt; Messwerte und Historie (u. a. letzte Messungen pro Becken) sind im **Betriebstagebuch** integriert.
 - **Formulare:** Neue Formulare (Checkliste Kassenplätze, Leistungsnachweis Azubi, Ausgabe Dienstkleidung, Schulung/Unterweisung). Statusänderung in der Tabelle nur bei **Störmeldung**.
 - **Stundenkorrektur:** Automatische E‑Mail an Kirstin Kreusch mit Bestätigungs-Button „Stundenkorrektur durchgeführt“. Bestätigung wird an die E‑Mail des Mitarbeiters gesendet.
 - **Dokumente:** Upload-Limit 50 MB. **Admin** und **Teamleiter** laden über **„Dokument hochladen“** ohne Zusatz-Passwort hoch; andere Rollen ggf. mit Passwortabfrage. Löschen nur für Admins.
@@ -281,7 +280,7 @@ Digitale Formulare für verschiedene Anträge und Meldungen.
 
 - **Feedback-Formular:** Rückmeldungen und Vorschläge
 - **Unfallmeldung:** Unfälle dokumentieren
-- **Wassermessung:** Messwerte inkl. Historie
+- **Betriebstagebuch:** Tagesprotokoll inkl. **Wasserwerte** (Halle & Sauna), Personal-Einteilung, PDF-Versand
 - **Stundenkorrektur:** Korrekturantrag mit Bestätigung per E‑Mail
 - **Checkliste Kassenplätze**
 - **Leistungsnachweis Azubi**
@@ -306,21 +305,11 @@ Digitale Formulare für verschiedene Anträge und Meldungen.
 
 **Störmeldung:** Der Status kann in der Tabelle „Alle Formulareinreichungen“ direkt geändert werden.
 
-### Wassermessung – Besonderheiten
+### Betriebstagebuch – Wasserwerte
 
-- **Chlor gebunden** wird automatisch aus **Gesamt – Frei** berechnet.
-- **Cl‑frei** wird je nach Becken farblich bewertet.
-- **Historie:** Button **„Historie“** öffnet ein Fenster mit:
-  - **Aktuelle Messwerte:** Messgerätediagramme (Cl-frei, Cl-gesamt, Cl-gebunden, pH, Redox, Temperatur) für das zuletzt gewählte Becken.
-  - **Becken-Filter:** Kacheln „Alle Becken“ bzw. einzelne Becken – nur Messwerte des gewählten Beckens werden angezeigt.
-  - **Zeitraum-Auswahl:**
-    - **Tagesaktuell (letzte 3):** Zeigt die letzten 3 Einträge – ideal für den Tagesüberblick.
-    - **Letzte 7 Tage / 30 Tage / 90 Tage / 12 Monate / Alle:** Klassische Zeiträume.
-  - **Bemerkungen zu Messungen (nur bei „Tagesaktuell“):** Wenn Sie **„Tagesaktuell (letzte 3)“** gewählt haben, erscheint unterhalb der Filter ein Bereich **„Bemerkungen zu Messungen“**. Dort sehen Sie zu jedem der letzten 3 Einträge Datum, Uhrzeit, Becken und die eingetragene Bemerkung. Sie können:
-    - **Bemerkung hinzufügen:** Klicken Sie auf **„Bemerkung hinzufügen“** bei einem Eintrag ohne Bemerkung, geben Sie den Text ein und klicken Sie auf **„Speichern“**.
-    - **Bemerkung bearbeiten:** Klicken Sie auf **„Bemerkung bearbeiten“**, ändern Sie den Text und speichern Sie. Die Änderung wird sofort übernommen.
-  - **Diagramme:** Liniendiagramme für Chlor-Werte, pH-Wert, Redox und Temperatur über den gewählten Zeitraum (bei allen Zeitraum-Optionen außer nur „Bemerkungen“).
-- **Hinweis:** Der Bemerkungs-Bereich wird bei allen anderen Zeiträumen (7 Tage, 30 Tage usw.) ausgeblendet – er ist nur bei **„Tagesaktuell“** sichtbar.
+- Wasserwerte werden im **Betriebstagebuch** je Becken erfasst (u. a. zu Betriebsbeginn, -mitte und -ende).
+- Im Formular finden Sie eine **Historie** (z. B. letzte Messungen) und können frühere Tageseinträge zur Orientierung einsehen.
+- Nach dem Speichern wird das Betriebstagebuch als **PDF per E‑Mail** versendet (wie im Formular vorgesehen).
 
 ### Stundenkorrektur – Bestätigung
 
@@ -737,9 +726,9 @@ Gehen Sie zu **„Dokumente“** und klicken Sie auf **„Dokument hochladen“*
 
 Gehen Sie zu **"Chat"** und klicken Sie dort auf **"📌 Pinnwand"** (oder über Formulare → Link zur Pinnwand). Auf der Pinnwand können Sie Fotos pinnen und – sofern ein Admin ein Event angelegt hat – sich über **"Jetzt anmelden"** mit Name und optional Kleidergröße anmelden.
 
-### Wie trage ich Bemerkungen bei der Wassermessung nach?
+### Wo erfasse ich Wasserwerte (Chlor, pH, …)?
 
-Öffnen Sie das **Wassermessung**-Formular, klicken Sie auf **"Historie"** und wählen Sie oben bei **Zeitraum** die Option **"Tagesaktuell (letzte 3)"**. Darunter erscheint der Bereich **"Bemerkungen zu Messungen"**. Bei jedem der letzten 3 Einträge können Sie auf **"Bemerkung hinzufügen"** oder **"Bemerkung bearbeiten"** klicken, Text eingeben und mit **"Speichern"** sichern.
+Öffnen Sie unter **Formulare** das **Betriebstagebuch**. Dort tragen Sie die **Wasserwerte** für Halle und Sauna ein; die Historie und Orientierung an vergangenen Einträgen ist im Formular integriert.
 
 ### Wie exportiere ich den Schichtplan als PDF?
 
@@ -795,5 +784,5 @@ Bei Fragen oder Problemen wenden Sie sich bitte an einen Administrator.
 **Stand:** März 2025  
 **Für:** Alle Mitarbeiter des LA OLA Freizeitbads  
 
-*Zuletzt ergänzt: Chat Pinnwand mit Event-Anmeldungen, Chat-Ansicht (Zurück-Button, Scroll zur letzten Nachricht), Wassermessung Historie (Tagesaktuell, Bemerkungen nachträglich eintragen/bearbeiten).*
+*Zuletzt angepasst: Formular „Wassermessung“ entfällt; Wasserwerte über das Betriebstagebuch. Chat Pinnwand, Chat-Ansicht (Zurück, Scroll zur letzten Nachricht).*
 

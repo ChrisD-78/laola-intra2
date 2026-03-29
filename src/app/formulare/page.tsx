@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import WassermessungForm from '@/components/WassermessungForm'
 import RutschenkontrolleForm from '@/components/RutschenkontrolleForm'
 import StoermeldungForm from '@/components/StoermeldungForm'
 import KassenabrechnungForm from '@/components/KassenabrechnungForm'
@@ -432,8 +431,6 @@ export default function Formulare() {
 
   const generateDescription = (type: string, data: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any
     switch (type) {
-      case 'wassermessung':
-        return `Becken: ${data.becken}, pH: ${data.phWert}, Chlor: ${data.chlorWert} mg/l, Chlor-Gesamt: ${data.chlorWertGesamt} mg/l, Chlor-Gebunden: ${data.chlorWertGebunden} mg/l, Redox: ${data.redox} mV`
       case 'betriebstagebuch':
         return `Betriebstagebuch – Datum: ${data.datum || '-'}, Wochentag: ${data.wochentag || '-'}, Schichtführung Früh: ${data.personal?.frueh?.schichtfuehrung || '-'}, Schichtführung Spät: ${data.personal?.spaet?.schichtfuehrung || '-'}`
       case 'rutschenkontrolle':
@@ -763,9 +760,6 @@ export default function Formulare() {
   const kassenplatzSubmissions = submissions.filter(
     submission => submission.type === 'kassenplatz_checkliste'
   )
-  const wassermessungSubmissions = submissions.filter(
-    submission => submission.type === 'wassermessung'
-  )
   const betriebstagebuchSubmissions = submissions.filter(
     submission => submission.type === 'betriebstagebuch'
   )
@@ -807,24 +801,6 @@ export default function Formulare() {
             <button 
               onClick={() => setOpenForm('arbeitsunfall')}
               className="w-full px-4 py-2.5 text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-            >
-              Formular öffnen
-            </button>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
-            <div className="text-center mb-4">
-              <span className="text-4xl">💧</span>
-            </div>
-            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
-              Wassermessung
-            </h3>
-            <p className="text-sm text-gray-900 text-center mb-4">
-              Dokumentieren Sie Wasserwerte und Messungen
-            </p>
-            <button 
-              onClick={() => setOpenForm('wassermessung')}
-              className="w-full px-4 py-2.5 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -1505,25 +1481,6 @@ export default function Formulare() {
       )}
 
       {/* Popup Forms */}
-      <WassermessungForm
-        isOpen={openForm === 'wassermessung'}
-        onClose={() => setOpenForm(null)}
-        onSubmit={(data) => handleFormSubmit('wassermessung', data)}
-        submissions={wassermessungSubmissions}
-        onUpdateBemerkungen={(id, bemerkungen) => {
-          setSubmissions(prev =>
-            prev.map((sub) =>
-              sub.id === id
-                ? {
-                    ...sub,
-                    formData: { ...sub.formData, bemerkungen },
-                  }
-                : sub
-            )
-          )
-        }}
-      />
-      
       <RutschenkontrolleForm
         isOpen={openForm === 'rutschenkontrolle'}
         onClose={() => setOpenForm(null)}

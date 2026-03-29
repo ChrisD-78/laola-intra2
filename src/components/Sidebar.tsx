@@ -14,11 +14,6 @@ const Sidebar = () => {
   const { isCollapsed, toggleSidebar } = useSidebar()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const handleAIAgentClick = () => {
-    window.open('https://cdagent.netlify.app', '_blank', 'noopener,noreferrer')
-    setIsMobileMenuOpen(false)
-  }
-
   // Prüfe, ob Benutzer Zugriff auf Technik-Bereich hat
   const hasTechnikAccess = isAdmin || userRole === 'Technik' || userRole === 'Teamleiter'
 
@@ -32,6 +27,7 @@ const Sidebar = () => {
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
     ...(hasTechnikAccess ? [{ href: '/technik', label: 'Technik', icon: '🔧' }] : []),
     { href: '/chat', label: 'Chat', icon: '💬' },
+    ...(isAdmin ? [{ href: '/agent', label: 'Agent', icon: '🤖' }] : []),
   ]
 
   const adminNavItems = [
@@ -156,20 +152,6 @@ const Sidebar = () => {
               </li>
             )
           })}
-
-          {/* AI-Agent Button (nur für Admins, oben in der Navigation) */}
-          {isAdmin && (
-            <li>
-              <button
-                onClick={handleAIAgentClick}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-white hover:bg-gradient-to-r hover:from-purple-700/50 hover:to-blue-700/50 hover:text-white hover:shadow-md backdrop-blur-sm relative group"
-              >
-                <span className="text-lg">🤖</span>
-                <span className="font-medium">AI-Agent</span>
-                <span className="absolute top-2 right-2 text-[10px] bg-purple-500/60 px-1.5 py-0.5 rounded-full whitespace-nowrap">Admin</span>
-              </button>
-            </li>
-          )}
 
           {/* Admin Section */}
           {isAdmin && (
