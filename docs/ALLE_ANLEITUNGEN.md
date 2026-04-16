@@ -199,7 +199,13 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=BMUjs8y0rLzMZ-v2s5Z2H0oS-nB_XqLfVPfGw-zHmK5DTSbJpLC
 VAPID_PRIVATE_KEY=yd7Re9R6A7-HVaA8z4yCZCz1TviHYoEko66WZiBHq9A
 VAPID_SUBJECT=mailto:admin@laola.baederbook.de
 NEXT_PUBLIC_APP_URL=https://ihre-domain.netlify.app
+
+# KI-Agent (optional): Anthropic API-Key, nur Server-seitig
+ANTHROPIC_API_KEY=<Ihr_Schlüssel_aus_der_Anthropic_Console>
+# Optional: AGENT_ANTHROPIC_MODEL=claude-sonnet-4-20250514
 ```
+
+**KI-Agent:** Schlüssel unter [Anthropic Console → API keys](https://console.anthropic.com/settings/keys) erzeugen. In Netlify unter **Site configuration → Environment variables** als `ANTHROPIC_API_KEY` eintragen (Scopes: alle Deploy-Kontexte oder nur Production), danach **Redeploy** auslösen. Lokal: in `.env.local` setzen und `npm run dev` neu starten.
 
 ### Schritt 5: Deployen
 
@@ -557,6 +563,21 @@ EMAIL_PASS=ihr_16_stelliges_app_password
 - Öffnen Sie das Feedback-Formular
 - Senden Sie ein Test-Feedback
 - Überprüfen Sie Ihr E-Mail-Postfach
+
+### KI-Agent: echte Mails aus Outlook (IMAP, gleicher Gmail-Account wie Formulare)
+
+Der **Formular-Versand** nutzt nur **SMTP (Gmail)**. Für den **Agent → E-Mail-Assistent** wird **IMAP** verwendet – mit denselben Zugangsdaten (`EMAIL_USER` + App-Passwort), sofern kein separates Postfach konfiguriert ist.
+
+1. In **Neon** das Skript `sql/create_agent_inbound_mails.sql` ausführen.
+2. **`AGENT_INBOX_CRON_SECRET`** in `.env.local` und auf **Netlify** setzen (zufällige lange Zeichenkette).
+3. **Outlook / Microsoft 365:** Postfachregel anlegen, z. B. eingehende Mails an eine öffentliche Adresse **an dieselbe Gmail-Adresse weiterleiten**, die Sie als `EMAIL_USER` nutzen (oder an ein dediziertes Gmail-Konto, dann `AGENT_IMAP_USER` / `AGENT_IMAP_PASS` setzen).
+4. **Cron** (z. B. alle 15 Minuten): `POST` oder `GET` auf  
+   `https://<Ihre-Domain>/api/agent/inbox/sync`  
+   mit Header `Authorization: Bearer <AGENT_INBOX_CRON_SECRET>`  
+   oder (weniger empfohlen) `?token=<AGENT_INBOX_CRON_SECRET>`.
+5. Im Intranet unter **Agent → E-Mail-Assistent** die Seite neu laden bzw. den Tab kurz verlassen und wieder öffnen, damit die Liste aus der Datenbank erscheint.
+
+**Hinweis:** Gmail-IMAP muss im Google-Konto aktiviert sein. Microsoft-Postfächer ohne Gmail erfordern ggf. `AGENT_IMAP_HOST=outlook.office365.com` und ein geeignetes Auth-Verfahren (je nach Tenant).
 
 ---
 

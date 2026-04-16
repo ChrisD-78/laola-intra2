@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type TabId = 'dashboard' | 'chat' | 'protocol' | 'mail'
 
 type MailItem = {
-  id: number
+  id: string
   unread: boolean
   priority: 'high' | 'mid' | 'low'
   from: string
@@ -14,6 +14,9 @@ type MailItem = {
   preview: string
   time: string
   body: string
+  source: 'demo' | 'paste' | 'imap'
+  /** Aus Server (IMAP-Sync), falls schon erzeugt */
+  aiReplyDraft?: string | null
 }
 
 const DOCS_CONTEXT = `Du bist der interne Wissens-Assistent der Stadtholding Landau / Freizeitbad LA OLA.
@@ -37,7 +40,8 @@ const INITIAL_DOCS = [
 
 const MAILS: MailItem[] = [
   {
-    id: 1,
+    id: 'd1',
+    source: 'demo',
     unread: true,
     priority: 'high',
     from: 'Thorsten Hartmann',
@@ -48,7 +52,8 @@ const MAILS: MailItem[] = [
     body: `Sehr geehrter Herr Hergesell,\n\nvielen Dank für Ihr detailliertes Angebot zur Bäderbook-Plattform vom 25. März 2026.\n\nWir haben das Dokument geprüft und haben folgende Rückfragen:\n\n1. Ist es möglich, die Anzahl der Online-Formulare im ersten Monat auf 8 statt der geplanten 6 zu erhöhen?\n2. Wie verhält sich die Datentransfer-Pauschale bei Spitzenzeiten (z.B. Sommersaison)?\n3. Gibt es einen SLA (Service Level Agreement) für Ausfallzeiten der Plattform?\n\nBitte teilen Sie uns auch mit, wann ein persönliches Gespräch möglich wäre.\n\nMit freundlichen Grüßen\nThorsten Hartmann\nStadtholding Landau`,
   },
   {
-    id: 2,
+    id: 'd2',
+    source: 'demo',
     unread: true,
     priority: 'mid',
     from: 'Sarah Müller',
@@ -59,7 +64,8 @@ const MAILS: MailItem[] = [
     body: `Guten Tag,\n\nich möchte hiermit beantragen, meinen Schichtdienst am Freitag, den 11. April 2026 (Spätschicht 14:00–22:00 Uhr) zu tauschen.\n\nKollegin Anna Becker hat sich bereit erklärt, die Schicht zu übernehmen.\n\nKönnen Sie den Tausch genehmigen?\n\nMit freundlichen Grüßen\nSarah Müller\nRettungsschwimmerin LA OLA`,
   },
   {
-    id: 3,
+    id: 'd3',
+    source: 'demo',
     unread: true,
     priority: 'low',
     from: 'Vintia Support',
@@ -70,7 +76,8 @@ const MAILS: MailItem[] = [
     body: `Sehr geehrte Damen und Herren,\n\nwir informieren Sie über das bevorstehende Update des Vintia Kassensystems auf Version 4.2.1.\n\nDas Update findet statt am:\nDienstag, 02. April 2026, 03:00–04:30 Uhr\n\nWährend dieser Zeit ist das System nicht verfügbar. Bitte planen Sie keine frühen Schichten ohne Kassenzugang.\n\nNeuerungen in Version 4.2.1:\n– Verbesserter Online-Ticketverkauf\n– Bugfixes Tagesabschluss\n– Neue Exportfunktionen\n\nMit freundlichen Grüßen\nVintia Support-Team`,
   },
   {
-    id: 4,
+    id: 'd4',
+    source: 'demo',
     unread: false,
     priority: 'mid',
     from: 'Nicole Weber',
@@ -128,6 +135,8 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [meetingDept, setMeetingDept] = useState('LA OLA – Betrieb')
   const [protocolHtml, setProtocolHtml] = useState('')
   const [protocolLoading, setProtocolLoading] = useState(false)
+  const [protocolMailTo, setProtocolMailTo] = useState('')
+  const [sendMailBusy, setSendMailBusy] = useState(false)
   const [hasAudio, setHasAudio] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -136,15 +145,67 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [recordStatus, setRecordStatus] = useState('Klicken zum Aufnehmen')
 
   const [mailList, setMailList] = useState<MailItem[]>(MAILS)
-  const [selectedMailId, setSelectedMailId] = useState<number | null>(null)
+  const [selectedMailId, setSelectedMailId] = useState<string | null>(null)
   const [aiReply, setAiReply] = useState('')
   const [mailReplyLoading, setMailReplyLoading] = useState(false)
   const [replyReadonly, setReplyReadonly] = useState(true)
+
+  /** E-Mail manuell einfügen (ohne Outlook-Regel). */
+  const [pasteFrom, setPasteFrom] = useState('')
+  const [pasteEmail, setPasteEmail] = useState('')
+  const [pasteSubject, setPasteSubject] = useState('')
+  const [pasteBody, setPasteBody] = useState('')
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
   }, [])
+
+  useEffect(() => {
+    if (tab !== 'mail') return
+    void (async () => {
+      try {
+        const res = await fetch('/api/agent/inbox/messages')
+        const data = (await res.json()) as {
+          messages?: {
+            id: string
+            from_name: string | null
+            from_email: string | null
+            subject: string | null
+            body_text: string | null
+            received_at: string
+            ai_reply_draft: string | null
+          }[]
+        }
+        if (!Array.isArray(data.messages)) return
+        const mapped: MailItem[] = data.messages.map((row) => {
+          const body = row.body_text || ''
+          return {
+            id: row.id,
+            source: 'imap',
+            unread: false,
+            priority: 'mid',
+            from: row.from_name || 'Unbekannt',
+            email: row.from_email || '—',
+            subject: row.subject || '(Ohne Betreff)',
+            preview: body.length > 90 ? `${body.slice(0, 90).replace(/\s+/g, ' ')}…` : body.replace(/\s+/g, ' '),
+            time: new Date(row.received_at).toLocaleString('de-DE', {
+              dateStyle: 'short',
+              timeStyle: 'short',
+            }),
+            body,
+            aiReplyDraft: row.ai_reply_draft,
+          }
+        })
+        setMailList((prev) => {
+          const keep = prev.filter((m) => m.source === 'demo' || m.source === 'paste')
+          return [...mapped, ...keep]
+        })
+      } catch {
+        /* still show demos */
+      }
+    })()
+  }, [tab])
 
   const sendChat = async () => {
     const msg = chatInput.trim()
@@ -229,6 +290,76 @@ Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene 
     showToast('Download gestartet')
   }
 
+  const sendAgentSmtpMail = async (payload: {
+    to: string
+    subject: string
+    text: string
+    html?: string
+  }) => {
+    const res = await fetch('/api/agent/send-reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...payload,
+        timestamp: new Date().toISOString(),
+      }),
+    })
+    const data = (await res.json()) as { message?: string; success?: boolean }
+    if (!res.ok) throw new Error(data.message || 'Versand fehlgeschlagen')
+  }
+
+  const sendAgentReplyMail = async () => {
+    if (!selectedMail || sendMailBusy) return
+    const body = aiReply.trim()
+    if (!body) {
+      showToast('Bitte zuerst einen Antworttext erzeugen oder eintragen.')
+      return
+    }
+    const to = selectedMail.email.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      showToast('Keine gültige Absender-E-Mail – Versand nicht möglich.')
+      return
+    }
+    setSendMailBusy(true)
+    try {
+      await sendAgentSmtpMail({
+        to,
+        subject: `Re: ${selectedMail.subject}`,
+        text: body,
+      })
+      showToast('E-Mail wurde gesendet.')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Versand fehlgeschlagen')
+    }
+    setSendMailBusy(false)
+  }
+
+  const sendProtocolByMail = async () => {
+    if (!protocolHtml.trim() || sendMailBusy) return
+    const to = protocolMailTo.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      showToast('Bitte Empfänger-E-Mail unter dem Protokoll eintragen.')
+      return
+    }
+    const title = meetingTitle.trim() || 'Besprechungsprotokoll'
+    const el = document.createElement('div')
+    el.innerHTML = protocolHtml
+    const plain = (el.innerText || '').trim() || '(HTML-Protokoll, siehe E-Mail)'
+    setSendMailBusy(true)
+    try {
+      await sendAgentSmtpMail({
+        to,
+        subject: title,
+        text: plain,
+        html: protocolHtml,
+      })
+      showToast('Protokoll per E-Mail gesendet.')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Versand fehlgeschlagen')
+    }
+    setSendMailBusy(false)
+  }
+
   const toggleRecording = async () => {
     if (!isRecording) {
       try {
@@ -285,6 +416,11 @@ Bitte schreibe eine passende Antwort.`
       try {
         const reply = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 600)
         setAiReply(reply)
+        setMailList((list) =>
+          list.map((m) =>
+            m.id === mail.id && m.source === 'imap' ? { ...m, aiReplyDraft: reply } : m,
+          ),
+        )
       } catch (e) {
         setAiReply(e instanceof Error ? e.message : 'Fehler beim Generieren')
       }
@@ -293,14 +429,48 @@ Bitte schreibe eine passende Antwort.`
     [currentUser],
   )
 
-  const openMail = (id: number) => {
+  const openMail = (id: string) => {
     const mail = mailList.find((m) => m.id === id)
     if (mail) {
       setReplyReadonly(true)
-      void generateMailReply(mail)
+      if (mail.source === 'imap' && mail.aiReplyDraft) {
+        setAiReply(mail.aiReplyDraft)
+        setMailReplyLoading(false)
+      } else {
+        void generateMailReply(mail)
+      }
     }
     setMailList((list) => list.map((m) => (m.id === id ? { ...m, unread: false } : m)))
     setSelectedMailId(id)
+  }
+
+  const analyzePastedMail = () => {
+    const subj = pasteSubject.trim()
+    const body = pasteBody.trim()
+    if (!subj || !body) {
+      showToast('Bitte Betreff und Nachrichtentext ausfüllen.')
+      return
+    }
+    const newId = `p-${Date.now()}`
+    const item: MailItem = {
+      id: newId,
+      source: 'paste',
+      unread: false,
+      priority: 'mid',
+      from: pasteFrom.trim() || 'Absender (nicht angegeben)',
+      email: pasteEmail.trim() || '—',
+      subject: subj,
+      preview:
+        body.length > 100 ? `${body.slice(0, 100).replace(/\s+/g, ' ')}…` : body.replace(/\s+/g, ' '),
+      time: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
+      body,
+    }
+    setMailList((list) => [item, ...list])
+    setSelectedMailId(newId)
+    setReplyReadonly(true)
+    setAiReply('')
+    void generateMailReply(item)
+    showToast('KI erstellt Antwortvorschlag …')
   }
 
   const tabTitle: Record<TabId, string> = {
@@ -313,7 +483,7 @@ Bitte schreibe eine passende Antwort.`
     dashboard: currentUser ? `Willkommen zurück, ${currentUser}` : 'Übersicht KI-Module',
     chat: 'Fragen zu Unternehmensdokumenten (Demo-Kontext)',
     protocol: 'Besprechungen – Protokoll per KI',
-    mail: 'E-Mails analysieren & Antwortentwurf',
+    mail: 'IMAP (Outlook→Gmail), Demo oder Mail einfügen',
   }
 
   const NavBtn = ({ id, label, icon }: { id: TabId; label: string; icon: string }) => (
@@ -646,20 +816,33 @@ Bitte schreibe eine passende Antwort.`
               )}
             </div>
             {protocolHtml && (
-              <div className="p-4 border-t border-gray-200 flex flex-wrap gap-2">
-                <button type="button" onClick={copyProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
-                  Kopieren
-                </button>
-                <button type="button" onClick={downloadProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
-                  HTML-Export
-                </button>
-                <button
-                  type="button"
-                  onClick={() => showToast('Demo: Versand nicht angebunden')}
-                  className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm"
-                >
-                  Per Mail senden
-                </button>
+              <div className="p-4 border-t border-gray-200 space-y-2">
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Empfänger (SMTP wie E-Mail-Assistent)</label>
+                  <input
+                    type="email"
+                    value={protocolMailTo}
+                    onChange={(e) => setProtocolMailTo(e.target.value)}
+                    placeholder="name@beispiel.de"
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={copyProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
+                    Kopieren
+                  </button>
+                  <button type="button" onClick={downloadProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
+                    HTML-Export
+                  </button>
+                  <button
+                    type="button"
+                    disabled={sendMailBusy}
+                    onClick={() => void sendProtocolByMail()}
+                    className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm disabled:opacity-50"
+                  >
+                    {sendMailBusy ? '…' : 'Per Mail senden'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -667,6 +850,25 @@ Bitte schreibe eine passende Antwort.`
       )}
 
       {tab === 'mail' && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-sm text-sky-950">
+            <p className="font-semibold text-sky-900 mb-1">Echte Mails aus Outlook an den Agenten</p>
+            <p className="text-sky-900/90 leading-relaxed">
+              Der <strong>Formular-Versand</strong> nutzt <strong>SMTP (Gmail)</strong> via{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">EMAIL_USER</code> /{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">EMAIL_PASS</code>. Zum <strong>Empfang</strong> dient{' '}
+              <strong>IMAP</strong> mit denselben Zugangsdaten. Für <strong>Antworten aus dem E-Mail-Assistenten</strong>{' '}
+              (und optional Protokoll-Mail) können Sie <strong>IONOS SMTP</strong> wie in der Netlify-Vorlage einrichten:{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_USER</code>,{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_PASSWORD</code> (oder{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">SMTP_PASSWORD</code>), optional{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_FROM_EMAIL</code> /{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_HOST</code>. Legen Sie in <strong>Outlook</strong>{' '}
+              eine Regel an: eingehende Mails <strong>weiterleiten an</strong> die IMAP-Gmail-Adresse. Cron:{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">POST/GET /api/agent/inbox/sync</code>. SQL:{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">sql/create_agent_inbound_mails.sql</code>.
+            </p>
+          </div>
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 min-h-[520px]">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center text-sm font-semibold">
@@ -706,13 +908,57 @@ Bitte schreibe eine passende Antwort.`
                 </button>
               ))}
             </div>
+            <div className="border-t border-gray-200 p-3 bg-gray-50/90 space-y-2">
+              <p className="text-xs font-semibold text-gray-700">Echte E-Mail hier einfügen</p>
+              <p className="text-[11px] text-gray-500 leading-snug">
+                Alternative ohne Weiterleitung: Inhalt aus Outlook/Webmail kopieren – die KI erzeugt den Antwortvorschlag.
+              </p>
+              <input
+                type="text"
+                value={pasteFrom}
+                onChange={(e) => setPasteFrom(e.target.value)}
+                placeholder="Absendername (optional)"
+                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
+              />
+              <input
+                type="text"
+                value={pasteEmail}
+                onChange={(e) => setPasteEmail(e.target.value)}
+                placeholder="E-Mail-Adresse Absender (optional)"
+                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
+              />
+              <input
+                type="text"
+                value={pasteSubject}
+                onChange={(e) => setPasteSubject(e.target.value)}
+                placeholder="Betreff *"
+                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
+              />
+              <textarea
+                value={pasteBody}
+                onChange={(e) => setPasteBody(e.target.value)}
+                placeholder="Nachrichtentext *"
+                rows={4}
+                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5 resize-y"
+              />
+              <button
+                type="button"
+                onClick={analyzePastedMail}
+                disabled={mailReplyLoading}
+                className="w-full py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                Mit KI analysieren
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col min-h-[400px]">
             {!selectedMail ? (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8">
                 <span className="text-5xl mb-3 opacity-50">✉️</span>
-                <p className="text-sm">Wählen Sie eine E-Mail aus der Liste.</p>
+                <p className="text-sm text-center max-w-sm">
+                  Server-Mails (IMAP) erscheinen oben in der Liste, oder Demo / unten einfügen.
+                </p>
               </div>
             ) : (
               <>
@@ -749,10 +995,11 @@ Bitte schreibe eine passende Antwort.`
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => showToast('Demo: Versand nicht angebunden')}
-                      className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+                      disabled={sendMailBusy}
+                      onClick={() => void sendAgentReplyMail()}
+                      className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:bg-gray-400"
                     >
-                      Senden (Demo)
+                      {sendMailBusy ? 'Senden …' : 'Senden'}
                     </button>
                     <button
                       type="button"
@@ -776,6 +1023,7 @@ Bitte schreibe eine passende Antwort.`
               </>
             )}
           </div>
+        </div>
         </div>
       )}
 
