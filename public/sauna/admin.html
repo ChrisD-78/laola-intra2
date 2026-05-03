@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA OLA Sauna · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1a20;
+    --surface: #16252e;
+    --surface-2: #1d3038;
+    --surface-3: #243a44;
+    --gold: #c9a961;
+    --gold-soft: #e6cd92;
+    --text: #f4f1ea;
+    --text-dim: #97a4ab;
+    --text-muted: #6a7a82;
+    --warm: #d97757;
+    --warm-soft: #e89478;
+    --cool: #4a7c8c;
+    --cool-soft: #6ba0b2;
+    --line: rgba(201, 169, 97, 0.18);
+    --line-strong: rgba(201, 169, 97, 0.4);
+    --danger: #c25450;
+    --success: #6b9a6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: radial-gradient(ellipse at top, rgba(201,169,97,0.06), transparent 60%), var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-weight: 300;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  header.app {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    padding-bottom: 24px; margin-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    position: relative; flex-wrap: wrap; gap: 20px;
+  }
+  header.app::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 80px; height: 1px; background: var(--gold); }
+  .title-block .label { font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); font-weight: 400; }
+  .title-block h1 { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 40px; margin-top: 4px; }
+  .title-block h1 em { color: var(--gold); font-weight: 500; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    background: transparent; color: var(--text); border: 1px solid var(--line-strong);
+    padding: 10px 18px; font-family: 'Outfit', sans-serif;
+    font-size: 12px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.25s ease; border-radius: 2px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .btn.primary { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .btn.primary:hover { background: var(--gold-soft); border-color: var(--gold-soft); }
+  .btn.ghost { border-color: var(--line); color: var(--text-dim); }
+  .btn.ghost:hover { color: var(--text); border-color: var(--gold); background: transparent; }
+  .btn.danger { color: var(--danger); border-color: rgba(194,84,80,0.4); }
+  .btn.danger:hover { background: var(--danger); color: var(--text); border-color: var(--danger); }
+  .btn.warm { background: var(--warm); color: var(--text); border-color: var(--warm); }
+  .btn.warm:hover { background: var(--warm-soft); border-color: var(--warm-soft); color: var(--text); }
+  .btn.cool { background: var(--cool); color: var(--text); border-color: var(--cool); }
+  .btn.cool:hover { background: var(--cool-soft); border-color: var(--cool-soft); color: var(--text); }
+  .btn.sm { padding: 7px 12px; font-size: 10px; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tab {
+    background: transparent; border: none; color: var(--text-dim);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase;
+    padding: 14px 24px; cursor: pointer; position: relative; transition: color 0.2s; font-weight: 400;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--gold); }
+  .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--gold); }
+  .tab.events.active { color: var(--warm); }
+  .tab.events.active::after { background: var(--warm); }
+  .tab.werbung.active { color: var(--cool-soft); }
+  .tab.werbung.active::after { background: var(--cool-soft); }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .day-bar {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 16px 18px; margin-bottom: 18px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px; justify-content: space-between;
+  }
+  .day-bar-label { font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); }
+  .day-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .day-pill {
+    background: transparent; border: 1px solid var(--line); color: var(--text-dim);
+    padding: 9px 16px; font-family: 'Outfit', sans-serif;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; border-radius: 2px; font-weight: 400;
+    position: relative; min-width: 64px;
+  }
+  .day-pill:hover { color: var(--text); border-color: var(--gold-soft); }
+  .day-pill.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+  .day-pill.today::before { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--warm); }
+  .day-pill.empty:not(.active) { opacity: 0.55; }
+  .day-pill .count { display: block; font-size: 9px; color: inherit; opacity: 0.7; margin-top: 2px; font-weight: 300; letter-spacing: 0.1em; }
+  .day-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 24px; margin-bottom: 18px; }
+  .card.warm-accent { border-color: rgba(217,119,87,0.3); }
+  .card.warm-accent::before { content: ''; display: block; width: 60px; height: 2px; background: var(--warm); margin-bottom: 14px; }
+  .card.cool-accent { border-color: rgba(74,124,140,0.3); }
+  .card.cool-accent::before { content: ''; display: block; width: 60px; height: 2px; background: var(--cool); margin-bottom: 14px; }
+  .card h2 {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500;
+    font-size: 22px; color: var(--gold); margin-bottom: 18px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .card.warm-accent h2 { color: var(--warm); border-bottom-color: rgba(217,119,87,0.18); }
+  .card.cool-accent h2 { color: var(--cool-soft); border-bottom-color: rgba(74,124,140,0.18); }
+  .card h2 .day-info { font-family: 'Outfit', sans-serif; font-style: normal; font-size: 11px; color: var(--text-dim); letter-spacing: 0.25em; text-transform: uppercase; font-weight: 400; }
+  .card h2 .day-info strong { color: var(--gold-soft); font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: left; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); font-weight: 400; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 8px; vertical-align: middle; border-bottom: 1px solid rgba(201,169,97,0.08); }
+  tbody tr:hover { background: rgba(201,169,97,0.03); }
+  input[type="text"], input[type="time"], input[type="url"], input[type="date"], input[type="datetime-local"], input[type="number"], select, textarea {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+    color: var(--text); padding: 9px 12px; font-family: 'Outfit', sans-serif;
+    font-size: 14px; font-weight: 300; border-radius: 2px; transition: border 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); background: var(--surface-3); }
+  input[type="time"], input[type="date"], input[type="datetime-local"] {
+    font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--gold-soft);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(0.5) saturate(2) hue-rotate(20deg); cursor: pointer;
+  }
+  label { display: block; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; font-weight: 400; }
+  .field { margin-bottom: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+  .icon-btn {
+    background: transparent; border: 1px solid var(--line); color: var(--text-dim);
+    width: 32px; height: 32px; border-radius: 2px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 14px;
+  }
+  .icon-btn:hover { color: var(--gold); border-color: var(--gold); }
+  .icon-btn.del:hover { color: var(--danger); border-color: var(--danger); }
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .add-row {
+    margin-top: 16px; padding: 14px; background: var(--surface-2);
+    border: 1px dashed var(--line-strong); border-radius: 4px;
+    display: grid; grid-template-columns: 90px 1fr 1fr 1fr auto; gap: 10px; align-items: end;
+  }
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: var(--gold); color: var(--bg); padding: 14px 22px;
+    border-radius: 2px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 500; transform: translateY(100px); opacity: 0;
+    transition: all 0.3s ease; z-index: 1000;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.warm { background: var(--warm); color: var(--text); }
+  .toast.danger { background: var(--danger); color: var(--text); }
+  .help { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
+  .badge { display: inline-block; background: var(--surface-3); color: var(--gold); padding: 3px 10px; border-radius: 2px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; border: 1px solid var(--line); }
+  .badge.event { background: rgba(217,119,87,0.18); color: var(--warm-soft); border-color: rgba(217,119,87,0.3); }
+  .badge.cool { background: rgba(74,124,140,0.18); color: var(--cool-soft); border-color: rgba(74,124,140,0.3); }
+  .badge.success { background: rgba(107,154,107,0.18); color: var(--success); border-color: rgba(107,154,107,0.3); }
+  .badge.muted { background: var(--surface-2); color: var(--text-muted); border-color: var(--line); }
+  .quick-links { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+  .quick-link {
+    flex: 1; min-width: 220px; padding: 18px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    text-decoration: none; color: var(--text); transition: all 0.25s;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .quick-link:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .quick-link .ql-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); }
+  .quick-link .ql-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; color: var(--text); }
+  .quick-link .ql-desc { font-size: 12px; color: var(--text-dim); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(10, 20, 25, 0.85); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--gold); border-radius: 4px; padding: 28px; max-width: 480px; width: 100%; }
+  .modal h3 { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 24px; color: var(--gold); margin-bottom: 14px; }
+  .modal p { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.6; }
+  .modal-days { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+  .modal-day { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); padding: 10px; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.2s; }
+  .modal-day:hover { border-color: var(--gold); }
+  .modal-day.selected { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* === EVENT-LIST === */
+  .event-list { display: flex; flex-direction: column; gap: 12px; }
+  .event-card {
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-left: 3px solid var(--warm); border-radius: 4px;
+    padding: 18px 20px; display: grid; grid-template-columns: 1fr auto;
+    gap: 14px; align-items: center; transition: all 0.2s;
+  }
+  .event-card:hover { border-color: rgba(217,119,87,0.4); border-left-color: var(--warm-soft); }
+  .event-card.past { opacity: 0.5; }
+  .event-card.today { background: linear-gradient(135deg, rgba(217,119,87,0.15) 0%, var(--surface-2) 100%); }
+  .event-meta { display: flex; flex-direction: column; gap: 4px; }
+  .event-meta .ev-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--warm-soft); font-weight: 500; }
+  .event-meta .ev-title { font-size: 16px; color: var(--text); font-weight: 400; }
+  .event-meta .ev-info { font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; margin-top: 2px; }
+  .event-meta .ev-info strong { color: var(--gold-soft); font-weight: 400; }
+  .event-actions { display: flex; gap: 6px; }
+  .event-empty { text-align: center; padding: 50px 20px; color: var(--text-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+  .event-editor { background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 20px; margin-bottom: 18px; }
+  .event-editor.creating { border-color: var(--warm); background: linear-gradient(135deg, rgba(217,119,87,0.08) 0%, var(--surface-2) 100%); }
+  .event-editor-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--warm-soft); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(217,119,87,0.18); }
+
+  /* === WERBUNG === */
+  .ad-list { display: flex; flex-direction: column; gap: 12px; }
+  .ad-card {
+    background: var(--surface-2); border: 1px solid var(--line); border-left: 3px solid var(--cool);
+    border-radius: 4px; padding: 16px 18px;
+    display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; align-items: center; transition: all 0.2s;
+  }
+  .ad-card.active { border-left-color: var(--success); background: linear-gradient(135deg, rgba(107,154,107,0.08) 0%, var(--surface-2) 100%); }
+  .ad-card.expired { opacity: 0.45; }
+  .ad-card.upcoming { border-left-color: var(--gold); }
+  .ad-card.disabled { opacity: 0.5; border-left-style: dashed; }
+  .ad-thumb {
+    width: 80px; height: 60px; border-radius: 3px; overflow: hidden;
+    background: var(--surface-3); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--text-muted); font-size: 11px;
+  }
+  .ad-thumb img, .ad-thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .ad-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .ad-meta-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 17px; color: var(--text); font-weight: 500; }
+  .ad-meta-info { font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .ad-meta-info span strong { color: var(--gold-soft); font-weight: 400; }
+  .ad-status-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+  .ad-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .ad-empty { text-align: center; padding: 50px 20px; color: var(--text-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+  .ad-editor { background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 22px; margin-bottom: 18px; }
+  .ad-editor.creating { border-color: var(--cool); background: linear-gradient(135deg, rgba(74,124,140,0.08) 0%, var(--surface-2) 100%); }
+  .ad-editor-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--cool-soft); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(74,124,140,0.18); }
+  .ad-editor h4 { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin: 18px 0 10px; font-weight: 400; }
+  .source-tabs { display: flex; gap: 0; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .source-tab { flex: 1; background: var(--surface-2); border: none; color: var(--text-dim); padding: 12px; font-family: inherit; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 400; }
+  .source-tab.active { background: var(--cool); color: var(--text); }
+  .source-tab:not(.active):hover { background: var(--surface-3); color: var(--text); }
+  .file-drop {
+    border: 1px dashed var(--line-strong); border-radius: 4px;
+    padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
+    background: var(--bg);
+  }
+  .file-drop:hover, .file-drop.drag { border-color: var(--cool); background: rgba(74,124,140,0.05); }
+  .file-drop-icon { font-size: 32px; color: var(--cool); font-family: 'Cormorant Garamond', serif; line-height: 1; margin-bottom: 8px; }
+  .file-drop-label { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .file-drop-hint { font-size: 11px; color: var(--text-muted); font-style: italic; font-family: 'Cormorant Garamond', serif; }
+  .file-info { padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+  .file-info-thumb { width: 60px; height: 45px; border-radius: 3px; overflow: hidden; background: var(--surface-3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .file-info-thumb img, .file-info-thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .file-info-meta { flex: 1; min-width: 0; }
+  .file-info-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-info-size { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
+  .priority-display {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .priority-dot.on { background: var(--cool-soft); }
+  .ad-preview-area {
+    margin-top: 14px; aspect-ratio: 16/9; width: 100%; max-width: 400px;
+    background: var(--surface-3); border: 1px solid var(--line); border-radius: 4px;
+    overflow: hidden; position: relative;
+  }
+  .ad-preview-area img, .ad-preview-area video, .ad-preview-area iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+  .ad-preview-area .empty-prev { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-style: italic; font-family: 'Cormorant Garamond', serif; }
+  .schedule-summary {
+    display: inline-block; padding: 4px 10px;
+    background: var(--surface-3); border-radius: 2px;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 12px; color: var(--gold-soft); border: 1px solid var(--line);
+  }
+  .weekday-pick {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 6px;
+  }
+  .weekday-pick label {
+    padding: 8px 4px; text-align: center; background: var(--surface-3);
+    border: 1px solid var(--line); border-radius: 2px; cursor: pointer;
+    color: var(--text-dim); font-size: 11px; letter-spacing: 0.1em;
+    transition: all 0.2s; margin-bottom: 0;
+  }
+  .weekday-pick input { display: none; }
+  .weekday-pick label:hover { color: var(--text); }
+  .weekday-pick input:checked + span,
+  .weekday-pick label.checked { background: var(--cool); border-color: var(--cool); color: var(--text); font-weight: 500; }
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 18px;
+  }
+  .stat-box {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px;
+  }
+  .stat-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); }
+  .stat-value { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 24px; color: var(--gold); margin-top: 4px; line-height: 1; }
+  .stat-value.cool { color: var(--cool-soft); }
+  .stat-value.warm { color: var(--warm-soft); }
+  .stat-value.success { color: var(--success); }
+  .now-playing-banner {
+    background: linear-gradient(135deg, rgba(107,154,107,0.18) 0%, rgba(74,124,140,0.1) 100%);
+    border: 1px solid rgba(107,154,107,0.3); border-radius: 4px;
+    padding: 14px 18px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .now-playing-banner.empty {
+    background: var(--surface-2); border-color: var(--line);
+  }
+  .now-playing-pulse { width: 10px; height: 10px; background: var(--success); border-radius: 50%; animation: pulse-dot 1.4s ease-in-out infinite; flex-shrink: 0; }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+  .now-playing-info { flex: 1; }
+  .now-playing-label { font-size: 9px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--success); font-weight: 500; }
+  .now-playing-banner.empty .now-playing-label { color: var(--text-muted); }
+  .now-playing-banner.empty .now-playing-pulse { background: var(--text-muted); animation: none; }
+  .now-playing-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--text); margin-top: 2px; }
+  .toggle-switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider-tg {
+    position: absolute; cursor: pointer; inset: 0; background: var(--surface-3);
+    border: 1px solid var(--line); transition: 0.25s; border-radius: 22px;
+  }
+  .slider-tg:before {
+    position: absolute; content: ''; height: 14px; width: 14px;
+    left: 3px; top: 50%; transform: translateY(-50%); background: var(--text-muted); transition: 0.25s; border-radius: 50%;
+  }
+  input:checked + .slider-tg { background: var(--cool); border-color: var(--cool); }
+  input:checked + .slider-tg:before { transform: translate(20px, -50%); background: var(--text); }
+
+  @media (max-width: 720px) {
+    body { padding: 20px 12px; }
+    .title-block h1 { font-size: 28px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .add-row { grid-template-columns: 1fr 1fr; }
+    table { font-size: 12px; }
+    .tab { padding: 12px 14px; font-size: 11px; letter-spacing: 0.15em; }
+    .day-pill { padding: 7px 10px; min-width: 52px; }
+    .day-bar { flex-direction: column; align-items: stretch; }
+    .event-card, .ad-card { grid-template-columns: 1fr; }
+    .event-actions, .ad-actions { justify-content: flex-end; }
+    .ad-card { grid-template-columns: 60px 1fr; }
+    .ad-card .ad-actions { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="app">
+    <div class="title-block">
+      <div class="label">LA OLA Sauna · Verwaltung</div>
+      <h1>Aufguss<em>plan</em> · Admin</h1>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="display.html" target="_blank">↗ TV-Display</a>
+      <a class="btn ghost" href="gaeste.html" target="_blank">↗ Gäste-Seite</a>
+      <button class="btn primary" onclick="saveAll()">Speichern</button>
+    </div>
+  </header>
+
+  <div class="quick-links">
+    <a class="quick-link" href="display.html" target="_blank">
+      <div class="ql-label">Bildschirm</div>
+      <div class="ql-title">TV · Hochformat 9:16</div>
+      <div class="ql-desc">Heutiger Plan · Events haben Vorrang</div>
+    </a>
+    <a class="quick-link" href="gaeste.html" target="_blank">
+      <div class="ql-label">Mobil</div>
+      <div class="ql-title">Gäste · Smartphone</div>
+      <div class="ql-desc">Aufgussplan & Saunaevents</div>
+    </a>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="aufguesse">Wochenplan</button>
+    <button class="tab events" data-tab="events">Saunaevents</button>
+    <button class="tab" data-tab="saunas">Saunen</button>
+    <button class="tab werbung" data-tab="werbung">Werbung</button>
+    <button class="tab" data-tab="export">Daten</button>
+  </div>
+
+  <!-- ============ WOCHENPLAN ============ -->
+  <div class="panel active" data-panel="aufguesse">
+    <div class="day-bar">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="day-bar-label">Wochentag wählen</div>
+        <div class="day-pills" id="dayPills"></div>
+      </div>
+      <div class="day-actions">
+        <button class="btn sm ghost" onclick="copyDayDialog()">⎘ Plan kopieren von …</button>
+        <button class="btn sm ghost" onclick="clearDay()">Tag leeren</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span>Aufgüsse · <em id="dayTitle">—</em></span>
+        <span class="day-info">Heute ist <strong id="todayName">—</strong></span>
+      </h2>
+      <p class="help" style="margin-bottom: 14px;">Der hier hinterlegte Plan wird wöchentlich an diesem Wochentag gezeigt — sofern für das aktuelle Datum kein Saunaevent definiert ist.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:90px;">Uhrzeit</th>
+            <th>Sauna</th>
+            <th>Art des Aufgusses</th>
+            <th>Duft</th>
+            <th style="width:100px;"></th>
+          </tr>
+        </thead>
+        <tbody id="aufgussTable"></tbody>
+      </table>
+
+      <div class="add-row">
+        <input type="time" id="newTime" value="14:00">
+        <select id="newSauna"></select>
+        <input type="text" id="newType" placeholder="z.B. Klassischer Aufguss">
+        <input type="text" id="newScent" placeholder="z.B. Eukalyptus & Minze">
+        <button class="btn primary" onclick="addAufguss()">Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SAUNAEVENTS ============ -->
+  <div class="panel" data-panel="events">
+    <div class="card warm-accent">
+      <h2>
+        <span>Saunaevents · <em id="evCountTitle">—</em></span>
+        <span class="day-info" style="color: var(--warm-soft);">Datum-spezifisch · überschreibt Wochenplan</span>
+      </h2>
+      <p class="help" style="margin-bottom: 18px;">Saunaevents gelten nur für ein konkretes Datum. An diesem Tag wird der normale Wochentag-Plan automatisch ersetzt.</p>
+      <button class="btn warm" onclick="newEvent()" style="margin-bottom: 18px;">+ Neues Saunaevent erstellen</button>
+      <div id="eventEditorContainer"></div>
+      <h3 style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--text); margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-weight: 400;">Geplante & vergangene Events</h3>
+      <div class="event-list" id="eventList"></div>
+    </div>
+  </div>
+
+  <!-- ============ SAUNAS ============ -->
+  <div class="panel" data-panel="saunas">
+    <div class="card">
+      <h2>Saunen verwalten</h2>
+      <p class="help" style="margin-bottom: 14px;">Saunen gelten für alle Wochentage und Events.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:120px;">Schlüssel</th>
+            <th>Anzeigename</th>
+            <th style="width:140px;">Temperatur</th>
+            <th style="width:60px;"></th>
+          </tr>
+        </thead>
+        <tbody id="saunaTable"></tbody>
+      </table>
+      <div class="add-row" style="grid-template-columns: 1fr 1fr 1fr auto;">
+        <input type="text" id="newSaunaKey" placeholder="z.B. finn">
+        <input type="text" id="newSaunaName" placeholder="z.B. Finnische Sauna">
+        <input type="text" id="newSaunaTemp" placeholder="z.B. 90 °C">
+        <button class="btn primary" onclick="addSauna()">Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ WERBUNG ============ -->
+  <div class="panel" data-panel="werbung">
+    <div class="card cool-accent">
+      <h2>
+        <span>Werbe-Slots · <em id="adCountTitle">—</em></span>
+        <span class="day-info" style="color: var(--cool-soft);">Bild & Video · zeitgesteuert · prioritätsbasiert</span>
+      </h2>
+      <p class="help" style="margin-bottom: 18px;">Verwalte mehrere Werbungen mit individuellen Zeitfenstern. Jede Werbung kann ein Bild oder Video sein. Im selben Zeitraum gewinnt die höhere Priorität — bei gleicher Priorität rotieren die Werbungen.</p>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">Werbungen gesamt</div><div class="stat-value" id="statTotal">0</div></div>
+        <div class="stat-box"><div class="stat-label">Aktiv jetzt</div><div class="stat-value success" id="statActive">0</div></div>
+        <div class="stat-box"><div class="stat-label">Demnächst</div><div class="stat-value cool" id="statUpcoming">0</div></div>
+        <div class="stat-box"><div class="stat-label">Speicher belegt</div><div class="stat-value warm" id="statStorage">0 KB</div></div>
+      </div>
+
+      <div class="now-playing-banner" id="nowPlayingBanner">
+        <div class="now-playing-pulse"></div>
+        <div class="now-playing-info">
+          <div class="now-playing-label" id="nowPlayingLabel">Aktuell auf dem TV-Display</div>
+          <div class="now-playing-title" id="nowPlayingTitle">—</div>
+        </div>
+      </div>
+
+      <button class="btn cool" onclick="newAd()" style="margin-bottom: 18px;">+ Neuen Werbe-Slot erstellen</button>
+      <div id="adEditorContainer"></div>
+
+      <h3 style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--text); margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-weight: 400;">Alle Werbe-Slots</h3>
+      <div class="ad-list" id="adList"></div>
+    </div>
+  </div>
+
+  <!-- ============ EXPORT ============ -->
+  <div class="panel" data-panel="export">
+    <div class="card">
+      <h2>Daten · Backup & Wiederherstellen</h2>
+      <p class="help" style="margin-bottom: 18px;">Exportiere alle Daten als JSON-Datei oder lade ein Backup wieder ein. Hochgeladene Werbe-Bilder/Videos werden als Base64 mitgesichert.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 24px;">
+        <button class="btn" onclick="exportData()">⤓ Als JSON exportieren</button>
+        <label class="btn" style="cursor:pointer;">
+          ⤒ JSON importieren
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none;">
+        </label>
+        <button class="btn danger" onclick="clearAll()">Alles zurücksetzen</button>
+      </div>
+      <div class="field">
+        <label>Aktuelle Daten (read-only · Werbe-Dateiinhalte gekürzt)</label>
+        <textarea id="dataPreview" rows="14" readonly style="font-family: 'Courier New', monospace; font-size: 12px;"></textarea>
+      </div>
+      <p class="help" style="margin-top: 18px;">Hinweis: Über das Intranet (/agent/sauna) wird bei jedem Speichern automatisch in die Neon-Tabelle <code style="background: rgba(255,255,255,0.06); padding: 2px 8px;">sauna_aufguss_snapshot</code> synchronisiert — TV- und Gäste-Seiten laden diesen Stand per API. sehr große Werbe-Uploads können weiterhin Browser-Limits erreichen (siehe externe URLs / YouTube).</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Plan kopieren -->
+<div class="modal-bg" id="copyModal">
+  <div class="modal">
+    <h3>Plan kopieren von …</h3>
+    <p>Wähle den Wochentag, dessen Aufgussplan du in <strong id="copyTargetName" style="color: var(--gold);">—</strong> kopieren möchtest. Bestehende Einträge im Zieltag werden überschrieben.</p>
+    <div class="modal-days" id="copySource"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeCopyModal()">Abbrechen</button>
+      <button class="btn primary" onclick="confirmCopy()">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Gespeichert</div>
+
+<script>
+  const STORAGE_KEY = 'laola_sauna_data';
+  const SAUNA_SNAPSHOT_API = '/api/sauna/snapshot';
+  const DATA_VERSION = 2; // bumped: ad-system overhaul
+
+  async function hydrateSaunaFromNeon() {
+    try {
+      const r = await fetch(SAUNA_SNAPSHOT_API, { cache: 'no-store' });
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j == null || j.payload == null) return;
+      const raw = typeof j.payload === 'string' ? j.payload : JSON.stringify(j.payload);
+      if (raw && raw.length > 20) localStorage.setItem(STORAGE_KEY, raw);
+    } catch (e) { console.warn('[Sauna] Hydrate von Neon:', e); }
+  }
+
+  let __saunaNeonPushTimer = null;
+  function schedulePushSaunaSnapshotToNeon() {
+    const adminUser = localStorage.getItem('currentUser');
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    if (!adminUser || !isAdmin) return;
+    clearTimeout(__saunaNeonPushTimer);
+    __saunaNeonPushTimer = setTimeout(async () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const payload = JSON.parse(raw);
+        const res = await fetch(SAUNA_SNAPSHOT_API, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminUser, payload }),
+        });
+        if (!res.ok) console.warn('[Sauna] Neon-Speichern fehlgeschlagen', await res.text());
+      } catch (e) { console.warn('[Sauna] Neon-Push:', e); }
+    }, 900);
+  }
+  const DAYS = [
+    { key: 'mon', short: 'Mo', long: 'Montag' },
+    { key: 'tue', short: 'Di', long: 'Dienstag' },
+    { key: 'wed', short: 'Mi', long: 'Mittwoch' },
+    { key: 'thu', short: 'Do', long: 'Donnerstag' },
+    { key: 'fri', short: 'Fr', long: 'Freitag' },
+    { key: 'sat', short: 'Sa', long: 'Samstag' },
+    { key: 'sun', short: 'So', long: 'Sonntag' }
+  ];
+  const JS_DAY_TO_KEY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+  function todayKey() { return JS_DAY_TO_KEY[new Date().getDay()]; }
+  function dayLong(key) { return DAYS.find(d => d.key === key)?.long || key; }
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function formatDateLong(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return dt.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  }
+  function formatDateTime(iso) {
+    if (!iso) return '—';
+    const dt = new Date(iso);
+    if (isNaN(dt.getTime())) return iso;
+    return dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' · ' +
+      dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  }
+  function genId(prefix) {
+    return (prefix || 'id') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  }
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(2) + ' MB';
+  }
+
+  let data = null;
+  let activeDay = todayKey();
+  let copySrcKey = null;
+  let editingEventId = null;
+  let editingAdId = null;
+  let adEditorState = { sourceMode: 'file', filePayload: null }; // file | url
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Migration: alte aufguesse-Liste → schedules
+        if (parsed.aufguesse && !parsed.schedules) {
+          parsed.schedules = {};
+          DAYS.forEach(d => parsed.schedules[d.key] = JSON.parse(JSON.stringify(parsed.aufguesse)));
+          delete parsed.aufguesse;
+        }
+        if (!parsed.schedules) parsed.schedules = {};
+        DAYS.forEach(d => { if (!Array.isArray(parsed.schedules[d.key])) parsed.schedules[d.key] = []; });
+        if (!Array.isArray(parsed.events)) parsed.events = [];
+
+        // Migration: alte ad-Struktur → adSlots-Liste
+        if (!Array.isArray(parsed.adSlots)) {
+          parsed.adSlots = [];
+          if (parsed.ad && parsed.ad.type && parsed.ad.type !== 'fallback' && parsed.ad.src) {
+            parsed.adSlots.push({
+              id: genId('ad'),
+              title: parsed.ad.caption || 'Werbung',
+              enabled: true,
+              priority: 5,
+              source: { kind: parsed.ad.type === 'youtube' ? 'youtube' : 'url', url: parsed.ad.src, mime: '' },
+              schedule: { mode: 'always', startAt: '', endAt: '', weekly: { days: [], fromTime: '', toTime: '' } },
+              displayDuration: 30,
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+        // Default-Werte für Slots ergänzen
+        parsed.adSlots = parsed.adSlots.map(s => ({
+          id: s.id || genId('ad'),
+          title: s.title || 'Werbung',
+          enabled: s.enabled !== false,
+          priority: typeof s.priority === 'number' ? s.priority : 5,
+          source: s.source || { kind: 'fallback', url: '', mime: '' },
+          schedule: s.schedule || { mode: 'always', startAt: '', endAt: '', weekly: { days: [], fromTime: '', toTime: '' } },
+          displayDuration: s.displayDuration || 30,
+          createdAt: s.createdAt || new Date().toISOString()
+        }));
+
+        parsed.version = DATA_VERSION;
+        return parsed;
+      }
+    } catch (e) { console.warn('Load error', e); }
+
+    // Default
+    const schedules = {};
+    const weekday = [
+      { time: '11:00', sauna: 'finn',     type: 'Klassischer Aufguss', scent: 'Eukalyptus & Minze' },
+      { time: '13:00', sauna: 'bio',      type: 'Wellness-Aufguss',    scent: 'Lavendel & Honig' },
+      { time: '15:00', sauna: 'finn',     type: 'Birkenaufguss',       scent: 'Birke & Wald' },
+      { time: '17:00', sauna: 'kraeuter', type: 'Kräuter-Spezial',     scent: 'Salbei & Thymian' },
+      { time: '19:00', sauna: 'finn',     type: 'Abend-Ritual',        scent: 'Sandelholz & Vanille' }
+    ];
+    const weekend = [
+      { time: '10:00', sauna: 'finn',     type: 'Morgen-Aufguss',      scent: 'Zitrone & Ingwer' },
+      { time: '12:00', sauna: 'bio',      type: 'Wellness-Aufguss',    scent: 'Lavendel & Honig' },
+      { time: '14:00', sauna: 'finn',     type: 'Show-Aufguss',        scent: 'Mango & Maracuja' },
+      { time: '16:00', sauna: 'kraeuter', type: 'Kräuter-Spezial',     scent: 'Salbei & Thymian' },
+      { time: '18:00', sauna: 'finn',     type: 'Eis-Aufguss',         scent: 'Pfefferminz & Zitrone' },
+      { time: '20:00', sauna: 'bio',      type: 'Gute-Nacht-Aufguss',  scent: 'Sandelholz & Vanille' }
+    ];
+    ['mon','tue','wed','thu','fri'].forEach(d => schedules[d] = JSON.parse(JSON.stringify(weekday)));
+    ['sat','sun'].forEach(d => schedules[d] = JSON.parse(JSON.stringify(weekend)));
+
+    return {
+      version: DATA_VERSION,
+      saunas: {
+        'finn':     { name: 'Finnische Sauna', temp: '90 °C' },
+        'bio':      { name: 'Bio-Sauna',       temp: '60 °C' },
+        'kraeuter': { name: 'Kräutersauna',    temp: '75 °C' },
+        'dampf':    { name: 'Dampfbad',        temp: '45 °C' }
+      },
+      schedules,
+      events: [],
+      adSlots: []
+    };
+  }
+
+  function save(silent, kind) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      schedulePushSaunaSnapshotToNeon();
+      if (!silent) toast('Gespeichert', kind);
+      refreshDataPreview();
+    } catch (e) {
+      toast('Speicher voll · Datei zu groß', 'danger');
+      console.error(e);
+    }
+  }
+  function saveAll() { save(); }
+
+  function toast(msg, kind) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('warm', 'danger');
+    if (kind === 'warm') t.classList.add('warm');
+    if (kind === 'danger') t.classList.add('danger');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // === TABS ===
+  document.querySelectorAll('.tab').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelector(`.panel[data-panel="${b.dataset.tab}"]`).classList.add('active');
+      if (b.dataset.tab === 'werbung') renderAds();
+    });
+  });
+
+  // === DAY-PILLS ===
+  function renderDayPills() {
+    const container = document.getElementById('dayPills');
+    const today = todayKey();
+    container.innerHTML = DAYS.map(d => {
+      const count = (data.schedules[d.key] || []).length;
+      const cls = ['day-pill', d.key === activeDay ? 'active' : '', d.key === today ? 'today' : '', count === 0 ? 'empty' : ''].filter(Boolean).join(' ');
+      return `<button class="${cls}" data-day="${d.key}" title="${d.long}${d.key===today?' (heute)':''}">${d.short}<span class="count">${count} Aufg.</span></button>`;
+    }).join('');
+    container.querySelectorAll('.day-pill').forEach(b => {
+      b.addEventListener('click', () => {
+        activeDay = b.dataset.day;
+        renderDayPills();
+        renderAufguesse();
+      });
+    });
+    document.getElementById('dayTitle').textContent = dayLong(activeDay);
+    document.getElementById('todayName').textContent = dayLong(today);
+  }
+
+  // === AUFGÜSSE ===
+  function renderAufguesse() {
+    const tb = document.getElementById('aufgussTable');
+    const list = data.schedules[activeDay] || [];
+    const items = [...list].sort((a, b) => a.time.localeCompare(b.time));
+    tb.innerHTML = items.map((it) => {
+      const realIdx = list.indexOf(it);
+      return `<tr>
+        <td><input type="time" value="${it.time}" onchange="updateAufguss(${realIdx},'time',this.value)"></td>
+        <td>${saunaSelect(it.sauna, realIdx)}</td>
+        <td><input type="text" value="${escapeAttr(it.type)}" onchange="updateAufguss(${realIdx},'type',this.value)"></td>
+        <td><input type="text" value="${escapeAttr(it.scent)}" onchange="updateAufguss(${realIdx},'scent',this.value)"></td>
+        <td><div class="row-actions"><button class="icon-btn del" onclick="delAufguss(${realIdx})">✕</button></div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic; font-family:'Cormorant Garamond',serif;">Für ${dayLong(activeDay)} sind keine Aufgüsse geplant</td></tr>`;
+    const sel = document.getElementById('newSauna');
+    sel.innerHTML = Object.entries(data.saunas).map(([k, v]) => `<option value="${k}">${escapeAttr(v.name)}</option>`).join('');
+  }
+  function saunaSelect(current, idx) {
+    return `<select onchange="updateAufguss(${idx},'sauna',this.value)">${Object.entries(data.saunas).map(([k, v]) => `<option value="${k}" ${k===current?'selected':''}>${escapeAttr(v.name)}</option>`).join('')}</select>`;
+  }
+  function updateAufguss(idx, field, val) {
+    data.schedules[activeDay][idx][field] = val;
+    save(true);
+    renderAufguesse();
+    renderDayPills();
+  }
+  function delAufguss(idx) {
+    if (!confirm('Diesen Aufguss wirklich löschen?')) return;
+    data.schedules[activeDay].splice(idx, 1);
+    save();
+    renderAufguesse();
+    renderDayPills();
+  }
+  function addAufguss() {
+    const time = document.getElementById('newTime').value;
+    const sauna = document.getElementById('newSauna').value;
+    const type = document.getElementById('newType').value.trim();
+    const scent = document.getElementById('newScent').value.trim();
+    if (!time || !sauna || !type) { toast('Uhrzeit, Sauna & Art benötigt'); return; }
+    data.schedules[activeDay].push({ time, sauna, type, scent });
+    document.getElementById('newType').value = '';
+    document.getElementById('newScent').value = '';
+    save();
+    renderAufguesse();
+    renderDayPills();
+  }
+  function clearDay() {
+    if (!confirm(`Wirklich alle Aufgüsse für ${dayLong(activeDay)} löschen?`)) return;
+    data.schedules[activeDay] = [];
+    save();
+    renderAufguesse();
+    renderDayPills();
+  }
+
+  // === KOPIEREN ===
+  function copyDayDialog() {
+    copySrcKey = null;
+    document.getElementById('copyTargetName').textContent = dayLong(activeDay);
+    const c = document.getElementById('copySource');
+    c.innerHTML = DAYS.filter(d => d.key !== activeDay).map(d => {
+      const count = (data.schedules[d.key] || []).length;
+      return `<button class="modal-day" data-day="${d.key}">${d.long}<span style="display:block; font-size:10px; opacity:0.6; margin-top:2px;">${count} Aufgüsse</span></button>`;
+    }).join('');
+    c.querySelectorAll('.modal-day').forEach(b => {
+      b.addEventListener('click', () => {
+        c.querySelectorAll('.modal-day').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        copySrcKey = b.dataset.day;
+      });
+    });
+    document.getElementById('copyModal').classList.add('show');
+  }
+  function closeCopyModal() { document.getElementById('copyModal').classList.remove('show'); }
+  function confirmCopy() {
+    if (!copySrcKey) { toast('Bitte Quell-Tag wählen'); return; }
+    if (!confirm(`Plan von ${dayLong(copySrcKey)} nach ${dayLong(activeDay)} kopieren?`)) return;
+    data.schedules[activeDay] = JSON.parse(JSON.stringify(data.schedules[copySrcKey]));
+    save();
+    renderAufguesse();
+    renderDayPills();
+    closeCopyModal();
+    toast(`Kopiert von ${dayLong(copySrcKey)}`);
+  }
+
+  // === SAUNAEVENTS ===
+  function getEvent(id) { return data.events.find(e => e.id === id); }
+  function newEvent() { editingEventId = 'new'; renderEventEditor(); setTimeout(() => document.getElementById('eventEditorContainer').scrollIntoView({behavior:'smooth',block:'start'}), 50); }
+  function editEvent(id) { editingEventId = id; renderEventEditor(); setTimeout(() => document.getElementById('eventEditorContainer').scrollIntoView({behavior:'smooth',block:'start'}), 50); }
+  function cancelEditEvent() { editingEventId = null; renderEventEditor(); }
+  function delEvent(id) {
+    const ev = getEvent(id);
+    if (!ev) return;
+    if (!confirm(`Saunaevent "${ev.title}" am ${formatDateLong(ev.date)} wirklich löschen?`)) return;
+    data.events = data.events.filter(e => e.id !== id);
+    save(false, 'warm');
+    renderEvents();
+    if (editingEventId === id) { editingEventId = null; renderEventEditor(); }
+  }
+  function duplicateEvent(id) {
+    const ev = getEvent(id);
+    if (!ev) return;
+    const copy = JSON.parse(JSON.stringify(ev));
+    copy.id = genId('ev');
+    copy.title = ev.title + ' (Kopie)';
+    copy.date = '';
+    data.events.push(copy);
+    save(false, 'warm');
+    editEvent(copy.id);
+    renderEvents();
+  }
+  function renderEvents() {
+    const list = document.getElementById('eventList');
+    const today = todayISO();
+    const sorted = [...data.events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const upcoming = sorted.filter(e => !e.date || e.date >= today);
+    const past = sorted.filter(e => e.date && e.date < today).reverse();
+    document.getElementById('evCountTitle').textContent = `${data.events.length} ${data.events.length === 1 ? 'Event' : 'Events'}`;
+    if (sorted.length === 0) { list.innerHTML = `<div class="event-empty">Noch keine Saunaevents geplant</div>`; return; }
+    const renderCard = (ev) => {
+      const isToday = ev.date === today;
+      const isPast = ev.date && ev.date < today;
+      const cls = ['event-card', isToday ? 'today' : '', isPast ? 'past' : ''].filter(Boolean).join(' ');
+      const count = (ev.aufguesse || []).length;
+      return `<div class="${cls}">
+        <div class="event-meta">
+          <div class="ev-date">${formatDateLong(ev.date)}${isToday ? ' · <span style="color: var(--warm);">heute aktiv</span>' : ''}</div>
+          <div class="ev-title">${escapeHTML(ev.title || '(ohne Titel)')}</div>
+          <div class="ev-info"><strong>${count}</strong> Aufgüsse${ev.note ? ' · ' + escapeHTML(ev.note) : ''}</div>
+        </div>
+        <div class="event-actions">
+          <button class="btn sm" onclick="editEvent('${ev.id}')">Bearbeiten</button>
+          <button class="btn sm ghost" onclick="duplicateEvent('${ev.id}')">⎘</button>
+          <button class="btn sm danger" onclick="delEvent('${ev.id}')">Löschen</button>
+        </div>
+      </div>`;
+    };
+    let html = '';
+    if (upcoming.length) html += upcoming.map(renderCard).join('');
+    if (past.length) {
+      html += `<div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted);">Vergangen</div>`;
+      html += past.map(renderCard).join('');
+    }
+    list.innerHTML = html;
+  }
+  function renderEventEditor() {
+    const container = document.getElementById('eventEditorContainer');
+    if (!editingEventId) { container.innerHTML = ''; return; }
+    const isNew = editingEventId === 'new';
+    const ev = isNew ? { id: '', title: '', date: '', note: '', aufguesse: [] } : getEvent(editingEventId);
+    if (!ev) { editingEventId = null; container.innerHTML = ''; return; }
+    const items = [...(ev.aufguesse || [])].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    container.innerHTML = `
+      <div class="event-editor ${isNew ? 'creating' : ''}">
+        <div class="event-editor-title">${isNew ? 'Neues Saunaevent' : 'Event bearbeiten'}</div>
+        <div class="grid-3" style="margin-bottom: 14px;">
+          <div class="field" style="margin-bottom: 0;"><label>Titel · Pflicht</label><input type="text" id="evTitle" value="${escapeAttr(ev.title)}" placeholder="z.B. Lange Saunanacht"></div>
+          <div class="field" style="margin-bottom: 0;"><label>Datum · Pflicht</label><input type="date" id="evDate" value="${escapeAttr(ev.date)}" min="${todayISO()}"></div>
+          <div class="field" style="margin-bottom: 0;"><label>Untertitel · optional</label><input type="text" id="evNote" value="${escapeAttr(ev.note || '')}" placeholder="z.B. Vollmond-Special"></div>
+        </div>
+        <h4 style="font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin: 18px 0 10px; font-weight: 400;">Aufgüsse für dieses Event</h4>
+        <table>
+          <thead><tr><th style="width:90px;">Uhrzeit</th><th>Sauna</th><th>Art</th><th>Duft</th><th style="width:60px;"></th></tr></thead>
+          <tbody>
+            ${items.map(it => {
+              const realIdx = (ev.aufguesse || []).indexOf(it);
+              return `<tr>
+                <td><input type="time" value="${it.time}" onchange="updateEventAufguss(${realIdx},'time',this.value)"></td>
+                <td><select onchange="updateEventAufguss(${realIdx},'sauna',this.value)">${Object.entries(data.saunas).map(([k,v]) => `<option value="${k}" ${k===it.sauna?'selected':''}>${escapeAttr(v.name)}</option>`).join('')}</select></td>
+                <td><input type="text" value="${escapeAttr(it.type)}" onchange="updateEventAufguss(${realIdx},'type',this.value)"></td>
+                <td><input type="text" value="${escapeAttr(it.scent)}" onchange="updateEventAufguss(${realIdx},'scent',this.value)"></td>
+                <td><button class="icon-btn del" onclick="delEventAufguss(${realIdx})">✕</button></td>
+              </tr>`;
+            }).join('') || `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted); font-style:italic; font-family:'Cormorant Garamond',serif;">Noch keine Aufgüsse</td></tr>`}
+          </tbody>
+        </table>
+        <div class="add-row" style="margin-top: 14px;">
+          <input type="time" id="evNewTime" value="18:00">
+          <select id="evNewSauna">${Object.entries(data.saunas).map(([k,v]) => `<option value="${k}">${escapeAttr(v.name)}</option>`).join('')}</select>
+          <input type="text" id="evNewType" placeholder="z.B. Vollmond-Aufguss">
+          <input type="text" id="evNewScent" placeholder="z.B. Mystische Hölzer">
+          <button class="btn warm" onclick="addEventAufguss()">+ Hinzufügen</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); flex-wrap: wrap;">
+          ${isNew ? `<span style="font-size: 12px; color: var(--text-muted); font-style: italic; font-family: 'Cormorant Garamond', serif;">Speichern aktiviert das Event für das gewählte Datum</span>` : `<button class="btn sm danger" onclick="delEvent('${ev.id}')">Event löschen</button>`}
+          <div style="display: flex; gap: 8px;">
+            <button class="btn ghost" onclick="cancelEditEvent()">${isNew ? 'Abbrechen' : 'Schließen'}</button>
+            <button class="btn warm" onclick="saveEventForm(${isNew ? 'true' : 'false'}, '${ev.id}')">Event speichern</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  function updateEventAufguss(idx, field, val) {
+    if (!editingEventId || editingEventId === 'new') return;
+    const ev = getEvent(editingEventId); if (!ev) return;
+    if (!ev.aufguesse) ev.aufguesse = [];
+    if (!ev.aufguesse[idx]) return;
+    ev.aufguesse[idx][field] = val;
+    save(true);
+    renderEventEditor();
+  }
+  function delEventAufguss(idx) {
+    if (!editingEventId) return;
+    if (!confirm('Diesen Aufguss aus dem Event entfernen?')) return;
+    if (editingEventId === 'new') return;
+    const ev = getEvent(editingEventId); if (!ev) return;
+    ev.aufguesse.splice(idx, 1);
+    save(true);
+    renderEventEditor();
+  }
+  function addEventAufguss() {
+    const time = document.getElementById('evNewTime').value;
+    const sauna = document.getElementById('evNewSauna').value;
+    const type = document.getElementById('evNewType').value.trim();
+    const scent = document.getElementById('evNewScent').value.trim();
+    if (!time || !sauna || !type) { toast('Uhrzeit, Sauna & Art benötigt'); return; }
+    let ev;
+    if (editingEventId === 'new') {
+      const tempTitle = (document.getElementById('evTitle')?.value || '').trim();
+      const tempDate = document.getElementById('evDate')?.value || '';
+      const tempNote = (document.getElementById('evNote')?.value || '').trim();
+      ev = { id: genId('ev'), title: tempTitle, date: tempDate, note: tempNote, aufguesse: [] };
+      data.events.push(ev);
+      editingEventId = ev.id;
+    } else {
+      ev = getEvent(editingEventId);
+    }
+    if (!ev.aufguesse) ev.aufguesse = [];
+    ev.aufguesse.push({ time, sauna, type, scent });
+    save(true);
+    renderEventEditor();
+    renderEvents();
+  }
+  function saveEventForm(isNew, currentId) {
+    const title = (document.getElementById('evTitle')?.value || '').trim();
+    const date = document.getElementById('evDate')?.value || '';
+    const note = (document.getElementById('evNote')?.value || '').trim();
+    if (!title) { toast('Titel benötigt'); return; }
+    if (!date) { toast('Datum benötigt'); return; }
+    const conflict = data.events.find(e => e.date === date && e.id !== currentId && currentId !== '');
+    if (conflict) {
+      if (!confirm(`Achtung: am ${formatDateLong(date)} existiert bereits "${conflict.title}". Trotzdem speichern?`)) return;
+    }
+    if (isNew === true || isNew === 'true') {
+      let ev = data.events.find(e => e.id === currentId);
+      if (!ev) { ev = { id: genId('ev'), title, date, note, aufguesse: [] }; data.events.push(ev); editingEventId = ev.id; }
+      else { ev.title = title; ev.date = date; ev.note = note; }
+    } else {
+      const ev = getEvent(currentId); if (ev) { ev.title = title; ev.date = date; ev.note = note; }
+    }
+    save(false, 'warm');
+    editingEventId = null;
+    renderEventEditor();
+    renderEvents();
+    toast('Event gespeichert', 'warm');
+  }
+
+  // === SAUNAS ===
+  function renderSaunas() {
+    const tb = document.getElementById('saunaTable');
+    tb.innerHTML = Object.entries(data.saunas).map(([key, val]) => `<tr>
+      <td><span class="badge">${escapeAttr(key)}</span></td>
+      <td><input type="text" value="${escapeAttr(val.name)}" onchange="updateSauna('${key}','name',this.value)"></td>
+      <td><input type="text" value="${escapeAttr(val.temp)}" onchange="updateSauna('${key}','temp',this.value)"></td>
+      <td><button class="icon-btn del" onclick="delSauna('${key}')">✕</button></td>
+    </tr>`).join('') || `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic; font-family:'Cormorant Garamond',serif;">Keine Saunen definiert</td></tr>`;
+  }
+  function updateSauna(key, field, val) { data.saunas[key][field] = val; save(true); }
+  function addSauna() {
+    const key = document.getElementById('newSaunaKey').value.trim().toLowerCase().replace(/\s+/g, '_');
+    const name = document.getElementById('newSaunaName').value.trim();
+    const temp = document.getElementById('newSaunaTemp').value.trim();
+    if (!key || !name) { toast('Schlüssel & Name benötigt'); return; }
+    if (data.saunas[key]) { toast('Schlüssel existiert bereits'); return; }
+    data.saunas[key] = { name, temp };
+    document.getElementById('newSaunaKey').value = '';
+    document.getElementById('newSaunaName').value = '';
+    document.getElementById('newSaunaTemp').value = '';
+    save();
+    renderSaunas();
+    renderAufguesse();
+    if (editingEventId) renderEventEditor();
+  }
+  function delSauna(key) {
+    const used = DAYS.some(d => (data.schedules[d.key] || []).some(a => a.sauna === key)) || data.events.some(e => (e.aufguesse || []).some(a => a.sauna === key));
+    if (used) { if (!confirm('Diese Sauna wird verwendet. Trotzdem löschen?')) return; }
+    else { if (!confirm('Diese Sauna wirklich löschen?')) return; }
+    delete data.saunas[key];
+    save();
+    renderSaunas();
+    renderAufguesse();
+    if (editingEventId) renderEventEditor();
+  }
+
+  // ====================================
+  // === WERBE-SCHEDULER (Hauptlogik) ===
+  // ====================================
+
+  // Prüft, ob ein Slot zum Zeitpunkt `now` aktiv ist
+  function isSlotActiveAt(slot, now) {
+    if (!slot.enabled) return false;
+    if (!slot.source || !slot.source.kind || slot.source.kind === 'fallback') return false;
+    if (slot.source.kind === 'file' && !slot.source.dataUrl) return false;
+    if (slot.source.kind === 'url' && !slot.source.url) return false;
+    if (slot.source.kind === 'youtube' && !slot.source.url) return false;
+
+    const sched = slot.schedule || { mode: 'always' };
+    if (sched.mode === 'always') return true;
+
+    if (sched.mode === 'datetime') {
+      const startOk = !sched.startAt || new Date(sched.startAt) <= now;
+      const endOk = !sched.endAt || new Date(sched.endAt) >= now;
+      return startOk && endOk;
+    }
+
+    if (sched.mode === 'weekly') {
+      const w = sched.weekly || {};
+      if (!Array.isArray(w.days) || w.days.length === 0) return false;
+      const todayWk = JS_DAY_TO_KEY[now.getDay()];
+      if (!w.days.includes(todayWk)) return false;
+      if (w.fromTime || w.toTime) {
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const tToMin = (t) => { if (!t) return null; const [h, m] = t.split(':').map(Number); return h*60+m; };
+        const fromMin = tToMin(w.fromTime);
+        const toMin = tToMin(w.toTime);
+        if (fromMin !== null && nowMin < fromMin) return false;
+        if (toMin !== null && nowMin >= toMin) return false;
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  // Liefert alle aktuell aktiven Slots, sortiert nach Priorität
+  function getActiveSlotsAt(now) {
+    return (data.adSlots || [])
+      .filter(s => isSlotActiveAt(s, now))
+      .sort((a, b) => b.priority - a.priority || a.createdAt.localeCompare(b.createdAt));
+  }
+
+  // Liefert die Top-Priorität-Gruppe (zur Rotation)
+  function getCurrentRotationGroup(now) {
+    const active = getActiveSlotsAt(now);
+    if (!active.length) return [];
+    const topPrio = active[0].priority;
+    return active.filter(s => s.priority === topPrio);
+  }
+
+  // Welche Werbung läuft JETZT (für Admin-Anzeige)
+  function getCurrentlyDisplayedSlot(now) {
+    const group = getCurrentRotationGroup(now);
+    if (!group.length) return null;
+    if (group.length === 1) return group[0];
+    // Rotation: gleichmäßig verteilt nach displayDuration
+    const totalCycle = group.reduce((sum, s) => sum + (s.displayDuration || 30), 0);
+    const cyclePos = Math.floor(now.getTime() / 1000) % totalCycle;
+    let acc = 0;
+    for (const s of group) {
+      acc += (s.displayDuration || 30);
+      if (cyclePos < acc) return s;
+    }
+    return group[0];
+  }
+
+  // Status-Badge für einen Slot
+  function getSlotStatus(slot, now) {
+    if (!slot.enabled) return { type: 'disabled', label: 'Deaktiviert' };
+    const src = slot.source || {};
+    if (!src.kind || src.kind === 'fallback') return { type: 'muted', label: 'Keine Quelle' };
+    if (src.kind === 'file' && !src.dataUrl) return { type: 'muted', label: 'Datei fehlt' };
+    if (src.kind === 'url' && !src.url) return { type: 'muted', label: 'URL fehlt' };
+
+    const sched = slot.schedule || { mode: 'always' };
+
+    if (sched.mode === 'always') return { type: 'success', label: 'Läuft (immer aktiv)' };
+
+    if (sched.mode === 'datetime') {
+      const start = sched.startAt ? new Date(sched.startAt) : null;
+      const end = sched.endAt ? new Date(sched.endAt) : null;
+      if (start && start > now) return { type: 'cool', label: 'Ab ' + formatDateTime(sched.startAt) };
+      if (end && end < now) return { type: 'muted', label: 'Beendet' };
+      return { type: 'success', label: 'Läuft jetzt' };
+    }
+
+    if (sched.mode === 'weekly') {
+      const active = isSlotActiveAt(slot, now);
+      if (active) return { type: 'success', label: 'Läuft jetzt' };
+      const w = sched.weekly || {};
+      const dList = (w.days || []).map(k => DAYS.find(d => d.key === k)?.short).filter(Boolean).join(', ');
+      return { type: 'cool', label: dList ? `Wöchentlich · ${dList}` : 'Wöchentlich (keine Tage)' };
+    }
+
+    return { type: 'muted', label: '—' };
+  }
+
+  function describeSchedule(slot) {
+    const sched = slot.schedule || { mode: 'always' };
+    if (sched.mode === 'always') return 'Immer aktiv';
+    if (sched.mode === 'datetime') {
+      const parts = [];
+      if (sched.startAt) parts.push('Ab ' + formatDateTime(sched.startAt));
+      if (sched.endAt) parts.push('Bis ' + formatDateTime(sched.endAt));
+      return parts.join(' · ') || 'Zeitraum (offen)';
+    }
+    if (sched.mode === 'weekly') {
+      const w = sched.weekly || {};
+      const dList = (w.days || []).map(k => DAYS.find(d => d.key === k)?.short).filter(Boolean).join(', ');
+      const time = w.fromTime || w.toTime ? `${w.fromTime || '00:00'}–${w.toTime || '24:00'}` : 'ganztags';
+      return `Wöchentlich · ${dList || 'keine Tage'} · ${time}`;
+    }
+    return '—';
+  }
+
+  function getSlotById(id) { return (data.adSlots || []).find(s => s.id === id); }
+
+  function newAd() {
+    editingAdId = 'new';
+    adEditorState = { sourceMode: 'file', filePayload: null };
+    renderAdEditor();
+    setTimeout(() => document.getElementById('adEditorContainer').scrollIntoView({behavior:'smooth',block:'start'}), 50);
+  }
+
+  function editAd(id) {
+    editingAdId = id;
+    const slot = getSlotById(id);
+    if (slot && slot.source) {
+      if (slot.source.kind === 'file') adEditorState = { sourceMode: 'file', filePayload: { dataUrl: slot.source.dataUrl, name: slot.source.fileName, size: slot.source.fileSize, mime: slot.source.mime } };
+      else if (slot.source.kind === 'url') adEditorState = { sourceMode: 'url', filePayload: null };
+      else if (slot.source.kind === 'youtube') adEditorState = { sourceMode: 'youtube', filePayload: null };
+      else adEditorState = { sourceMode: 'file', filePayload: null };
+    } else {
+      adEditorState = { sourceMode: 'file', filePayload: null };
+    }
+    renderAdEditor();
+    setTimeout(() => document.getElementById('adEditorContainer').scrollIntoView({behavior:'smooth',block:'start'}), 50);
+  }
+
+  function cancelEditAd() {
+    editingAdId = null;
+    adEditorState = { sourceMode: 'file', filePayload: null };
+    renderAdEditor();
+  }
+
+  function delAd(id) {
+    const s = getSlotById(id); if (!s) return;
+    if (!confirm(`Werbe-Slot "${s.title}" wirklich löschen?`)) return;
+    data.adSlots = data.adSlots.filter(x => x.id !== id);
+    save(false, 'warm');
+    renderAds();
+    if (editingAdId === id) cancelEditAd();
+  }
+
+  function duplicateAd(id) {
+    const s = getSlotById(id); if (!s) return;
+    const copy = JSON.parse(JSON.stringify(s));
+    copy.id = genId('ad');
+    copy.title = s.title + ' (Kopie)';
+    copy.enabled = false;
+    copy.createdAt = new Date().toISOString();
+    data.adSlots.push(copy);
+    save(false, 'warm');
+    renderAds();
+    editAd(copy.id);
+  }
+
+  function toggleAdEnabled(id) {
+    const s = getSlotById(id); if (!s) return;
+    s.enabled = !s.enabled;
+    save(true);
+    renderAds();
+  }
+
+  function renderAds() {
+    const list = document.getElementById('adList');
+    const slots = data.adSlots || [];
+    document.getElementById('adCountTitle').textContent = `${slots.length} ${slots.length === 1 ? 'Werbung' : 'Werbungen'}`;
+
+    // Stats
+    const now = new Date();
+    const active = getActiveSlotsAt(now);
+    const upcomingCount = slots.filter(s => {
+      if (!s.enabled) return false;
+      const sched = s.schedule || {};
+      if (sched.mode === 'datetime' && sched.startAt) return new Date(sched.startAt) > now;
+      return false;
+    }).length;
+    document.getElementById('statTotal').textContent = slots.length;
+    document.getElementById('statActive').textContent = active.length;
+    document.getElementById('statUpcoming').textContent = upcomingCount;
+
+    let totalSize = 0;
+    try { totalSize = new Blob([JSON.stringify(data)]).size; } catch (e) {}
+    document.getElementById('statStorage').textContent = formatBytes(totalSize);
+
+    // Now Playing Banner
+    const playing = getCurrentlyDisplayedSlot(now);
+    const banner = document.getElementById('nowPlayingBanner');
+    if (playing) {
+      banner.classList.remove('empty');
+      document.getElementById('nowPlayingLabel').textContent = 'Aktuell auf dem TV-Display';
+      const group = getCurrentRotationGroup(now);
+      const rotInfo = group.length > 1 ? ` · rotiert in ${group.length} Slots` : '';
+      document.getElementById('nowPlayingTitle').textContent = playing.title + rotInfo;
+    } else {
+      banner.classList.add('empty');
+      document.getElementById('nowPlayingLabel').textContent = 'Aktuell keine Werbung aktiv';
+      document.getElementById('nowPlayingTitle').textContent = 'TV-Display zeigt LA OLA Standard-Anzeige';
+    }
+
+    if (slots.length === 0) {
+      list.innerHTML = `<div class="ad-empty">Noch keine Werbe-Slots erstellt · klick oben auf „Neuen Werbe-Slot erstellen"</div>`;
+      return;
+    }
+
+    // Sortierung: aktiv → demnächst → restliche → deaktiviert/abgelaufen
+    const enriched = slots.map(s => ({ slot: s, status: getSlotStatus(s, now), isActive: isSlotActiveAt(s, now) }));
+    enriched.sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      if (a.slot.priority !== b.slot.priority) return b.slot.priority - a.slot.priority;
+      return (a.slot.title || '').localeCompare(b.slot.title || '');
+    });
+
+    list.innerHTML = enriched.map(({slot, status, isActive}) => {
+      const cls = ['ad-card', isActive ? 'active' : '', !slot.enabled ? 'disabled' : '', status.type === 'cool' ? 'upcoming' : '', status.type === 'muted' && slot.enabled ? 'expired' : ''].filter(Boolean).join(' ');
+      let thumb = '<span>—</span>';
+      const src = slot.source || {};
+      if (src.kind === 'file' && src.dataUrl) {
+        if ((src.mime || '').startsWith('video')) thumb = `<video src="${src.dataUrl}" muted></video>`;
+        else thumb = `<img src="${src.dataUrl}" alt="">`;
+      } else if (src.kind === 'url' && src.url) {
+        if ((src.mime || '').startsWith('video') || /\.(mp4|webm|mov)(\?|$)/i.test(src.url)) thumb = `<video src="${src.url}" muted></video>`;
+        else thumb = `<img src="${src.url}" alt="" onerror="this.style.display='none'">`;
+      } else if (src.kind === 'youtube') {
+        thumb = '<span style="font-size:10px;">YouTube</span>';
+      }
+
+      const sourceLabel = src.kind === 'file' ? `Datei (${src.fileName ? formatBytes(src.fileSize || 0) : '—'})`
+                       : src.kind === 'url' ? 'URL'
+                       : src.kind === 'youtube' ? 'YouTube'
+                       : 'Keine Quelle';
+
+      return `<div class="${cls}">
+        <div class="ad-thumb">${thumb}</div>
+        <div class="ad-meta">
+          <div class="ad-meta-title">${escapeHTML(slot.title)}</div>
+          <div class="ad-meta-info">
+            <span>Quelle: <strong>${sourceLabel}</strong></span>
+            <span>Priorität: <strong>${slot.priority}</strong></span>
+            <span>${escapeHTML(describeSchedule(slot))}</span>
+          </div>
+          <div class="ad-status-row">
+            <span class="badge ${status.type === 'success' ? 'success' : status.type === 'cool' ? 'cool' : status.type === 'disabled' ? 'muted' : 'muted'}">${escapeHTML(status.label)}</span>
+            <label class="toggle-switch" title="Aktivieren/Deaktivieren">
+              <input type="checkbox" ${slot.enabled ? 'checked' : ''} onchange="toggleAdEnabled('${slot.id}')">
+              <span class="slider-tg"></span>
+            </label>
+          </div>
+        </div>
+        <div class="ad-actions">
+          <button class="btn sm" onclick="editAd('${slot.id}')">Bearbeiten</button>
+          <button class="btn sm ghost" onclick="duplicateAd('${slot.id}')">⎘</button>
+          <button class="btn sm danger" onclick="delAd('${slot.id}')">Löschen</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderAdEditor() {
+    const container = document.getElementById('adEditorContainer');
+    if (!editingAdId) { container.innerHTML = ''; return; }
+    const isNew = editingAdId === 'new';
+    const slot = isNew ? {
+      id: '', title: '', enabled: true, priority: 5,
+      source: { kind: 'file', dataUrl: '', fileName: '', fileSize: 0, mime: '', url: '' },
+      schedule: { mode: 'always', startAt: '', endAt: '', weekly: { days: [], fromTime: '', toTime: '' } },
+      displayDuration: 30
+    } : getSlotById(editingAdId);
+    if (!slot) { editingAdId = null; container.innerHTML = ''; return; }
+
+    const sm = adEditorState.sourceMode || (slot.source && slot.source.kind) || 'file';
+    const sched = slot.schedule || { mode: 'always' };
+    const fp = adEditorState.filePayload;
+
+    let preview = '<div class="empty-prev">Keine Vorschau</div>';
+    if (sm === 'file' && fp && fp.dataUrl) {
+      if ((fp.mime || '').startsWith('video')) preview = `<video src="${fp.dataUrl}" controls muted></video>`;
+      else preview = `<img src="${fp.dataUrl}" alt="">`;
+    } else if (sm === 'url' && slot.source && slot.source.url) {
+      if (/\.(mp4|webm|mov)(\?|$)/i.test(slot.source.url)) preview = `<video src="${slot.source.url}" controls muted></video>`;
+      else preview = `<img src="${slot.source.url}" alt="" onerror="this.parentElement.innerHTML='<div class=&quot;empty-prev&quot;>URL nicht erreichbar</div>'">`;
+    } else if (sm === 'youtube' && slot.source && slot.source.url) {
+      const m = slot.source.url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{11})/);
+      if (m) preview = `<iframe src="https://www.youtube.com/embed/${m[1]}?mute=1" allowfullscreen></iframe>`;
+    }
+
+    container.innerHTML = `
+      <div class="ad-editor ${isNew ? 'creating' : ''}">
+        <div class="ad-editor-title">${isNew ? 'Neuer Werbe-Slot' : 'Werbe-Slot bearbeiten'}</div>
+
+        <div class="grid-3" style="margin-bottom: 14px;">
+          <div class="field" style="margin-bottom: 0; grid-column: span 2;">
+            <label>Titel · Pflicht</label>
+            <input type="text" id="adTitle" value="${escapeAttr(slot.title)}" placeholder="z.B. Sommer-Spezial 2026">
+          </div>
+          <div class="field" style="margin-bottom: 0;">
+            <label>Priorität (1–10)</label>
+            <input type="number" id="adPriority" min="1" max="10" value="${slot.priority || 5}">
+          </div>
+        </div>
+
+        <h4>Quelle</h4>
+        <div class="source-tabs">
+          <button class="source-tab ${sm==='file'?'active':''}" onclick="setAdSourceMode('file')">📁 Datei-Upload</button>
+          <button class="source-tab ${sm==='url'?'active':''}" onclick="setAdSourceMode('url')">🔗 Externe URL</button>
+          <button class="source-tab ${sm==='youtube'?'active':''}" onclick="setAdSourceMode('youtube')">▶ YouTube</button>
+        </div>
+
+        ${sm === 'file' ? `
+          <div class="file-drop" id="fileDrop" onclick="document.getElementById('adFileInput').click()">
+            <div class="file-drop-icon">⤓</div>
+            <div class="file-drop-label">Datei auswählen oder hier hineinziehen</div>
+            <div class="file-drop-hint">Bilder (JPG, PNG, WebP) oder Videos (MP4, WebM) · max ~3 MB empfohlen</div>
+            <input type="file" id="adFileInput" accept="image/*,video/*" style="display:none;" onchange="handleAdFile(event)">
+          </div>
+          ${fp ? `
+            <div class="file-info">
+              <div class="file-info-thumb">${(fp.mime||'').startsWith('video') ? `<video src="${fp.dataUrl}" muted></video>` : `<img src="${fp.dataUrl}">`}</div>
+              <div class="file-info-meta">
+                <div class="file-info-name">${escapeHTML(fp.name || '—')}</div>
+                <div class="file-info-size">${formatBytes(fp.size || 0)} · ${escapeHTML(fp.mime || '')}</div>
+              </div>
+              <button class="icon-btn del" onclick="clearAdFile()">✕</button>
+            </div>
+          ` : ''}
+        ` : ''}
+
+        ${sm === 'url' ? `
+          <div class="grid-2">
+            <div class="field">
+              <label>URL · Pflicht</label>
+              <input type="url" id="adUrl" value="${escapeAttr(slot.source && slot.source.kind==='url' ? slot.source.url : '')}" placeholder="https://example.com/banner.jpg">
+              <div class="help">Direkter Link zu einer Bild- oder Videodatei</div>
+            </div>
+            <div class="field">
+              <label>Typ (auto-erkannt)</label>
+              <select id="adUrlMime">
+                <option value="">Automatisch erkennen</option>
+                <option value="image/jpeg">Bild</option>
+                <option value="video/mp4">Video</option>
+              </select>
+            </div>
+          </div>
+        ` : ''}
+
+        ${sm === 'youtube' ? `
+          <div class="field">
+            <label>YouTube-URL oder Video-ID</label>
+            <input type="url" id="adYtUrl" value="${escapeAttr(slot.source && slot.source.kind==='youtube' ? slot.source.url : '')}" placeholder="https://www.youtube.com/watch?v=…">
+            <div class="help">Video läuft stumm in Endlosschleife auf dem TV.</div>
+          </div>
+        ` : ''}
+
+        <div class="field" style="margin-top: 14px;">
+          <label>Vorschau</label>
+          <div class="ad-preview-area">${preview}</div>
+        </div>
+
+        <h4>Zeitsteuerung</h4>
+        <div class="field">
+          <label>Modus</label>
+          <select id="adSchedMode" onchange="changeSchedMode(this.value)">
+            <option value="always" ${sched.mode==='always'?'selected':''}>Immer aktiv</option>
+            <option value="datetime" ${sched.mode==='datetime'?'selected':''}>Einmaliger Zeitraum (von–bis)</option>
+            <option value="weekly" ${sched.mode==='weekly'?'selected':''}>Wöchentlich wiederkehrend</option>
+          </select>
+        </div>
+
+        <div id="schedDateTime" style="display: ${sched.mode==='datetime'?'block':'none'};">
+          <div class="grid-2">
+            <div class="field">
+              <label>Startzeitpunkt</label>
+              <input type="datetime-local" id="adStartAt" value="${escapeAttr(sched.startAt || '')}">
+              <div class="help">Leer = sofort aktiv</div>
+            </div>
+            <div class="field">
+              <label>Endzeitpunkt</label>
+              <input type="datetime-local" id="adEndAt" value="${escapeAttr(sched.endAt || '')}">
+              <div class="help">Leer = unbegrenzt</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="schedWeekly" style="display: ${sched.mode==='weekly'?'block':'none'};">
+          <div class="field">
+            <label>Wochentage</label>
+            <div class="weekday-pick" id="weekdayPick">
+              ${DAYS.map(d => {
+                const checked = (sched.weekly?.days || []).includes(d.key);
+                return `<label class="${checked?'checked':''}"><input type="checkbox" value="${d.key}" ${checked?'checked':''} onchange="toggleWeekday(this)"><span>${d.short}</span></label>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Von Uhrzeit</label><input type="time" id="adWeekFrom" value="${escapeAttr(sched.weekly?.fromTime || '')}"><div class="help">Leer = ganztags</div></div>
+            <div class="field"><label>Bis Uhrzeit</label><input type="time" id="adWeekTo" value="${escapeAttr(sched.weekly?.toTime || '')}"></div>
+          </div>
+        </div>
+
+        <h4>Anzeige-Verhalten</h4>
+        <div class="grid-2">
+          <div class="field">
+            <label>Anzeigedauer in Sekunden (für Rotation)</label>
+            <input type="number" id="adDisplayDuration" min="5" max="600" value="${slot.displayDuration || 30}">
+            <div class="help">Bei mehreren Werbungen mit gleicher Priorität: wie lange jede angezeigt wird, bevor zur nächsten gewechselt wird.</div>
+          </div>
+          <div class="field">
+            <label>Aktiv?</label>
+            <label class="toggle-switch" style="margin-top: 9px;">
+              <input type="checkbox" id="adEnabled" ${slot.enabled !== false ? 'checked' : ''}>
+              <span class="slider-tg"></span>
+            </label>
+            <div class="help" style="margin-top: 8px;">Deaktivierte Slots werden nicht ausgespielt — auch nicht im aktiven Zeitraum.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); flex-wrap: wrap;">
+          ${isNew ? `<span style="font-size: 12px; color: var(--text-muted); font-style: italic; font-family: 'Cormorant Garamond', serif;">Speichern aktiviert den Slot gemäß Zeitsteuerung</span>` : `<button class="btn sm danger" onclick="delAd('${slot.id}')">Slot löschen</button>`}
+          <div style="display: flex; gap: 8px;">
+            <button class="btn ghost" onclick="cancelEditAd()">${isNew ? 'Abbrechen' : 'Schließen'}</button>
+            <button class="btn cool" onclick="saveAdForm(${isNew ? 'true' : 'false'}, '${slot.id}')">Slot speichern</button>
+          </div>
+        </div>
+      </div>`;
+
+    // Drag&Drop für Datei
+    if (sm === 'file') {
+      const drop = document.getElementById('fileDrop');
+      if (drop) {
+        ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+        ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+        drop.addEventListener('drop', e => {
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleAdFileObj(e.dataTransfer.files[0]);
+          }
+        });
+      }
+    }
+  }
+
+  function setAdSourceMode(mode) {
+    adEditorState.sourceMode = mode;
+    if (editingAdId && editingAdId !== 'new') {
+      const slot = getSlotById(editingAdId);
+      if (slot && slot.source && slot.source.kind !== mode) {
+        // Quelle wechseln — alte Werte beibehalten falls passend
+      }
+    }
+    renderAdEditor();
+  }
+
+  function handleAdFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    handleAdFileObj(file);
+  }
+
+  function handleAdFileObj(file) {
+    if (file.size > 5 * 1024 * 1024) {
+      if (!confirm(`Die Datei ist ${formatBytes(file.size)} groß. Größere Dateien können den Browser-Speicher sprengen. Trotzdem versuchen?`)) return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      adEditorState.filePayload = {
+        dataUrl: e.target.result,
+        name: file.name,
+        size: file.size,
+        mime: file.type
+      };
+      renderAdEditor();
+    };
+    reader.onerror = () => toast('Datei konnte nicht gelesen werden', 'danger');
+    reader.readAsDataURL(file);
+  }
+
+  function clearAdFile() {
+    adEditorState.filePayload = null;
+    renderAdEditor();
+  }
+
+  function changeSchedMode(mode) {
+    document.getElementById('schedDateTime').style.display = mode === 'datetime' ? 'block' : 'none';
+    document.getElementById('schedWeekly').style.display = mode === 'weekly' ? 'block' : 'none';
+  }
+
+  function toggleWeekday(input) {
+    const label = input.closest('label');
+    if (input.checked) label.classList.add('checked'); else label.classList.remove('checked');
+  }
+
+  function saveAdForm(isNew, currentId) {
+    const title = (document.getElementById('adTitle')?.value || '').trim();
+    const priority = parseInt(document.getElementById('adPriority')?.value || '5', 10);
+    const enabled = document.getElementById('adEnabled')?.checked !== false;
+    const displayDuration = parseInt(document.getElementById('adDisplayDuration')?.value || '30', 10);
+    const sm = adEditorState.sourceMode || 'file';
+    const schedMode = document.getElementById('adSchedMode')?.value || 'always';
+
+    if (!title) { toast('Titel benötigt'); return; }
+
+    // Source bauen
+    let source = { kind: 'fallback' };
+    if (sm === 'file') {
+      const fp = adEditorState.filePayload;
+      // Bei Bearbeitung ohne neuen File: bestehende Daten behalten
+      if (!fp && !isNew) {
+        const existing = getSlotById(currentId);
+        if (existing && existing.source && existing.source.kind === 'file') {
+          source = existing.source;
+        } else {
+          toast('Bitte Datei wählen'); return;
+        }
+      } else if (fp) {
+        source = { kind: 'file', dataUrl: fp.dataUrl, fileName: fp.name, fileSize: fp.size, mime: fp.mime, url: '' };
+      } else {
+        toast('Bitte Datei wählen'); return;
+      }
+    } else if (sm === 'url') {
+      const url = (document.getElementById('adUrl')?.value || '').trim();
+      const mime = document.getElementById('adUrlMime')?.value || '';
+      if (!url) { toast('URL benötigt'); return; }
+      let detectedMime = mime;
+      if (!detectedMime) {
+        if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) detectedMime = 'video/mp4';
+        else if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) detectedMime = 'image/jpeg';
+      }
+      source = { kind: 'url', url, mime: detectedMime, dataUrl: '', fileName: '', fileSize: 0 };
+    } else if (sm === 'youtube') {
+      const url = (document.getElementById('adYtUrl')?.value || '').trim();
+      if (!url) { toast('YouTube-URL benötigt'); return; }
+      source = { kind: 'youtube', url, mime: '', dataUrl: '', fileName: '', fileSize: 0 };
+    }
+
+    // Schedule bauen
+    let schedule = { mode: 'always', startAt: '', endAt: '', weekly: { days: [], fromTime: '', toTime: '' } };
+    if (schedMode === 'datetime') {
+      schedule = {
+        mode: 'datetime',
+        startAt: document.getElementById('adStartAt')?.value || '',
+        endAt: document.getElementById('adEndAt')?.value || '',
+        weekly: { days: [], fromTime: '', toTime: '' }
+      };
+      if (schedule.startAt && schedule.endAt && new Date(schedule.endAt) <= new Date(schedule.startAt)) {
+        toast('Ende muss nach dem Start liegen'); return;
+      }
+    } else if (schedMode === 'weekly') {
+      const days = Array.from(document.querySelectorAll('#weekdayPick input:checked')).map(i => i.value);
+      schedule = {
+        mode: 'weekly',
+        startAt: '', endAt: '',
+        weekly: {
+          days,
+          fromTime: document.getElementById('adWeekFrom')?.value || '',
+          toTime: document.getElementById('adWeekTo')?.value || ''
+        }
+      };
+      if (days.length === 0) {
+        toast('Bitte mindestens einen Wochentag wählen'); return;
+      }
+      if (schedule.weekly.fromTime && schedule.weekly.toTime && schedule.weekly.toTime <= schedule.weekly.fromTime) {
+        toast('Bis-Uhrzeit muss nach Von-Uhrzeit liegen'); return;
+      }
+    }
+
+    if (isNew === true || isNew === 'true') {
+      const slot = {
+        id: genId('ad'),
+        title, enabled, priority,
+        source, schedule,
+        displayDuration: Math.max(5, displayDuration),
+        createdAt: new Date().toISOString()
+      };
+      data.adSlots.push(slot);
+      editingAdId = null;
+    } else {
+      const slot = getSlotById(currentId);
+      if (slot) {
+        slot.title = title;
+        slot.enabled = enabled;
+        slot.priority = priority;
+        slot.source = source;
+        slot.schedule = schedule;
+        slot.displayDuration = Math.max(5, displayDuration);
+        editingAdId = null;
+      }
+    }
+    save(false, 'warm');
+    adEditorState = { sourceMode: 'file', filePayload: null };
+    renderAdEditor();
+    renderAds();
+    toast('Werbe-Slot gespeichert', 'warm');
+  }
+
+  // === EXPORT/IMPORT ===
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `laola-sauna-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    toast('Exportiert');
+  }
+  function importData(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.saunas) throw new Error();
+        // Migration über load-Funktion
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+        data = load();
+        save();
+        renderAll();
+        toast('Importiert');
+      } catch { toast('Ungültige Datei', 'danger'); }
+    };
+    reader.readAsText(file);
+  }
+  function clearAll() {
+    if (!confirm('Wirklich ALLES zurücksetzen?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    data = load();
+    activeDay = todayKey();
+    editingEventId = null;
+    editingAdId = null;
+    save();
+    renderAll();
+  }
+  function refreshDataPreview() {
+    const el = document.getElementById('dataPreview');
+    if (!el) return;
+    // Datei-Inhalte für die Anzeige kürzen
+    const truncated = JSON.parse(JSON.stringify(data));
+    if (truncated.adSlots) {
+      truncated.adSlots.forEach(s => {
+        if (s.source && s.source.dataUrl && s.source.dataUrl.length > 80) {
+          s.source.dataUrl = s.source.dataUrl.slice(0, 60) + '…[' + formatBytes(s.source.fileSize || 0) + ' Base64]';
+        }
+      });
+    }
+    el.value = JSON.stringify(truncated, null, 2);
+  }
+  function escapeAttr(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  function escapeHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  function renderAll() {
+    renderDayPills();
+    renderAufguesse();
+    renderSaunas();
+    renderEvents();
+    renderEventEditor();
+    renderAds();
+    renderAdEditor();
+    refreshDataPreview();
+  }
+
+  async function bootstrapSaunaAdmin() {
+    await hydrateSaunaFromNeon();
+    data = load();
+    renderAll();
+    setInterval(() => { if (!editingAdId) renderAds(); }, 30000);
+  }
+  bootstrapSaunaAdmin();
+</script>
+</body>
+</html>

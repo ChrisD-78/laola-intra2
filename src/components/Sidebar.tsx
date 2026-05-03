@@ -41,7 +41,12 @@ const Sidebar = () => {
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
     ...(hasTechnikAccess ? [{ href: '/technik', label: 'Technik', icon: '🔧' }] : []),
     { href: '/chat', label: 'Chat', icon: '💬' },
-    ...(isAdmin ? [{ href: '/agent', label: 'Agent', icon: '🤖' }] : []),
+    ...(isAdmin
+      ? [
+          { href: '/agent', label: 'Agent', icon: '🤖' },
+          { href: '/agent/sauna', label: 'Sauna', icon: '🧖' },
+        ]
+      : []),
   ]
 
   const adminNavItems = [

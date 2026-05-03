@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA OLA Sauna · Aufgussplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a1419; --bg-mid: #122028; --surface: #1a2c36; --surface-2: #243a44;
+    --gold: #c9a961; --gold-soft: #e6cd92; --gold-deep: #8b7339;
+    --text: #f4f1ea; --text-dim: #a8b5bc; --text-muted: #6a7a82;
+    --warm: #d97757; --warm-soft: #e89478;
+    --line: rgba(201, 169, 97, 0.18);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: 'Outfit', sans-serif; color: var(--text); background: var(--bg-deep); font-weight: 300; min-height: 100vh; overflow-x: hidden; }
+  body {
+    background:
+      radial-gradient(ellipse at 30% 0%, rgba(201, 169, 97, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 100%, rgba(74, 124, 140, 0.08) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+    background-attachment: fixed;
+  }
+  .container { max-width: 600px; margin: 0 auto; padding: 30px 20px 80px; }
+  .hero { text-align: center; padding: 30px 0 36px; border-bottom: 1px solid var(--line); position: relative; margin-bottom: 24px; }
+  .hero::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 60px; height: 1px; background: var(--gold); }
+  .hero-label { font-size: 10px; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; font-weight: 400; }
+  .hero h1 { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 42px; letter-spacing: 0.02em; line-height: 1.1; }
+  .hero h1 em { color: var(--gold); font-weight: 500; font-style: italic; }
+  .hero-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: var(--text-dim); margin-top: 10px; }
+  .event-hero { background: linear-gradient(135deg, rgba(217,119,87,0.2) 0%, rgba(201,169,97,0.12) 100%); border: 1px solid var(--warm); border-radius: 8px; padding: 22px 22px 18px; margin-bottom: 24px; text-align: center; position: relative; overflow: hidden; }
+  .event-hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(201,169,97,0.18) 0%, transparent 70%); pointer-events: none; }
+  .event-hero-label { display: inline-block; background: var(--warm); color: var(--text); padding: 5px 14px; border-radius: 2px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; font-weight: 500; margin-bottom: 14px; }
+  .event-hero h2 { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 32px; line-height: 1.2; color: var(--warm-soft); margin-bottom: 6px; }
+  .event-hero-note { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: var(--text-dim); }
+  .day-tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; scrollbar-width: none; }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab { flex: 1; min-width: 56px; background: transparent; border: 1px solid var(--line); color: var(--text-dim); padding: 10px 8px; font-family: 'Outfit', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: 4px; font-weight: 400; position: relative; }
+  .day-tab:hover { color: var(--text); }
+  .day-tab.active { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); font-weight: 500; }
+  .day-tab.today::before { content: ''; position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--warm); }
+  .day-tab.event-day { border-color: var(--warm); color: var(--warm-soft); }
+  .day-tab.event-day.active { background: var(--warm); color: var(--text); border-color: var(--warm); }
+  .now { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 20px; position: relative; overflow: hidden; }
+  .now::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, var(--gold), var(--warm)); }
+  .now-label { font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; font-weight: 400; }
+  .now-time { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; letter-spacing: 0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .now-time .colon { color: var(--gold); }
+  .now-date { text-align: right; font-size: 12px; color: var(--text-dim); letter-spacing: 0.1em; font-style: italic; font-family: 'Cormorant Garamond', serif; }
+  .now-date strong { display: block; font-style: normal; font-family: 'Outfit', sans-serif; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 4px; font-weight: 400; }
+  .live-now { background: linear-gradient(135deg, rgba(217, 119, 87, 0.2) 0%, rgba(201, 169, 97, 0.12) 100%); border: 1px solid var(--gold); border-radius: 6px; padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(217, 119, 87, 0.1); }
+  .live-now::before { content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(201,169,97,0.15) 0%, transparent 70%); pointer-events: none; }
+  .live-now-label { display: inline-flex; align-items: center; gap: 8px; background: var(--warm); color: var(--text); padding: 4px 12px; border-radius: 2px; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 500; margin-bottom: 14px; }
+  .live-now-label::before { content: ''; width: 6px; height: 6px; background: var(--text); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  .live-now-type { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 28px; color: var(--gold-soft); line-height: 1.2; margin-bottom: 10px; }
+  .live-now-meta { display: flex; flex-wrap: wrap; gap: 14px 24px; color: var(--text-dim); font-size: 14px; }
+  .live-now-meta span strong { color: var(--text); font-weight: 500; }
+  .section-title { text-align: center; margin: 28px 0 18px; }
+  .section-title h2 { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 26px; }
+  .section-title h2 em { color: var(--gold); font-weight: 500; }
+  .section-title h2 em.warm { color: var(--warm-soft); }
+  .section-title-sub { font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .item { display: grid; grid-template-columns: 70px 1fr; gap: 16px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; transition: all 0.3s; position: relative; }
+  .item.event-item { border-left: 3px solid var(--warm); }
+  .item:active { transform: scale(0.99); }
+  .item.past { opacity: 0.45; }
+  .item.past .time-num { text-decoration: line-through; }
+  .time { border-right: 1px solid var(--line); padding-right: 14px; text-align: center; }
+  .time-num { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
+  .item.event-item .time-num { color: var(--warm-soft); }
+  .time-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+  .info-type { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; font-weight: 500; line-height: 1.2; margin-bottom: 6px; }
+  .info-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--text-dim); }
+  .info-meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .info-meta .scent::before { content: '◈'; color: var(--gold); font-size: 9px; }
+  .item.event-item .info-meta .scent::before { color: var(--warm); }
+  .info-meta .sauna { color: var(--gold-soft); font-weight: 400; }
+  .info-meta .sauna::before { content: '·'; color: var(--text-muted); margin-right: 8px; }
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .empty-icon { font-family: 'Cormorant Garamond', serif; font-size: 60px; color: var(--gold-deep); font-style: italic; line-height: 1; margin-bottom: 14px; }
+  .empty-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; }
+  footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--line); text-align: center; }
+  footer .name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--gold); margin-bottom: 4px; }
+  footer .sub { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); }
+  .ornament { text-align: center; color: var(--gold-deep); font-family: 'Cormorant Garamond', serif; font-size: 24px; margin: 24px 0; letter-spacing: 1em; opacity: 0.5; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; justify-content: center; }
+  .chip { background: transparent; border: 1px solid var(--line); color: var(--text-dim); padding: 7px 14px; border-radius: 100px; font-family: 'Outfit', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 400; }
+  .chip:hover { color: var(--text); }
+  .chip.active { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); font-weight: 500; }
+  .day-banner { text-align: center; margin-bottom: 18px; padding: 12px; background: rgba(74, 124, 140, 0.1); border: 1px solid rgba(74, 124, 140, 0.3); border-radius: 4px; font-size: 13px; color: var(--text-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; display: none; }
+  .day-banner.show { display: block; }
+  .day-banner strong { color: var(--gold-soft); font-style: normal; font-family: 'Outfit', sans-serif; font-weight: 500; }
+  .upcoming-events { margin: 32px 0 0; }
+  .upcoming-events h3 { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; margin-bottom: 16px; color: var(--text); font-weight: 400; }
+  .upcoming-events h3 em { color: var(--warm-soft); font-weight: 500; }
+  .upcoming-list { display: flex; flex-direction: column; gap: 10px; }
+  .upcoming-item { display: grid; grid-template-columns: auto 1fr; gap: 14px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warm); border-radius: 4px; align-items: center; }
+  .upcoming-date { text-align: center; padding-right: 14px; border-right: 1px solid var(--line); min-width: 60px; }
+  .upcoming-date-day { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--warm-soft); font-style: italic; line-height: 1; }
+  .upcoming-date-mon { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+  .upcoming-info-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 17px; color: var(--text); line-height: 1.2; }
+  .upcoming-info-meta { font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; margin-top: 3px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="hero">
+    <div class="hero-label">Freizeitbad</div>
+    <h1>LA <em>OLA</em><br>Saunawelt</h1>
+    <div class="hero-sub">Aufgüsse · Düfte · Rituale</div>
+  </div>
+
+  <div id="eventHero"></div>
+
+  <div class="now">
+    <div>
+      <div class="now-label">Jetzt</div>
+      <div class="now-time" id="clock">--<span class="colon">:</span>--</div>
+    </div>
+    <div class="now-date">
+      <strong id="weekday">—</strong>
+      <span id="datestr">—</span>
+    </div>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+
+  <div class="day-banner" id="dayBanner">
+    Du siehst gerade den Plan für <strong id="bannerDay">—</strong>. <a href="#" id="backToToday" style="color: var(--gold); text-decoration: underline;">Zurück zu heute</a>
+  </div>
+
+  <div id="liveContainer"></div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="section-title">
+    <h2 id="planTitle">Plan · <em id="planDayName">—</em></h2>
+    <div class="section-title-sub" id="planSubtitle">Programm</div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div id="upcomingContainer"></div>
+
+  <div class="ornament">~ · ~</div>
+
+  <footer>
+    <div class="name">LA OLA · Saunawelt</div>
+    <div class="sub">Landau in der Pfalz</div>
+  </footer>
+
+</div>
+
+<script>
+  const SAUNA_SNAPSHOT_API = '/api/sauna/snapshot';
+  async function hydrateSaunaFromNeonThenRender() {
+    try {
+      const r = await fetch(SAUNA_SNAPSHOT_API, { cache: 'no-store' });
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j == null || j.payload == null) return;
+      const raw = typeof j.payload === 'string' ? j.payload : JSON.stringify(j.payload);
+      if (raw && raw.length > 20) localStorage.setItem('laola_sauna_data', raw);
+    } catch (_) { /* Offline */ }
+  }
+
+  const DAYS = [
+    { key: 'mon', short: 'Mo', long: 'Montag' }, { key: 'tue', short: 'Di', long: 'Dienstag' },
+    { key: 'wed', short: 'Mi', long: 'Mittwoch' }, { key: 'thu', short: 'Do', long: 'Donnerstag' },
+    { key: 'fri', short: 'Fr', long: 'Freitag' }, { key: 'sat', short: 'Sa', long: 'Samstag' },
+    { key: 'sun', short: 'So', long: 'Sonntag' }
+  ];
+  const JS_DAY_TO_KEY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+  function todayKey() { return JS_DAY_TO_KEY[new Date().getDay()]; }
+  function dayLong(key) { return DAYS.find(d => d.key === key)?.long || key; }
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function formatDateMonth(iso) {
+    if (!iso) return { day: '--', mon: '---' };
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return { day: String(d).padStart(2, '0'), mon: dt.toLocaleDateString('de-DE', { month: 'short' }).replace('.', '') };
+  }
+  function formatDateLong(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return dt.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' });
+  }
+
+  let viewDay = todayKey();
+  let activeFilter = 'all';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem('laola_sauna_data');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.aufguesse && !parsed.schedules) {
+          parsed.schedules = {};
+          DAYS.forEach(d => parsed.schedules[d.key] = JSON.parse(JSON.stringify(parsed.aufguesse)));
+        }
+        if (!Array.isArray(parsed.events)) parsed.events = [];
+        if (!Array.isArray(parsed.adSlots)) parsed.adSlots = [];
+        return parsed;
+      }
+    } catch (e) {}
+    const demo = [
+      { time: '11:00', sauna: 'finn', type: 'Klassischer Aufguss', scent: 'Eukalyptus & Minze' },
+      { time: '13:00', sauna: 'bio', type: 'Wellness-Aufguss', scent: 'Lavendel & Honig' },
+      { time: '15:00', sauna: 'finn', type: 'Birkenaufguss', scent: 'Birke & Wald' },
+      { time: '17:00', sauna: 'kraeuter', type: 'Kräuter-Spezial', scent: 'Salbei & Thymian' },
+      { time: '19:00', sauna: 'finn', type: 'Abend-Ritual', scent: 'Sandelholz & Vanille' }
+    ];
+    const schedules = {};
+    DAYS.forEach(d => schedules[d.key] = demo);
+    return {
+      saunas: { 'finn': { name: 'Finnische Sauna', temp: '90 °C' }, 'bio': { name: 'Bio-Sauna', temp: '60 °C' }, 'kraeuter': { name: 'Kräutersauna', temp: '75 °C' }, 'dampf': { name: 'Dampfbad', temp: '45 °C' } },
+      schedules, events: [], adSlots: []
+    };
+  }
+
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').innerHTML = `${h}<span class="colon">:</span>${m}`;
+    document.getElementById('weekday').textContent = now.toLocaleDateString('de-DE', { weekday: 'long' });
+    document.getElementById('datestr').textContent = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+  function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+  function escapeHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function getActiveEventToday(data) {
+    const today = todayISO();
+    const todayEvents = (data.events || []).filter(e => e.date === today && e.title && (e.aufguesse || []).length > 0);
+    return todayEvents.length ? todayEvents[todayEvents.length - 1] : null;
+  }
+
+  function renderDayTabs(data) {
+    const today = todayKey();
+    const todayEvent = getActiveEventToday(data);
+    const bar = document.getElementById('dayTabs');
+    bar.innerHTML = DAYS.map(d => {
+      const isEventToday = d.key === today && todayEvent;
+      const cls = ['day-tab', d.key === viewDay ? 'active' : '', d.key === today ? 'today' : '', isEventToday ? 'event-day' : ''].filter(Boolean).join(' ');
+      const label = isEventToday ? '✦' : d.short;
+      return `<button class="${cls}" data-day="${d.key}" title="${d.long}${isEventToday ? ' · Saunaevent' : ''}">${label}<div style="font-size: 8px; opacity: 0.7; margin-top: 2px; letter-spacing: 0.1em;">${d.short}</div></button>`;
+    }).join('');
+    bar.querySelectorAll('.day-tab').forEach(b => {
+      b.addEventListener('click', () => { viewDay = b.dataset.day; activeFilter = 'all'; render(); });
+    });
+  }
+
+  function render() {
+    const data = load();
+    const today = todayKey();
+    const isToday = viewDay === today;
+    const todayEvent = getActiveEventToday(data);
+    const showingEvent = isToday && !!todayEvent;
+
+    renderDayTabs(data);
+
+    const evHero = document.getElementById('eventHero');
+    if (showingEvent) {
+      evHero.innerHTML = `<div class="event-hero">
+        <div class="event-hero-label">✦ Saunaevent · Heute ✦</div>
+        <h2>${escapeHTML(todayEvent.title)}</h2>
+        ${todayEvent.note ? `<div class="event-hero-note">${escapeHTML(todayEvent.note)}</div>` : ''}
+      </div>`;
+    } else { evHero.innerHTML = ''; }
+
+    const planTitle = document.getElementById('planTitle');
+    const planSubtitle = document.getElementById('planSubtitle');
+    if (showingEvent) {
+      planTitle.innerHTML = `Programm · <em class="warm">${escapeHTML(todayEvent.title)}</em>`;
+      planSubtitle.textContent = 'Saunaevent';
+    } else {
+      planTitle.innerHTML = `Plan · <em>${escapeHTML(dayLong(viewDay))}</em>`;
+      planSubtitle.textContent = 'Programm';
+    }
+
+    const banner = document.getElementById('dayBanner');
+    if (!isToday) {
+      banner.classList.add('show');
+      document.getElementById('bannerDay').textContent = dayLong(viewDay);
+      document.getElementById('backToToday').onclick = (e) => { e.preventDefault(); viewDay = today; activeFilter = 'all'; render(); };
+    } else { banner.classList.remove('show'); }
+
+    let aufguesse = showingEvent ? (todayEvent.aufguesse || []) : ((data.schedules && data.schedules[viewDay]) || []);
+
+    const filters = document.getElementById('filters');
+    const used = [...new Set(aufguesse.map(a => a.sauna))];
+    if (used.length > 1) {
+      filters.style.display = 'flex';
+      filters.innerHTML = `<button class="chip ${activeFilter==='all'?'active':''}" data-f="all">Alle</button>
+        ${used.map(k => { const s = data.saunas[k]; if (!s) return ''; return `<button class="chip ${activeFilter===k?'active':''}" data-f="${k}">${escapeHTML(s.name)}</button>`; }).join('')}`;
+      filters.querySelectorAll('.chip').forEach(c => { c.addEventListener('click', () => { activeFilter = c.dataset.f; render(); }); });
+    } else { filters.style.display = 'none'; }
+
+    let items = [...aufguesse].sort((a, b) => a.time.localeCompare(b.time));
+    if (activeFilter !== 'all') items = items.filter(a => a.sauna === activeFilter);
+
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const liveContainer = document.getElementById('liveContainer');
+
+    if (isToday) {
+      let liveItem = null;
+      const sortedAll = [...aufguesse].sort((a, b) => a.time.localeCompare(b.time));
+      for (const it of sortedAll) {
+        const start = timeToMin(it.time);
+        if (nowMin >= start && nowMin < start + 30) { liveItem = it; break; }
+      }
+      if (liveItem) {
+        const sauna = data.saunas[liveItem.sauna] || { name: liveItem.sauna, temp: '' };
+        liveContainer.innerHTML = `<div class="live-now">
+          <div class="live-now-label">Läuft gerade</div>
+          <div class="live-now-type">${escapeHTML(liveItem.type)}</div>
+          <div class="live-now-meta">
+            <span>◈ <strong>${escapeHTML(liveItem.scent)}</strong></span>
+            <span>${escapeHTML(sauna.name)} <strong>${escapeHTML(sauna.temp)}</strong></span>
+            <span>seit <strong>${escapeHTML(liveItem.time)} Uhr</strong></span>
+          </div>
+        </div>`;
+      } else {
+        const next = sortedAll.map(it => ({ it, min: timeToMin(it.time) })).filter(x => x.min > nowMin).sort((a, b) => a.min - b.min)[0];
+        if (next) {
+          const sauna = data.saunas[next.it.sauna] || { name: next.it.sauna, temp: '' };
+          const minsUntil = next.min - nowMin;
+          const untilText = minsUntil < 60 ? `in ${minsUntil} Minuten` : `um ${next.it.time} Uhr`;
+          liveContainer.innerHTML = `<div class="live-now" style="background: linear-gradient(135deg, rgba(74,124,140,0.15) 0%, rgba(201,169,97,0.08) 100%);">
+            <div class="live-now-label" style="background: var(--gold); color: var(--bg-deep);">Als Nächstes</div>
+            <div class="live-now-type">${escapeHTML(next.it.type)}</div>
+            <div class="live-now-meta">
+              <span>◈ <strong>${escapeHTML(next.it.scent)}</strong></span>
+              <span>${escapeHTML(sauna.name)} <strong>${escapeHTML(sauna.temp)}</strong></span>
+              <span><strong>${untilText}</strong></span>
+            </div>
+          </div>`;
+        } else { liveContainer.innerHTML = ''; }
+      }
+    } else { liveContainer.innerHTML = ''; }
+
+    const list = document.getElementById('list');
+    if (items.length === 0) {
+      const what = showingEvent ? todayEvent.title : dayLong(viewDay);
+      list.innerHTML = `<div class="empty"><div class="empty-icon">~</div><div class="empty-text">Keine Aufgüsse${activeFilter!=='all'?' in dieser Auswahl':''} für ${escapeHTML(what)}</div></div>`;
+    } else {
+      list.innerHTML = items.map(it => {
+        const sauna = data.saunas[it.sauna] || { name: it.sauna, temp: '' };
+        const startMin = timeToMin(it.time);
+        const isPast = isToday && nowMin >= startMin + 30;
+        const cls = ['item', isPast ? 'past' : '', showingEvent ? 'event-item' : ''].filter(Boolean).join(' ');
+        return `<div class="${cls}">
+          <div class="time"><div class="time-num">${escapeHTML(it.time)}</div><div class="time-label">Uhr</div></div>
+          <div class="info">
+            <div class="info-type">${escapeHTML(it.type)}</div>
+            <div class="info-meta"><span class="scent">${escapeHTML(it.scent)}</span><span class="sauna">${escapeHTML(sauna.name)} · ${escapeHTML(sauna.temp)}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    renderUpcoming(data);
+  }
+
+  function renderUpcoming(data) {
+    const c = document.getElementById('upcomingContainer');
+    const today = todayISO();
+    const upcoming = (data.events || [])
+      .filter(e => e.date && e.date > today && e.title && (e.aufguesse || []).length > 0)
+      .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+    if (upcoming.length === 0) { c.innerHTML = ''; return; }
+    c.innerHTML = `<div class="upcoming-events">
+      <h3>Kommende <em>Saunaevents</em></h3>
+      <div class="upcoming-list">
+        ${upcoming.map(ev => {
+          const d = formatDateMonth(ev.date);
+          return `<div class="upcoming-item">
+            <div class="upcoming-date">
+              <div class="upcoming-date-day">${d.day}</div>
+              <div class="upcoming-date-mon">${escapeHTML(d.mon)}</div>
+            </div>
+            <div class="upcoming-info">
+              <div class="upcoming-info-title">${escapeHTML(ev.title)}</div>
+              <div class="upcoming-info-meta">${escapeHTML(formatDateLong(ev.date))}${ev.note ? ' · ' + escapeHTML(ev.note) : ''} · ${(ev.aufguesse || []).length} Aufgüsse</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  tick();
+  hydrateSaunaFromNeonThenRender().finally(() => { render(); });
+  setInterval(tick, 1000);
+  setInterval(() => { hydrateSaunaFromNeonThenRender().finally(() => render()); }, 20000);
+  setInterval(render, 30000);
+  window.addEventListener('storage', render);
+</script>
+</body>
+</html>

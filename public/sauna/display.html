@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA OLA Sauna · Aufgussplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a1419;
+    --bg-mid: #122028;
+    --bg-soft: #1a2c36;
+    --gold: #c9a961;
+    --gold-soft: #e6cd92;
+    --gold-deep: #8b7339;
+    --text: #f4f1ea;
+    --text-dim: #a8b5bc;
+    --accent-warm: #d97757;
+    --accent-warm-soft: #e89478;
+    --accent-cool: #4a7c8c;
+    --line: rgba(201, 169, 97, 0.18);
+    --event-line: rgba(217, 119, 87, 0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100vh; overflow: hidden; font-family: 'Outfit', sans-serif; color: var(--text); background: var(--bg-deep); }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(201, 169, 97, 0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 100%, rgba(74, 124, 140, 0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+    position: relative; transition: background 0.6s ease;
+  }
+  body.event-mode {
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(217, 119, 87, 0.14) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 100%, rgba(201, 169, 97, 0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity: 0.04; mix-blend-mode: overlay; pointer-events: none; z-index: 100;
+  }
+  .stage { width: 100vw; height: 100vh; display: grid; grid-template-rows: 11% 64% 25%; padding: 1.5vh 2.5vw; gap: 1vh; position: relative; }
+  .header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 1vw; border-bottom: 1px solid var(--line); position: relative; }
+  body.event-mode .header { border-bottom-color: var(--event-line); }
+  .header::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 12vw; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  body.event-mode .header::after { background: linear-gradient(90deg, transparent, var(--accent-warm), transparent); }
+  .brand { display: flex; flex-direction: column; gap: 0.2vh; }
+  .brand-label { font-size: 1vh; font-weight: 300; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; }
+  .brand-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 2.4vh; letter-spacing: 0.05em; line-height: 1; }
+  .brand-name span { color: var(--gold); font-weight: 500; }
+  .clock { text-align: center; line-height: 1; }
+  .clock-time { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 5.5vh; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .clock-time .colon { color: var(--gold); animation: blink 2s ease-in-out infinite; }
+  body.event-mode .clock-time .colon { color: var(--accent-warm); }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .clock-date { font-size: 1.1vh; font-weight: 300; letter-spacing: 0.35em; color: var(--text-dim); text-transform: uppercase; margin-top: 0.4vh; }
+  .day-tag { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3vh; }
+  .day-tag-label { font-size: 1vh; font-weight: 300; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; }
+  body.event-mode .day-tag-label { color: var(--accent-warm); }
+  .day-tag-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.2vh; color: var(--text); font-weight: 400; }
+  .plan { display: flex; flex-direction: column; overflow: hidden; position: relative; padding: 1.5vh 0; }
+  .plan-title { text-align: center; margin-bottom: 1.8vh; position: relative; }
+  .plan-title::before, .plan-title::after { content: ''; position: absolute; top: 50%; width: 8vw; height: 1px; }
+  .plan-title::before { left: 8vw; background: linear-gradient(90deg, transparent, var(--gold-deep)); }
+  .plan-title::after { right: 8vw; background: linear-gradient(270deg, transparent, var(--gold-deep)); }
+  body.event-mode .plan-title::before { background: linear-gradient(90deg, transparent, var(--accent-warm)); }
+  body.event-mode .plan-title::after { background: linear-gradient(270deg, transparent, var(--accent-warm)); }
+  .plan-title h1 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-style: italic; font-size: 3.4vh; letter-spacing: 0.1em; }
+  .plan-title h1 em { color: var(--gold); font-weight: 500; }
+  body.event-mode .plan-title h1 em { color: var(--accent-warm-soft); }
+  .plan-title .sub { display: block; font-family: 'Outfit', sans-serif; font-style: normal; font-size: 0.95vh; font-weight: 300; letter-spacing: 0.5em; color: var(--text-dim); text-transform: uppercase; margin-top: 0.6vh; }
+  .event-banner { display: none; text-align: center; margin-bottom: 1vh; padding: 0.6vh 2vw; }
+  body.event-mode .event-banner { display: block; }
+  .event-banner-label { display: inline-block; background: var(--accent-warm); color: var(--text); padding: 0.4vh 1.2vw; border-radius: 2px; font-size: 0.95vh; font-weight: 500; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5vh; }
+  .event-banner-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.2vh; color: var(--accent-warm-soft); font-weight: 500; }
+  .event-banner-note { font-size: 1vh; color: var(--text-dim); letter-spacing: 0.2em; margin-top: 0.2vh; text-transform: uppercase; }
+  .list { flex: 1; display: flex; flex-direction: column; gap: 0.9vh; padding: 0 0.5vw; overflow: hidden; }
+  .row {
+    display: grid; grid-template-columns: 14% 1fr 22%; align-items: center; gap: 1.2vw;
+    padding: 1.4vh 1.2vw; background: linear-gradient(135deg, rgba(26, 44, 54, 0.6) 0%, rgba(18, 32, 40, 0.4) 100%);
+    border: 1px solid var(--line); border-radius: 4px; position: relative;
+    transition: all 0.6s ease; opacity: 0; transform: translateX(-20px);
+    animation: rowIn 0.8s ease-out forwards;
+  }
+  body.event-mode .row { border-color: rgba(217,119,87,0.18); }
+  .row:nth-child(1) { animation-delay: 0.05s; } .row:nth-child(2) { animation-delay: 0.12s; } .row:nth-child(3) { animation-delay: 0.19s; }
+  .row:nth-child(4) { animation-delay: 0.26s; } .row:nth-child(5) { animation-delay: 0.33s; } .row:nth-child(6) { animation-delay: 0.4s; }
+  .row:nth-child(7) { animation-delay: 0.47s; } .row:nth-child(8) { animation-delay: 0.54s; } .row:nth-child(9) { animation-delay: 0.61s; }
+  @keyframes rowIn { to { opacity: 1; transform: translateX(0); } }
+  .row.live { background: linear-gradient(135deg, rgba(217, 119, 87, 0.18) 0%, rgba(201, 169, 97, 0.12) 100%); border-color: var(--gold); box-shadow: 0 0 30px rgba(217, 119, 87, 0.15), inset 0 0 20px rgba(201, 169, 97, 0.05); }
+  .row.live::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, var(--gold) 0%, var(--accent-warm) 100%); border-radius: 4px 0 0 4px; }
+  .row.past { opacity: 0.35; }
+  .row.past .time-num { text-decoration: line-through; text-decoration-color: var(--gold-deep); text-decoration-thickness: 1px; }
+  .time { text-align: center; }
+  .time-num { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 3.8vh; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+  body.event-mode .time-num { color: var(--accent-warm-soft); }
+  .row.live .time-num { color: var(--gold-soft); }
+  body.event-mode .row.live .time-num { color: var(--gold-soft); }
+  .time-label { font-size: 0.85vh; font-weight: 300; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; margin-top: 0.3vh; }
+  .info { display: flex; flex-direction: column; gap: 0.4vh; border-left: 1px solid var(--line); padding-left: 1.5vw; }
+  body.event-mode .info { border-left-color: rgba(217,119,87,0.18); }
+  .info-type { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.4vh; font-weight: 500; line-height: 1.1; }
+  .row.live .info-type { color: var(--gold-soft); }
+  .info-scent { display: flex; align-items: center; gap: 0.6vw; font-size: 1.3vh; font-weight: 300; color: var(--text-dim); letter-spacing: 0.05em; }
+  .info-scent::before { content: '◈'; color: var(--gold); font-size: 1vh; }
+  body.event-mode .info-scent::before { color: var(--accent-warm); }
+  .sauna { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3vh; }
+  .sauna-name { font-size: 1.3vh; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sauna-temp { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.4vh; color: var(--gold); }
+  body.event-mode .sauna-temp { color: var(--accent-warm-soft); }
+  .live-badge { position: absolute; top: -1vh; right: 1vw; background: var(--accent-warm); color: var(--text); font-size: 0.85vh; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; padding: 0.4vh 0.8vw; border-radius: 2px; display: none; align-items: center; gap: 0.4vw; }
+  .row.live .live-badge { display: inline-flex; }
+  .live-badge::before { content: ''; width: 0.7vh; height: 0.7vh; background: var(--text); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  .empty { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1vh; color: var(--text-dim); }
+  .empty-icon { font-family: 'Cormorant Garamond', serif; font-size: 6vh; color: var(--gold-deep); font-style: italic; }
+  .empty-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.2vh; color: var(--text-dim); }
+
+  /* === AD AREA === */
+  .ad { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--bg-soft); }
+  .ad-slot {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; transition: opacity 0.7s ease;
+  }
+  .ad-slot.visible { opacity: 1; }
+  .ad-slot img, .ad-slot video, .ad-slot iframe {
+    width: 100%; height: 100%; object-fit: cover; border: none;
+    display: block;
+  }
+  .ad-slot .fallback {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 2vh;
+  }
+  .ad-overlay { position: absolute; top: 1vh; left: 1vw; font-size: 0.8vh; font-weight: 300; letter-spacing: 0.4em; color: rgba(244, 241, 234, 0.5); text-transform: uppercase; z-index: 5; pointer-events: none; }
+  .ad-corner { position: absolute; bottom: 1vh; right: 1vw; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.3vh; color: rgba(244, 241, 234, 0.7); z-index: 5; pointer-events: none; }
+  .corner { position: fixed; width: 30px; height: 30px; border: 1px solid var(--gold); opacity: 0.3; z-index: 50; transition: border-color 0.6s ease; }
+  body.event-mode .corner { border-color: var(--accent-warm); opacity: 0.4; }
+  .corner.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+  .corner.tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+  .corner.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+  .corner.br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+</style>
+</head>
+<body>
+
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+<div class="stage">
+
+  <header class="header">
+    <div class="brand">
+      <div class="brand-label">Freizeitbad</div>
+      <div class="brand-name">LA <span>OLA</span> · Saunawelt</div>
+    </div>
+    <div class="clock">
+      <div class="clock-time" id="clock">--<span class="colon">:</span>--</div>
+      <div class="clock-date" id="date">—</div>
+    </div>
+    <div class="day-tag">
+      <div class="day-tag-label" id="dayTagLabel">Heute</div>
+      <div class="day-tag-name" id="dayName">—</div>
+    </div>
+  </header>
+
+  <section class="plan">
+    <div class="plan-title">
+      <h1 id="planHeading">Aufguss<em>plan</em></h1>
+      <span class="sub" id="planSub">Today · Aujourd'hui</span>
+    </div>
+    <div class="event-banner" id="eventBanner">
+      <div class="event-banner-label">✦ Saunaevent ✦</div>
+      <div class="event-banner-title" id="eventBannerTitle">—</div>
+      <div class="event-banner-note" id="eventBannerNote"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section class="ad" id="adArea">
+    <div class="ad-overlay">Werbung</div>
+    <div class="ad-corner" id="adCorner">LA OLA</div>
+    <!-- Slots werden dynamisch eingefügt -->
+  </section>
+
+</div>
+
+<script>
+  const SAUNA_SNAPSHOT_API = '/api/sauna/snapshot';
+  async function hydrateSaunaFromNeonThenRender() {
+    try {
+      const r = await fetch(SAUNA_SNAPSHOT_API, { cache: 'no-store' });
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j == null || j.payload == null) return;
+      const raw = typeof j.payload === 'string' ? j.payload : JSON.stringify(j.payload);
+      if (raw && raw.length > 20) localStorage.setItem('laola_sauna_data', raw);
+    } catch (_) { /* Offline / kein Neon */ }
+  }
+
+  const DAYS = [
+    { key: 'mon', long: 'Montag' }, { key: 'tue', long: 'Dienstag' }, { key: 'wed', long: 'Mittwoch' },
+    { key: 'thu', long: 'Donnerstag' }, { key: 'fri', long: 'Freitag' }, { key: 'sat', long: 'Samstag' }, { key: 'sun', long: 'Sonntag' }
+  ];
+  const JS_DAY_TO_KEY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+  function todayKey() { return JS_DAY_TO_KEY[new Date().getDay()]; }
+  function dayLong(key) { return DAYS.find(d => d.key === key)?.long || key; }
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').innerHTML = `${h}<span class="colon">:</span>${m}`;
+    document.getElementById('date').textContent = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem('laola_sauna_data');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.aufguesse && !parsed.schedules) {
+          parsed.schedules = {};
+          DAYS.forEach(d => parsed.schedules[d.key] = JSON.parse(JSON.stringify(parsed.aufguesse)));
+        }
+        if (!Array.isArray(parsed.events)) parsed.events = [];
+        if (!Array.isArray(parsed.adSlots)) parsed.adSlots = [];
+        return parsed;
+      }
+    } catch (e) {}
+    return {
+      saunas: { 'finn': { name: 'Finnische Sauna', temp: '90 °C' }, 'bio': { name: 'Bio-Sauna', temp: '60 °C' }, 'kraeuter': { name: 'Kräutersauna', temp: '75 °C' }, 'dampf': { name: 'Dampfbad', temp: '45 °C' } },
+      schedules: {}, events: [], adSlots: []
+    };
+  }
+
+  function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+  function escapeHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  function getActiveEvent(data) {
+    const today = todayISO();
+    const todayEvents = (data.events || []).filter(e => e.date === today && e.title && (e.aufguesse || []).length > 0);
+    return todayEvents.length ? todayEvents[todayEvents.length - 1] : null;
+  }
+
+  // === WERBE-SCHEDULER (synchron zur Admin-Seite) ===
+  function isSlotActiveAt(slot, now) {
+    if (!slot.enabled) return false;
+    if (!slot.source || !slot.source.kind || slot.source.kind === 'fallback') return false;
+    if (slot.source.kind === 'file' && !slot.source.dataUrl) return false;
+    if (slot.source.kind === 'url' && !slot.source.url) return false;
+    if (slot.source.kind === 'youtube' && !slot.source.url) return false;
+    const sched = slot.schedule || { mode: 'always' };
+    if (sched.mode === 'always') return true;
+    if (sched.mode === 'datetime') {
+      const startOk = !sched.startAt || new Date(sched.startAt) <= now;
+      const endOk = !sched.endAt || new Date(sched.endAt) >= now;
+      return startOk && endOk;
+    }
+    if (sched.mode === 'weekly') {
+      const w = sched.weekly || {};
+      if (!Array.isArray(w.days) || w.days.length === 0) return false;
+      const todayWk = JS_DAY_TO_KEY[now.getDay()];
+      if (!w.days.includes(todayWk)) return false;
+      if (w.fromTime || w.toTime) {
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const tToMin = (t) => { if (!t) return null; const [h, m] = t.split(':').map(Number); return h*60+m; };
+        const fromMin = tToMin(w.fromTime);
+        const toMin = tToMin(w.toTime);
+        if (fromMin !== null && nowMin < fromMin) return false;
+        if (toMin !== null && nowMin >= toMin) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function getRotationGroup(data, now) {
+    const active = (data.adSlots || [])
+      .filter(s => isSlotActiveAt(s, now))
+      .sort((a, b) => b.priority - a.priority || (a.createdAt || '').localeCompare(b.createdAt || ''));
+    if (!active.length) return [];
+    const topPrio = active[0].priority;
+    return active.filter(s => s.priority === topPrio);
+  }
+
+  // === AD-RENDERING ===
+  // Wir nutzen zwei Slot-Container, die wir crossfaden, damit kein Flackern entsteht
+  let adContainerA = null;
+  let adContainerB = null;
+  let adActiveContainer = null;
+  let adCurrentSlotId = null;
+  let adNextChangeAt = 0; // ms-Timestamp, wann der nächste Wechsel ansteht
+  let adRotationIndex = 0;
+  let adLastGroupSig = '';
+
+  function ensureAdContainers() {
+    const area = document.getElementById('adArea');
+    if (!adContainerA) {
+      adContainerA = document.createElement('div');
+      adContainerA.className = 'ad-slot';
+      area.appendChild(adContainerA);
+    }
+    if (!adContainerB) {
+      adContainerB = document.createElement('div');
+      adContainerB.className = 'ad-slot';
+      area.appendChild(adContainerB);
+    }
+  }
+
+  function buildSlotHTML(slot) {
+    if (!slot) {
+      return `<div class="fallback">
+        <div style="font-family:'Cormorant Garamond',serif; font-style:italic; font-size:3.5vh; color: var(--gold);">Entspannung · pur</div>
+        <div style="font-size:1.3vh; letter-spacing:0.4em; color: var(--text-dim); text-transform:uppercase;">LA OLA · Landau in der Pfalz</div>
+      </div>`;
+    }
+    const src = slot.source || {};
+    if (src.kind === 'file' && src.dataUrl) {
+      if ((src.mime || '').startsWith('video')) {
+        return `<video src="${src.dataUrl}" autoplay muted loop playsinline></video>`;
+      }
+      return `<img src="${src.dataUrl}" alt="">`;
+    }
+    if (src.kind === 'url' && src.url) {
+      const isVideo = (src.mime || '').startsWith('video') || /\.(mp4|webm|mov)(\?|$)/i.test(src.url);
+      if (isVideo) {
+        return `<video src="${src.url}" autoplay muted loop playsinline></video>`;
+      }
+      return `<img src="${src.url}" alt="">`;
+    }
+    if (src.kind === 'youtube' && src.url) {
+      let id = src.url;
+      const m = src.url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{11})/);
+      if (m) id = m[1];
+      return `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&modestbranding=1&rel=0&playsinline=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    }
+    return `<div class="fallback">
+      <div style="font-family:'Cormorant Garamond',serif; font-style:italic; font-size:3.5vh; color: var(--gold);">Entspannung · pur</div>
+      <div style="font-size:1.3vh; letter-spacing:0.4em; color: var(--text-dim); text-transform:uppercase;">LA OLA · Landau in der Pfalz</div>
+    </div>`;
+  }
+
+  function renderAdsFor(now, data) {
+    ensureAdContainers();
+    const group = getRotationGroup(data, now);
+
+    // Signatur der Gruppe — falls sich aktive Werbungen ändern, neu starten
+    const groupSig = group.map(s => s.id + ':' + s.displayDuration).join('|');
+    if (groupSig !== adLastGroupSig) {
+      adLastGroupSig = groupSig;
+      adRotationIndex = 0;
+      adNextChangeAt = 0; // sofort wechseln
+    }
+
+    let nextSlot = null;
+    let nextDuration = 30;
+    if (group.length === 0) {
+      nextSlot = null;
+      nextDuration = 60; // Fallback bleibt mind. 60s
+    } else if (group.length === 1) {
+      nextSlot = group[0];
+      nextDuration = Math.max(5, nextSlot.displayDuration || 30);
+    } else {
+      nextSlot = group[adRotationIndex % group.length];
+      nextDuration = Math.max(5, nextSlot.displayDuration || 30);
+    }
+
+    const desiredId = nextSlot ? nextSlot.id : '__fallback__';
+    const nowMs = now.getTime();
+    const needSwitch = (adCurrentSlotId !== desiredId) || (nowMs >= adNextChangeAt);
+
+    if (needSwitch) {
+      // Crossfade
+      const inactive = adActiveContainer === adContainerA ? adContainerB : adContainerA;
+      const newHTML = buildSlotHTML(nextSlot);
+      if (inactive.innerHTML !== newHTML) {
+        inactive.innerHTML = newHTML;
+      }
+      // Sichtbar machen
+      inactive.classList.add('visible');
+      if (adActiveContainer) adActiveContainer.classList.remove('visible');
+      adActiveContainer = inactive;
+
+      adCurrentSlotId = desiredId;
+      adNextChangeAt = nowMs + nextDuration * 1000;
+
+      if (group.length > 1) {
+        adRotationIndex = (adRotationIndex + 1) % group.length;
+      }
+
+      // Caption-Eckig
+      const corner = document.getElementById('adCorner');
+      corner.textContent = nextSlot ? nextSlot.title : 'LA OLA';
+    }
+  }
+
+  // === HAUPT-RENDER ===
+  let lastDayKey = null;
+  let lastEventId = null;
+
+  function render() {
+    const data = loadData();
+    const list = document.getElementById('list');
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const today = todayKey();
+
+    const activeEvent = getActiveEvent(data);
+
+    let aufguesse;
+    if (activeEvent) {
+      aufguesse = activeEvent.aufguesse || [];
+      document.body.classList.add('event-mode');
+      document.getElementById('planHeading').innerHTML = 'Sauna<em>event</em>';
+      document.getElementById('planSub').textContent = 'Heute · Today · Aujourd\'hui';
+      document.getElementById('dayTagLabel').textContent = 'Event';
+      document.getElementById('dayName').textContent = activeEvent.title || dayLong(today);
+      document.getElementById('eventBannerTitle').textContent = activeEvent.title || '';
+      document.getElementById('eventBannerNote').textContent = activeEvent.note || '';
+    } else {
+      aufguesse = (data.schedules && data.schedules[today]) || [];
+      document.body.classList.remove('event-mode');
+      document.getElementById('planHeading').innerHTML = 'Aufguss<em>plan</em>';
+      document.getElementById('planSub').textContent = 'Today · Aujourd\'hui';
+      document.getElementById('dayTagLabel').textContent = 'Heute';
+      document.getElementById('dayName').textContent = dayLong(today);
+    }
+
+    const items = [...aufguesse].sort((a, b) => timeToMin(a.time) - timeToMin(b.time));
+    let liveIdx = -1;
+    for (let i = 0; i < items.length; i++) {
+      const start = timeToMin(items[i].time);
+      if (nowMin >= start && nowMin < start + 30) { liveIdx = i; break; }
+    }
+
+    if (items.length === 0) {
+      const what = activeEvent ? activeEvent.title : dayLong(today);
+      list.innerHTML = `<div class="empty"><div class="empty-icon">~</div><div class="empty-text">Heute (${escapeHTML(what)}) keine Aufgüsse geplant</div></div>`;
+    } else {
+      list.innerHTML = items.map((it, idx) => {
+        const sauna = (data.saunas && data.saunas[it.sauna]) || { name: it.sauna, temp: '' };
+        const startMin = timeToMin(it.time);
+        const isPast = nowMin >= startMin + 30;
+        const isLive = idx === liveIdx;
+        const cls = isLive ? 'live' : (isPast ? 'past' : '');
+        return `<div class="row ${cls}">
+          <div class="live-badge">Jetzt</div>
+          <div class="time"><div class="time-num">${escapeHTML(it.time)}</div><div class="time-label">Uhr</div></div>
+          <div class="info"><div class="info-type">${escapeHTML(it.type)}</div><div class="info-scent">${escapeHTML(it.scent)}</div></div>
+          <div class="sauna"><div class="sauna-name">${escapeHTML(sauna.name)}</div><div class="sauna-temp">${escapeHTML(sauna.temp)}</div></div>
+        </div>`;
+      }).join('');
+    }
+
+    // Werbung auf jedem Render-Zyklus prüfen
+    renderAdsFor(now, data);
+
+    const currentEventId = activeEvent ? activeEvent.id : null;
+    if ((lastDayKey && lastDayKey !== today) || lastEventId !== currentEventId) {
+      list.querySelectorAll('.row').forEach(r => { r.style.animation = 'none'; void r.offsetHeight; r.style.animation = ''; });
+    }
+    lastDayKey = today;
+    lastEventId = currentEventId;
+  }
+
+  hydrateSaunaFromNeonThenRender().finally(() => { render(); });
+  setInterval(() => render(), 5000);
+  setInterval(() => { hydrateSaunaFromNeonThenRender().finally(() => render()); }, 20000);
+  window.addEventListener('storage', render);
+  setInterval(() => { if (lastDayKey !== todayKey()) render(); }, 60000);
+</script>
+</body>
+</html>
