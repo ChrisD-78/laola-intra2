@@ -43,7 +43,7 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
     opacity: 0.04; mix-blend-mode: overlay; pointer-events: none; z-index: 100;
   }
-  .stage { width: 100vw; height: 100vh; display: grid; grid-template-rows: 11% 64% 25%; padding: 1.5vh 2.5vw; gap: 1vh; position: relative; }
+  .stage { width: 100vw; height: 100vh; min-height: 0; display: grid; grid-template-rows: 11% minmax(0, 1fr) 25%; padding: 1.5vh 2.5vw; gap: 1vh; position: relative; }
   .header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 1vw; border-bottom: 1px solid var(--line); position: relative; }
   body.event-mode .header { border-bottom-color: var(--event-line); }
   .header::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 12vw; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
@@ -62,7 +62,7 @@
   .day-tag-label { font-size: 1vh; font-weight: 300; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; }
   body.event-mode .day-tag-label { color: var(--accent-warm); }
   .day-tag-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.2vh; color: var(--text); font-weight: 400; }
-  .plan { display: flex; flex-direction: column; overflow: hidden; position: relative; padding: 1.5vh 0; }
+  .plan { display: flex; flex-direction: column; overflow: hidden; position: relative; padding: 1.5vh 0; min-height: 0; }
   .plan-title { text-align: center; margin-bottom: 1.8vh; position: relative; }
   .plan-title::before, .plan-title::after { content: ''; position: absolute; top: 50%; width: 8vw; height: 1px; }
   .plan-title::before { left: 8vw; background: linear-gradient(90deg, transparent, var(--gold-deep)); }
@@ -78,13 +78,22 @@
   .event-banner-label { display: inline-block; background: var(--accent-warm); color: var(--text); padding: 0.4vh 1.2vw; border-radius: 2px; font-size: 0.95vh; font-weight: 500; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5vh; }
   .event-banner-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.2vh; color: var(--accent-warm-soft); font-weight: 500; }
   .event-banner-note { font-size: 1vh; color: var(--text-dim); letter-spacing: 0.2em; margin-top: 0.2vh; text-transform: uppercase; }
-  .list { flex: 1; display: flex; flex-direction: column; gap: 0.9vh; padding: 0 0.5vw; overflow: hidden; }
+  .list { flex: 1; display: flex; flex-direction: column; gap: 0.9vh; padding: 0 0.5vw; min-height: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .row {
     display: grid; grid-template-columns: 14% 1fr 22%; align-items: center; gap: 1.2vw;
     padding: 1.4vh 1.2vw; background: linear-gradient(135deg, rgba(26, 44, 54, 0.6) 0%, rgba(18, 32, 40, 0.4) 100%);
     border: 1px solid var(--line); border-radius: 4px; position: relative;
-    transition: all 0.6s ease; opacity: 0; transform: translateX(-20px);
-    animation: rowIn 0.8s ease-out forwards;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    opacity: 1;
+    transform: translateX(0);
+  }
+  /* Einblend-Animation nur wenn erlaubt (TV oft „Animationen reduzieren“ → sonst waren Zeilen permanent unsichtbar) */
+  @media (prefers-reduced-motion: no-preference) {
+    .row {
+      opacity: 0;
+      transform: translateX(-12px);
+      animation: rowIn 0.6s ease-out forwards;
+    }
   }
   body.event-mode .row { border-color: rgba(217,119,87,0.18); }
   .row:nth-child(1) { animation-delay: 0.05s; } .row:nth-child(2) { animation-delay: 0.12s; } .row:nth-child(3) { animation-delay: 0.19s; }
@@ -232,6 +241,10 @@
           parsed.schedules = {};
           DAYS.forEach(d => parsed.schedules[d.key] = JSON.parse(JSON.stringify(parsed.aufguesse)));
         }
+        if (!parsed.schedules) parsed.schedules = {};
+        DAYS.forEach(d => {
+          if (!Array.isArray(parsed.schedules[d.key])) parsed.schedules[d.key] = [];
+        });
         if (!Array.isArray(parsed.events)) parsed.events = [];
         if (!Array.isArray(parsed.adSlots)) parsed.adSlots = [];
         return parsed;

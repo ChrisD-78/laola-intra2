@@ -210,6 +210,10 @@
           parsed.schedules = {};
           DAYS.forEach(d => parsed.schedules[d.key] = JSON.parse(JSON.stringify(parsed.aufguesse)));
         }
+        if (!parsed.schedules) parsed.schedules = {};
+        DAYS.forEach(d => {
+          if (!Array.isArray(parsed.schedules[d.key])) parsed.schedules[d.key] = [];
+        });
         if (!Array.isArray(parsed.events)) parsed.events = [];
         if (!Array.isArray(parsed.adSlots)) parsed.adSlots = [];
         return parsed;
