@@ -14,6 +14,7 @@ import DienstkleidungForm from '@/components/DienstkleidungForm'
 import SchulungUnterweisungForm from '@/components/SchulungUnterweisungForm'
 import ChecklisteEHForm from '@/components/ChecklisteEHForm'
 import BetriebstagebuchForm from '@/components/BetriebstagebuchForm'
+import BetriebstagebuchFbForm from '@/components/BetriebstagebuchFbForm'
 import { insertAccident, getFormSubmissions, insertFormSubmission, deleteFormSubmissionById, insertExternalProof, uploadProofPdf } from '@/lib/db'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -157,6 +158,137 @@ const createBetriebstagebuchPdf = async (data: any): Promise<Blob> => { // eslin
 
   return doc.output('blob')
 }
+
+const createBetriebstagebuchFbPdf = async (data: any): Promise<Blob> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const jsPDFModule = await import('jspdf')
+  const jsPDF = (jsPDFModule as any).default || jsPDFModule
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const marginX = 40
+  const lineHeight = 16
+  let y = 50
+
+  const addHeading = (text: string) => {
+    doc.setFontSize(16)
+    doc.setFont(undefined, 'bold')
+    doc.text(text, marginX, y)
+    y += 26
+    doc.setFont(undefined, 'normal')
+    doc.setFontSize(11)
+  }
+
+  const addLine = (label: string, value: string) => {
+    const content = `${label}: ${value || '-'}`
+    const lines = doc.splitTextToSize(content, pageWidth - marginX * 2)
+    lines.forEach((line: string) => {
+      if (y > 780) {
+        doc.addPage()
+        y = 50
+      }
+      doc.text(line, marginX, y)
+      y += lineHeight
+    })
+  }
+
+  const addSection = (title: string) => {
+    y += 8
+    if (y > 780) {
+      doc.addPage()
+      y = 50
+    }
+    doc.setFontSize(13)
+    doc.setFont(undefined, 'bold')
+    doc.text(title, marginX, y)
+    y += 20
+    doc.setFont(undefined, 'normal')
+    doc.setFontSize(11)
+  }
+
+  const date = data.datum || new Date().toISOString().split('T')[0]
+
+  addHeading('Betriebstagebuch FB – Freibad LA OLA')
+  addLine('Datum', date)
+  addLine('Wochentag', data.wochentag || '')
+
+  addSection('Personal / Einteilung')
+  addLine('Frühschicht – Schichtführung', data.personal?.frueh?.schichtfuehrung || '')
+  addLine('Frühschicht – 2. Aufsicht', data.personal?.frueh?.aufsicht2 || '')
+  addLine('Frühschicht – 3. Aufsicht', data.personal?.frueh?.aufsicht3 || '')
+  addLine('Frühschicht – Sauna', data.personal?.frueh?.sauna || '')
+  addLine('Frühschicht – Umkleide', data.personal?.frueh?.umkleide || '')
+  addLine('Frühschicht – Kasse', data.personal?.frueh?.kasse || '')
+  addLine('Spätschicht – Schichtführung', data.personal?.spaet?.schichtfuehrung || '')
+  addLine('Spätschicht – 2. Aufsicht', data.personal?.spaet?.aufsicht2 || '')
+  addLine('Spätschicht – 3. Aufsicht', data.personal?.spaet?.aufsicht3 || '')
+  addLine('Spätschicht – Sauna', data.personal?.spaet?.sauna || '')
+  addLine('Spätschicht – Umkleide', data.personal?.spaet?.umkleide || '')
+  addLine('Spätschicht – Kasse', data.personal?.spaet?.kasse || '')
+
+  const fbPools: { key: string; label: string }[] = [
+    { key: 'schwimmer', label: 'Schwimmerbecken' },
+    { key: 'nichtschwimmer', label: 'Nichtschwimmerbecken' },
+    { key: 'plansch', label: 'Planschbecken' },
+    { key: 'kleinkinder', label: 'Kleinkinderbecken' },
+  ]
+
+  const slots = ['betriebsbeginn', 'betriebsmitte', 'betriebsende'] as const
+  const fields: { key: keyof any; label: string }[] = [
+    { key: 'temp', label: 'Temp' },
+    { key: 'ph', label: 'pH' },
+    { key: 'clFrei', label: 'Cl frei' },
+    { key: 'clGes', label: 'Cl ges.' },
+    { key: 'clGeb', label: 'Cl geb.' },
+    { key: 'redox', label: 'Redox' },
+  ]
+
+  fbPools.forEach(({ key, label }) => {
+    const sectionData = data.wasserwerteFreibad?.[key]
+    if (!sectionData) return
+    addSection(`Wasserwerte – ${label}`)
+    slots.forEach((slot) => {
+      const row = (sectionData as any)?.[slot] || {}
+      const slotLabel =
+        slot === 'betriebsbeginn' ? 'Betriebsbeginn' : slot === 'betriebsmitte' ? 'Betriebsmitte' : 'Betriebsende'
+      addLine(`  ${slotLabel}`, '')
+      fields.forEach((f) => {
+        addLine(`    ${f.label}`, String(row[f.key] ?? ''))
+      })
+    })
+    y += 4
+  })
+
+  addSection('Montag / Zusatz & Lufttemperatur')
+  addLine('Säurekapazität (mmol/l)', data.montag?.saeurekapazitaet || '')
+  addLine('Messwasserentnahmestellen reinigen', data.montag?.messwasserentnahmestellenReinigen ? 'Ja' : 'Nein')
+  addLine('Küvetten austauschen (montags)', data.montag?.kuvetteAustauschen ? 'Ja' : 'Nein')
+  addLine('Lufttemperatur außen (°C)', data.lufttemperatur?.aussen || '')
+
+  addSection('Kontrollgang')
+  addLine('Uhrzeit', data.kontrollgang?.uhrzeit || '')
+  addLine('Handzeichen', data.kontrollgang?.handzeichen || '')
+
+  addSection('Vorkommnisse')
+  addLine('Betriebsstörung / Vorkommnisse', data.betriebsstoerungVorkommnisse || '')
+  addLine('Behoben von', data.behobenVon || '')
+  addLine('Behoben um', data.behobenUm || '')
+
+  addSection('Filterspülung durchgeführt')
+  addLine('Filter 1', data.filterSpuelung?.filter1 ? 'Ja' : 'Nein')
+  addLine('Filter 2', data.filterSpuelung?.filter2 ? 'Ja' : 'Nein')
+  addLine('Filter 3', data.filterSpuelung?.filter3 ? 'Ja' : 'Nein')
+  addLine('Filter 4', data.filterSpuelung?.filter4 ? 'Ja' : 'Nein')
+
+  addSection('Sonstiges')
+  addLine('Sonstiges', data.sonstiges || '')
+
+  addSection('Name')
+  addLine('Verantwortlicher Frühschicht', data.unterschrift?.verantwortlicherFrueh || '')
+  addLine('Verantwortlicher Spätschicht', data.unterschrift?.verantwortlicherSpaet || '')
+
+  return doc.output('blob')
+}
+
 const createChecklisteEhPdf = async (data: any): Promise<Blob> => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const jsPDFModule = await import('jspdf')
   const jsPDF = (jsPDFModule as any).default || jsPDFModule
@@ -397,6 +529,39 @@ export default function Formulare() {
         }
       }
 
+      if (type === 'betriebstagebuch_fb') {
+        try {
+          const pdfBlob = await createBetriebstagebuchFbPdf(data)
+          const fileName = `Betriebstagebuch_FB_LA-OLA_${(data.datum || new Date().toISOString().split('T')[0]).replace(/-/g, '')}.pdf`
+          const base64Content = await blobToBase64(pdfBlob)
+
+          const subject = `Betriebstagebuch FB Freibad LA OLA – ${data.datum || new Date().toLocaleDateString('de-DE')}`
+          const plainText = `Betriebstagebuch FB Freibad LA OLA\n\nDatum: ${data.datum || ''}\nWochentag: ${data.wochentag || ''}`
+
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: ['christof.drost@landau.de', 'kai.kokott@landau.de'],
+              subject,
+              text: plainText,
+              html: `<p><strong>Betriebstagebuch FB Freibad LA OLA</strong><br/><strong>Datum:</strong> ${data.datum || ''}<br/><strong>Wochentag:</strong> ${data.wochentag || ''}</p><p>Das vollständige Betriebstagebuch FB ist als PDF im Anhang.</p>`,
+              attachments: [
+                {
+                  filename: fileName,
+                  content: base64Content,
+                  contentType: 'application/pdf',
+                  encoding: 'base64'
+                }
+              ]
+            })
+          })
+        } catch (e) {
+          console.error('Fehler beim Versenden des Betriebstagebuch-FB-PDFs per E-Mail', e)
+          alert('Das Betriebstagebuch FB konnte nicht per E-Mail versendet werden. Bitte später erneut versuchen.')
+        }
+      }
+
       // Special handling for arbeitsunfall
       if (type === 'arbeitsunfall') {
         try {
@@ -433,6 +598,8 @@ export default function Formulare() {
     switch (type) {
       case 'betriebstagebuch':
         return `Betriebstagebuch – Datum: ${data.datum || '-'}, Wochentag: ${data.wochentag || '-'}, Schichtführung Früh: ${data.personal?.frueh?.schichtfuehrung || '-'}, Schichtführung Spät: ${data.personal?.spaet?.schichtfuehrung || '-'}`
+      case 'betriebstagebuch_fb':
+        return `Betriebstagebuch FB – Datum: ${data.datum || '-'}, Wochentag: ${data.wochentag || '-'}, Schichtführung Früh: ${data.personal?.frueh?.schichtfuehrung || '-'}, Schichtführung Spät: ${data.personal?.spaet?.schichtfuehrung || '-'}`
       case 'rutschenkontrolle':
         return `Sicherheit: ${data.sicherheitscheck}, Funktion: ${data.funktionspruefung}`
       case 'stoermeldung':
@@ -656,6 +823,7 @@ export default function Formulare() {
       case 'schulung_unterweisung': return 'Schulung / Unterweisung'
       case 'checkliste_eh': return 'Checkliste EH'
       case 'betriebstagebuch': return 'Betriebstagebuch'
+      case 'betriebstagebuch_fb': return 'Betriebstagebuch FB'
       default: return type
     }
   }
@@ -676,6 +844,7 @@ export default function Formulare() {
       case 'schulung_unterweisung': return '📚'
       case 'checkliste_eh': return '🩹'
       case 'betriebstagebuch': return '📒'
+      case 'betriebstagebuch_fb': return '📗'
       default: return '📝'
     }
   }
@@ -694,7 +863,8 @@ export default function Formulare() {
     { value: 'dienstkleidung', label: 'Ausgabe Dienstkleidung', icon: '👕' },
     { value: 'schulung_unterweisung', label: 'Schulung / Unterweisung', icon: '📚' },
     { value: 'checkliste_eh', label: 'Checkliste EH', icon: '🩹' },
-    { value: 'betriebstagebuch', label: 'Betriebstagebuch', icon: '📒' }
+    { value: 'betriebstagebuch', label: 'Betriebstagebuch', icon: '📒' },
+    { value: 'betriebstagebuch_fb', label: 'Betriebstagebuch FB', icon: '📗' }
   ]
 
   const tableSubmissions = isAdmin
@@ -762,6 +932,9 @@ export default function Formulare() {
   )
   const betriebstagebuchSubmissions = submissions.filter(
     submission => submission.type === 'betriebstagebuch'
+  )
+  const betriebstagebuchFbSubmissions = submissions.filter(
+    submission => submission.type === 'betriebstagebuch_fb'
   )
   const dienstkleidungSubmissions = submissions.filter(
     submission => submission.type === 'dienstkleidung'
@@ -1017,6 +1190,24 @@ export default function Formulare() {
             <button
               onClick={() => setOpenForm('betriebstagebuch')}
               className="w-full px-4 py-2.5 text-base bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+            >
+              Formular öffnen
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="text-center mb-4">
+              <span className="text-4xl">📗</span>
+            </div>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 text-center mb-2">
+              Betriebstagebuch FB
+            </h3>
+            <p className="text-sm text-gray-900 text-center mb-4">
+              Freibad: Schicht- und Messwerte sowie Vorkommnisse dokumentieren
+            </p>
+            <button
+              onClick={() => setOpenForm('betriebstagebuch_fb')}
+              className="w-full px-4 py-2.5 text-base bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors font-medium"
             >
               Formular öffnen
             </button>
@@ -1563,6 +1754,13 @@ export default function Formulare() {
         onClose={() => setOpenForm(null)}
         onSubmit={(data) => handleFormSubmit('betriebstagebuch', data)}
         submissions={betriebstagebuchSubmissions}
+      />
+
+      <BetriebstagebuchFbForm
+        isOpen={openForm === 'betriebstagebuch_fb'}
+        onClose={() => setOpenForm(null)}
+        onSubmit={(data) => handleFormSubmit('betriebstagebuch_fb', data)}
+        submissions={betriebstagebuchFbSubmissions}
       />
     </div>
   )
