@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 // GET all quizzes
 export async function GET() {
@@ -18,7 +19,7 @@ export async function GET() {
       ORDER BY q.created_at DESC
     `
 
-    return NextResponse.json(quizzes || [])
+    return jsonCache(quizzes || [], CACHE_HEADER.quizListAgg)
   } catch (error) {
     console.error('Failed to fetch quizzes:', error)
     // Return empty array instead of error to prevent crashes

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -20,7 +21,7 @@ export async function GET() {
       ORDER BY created_at DESC
       LIMIT 200
     `
-    return NextResponse.json(rows)
+    return jsonCache(rows, CACHE_HEADER.generalList)
   } catch (error) {
     console.error('Failed to fetch pinnwand entries:', error)
     return NextResponse.json(

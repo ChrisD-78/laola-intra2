@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       `
     }
 
-    return NextResponse.json(documents)
+    return jsonCache(documents, CACHE_HEADER.dashboardBullets)
   } catch (error) {
     console.error('Failed to fetch documents:', error)
     return NextResponse.json(

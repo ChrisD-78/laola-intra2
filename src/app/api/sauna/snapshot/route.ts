@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 function getSql() {
   const url = process.env.DATABASE_URL
@@ -10,7 +11,7 @@ function getSql() {
 export async function GET() {
   const sql = getSql()
   if (!sql) {
-    return NextResponse.json({ payload: null, updated_at: null })
+    return jsonCache({ payload: null, updated_at: null }, CACHE_HEADER.saunaDisplay)
   }
 
   try {
@@ -20,14 +21,19 @@ export async function GET() {
       WHERE id = 1
     `
     if (!rows?.length) {
-      return NextResponse.json({ payload: null, updated_at: null })
+      return jsonCache({ payload: null, updated_at: null }, CACHE_HEADER.saunaDisplay)
     }
     const row = rows[0] as { payload: unknown; updated_at: Date | string }
-    return NextResponse.json({
-      payload: row.payload,
-      updated_at:
-        typeof row.updated_at === 'string' ? row.updated_at : row.updated_at?.toISOString?.() ?? null,
-    })
+    return jsonCache(
+      {
+        payload: row.payload,
+        updated_at:
+          typeof row.updated_at === 'string'
+            ? row.updated_at
+            : row.updated_at?.toISOString?.() ?? null,
+      },
+      CACHE_HEADER.saunaDisplay,
+    )
   } catch (e) {
     console.error('[sauna/snapshot GET]', e)
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 // GET leaderboard for quiz
 export async function GET(
@@ -34,7 +35,7 @@ export async function GET(
       fastest_time: entry.fastest_time ? Number(entry.fastest_time) : null
     }))
 
-    return NextResponse.json(sanitizedLeaderboard)
+    return jsonCache(sanitizedLeaderboard, CACHE_HEADER.quizLeaderboard)
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error)
     return NextResponse.json(

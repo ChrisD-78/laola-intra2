@@ -32,10 +32,11 @@ export async function GET() {
         display_name ASC
     `
 
-    return NextResponse.json({
-      success: true,
-      users: result
-    })
+    /** Kein CDN-Teilen ( sensible Daten ); nur Browser spart Bandbreite */
+    return NextResponse.json(
+      { success: true, users: result },
+      { headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' } },
+    )
 
   } catch (error) {
     console.error('Failed to fetch users:', error)

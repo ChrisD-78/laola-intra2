@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,7 +11,7 @@ export async function GET() {
       SELECT * FROM tasks 
       ORDER BY created_at DESC
     `
-    return NextResponse.json(tasks)
+    return jsonCache(tasks, CACHE_HEADER.dashboardBullets)
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
     return NextResponse.json(

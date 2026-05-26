@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { useChatNotifications } from '@/contexts/ChatNotificationContext'
 import { upsertChatUser, getChatUsers, getChatGroups, createChatGroup, getDirectMessages, getGroupMessages, sendChatMessage, updateChatMessageStatus, ChatMessageRecord, ChatUserRecord } from '@/lib/db'
+import { fetchJsonGETCached } from '@/lib/clientFetchCache'
+import { isAutoRefreshPausedLocal } from '@/lib/quietHours'
+
+/** Wie ChatNotificationContext: Sidebar-Badges / Thread-Poll nur bei sichtbarem Tab, längere Intervalle */
+const CHAT_SIDEBAR_UNREAD_POLL_MS = 30_000
+const CHAT_ACTIVE_THREAD_POLL_MS = 20_000
 
 interface Message {
   id: string
@@ -42,7 +48,8 @@ export default function Chat() {
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
-  const [allMessages, setAllMessages] = useState<Message[]>([]) // All messages from all users for unread counts
+  const [directUnreadByPeer, setDirectUnreadByPeer] = useState<Record<string, number>>({})
+  const [groupUnreadById, setGroupUnreadById] = useState<Record<string, number>>({})
   const [groups, setGroups] = useState<Group[]>([])
   // Initial seed users - alle registrierten Benutzer
   const [users, setUsers] = useState<User[]>([
@@ -68,6 +75,53 @@ export default function Chat() {
   const [profileName, setProfileName] = useState('')
   const [showSidebar, setShowSidebar] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<Message[]>([])
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  const refreshThreadUnreadCounts = useCallback(async () => {
+    if (!authUser) {
+      setDirectUnreadByPeer({})
+      setGroupUnreadById({})
+      return
+    }
+    try {
+      const res = await fetch(
+        `/api/chat/unread-thread-counts?viewer=${encodeURIComponent(authUser)}`,
+        { cache: 'no-store' },
+      )
+      if (!res.ok) throw new Error(String(res.status))
+      const data = (await res.json()) as {
+        directByPeer?: Record<string, number>
+        groupById?: Record<string, number>
+      }
+      setDirectUnreadByPeer(data.directByPeer || {})
+      setGroupUnreadById(data.groupById || {})
+    } catch (e) {
+      console.warn('Chat: thread unread counts failed', e)
+    }
+  }, [authUser])
+
+  useEffect(() => {
+    if (!authUser) return
+    void refreshThreadUnreadCounts()
+    const tick = () => {
+      if (isAutoRefreshPausedLocal()) return
+      if (document.visibilityState === 'visible') void refreshThreadUnreadCounts()
+    }
+    const iv = window.setInterval(tick, CHAT_SIDEBAR_UNREAD_POLL_MS)
+    const onVis = () => {
+      if (isAutoRefreshPausedLocal()) return
+      if (document.visibilityState === 'visible') void refreshThreadUnreadCounts()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.clearInterval(iv)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [authUser, refreshThreadUnreadCounts])
 
 
   // Initial load of users/groups from Chat-DB
@@ -116,14 +170,16 @@ export default function Chat() {
   useEffect(() => {
     const loadAdminUsers = async () => {
       try {
-        const response = await fetch('/api/users')
-        const data = await response.json()
+        const data = await fetchJsonGETCached<{ success?: boolean; users?: { display_name?: string }[] }>(
+          '/api/users',
+          120_000,
+        )
         if (data.success && Array.isArray(data.users)) {
-          const adminUsers: User[] = data.users.map((u: any) => ({
-            id: u.display_name,
-            name: u.display_name,
-            isOnline: false
-          }))
+          const adminUsers: User[] = data.users.map((u) => ({
+            id: u.display_name ?? '',
+            name: u.display_name ?? '',
+            isOnline: false,
+          })).filter((u) => u.id.length > 0)
 
           setUsers(prev => {
             const existingIds = new Set(prev.map(u => u.id))
@@ -200,23 +256,23 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, selectedRecipient, selectedGroup])
 
-  // Real-time polling for new messages (every 3 seconds)
+  // Aktueller Chat: periodisch neu laden (bei sichtbarem Tab, langsamer als zuvor → weniger Netlify-Functions)
   useEffect(() => {
     if (!authUser) return
     if (!selectedRecipient && !selectedGroup) return
-    
+
     const pollMessages = async () => {
+      if (document.visibilityState !== 'visible') return
       try {
         let dbMessages: ChatMessageRecord[] = []
-        
+
         if (selectedGroup) {
           dbMessages = await getGroupMessages(selectedGroup)
         } else if (selectedRecipient) {
           dbMessages = await getDirectMessages(authUser, selectedRecipient)
         }
-        
-        // Convert DB messages to local Message format
-        const localMessages: Message[] = dbMessages.map(msg => ({
+
+        const localMessages: Message[] = dbMessages.map((msg) => ({
           id: msg.id as string,
           sender: msg.sender_id,
           recipient: msg.recipient_id || undefined,
@@ -226,71 +282,29 @@ export default function Chat() {
           isRead: msg.is_read,
           imageUrl: msg.image_url || undefined,
           imageName: msg.image_name || undefined,
-          readBy: msg.read_by || []
+          readBy: msg.read_by || [],
         }))
-        
-        // Only update if messages have changed
-        if (JSON.stringify(localMessages) !== JSON.stringify(messages)) {
+
+        if (JSON.stringify(localMessages) !== JSON.stringify(messagesRef.current)) {
           setMessages(localMessages)
         }
       } catch (e) {
         console.error('Poll messages failed', e)
       }
     }
-    
-    // Poll every 3 seconds
-    const interval = setInterval(pollMessages, 3000)
-    
-    // Cleanup on unmount
-    return () => clearInterval(interval)
-  }, [authUser, selectedRecipient, selectedGroup, messages])
 
-  // Poll all messages from all users for unread counts (every 5 seconds)
-  useEffect(() => {
-    if (!authUser) return
-    
-    const pollAllMessages = async () => {
-      try {
-        const allUserMessages: Message[] = []
-        
-        // Get messages from all users
-        for (const user of users) {
-          if (user.id === authUser) continue
-          
-          try {
-            const dbMessages = await getDirectMessages(authUser, user.id)
-            const localMessages: Message[] = dbMessages.map(msg => ({
-              id: msg.id as string,
-              sender: msg.sender_id,
-              recipient: msg.recipient_id || undefined,
-              groupId: msg.group_id || undefined,
-              content: msg.content,
-              timestamp: msg.created_at || new Date().toISOString(),
-              isRead: msg.is_read,
-              imageUrl: msg.image_url || undefined,
-              imageName: msg.image_name || undefined
-            }))
-            allUserMessages.push(...localMessages)
-          } catch (e) {
-            // Ignore errors for individual users
-          }
-        }
-        
-        setAllMessages(allUserMessages)
-      } catch (e) {
-        console.error('Poll all messages failed', e)
-      }
+    void pollMessages()
+    const onVis = () => {
+      if (!isAutoRefreshPausedLocal() && document.visibilityState === 'visible') void pollMessages()
     }
-    
-    // Initial load
-    pollAllMessages()
-    
-    // Poll every 5 seconds
-    const interval = setInterval(pollAllMessages, 5000)
-    
-    // Cleanup on unmount
-    return () => clearInterval(interval)
-  }, [authUser, users])
+    document.addEventListener('visibilitychange', onVis)
+
+    const interval = window.setInterval(pollMessages, CHAT_ACTIVE_THREAD_POLL_MS)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [authUser, selectedRecipient, selectedGroup])
 
   const createGroup = (e: React.FormEvent) => {
     e.preventDefault()
@@ -321,6 +335,7 @@ export default function Chat() {
         setShowCreateGroup(false)
         setActiveTab('groups')
         setSelectedGroup(groupId)
+        void refreshThreadUnreadCounts()
       } catch (e) {
         console.error('Create group failed', e)
         alert('Gruppe konnte nicht erstellt werden.')
@@ -463,6 +478,7 @@ export default function Chat() {
       })
       // Aktualisiere unread count nach dem Senden
       refreshUnreadCount()
+      void refreshThreadUnreadCounts()
     } catch (err) {
       console.error('Send message failed', err)
       alert('Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.')
@@ -491,56 +507,53 @@ export default function Chat() {
     return []
   }
 
-  const getUnreadCount = (userId: string) => {
-    if (!authUser) return 0
-    return allMessages.filter(msg => 
-      msg.sender === userId && 
-      msg.recipient === authUser && 
-      !msg.isRead
-    ).length
-  }
+  const getUnreadCount = (userId: string) => directUnreadByPeer[userId] ?? 0
 
-  const getGroupUnreadCount = (groupId: string) => {
-    if (!authUser) return 0
-    return messages.filter(msg => 
-      msg.groupId === groupId && 
-      msg.sender !== authUser && 
-      !msg.isRead
-    ).length
-  }
+  const getGroupUnreadCount = (groupId: string) => groupUnreadById[groupId] ?? 0
 
   const markAsRead = async (userId: string) => {
     if (!authUser) return
-    // FIRST: Get unread messages BEFORE updating state
-    const unreadMessages = allMessages.filter(msg => 
-      msg.sender === userId && msg.recipient === authUser && !msg.isRead
-    )
-    
-    // SECOND: Update database
+
+    let unreadMessages: ChatMessageRecord[] = []
+    try {
+      const dbMessages = await getDirectMessages(authUser, userId)
+      unreadMessages = dbMessages.filter((msg) => {
+        if (msg.sender_id !== userId || msg.recipient_id !== authUser) return false
+        const readBy = (msg.read_by as string[] | null) || []
+        const isReadForUser = !!(msg.is_read || readBy.includes(authUser))
+        return !isReadForUser
+      })
+    } catch (e) {
+      console.error('❌ Load direct messages for mark read failed:', e)
+      return
+    }
+
+    if (unreadMessages.length === 0) {
+      setDirectUnreadByPeer((prev) => ({ ...prev, [userId]: 0 }))
+      void refreshThreadUnreadCounts()
+      refreshUnreadCount()
+      return
+    }
+
     try {
       for (const msg of unreadMessages) {
-        await updateChatMessageStatus(msg.id, true, authUser)
+        await updateChatMessageStatus(msg.id as string, true, authUser)
       }
-      console.log(`✅ Marked ${unreadMessages.length} messages as read in database`)
     } catch (e) {
       console.error('❌ Mark as read failed:', e)
-      return // Don't update local state if DB update fails
+      return
     }
-    
-    // THIRD: Update local state only after successful DB update
-    setMessages(prev => prev.map(msg => 
-      msg.sender === userId && msg.recipient === authUser && !msg.isRead
-        ? { ...msg, isRead: true }
-        : msg
-    ))
-    
-    setAllMessages(prev => prev.map(msg => 
-      msg.sender === userId && msg.recipient === authUser && !msg.isRead
-        ? { ...msg, isRead: true }
-        : msg
-    ))
-    
-    // FOURTH: Refresh unread count in sidebar
+
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.sender === userId && msg.recipient === authUser && !msg.isRead
+          ? { ...msg, isRead: true }
+          : msg,
+      ),
+    )
+
+    setDirectUnreadByPeer((prev) => ({ ...prev, [userId]: 0 }))
+    void refreshThreadUnreadCounts()
     refreshUnreadCount()
   }
 
@@ -548,41 +561,43 @@ export default function Chat() {
     if (!authUser) return
     let unreadMessages: ChatMessageRecord[] = []
 
-    // FIRST: Load unread group messages from DB (allMessages doesn't include groups)
     try {
       const dbMessages = await getGroupMessages(groupId)
-      unreadMessages = dbMessages.filter(
-        msg => msg.sender_id !== authUser && !msg.is_read
-      )
+      unreadMessages = dbMessages.filter((msg) => {
+        if (msg.sender_id === authUser) return false
+        const readBy = (msg.read_by as string[] | null) || []
+        const isReadForUser = !!(msg.is_read || readBy.includes(authUser))
+        return !isReadForUser
+      })
     } catch (e) {
       console.error('❌ Load group messages failed:', e)
       return
     }
 
     if (unreadMessages.length === 0) {
+      setGroupUnreadById((prev) => ({ ...prev, [groupId]: 0 }))
+      void refreshThreadUnreadCounts()
       refreshUnreadCount()
       return
     }
-    
-    // SECOND: Update database
+
     try {
       for (const msg of unreadMessages) {
         await updateChatMessageStatus(msg.id as string, true, authUser)
       }
-      console.log(`✅ Marked ${unreadMessages.length} group messages as read in database`)
     } catch (e) {
       console.error('❌ Mark group as read failed:', e)
-      return // Don't update local state if DB update fails
+      return
     }
-    
-    // THIRD: Update local state only after successful DB update
-    setMessages(prev => prev.map(msg => 
-      msg.groupId === groupId && msg.sender !== authUser && !msg.isRead
-        ? { ...msg, isRead: true }
-        : msg
-    ))
-    
-    // FOURTH: Refresh unread count in sidebar
+
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.groupId === groupId && msg.sender !== authUser && !msg.isRead ? { ...msg, isRead: true } : msg,
+      ),
+    )
+
+    setGroupUnreadById((prev) => ({ ...prev, [groupId]: 0 }))
+    void refreshThreadUnreadCounts()
     refreshUnreadCount()
   }
 

@@ -1,5 +1,16 @@
 'use client'
 
+import { fetchJsonGETCached, invalidateClientFetchCache } from '@/lib/clientFetchCache'
+
+/** Kurzer Browser-seitiger Deduplicate der gleichen GET-URLs (Nutzer bleiben max. TTL lang „hinten“. ) */
+const TTL_TASKS_DOC_MS = 45_000
+const TTL_TRAINING_MS = 60_000
+const TTL_COMPLETED_TRAINING_MS = 30_000
+const TTL_DASHBOARD_MS = 30_000
+const TTL_CHAT_META_MS = 20_000
+const TTL_TECHNIK_MS = 45_000
+const TTL_PINNWAND_MS = 30_000
+
 // =====================
 // Tasks
 // =====================
@@ -15,12 +26,12 @@ export interface TaskRecord {
 }
 
 export async function getTasks(): Promise<TaskRecord[]> {
-  const response = await fetch('/api/tasks')
-  if (!response.ok) {
-    console.warn('Failed to fetch tasks, returning empty list. Status:', response.status)
+  try {
+    return await fetchJsonGETCached<TaskRecord[]>('/api/tasks', TTL_TASKS_DOC_MS)
+  } catch (error) {
+    console.warn('Failed to fetch tasks, returning empty list.', error)
     return []
   }
-  return response.json()
 }
 
 export async function createTask(task: Omit<TaskRecord, 'id' | 'created_at' | 'status'> & { status?: string }) {
@@ -72,9 +83,7 @@ export interface DocumentRecord {
 // For now, keeping placeholder functions
 
 export async function getDocuments(): Promise<DocumentRecord[]> {
-  const response = await fetch('/api/documents')
-  if (!response.ok) throw new Error('Failed to fetch documents')
-  return response.json()
+  return fetchJsonGETCached<DocumentRecord[]>('/api/documents', TTL_TASKS_DOC_MS)
 }
 
 export async function createDocument(doc: Omit<DocumentRecord, 'id' | 'uploaded_at'>) {
@@ -128,9 +137,7 @@ export interface CompletedTrainingRecord {
 // Keeping placeholder functions
 
 export async function getTrainings(): Promise<TrainingRecord[]> {
-  const response = await fetch('/api/trainings')
-  if (!response.ok) throw new Error('Failed to fetch trainings')
-  return response.json()
+  return fetchJsonGETCached<TrainingRecord[]>('/api/trainings', TTL_TRAINING_MS)
 }
 
 export async function createTraining(training: Omit<TrainingRecord, 'id' | 'created_at' | 'updated_at'>) {
@@ -146,9 +153,7 @@ export async function markTrainingComplete(data: Omit<CompletedTrainingRecord, '
 }
 
 export async function getCompletedTrainings(): Promise<CompletedTrainingRecord[]> {
-  const response = await fetch('/api/trainings/completed')
-  if (!response.ok) throw new Error('Failed to fetch completed trainings')
-  return response.json()
+  return fetchJsonGETCached<CompletedTrainingRecord[]>('/api/trainings/completed', TTL_COMPLETED_TRAINING_MS)
 }
 
 export async function hasCompletedTraining(trainingId: string, userId: string): Promise<boolean> {
@@ -171,9 +176,7 @@ export interface DashboardInfoRecord {
 }
 
 export async function getDashboardInfos(): Promise<DashboardInfoRecord[]> {
-  const response = await fetch('/api/dashboard-infos')
-  if (!response.ok) throw new Error('Failed to fetch dashboard infos')
-  return response.json()
+  return fetchJsonGETCached<DashboardInfoRecord[]>('/api/dashboard-infos', TTL_DASHBOARD_MS)
 }
 
 export async function createDashboardInfo(info: Omit<DashboardInfoRecord, 'id' | 'created_at'>) {
@@ -386,12 +389,7 @@ export async function upsertChatUser(user: { id: string; name: string; avatar?: 
 
 export async function getChatUsers(): Promise<ChatUserRecord[]> {
   try {
-    const response = await fetch('/api/chat/users')
-    if (!response.ok) {
-      console.warn('Failed to fetch chat users, returning empty list. Status:', response.status)
-      return []
-    }
-    return response.json()
+    return await fetchJsonGETCached<ChatUserRecord[]>('/api/chat/users', TTL_CHAT_META_MS)
   } catch (error) {
     console.warn('Failed to fetch chat users (network or server error), returning empty list.', error)
     return []
@@ -399,9 +397,7 @@ export async function getChatUsers(): Promise<ChatUserRecord[]> {
 }
 
 export async function getChatGroups() {
-  const response = await fetch('/api/chat/groups')
-  if (!response.ok) throw new Error('Failed to fetch chat groups')
-  return response.json()
+  return fetchJsonGETCached('/api/chat/groups', TTL_CHAT_META_MS)
 }
 
 export async function createChatGroup(
@@ -416,7 +412,9 @@ export async function createChatGroup(
     body: JSON.stringify({ name, description, created_by: createdBy, members })
   })
   if (!response.ok) throw new Error('Failed to create chat group')
-  return response.json()
+  const result = await response.json()
+  invalidateClientFetchCache('/api/chat/groups')
+  return result
 }
 
 export async function getDirectMessages(user1: string, user2: string) {
@@ -452,15 +450,15 @@ export async function updateChatMessageStatus(messageId: string, isRead: boolean
 }
 
 export async function getChatPinnwandEntries(): Promise<ChatPinnwandEntryRecord[]> {
-  const response = await fetch('/api/chat/pinnwand')
-  if (!response.ok) {
+  try {
+    return await fetchJsonGETCached<ChatPinnwandEntryRecord[]>('/api/chat/pinnwand', TTL_PINNWAND_MS)
+  } catch (error) {
     console.warn(
-      'Failed to fetch pinnwand entries, returning empty list. Status:',
-      response.status
+      'Failed to fetch pinnwand entries, returning empty list.',
+      error,
     )
     return []
   }
-  return response.json()
 }
 
 export async function createChatPinnwandEntry(
@@ -791,9 +789,7 @@ export interface TechnikInspectionRecord {
 }
 
 export async function getTechnikInspections(): Promise<TechnikInspectionRecord[]> {
-  const response = await fetch('/api/technik')
-  if (!response.ok) throw new Error('Failed to fetch technik inspections')
-  return response.json()
+  return fetchJsonGETCached<TechnikInspectionRecord[]>('/api/technik', TTL_TECHNIK_MS)
 }
 
 export async function createTechnikInspection(inspection: Omit<TechnikInspectionRecord, 'id' | 'created_at' | 'updated_at'>) {
@@ -882,9 +878,7 @@ export interface GefahrstoffRecord {
 }
 
 export async function getGefahrstoffe(): Promise<GefahrstoffRecord[]> {
-  const response = await fetch('/api/technik/gefahrstoffe')
-  if (!response.ok) throw new Error('Failed to fetch gefahrstoffe')
-  return response.json()
+  return fetchJsonGETCached<GefahrstoffRecord[]>('/api/technik/gefahrstoffe', TTL_TECHNIK_MS)
 }
 
 export async function createGefahrstoff(gefahrstoff: Omit<GefahrstoffRecord, 'id' | 'created_at' | 'updated_at'>) {
@@ -945,9 +939,10 @@ export interface MaschinenBetriebsanweisungRecord {
 }
 
 export async function getMaschinenBetriebsanweisungen(): Promise<MaschinenBetriebsanweisungRecord[]> {
-  const response = await fetch('/api/technik/betriebsanweisungen-maschinen')
-  if (!response.ok) throw new Error('Failed to fetch betriebsanweisungen maschinen')
-  return response.json()
+  return fetchJsonGETCached<MaschinenBetriebsanweisungRecord[]>(
+    '/api/technik/betriebsanweisungen-maschinen',
+    TTL_TECHNIK_MS,
+  )
 }
 
 export async function createMaschinenBetriebsanweisung(

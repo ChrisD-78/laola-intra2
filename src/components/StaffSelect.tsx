@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { fetchJsonGETCached } from '@/lib/clientFetchCache'
 
 type StaffRow = { display_name: string; username: string; is_active?: boolean; orphan?: boolean }
 
@@ -36,8 +37,10 @@ export default function StaffSelect({
     let cancelled = false
     ;(async () => {
       try {
-        const response = await fetch('/api/users')
-        const data = await response.json()
+        const data = await fetchJsonGETCached<{
+          success?: boolean
+          users?: StaffRow[]
+        }>('/api/users', 120_000)
         if (cancelled) return
         if (data.success && Array.isArray(data.users)) {
           const rows: StaffRow[] = data.users

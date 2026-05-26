@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {
@@ -14,7 +15,7 @@ export async function GET() {
     
     if (!hasResults || hasResults.length === 0 || hasResults[0].count === 0) {
       // No results yet, return empty array
-      return NextResponse.json([])
+      return jsonCache([], CACHE_HEADER.quizLeaderboard)
     }
     
     // Globale Rangliste über alle Quizze hinweg
@@ -59,11 +60,10 @@ export async function GET() {
       total_attempts: Number(entry.total_attempts || 0)
     }))
     
-    return NextResponse.json(sanitizedResult)
+    return jsonCache(sanitizedResult, CACHE_HEADER.quizLeaderboard)
   } catch (error) {
     console.error('Failed to fetch global leaderboard:', error)
-    // Return empty array instead of error to prevent crashes
-    return NextResponse.json([])
+    return jsonCache([], CACHE_HEADER.quizLeaderboard)
   }
 }
 

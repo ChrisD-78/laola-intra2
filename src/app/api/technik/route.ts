@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -28,7 +29,7 @@ export async function GET() {
       FROM technik_inspections
       ORDER BY naechste_pruefung ASC, created_at DESC
     `
-    return NextResponse.json(result)
+    return jsonCache(result, CACHE_HEADER.generalList)
   } catch (error) {
     console.error('Failed to fetch technik inspections:', error)
     return NextResponse.json(

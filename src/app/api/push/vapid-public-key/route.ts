@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 // GET - VAPID Public Key abrufen (für Frontend)
 export async function GET() {
@@ -20,9 +21,12 @@ export async function GET() {
     console.warn('VAPID Private Key nicht gefunden - Push Notifications können nicht gesendet werden')
   }
 
-  return NextResponse.json({ 
-    publicKey,
-    configured: !!publicKey && !!privateKey
-  })
+  return jsonCache(
+    {
+      publicKey,
+      configured: !!publicKey && !!privateKey,
+    },
+    CACHE_HEADER.vapidPublic,
+  )
 }
 

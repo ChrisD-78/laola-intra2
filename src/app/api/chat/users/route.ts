@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,7 +11,7 @@ export async function GET() {
       SELECT * FROM chat_users 
       ORDER BY name ASC
     `
-    return NextResponse.json(users)
+    return jsonCache(users, CACHE_HEADER.chatParticipantMeta)
   } catch (error) {
     console.error('Failed to fetch chat users:', error)
     return NextResponse.json(

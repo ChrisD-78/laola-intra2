@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -26,7 +27,7 @@ export async function GET() {
       members: membersByGroup.get(group.id) || []
     }))
 
-    return NextResponse.json(enriched)
+    return jsonCache(enriched, CACHE_HEADER.chatParticipantMeta)
   } catch (error) {
     console.error('Failed to fetch chat groups:', error)
     return NextResponse.json(
