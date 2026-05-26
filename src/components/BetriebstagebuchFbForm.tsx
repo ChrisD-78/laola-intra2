@@ -599,12 +599,6 @@ export default function BetriebstagebuchFbForm({
     handleClose()
   }
 
-  /** Bei Betriebsmitte nur Schwimmer- und Nichtschwimmerbecken */
-  const visibleFbPoolsForWater =
-    selectedTimeSlot === 'betriebsmitte'
-      ? FB_POOLS.filter((p) => p.key === 'schwimmer' || p.key === 'nichtschwimmer')
-      : FB_POOLS
-
   if (!isOpen) return null
 
   return (
@@ -772,7 +766,7 @@ export default function BetriebstagebuchFbForm({
 
             {/* Becken */}
             <div className="space-y-4">
-              {visibleFbPoolsForWater.map((pool) => (
+              {FB_POOLS.map((pool) => (
                 <div key={pool.key} className="space-y-2">
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
