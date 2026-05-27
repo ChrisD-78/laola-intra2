@@ -332,7 +332,7 @@ export default function Dashboard() {
       </div>
 
       {/* Aktionen unterhalb des Headers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Link
           href="https://stadtholding-landau-pep.dejoris.de/de/login//#%257B%2522main%2522%253A%2522de%252Fadmin%252Femployees%2522%252C%2522column%2522%253A%2522de%252Fadmin%252Findex%252Fhome_column%2522%252C%2522icon%2522%253A%2522fas%2520fa-users%2522%257D"
           target="_blank"
@@ -382,6 +382,21 @@ export default function Dashboard() {
             </div>
           </div>
         </button>
+
+        <Link
+          href="/reinigungswoche"
+          className="block w-full bg-white rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl shadow-lg">
+              <span className="text-2xl">🧹</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-base font-semibold text-gray-900">Reinigungswoche 26</p>
+              <p className="text-xs text-gray-600">Wochenplan · Bautagebuch</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Quick Stats */}

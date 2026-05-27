@@ -38,6 +38,7 @@ const Sidebar = () => {
     { href: '/aufgaben', label: 'Aufgaben', icon: '📋' },
     { href: '/dokumente', label: 'Dokumente', icon: '📄' },
     { href: '/formulare', label: 'Formulare', icon: '📝' },
+    { href: '/reinigungswoche', label: 'Reinigungswoche', icon: '🧹' },
     { href: '/schulungen', label: 'Schulungen', icon: '🎓' },
     ...(hasTechnikAccess ? [{ href: '/technik', label: 'Technik', icon: '🔧' }] : []),
     { href: '/chat', label: 'Chat', icon: '💬' },
