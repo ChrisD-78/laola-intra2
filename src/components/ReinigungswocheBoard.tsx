@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/components/AuthProvider'
 import {
   type DayKey,
   type ReinigungEntry,
+  type ReinigungListenEintrag,
   type ReinigungswocheStore,
   type ReinigungswocheWeekData,
   DAY_ORDER,
@@ -14,6 +16,7 @@ import {
   formatIsoLocal,
   parseIsoLocal,
   newEntry,
+  newListenEintrag,
   normalizeWeekFromStorage,
   normalizeStoreFromStorage,
   defaultReinigungWeekMondayIso,
@@ -28,11 +31,15 @@ import {
 
 const LS_FALLBACK_KEY = 'laola-reinigungswoche-v1'
 
+type HeaderPanel = 'bestellungen' | 'aufgaben' | null
+type ListenKey = 'bestellungen' | 'wochenAufgaben'
+
 function cloneStore(s: ReinigungswocheStore): ReinigungswocheStore {
   return JSON.parse(JSON.stringify(s)) as ReinigungswocheStore
 }
 
 export default function ReinigungswocheBoard() {
+  const { currentUser } = useAuth()
   const [weekMondayIso, setWeekMondayIso] = useState(() => defaultReinigungWeekMondayIso())
   const [store, setStore] = useState<ReinigungswocheStore>({ weeks: {} })
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -41,6 +48,7 @@ export default function ReinigungswocheBoard() {
   const hydrateRef = useRef(true)
   /** Nur ein Wochentag sichtbar; null = alle Tage */
   const [soloDayKey, setSoloDayKey] = useState<DayKey | null>(null)
+  const [headerPanel, setHeaderPanel] = useState<HeaderPanel>(null)
 
   const weekDates = DAY_ORDER.map((_, i) => {
     const start = parseIsoLocal(weekMondayIso)
@@ -51,8 +59,9 @@ export default function ReinigungswocheBoard() {
 
   const weekData = normalizeWeekFromStorage(store.weeks[weekMondayIso])
   const entriesForWeek = weekData.aufgaben
-  const anwesendeProTag = weekData.anwesendeMitarbeiterProTag
   const fachfirmenAmTag = weekData.fachfirmenProTag
+  const bestellungen = weekData.bestellungen
+  const wochenAufgaben = weekData.wochenAufgaben
 
   const minWeekMonday = getReinigungMinWeekMondayIso()
   const maxWeekMonday = getReinigungMaxWeekMondayIso()
@@ -186,15 +195,6 @@ export default function ReinigungswocheBoard() {
     [mutateWeek],
   )
 
-  const setAnwesendeProTag = useCallback(
-    (day: DayKey, text: string) => {
-      mutateWeek((w) => {
-        w.anwesendeMitarbeiterProTag[day] = text
-      })
-    },
-    [mutateWeek],
-  )
-
   const setFachfirmenProTag = useCallback(
     (day: DayKey, text: string) => {
       mutateWeek((w) => {
@@ -203,6 +203,37 @@ export default function ReinigungswocheBoard() {
     },
     [mutateWeek],
   )
+
+  const addListenEintrag = useCallback(
+    (listKey: ListenKey) => {
+      mutateWeek((w) => {
+        w[listKey] = [...w[listKey], newListenEintrag(currentUser ?? '')]
+      })
+    },
+    [mutateWeek, currentUser],
+  )
+
+  const removeListenEintrag = useCallback(
+    (listKey: ListenKey, id: string) => {
+      mutateWeek((w) => {
+        w[listKey] = w[listKey].filter((r) => r.id !== id)
+      })
+    },
+    [mutateWeek],
+  )
+
+  const updateListenEintrag = useCallback(
+    (listKey: ListenKey, id: string, patch: Partial<ReinigungListenEintrag>) => {
+      mutateWeek((w) => {
+        w[listKey] = w[listKey].map((r) => (r.id === id ? { ...r, ...patch } : r))
+      })
+    },
+    [mutateWeek],
+  )
+
+  const toggleHeaderPanel = useCallback((panel: Exclude<HeaderPanel, null>) => {
+    setHeaderPanel((prev) => (prev === panel ? null : panel))
+  }, [])
 
   const shiftWeek = useCallback(
     (delta: number) => {
@@ -241,63 +272,210 @@ export default function ReinigungswocheBoard() {
           )}
         </div>
 
-        <aside className="relative z-30 w-full shrink-0 xl:max-w-sm xl:sticky xl:top-20">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md space-y-3 pointer-events-auto">
-            <div className="text-center px-1">
-              <p className="text-sm font-semibold text-gray-900">KW {kwNum}</p>
-              <p className="mt-1 text-xs text-gray-600 leading-snug tabular-nums">{weekRangeLabel}</p>
+        <div className="flex w-full shrink-0 flex-col gap-3 xl:w-auto xl:max-w-none">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[42rem]">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md space-y-3">
+              <div className="text-center px-1">
+                <p className="text-sm font-semibold text-gray-900">KW {kwNum}</p>
+                <p className="mt-1 text-xs text-gray-600 leading-snug tabular-nums">{weekRangeLabel}</p>
+              </div>
+              <div className="flex flex-nowrap items-stretch justify-center gap-2">
+                <button
+                  type="button"
+                  disabled={atMinWeek}
+                  onClick={() => shiftWeek(-1)}
+                  className="flex h-14 min-h-[52px] w-14 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-2xl font-semibold shadow-sm hover:bg-gray-100 active:bg-gray-200 touch-manipulation disabled:pointer-events-none disabled:opacity-35"
+                  aria-label="Vorherige Woche"
+                  title={atMinWeek ? 'Erste Reinigungswoche im Zeitraum' : 'Eine Woche zurück'}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={goCurrentWeek}
+                  className="min-h-[52px] flex-1 min-w-[6rem] rounded-xl bg-emerald-600 px-3 text-[14px] font-semibold text-white shadow-md hover:bg-emerald-700 active:bg-emerald-800 touch-manipulation"
+                  title="Springt zur Kalender­woche mit heutigem Datum (begrenzt auf den Reinigungszeitraum 22.6.–9.8.2026)"
+                >
+                  Diese Woche
+                </button>
+                <button
+                  type="button"
+                  disabled={atMaxWeek}
+                  onClick={() => shiftWeek(1)}
+                  className="flex h-14 min-h-[52px] w-14 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-2xl font-semibold shadow-sm hover:bg-gray-100 active:bg-gray-200 touch-manipulation disabled:pointer-events-none disabled:opacity-35"
+                  aria-label="Nächste Woche"
+                  title={atMaxWeek ? 'Letzte Reinigungswoche im Zeitraum' : 'Eine Woche vor'}
+                >
+                  ›
+                </button>
+              </div>
+              <div
+                className={`rounded-xl px-3 py-3 text-center text-sm font-medium shadow-inner pointer-events-none ${
+                  saveState === 'saving'
+                    ? 'bg-blue-50 text-blue-800'
+                    : saveState === 'saved'
+                      ? 'bg-green-50 text-green-800'
+                      : saveState === 'error'
+                        ? 'bg-red-50 text-red-800'
+                        : 'bg-gray-50 text-gray-600'
+                }`}
+                aria-live="polite"
+              >
+                {saveState === 'saving' && 'Speichern…'}
+                {saveState === 'saved' && 'Gespeichert'}
+                {saveState === 'error' &&
+                  'Speichern am Server fehlgeschlagen – Entwurf lokal zwischengespeichert.'}
+                {saveState === 'idle' && 'Änderungen werden automatisch gespeichert'}
+              </div>
             </div>
-            <div className="flex flex-nowrap items-stretch justify-center gap-2">
-              <button
-                type="button"
-                disabled={atMinWeek}
-                onClick={() => shiftWeek(-1)}
-                className="flex h-14 min-h-[52px] w-14 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-2xl font-semibold shadow-sm hover:bg-gray-100 active:bg-gray-200 touch-manipulation disabled:pointer-events-none disabled:opacity-35"
-                aria-label="Vorherige Woche"
-                title={atMinWeek ? 'Erste Reinigungswoche im Zeitraum' : 'Eine Woche zurück'}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={goCurrentWeek}
-                className="min-h-[52px] flex-1 min-w-[10rem] max-w-[16rem] rounded-xl bg-emerald-600 px-4 text-[15px] font-semibold text-white shadow-md hover:bg-emerald-700 active:bg-emerald-800 touch-manipulation"
-                title="Springt zur Kalender­woche mit heutigem Datum (begrenzt auf den Reinigungszeitraum 22.6.–9.8.2026)"
-              >
-                Diese Woche
-              </button>
-              <button
-                type="button"
-                disabled={atMaxWeek}
-                onClick={() => shiftWeek(1)}
-                className="flex h-14 min-h-[52px] w-14 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-2xl font-semibold shadow-sm hover:bg-gray-100 active:bg-gray-200 touch-manipulation disabled:pointer-events-none disabled:opacity-35"
-                aria-label="Nächste Woche"
-                title={atMaxWeek ? 'Letzte Reinigungswoche im Zeitraum' : 'Eine Woche vor'}
-              >
-                ›
-              </button>
-            </div>
-            <div
-              className={`rounded-xl px-3 py-3 text-center text-sm font-medium shadow-inner pointer-events-none ${
-                saveState === 'saving'
-                  ? 'bg-blue-50 text-blue-800'
-                  : saveState === 'saved'
-                    ? 'bg-green-50 text-green-800'
-                    : saveState === 'error'
-                      ? 'bg-red-50 text-red-800'
-                      : 'bg-gray-50 text-gray-600'
+
+            <button
+              type="button"
+              onClick={() => toggleHeaderPanel('bestellungen')}
+              aria-expanded={headerPanel === 'bestellungen'}
+              className={`rounded-2xl border p-4 shadow-md text-left transition-colors touch-manipulation min-h-[11rem] flex flex-col justify-between ${
+                headerPanel === 'bestellungen'
+                  ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300'
+                  : 'border-gray-200 bg-white hover:border-amber-200 hover:bg-amber-50/40'
               }`}
-              aria-live="polite"
             >
-              {saveState === 'saving' && 'Speichern…'}
-              {saveState === 'saved' && 'Gespeichert'}
-              {saveState === 'error' &&
-                'Speichern am Server fehlgeschlagen – Entwurf lokal zwischengespeichert.'}
-              {saveState === 'idle' && 'Änderungen werden automatisch gespeichert'}
-            </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900">Bestellungen</p>
+                <p className="mt-2 text-sm text-gray-600 leading-snug">
+                  Material, Verbrauch, Einkäufe für diese Woche
+                </p>
+              </div>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                {bestellungen.length === 0
+                  ? 'Tippen zum Eintragen'
+                  : `${bestellungen.length} Eintrag${bestellungen.length === 1 ? '' : 'e'}`}
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleHeaderPanel('aufgaben')}
+              aria-expanded={headerPanel === 'aufgaben'}
+              className={`rounded-2xl border p-4 shadow-md text-left transition-colors touch-manipulation min-h-[11rem] flex flex-col justify-between ${
+                headerPanel === 'aufgaben'
+                  ? 'border-teal-400 bg-teal-50 ring-2 ring-teal-300'
+                  : 'border-gray-200 bg-white hover:border-teal-200 hover:bg-teal-50/40'
+              }`}
+            >
+              <div>
+                <p className="text-lg font-bold text-gray-900">Aufgaben</p>
+                <p className="mt-2 text-sm text-gray-600 leading-snug">
+                  Allgemeine Aufgaben und Hinweise für die Woche
+                </p>
+              </div>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-teal-800">
+                {wochenAufgaben.length === 0
+                  ? 'Tippen zum Eintragen'
+                  : `${wochenAufgaben.length} Eintrag${wochenAufgaben.length === 1 ? '' : 'e'}`}
+              </p>
+            </button>
           </div>
-        </aside>
+        </div>
       </div>
+
+      {headerPanel !== null && (
+        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-gray-900">
+              {headerPanel === 'bestellungen' ? 'Bestellungen' : 'Aufgaben'} · KW {kwNum}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setHeaderPanel(null)}
+              className="min-h-[44px] rounded-xl border border-gray-300 bg-gray-50 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-100 touch-manipulation"
+            >
+              Schließen
+            </button>
+          </div>
+
+          <div className="overflow-x-auto -mx-1 px-1">
+            <table className="w-full min-w-[36rem] border-collapse text-left">
+              <thead>
+                <tr className="border-b-2 border-gray-200 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <th className="w-12 py-3 pr-2">Nr.</th>
+                  <th className="py-3 pr-3">
+                    {headerPanel === 'bestellungen' ? 'Bestellung / Bedarf' : 'Aufgabe / Hinweis'}
+                  </th>
+                  <th className="w-[10rem] py-3 pr-3 sm:w-[12rem]">Mitarbeiter</th>
+                  <th className="w-16 py-3 text-center"> </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(headerPanel === 'bestellungen' ? bestellungen : wochenAufgaben).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-sm text-gray-500">
+                      Noch keine Einträge – unten hinzufügen
+                    </td>
+                  </tr>
+                ) : (
+                  (headerPanel === 'bestellungen' ? bestellungen : wochenAufgaben).map((row, index) => {
+                    const listKey: ListenKey =
+                      headerPanel === 'bestellungen' ? 'bestellungen' : 'wochenAufgaben'
+                    return (
+                      <tr key={row.id} className="border-b border-gray-100 align-top">
+                        <td className="py-3 pr-2 text-sm font-bold tabular-nums text-gray-700">
+                          {index + 1}
+                        </td>
+                        <td className="py-2 pr-3">
+                          <textarea
+                            value={row.inhalt}
+                            onChange={(e) => updateListenEintrag(listKey, row.id, { inhalt: e.target.value })}
+                            rows={2}
+                            placeholder={
+                              headerPanel === 'bestellungen'
+                                ? 'z. B. Chlor, Putzmittel, Handschuhe …'
+                                : 'z. B. Filter wechseln, Lager aufräumen …'
+                            }
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-[16px] text-gray-900 placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-400/40 touch-manipulation"
+                          />
+                        </td>
+                        <td className="py-2 pr-3">
+                          <input
+                            type="text"
+                            value={row.mitarbeiter}
+                            onChange={(e) =>
+                              updateListenEintrag(listKey, row.id, { mitarbeiter: e.target.value })
+                            }
+                            placeholder="Name"
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-[16px] text-gray-900 placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-400/40 touch-manipulation"
+                          />
+                        </td>
+                        <td className="py-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeListenEintrag(listKey, row.id)}
+                            title="Eintrag löschen"
+                            aria-label="Eintrag löschen"
+                            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 touch-manipulation"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              addListenEintrag(headerPanel === 'bestellungen' ? 'bestellungen' : 'wochenAufgaben')
+            }
+            className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-teal-300 bg-teal-50/70 text-teal-800 font-semibold text-[15px] hover:bg-teal-100 hover:border-teal-400 transition-colors touch-manipulation"
+          >
+            <span className="text-xl leading-none">+</span>
+            Eintrag hinzufügen
+          </button>
+        </section>
+      )}
 
       {soloDayKey !== null && (
         <div className="flex flex-wrap items-center justify-center gap-2 pb-1">
@@ -348,7 +526,6 @@ export default function ReinigungswocheBoard() {
             const dateCell = weekDates[idx]
             const dow = DAY_LABELS[dayKey]
             const dowShort = DAY_LABELS_SHORT[dayKey]
-            const anwesendeText = anwesendeProTag[dayKey] ?? ''
             const fachfirmenText = fachfirmenAmTag[dayKey] ?? ''
 
             const doneRatio =
@@ -398,22 +575,6 @@ export default function ReinigungswocheBoard() {
                 </header>
 
                 <div className="flex flex-1 flex-col gap-3 p-3">
-                  {/* Eigene Spalte/Feld pro Tag: alle Anwesenden */}
-                  <div className="rounded-xl border-2 border-amber-200/90 bg-amber-50/90 p-3 shadow-inner">
-                    <label className="block">
-                      <span className="text-xs font-bold uppercase tracking-wide text-amber-900">
-                        Alle an diesem Tag anwesend
-                      </span>
-                      <textarea
-                        value={anwesendeText}
-                        onChange={(e) => setAnwesendeProTag(dayKey, e.target.value)}
-                        rows={5}
-                        placeholder={'z.\u202fB.\u202fMaria M.\nKai K.\n…'}
-                        className="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-3 text-[16px] text-gray-900 placeholder:text-amber-400/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-400/40 touch-manipulation"
-                      />
-                    </label>
-                  </div>
-
                   <div className="rounded-xl border-2 border-violet-200/90 bg-violet-50/90 p-3 shadow-inner">
                     <label className="block">
                       <span className="text-xs font-bold uppercase tracking-wide text-violet-900">
@@ -458,9 +619,11 @@ export default function ReinigungswocheBoard() {
                           <button
                             type="button"
                             onClick={() => removeRow(dayKey, row.id)}
-                            className="ml-auto text-sm text-red-600 font-medium px-3 py-2 rounded-lg hover:bg-red-50 min-h-[44px] touch-manipulation"
+                            title="Aufgabe löschen"
+                            aria-label="Aufgabe löschen"
+                            className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 touch-manipulation"
                           >
-                            Löschen
+                            🗑️
                           </button>
                         </div>
                         <div className="space-y-3">

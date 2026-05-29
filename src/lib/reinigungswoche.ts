@@ -30,13 +30,24 @@ export interface ReinigungEntry {
   erledigt: boolean
 }
 
+/** Eintrag in den Wochenlisten Bestellungen / Aufgaben (oben) */
+export interface ReinigungListenEintrag {
+  id: string
+  inhalt: string
+  mitarbeiter: string
+}
+
 /** Eine Kalenderwoche (Schlüssel in store.weeks = ISO-Montag) */
 export interface ReinigungswocheWeekData {
   aufgaben: Record<DayKey, ReinigungEntry[]>
-  /** Alle an diesem Wochentag anwesenden Mitarbeiter (ein gemeinsames Feld pro Tag) */
-  anwesendeMitarbeiterProTag: Record<DayKey, string>
-  /** Fachfirmen pro Tag – gemeinsames Feld wie bei Anwesenheit */
+  /** Fachfirmen pro Tag */
   fachfirmenProTag: Record<DayKey, string>
+  /** Wochenliste: Bestellungen */
+  bestellungen: ReinigungListenEintrag[]
+  /** Wochenliste: allgemeine Aufgaben (nicht die Tages-Aufgaben im Plan) */
+  wochenAufgaben: ReinigungListenEintrag[]
+  /** @deprecated Nicht mehr in der UI – bleibt für alte gespeicherte Daten */
+  anwesendeMitarbeiterProTag?: Record<DayKey, string>
 }
 
 export interface ReinigungswocheStore {
@@ -88,6 +99,28 @@ export function newEntry(): ReinigungEntry {
   }
 }
 
+export function newListenEintrag(mitarbeiter = ''): ReinigungListenEintrag {
+  return {
+    id: newEntry().id,
+    inhalt: '',
+    mitarbeiter,
+  }
+}
+
+function ensureListenEintragShape(e: unknown): ReinigungListenEintrag {
+  const o = (e || {}) as Record<string, unknown>
+  return {
+    id: String(o.id ?? newEntry().id),
+    inhalt: String(o.inhalt ?? o.text ?? o.beschreibung ?? ''),
+    mitarbeiter: String(o.mitarbeiter ?? o.eingetragenVon ?? ''),
+  }
+}
+
+function ensureListenArray(src: unknown): ReinigungListenEintrag[] {
+  if (!Array.isArray(src)) return []
+  return src.map((row) => ensureListenEintragShape(row))
+}
+
 function ensureEntryShape(e: unknown): ReinigungEntry {
   const o = (e || {}) as Record<string, unknown>
   const vm = String(o.verantwortlicherMitarbeiter ?? o.mitarbeiter ?? '')
@@ -125,14 +158,14 @@ function ensureAufgabenShape(src: unknown): Record<DayKey, ReinigungEntry[]> {
 /** Akzeptiert neues Format { aufgaben, anwesende…, fachfirmen… } oder Legacy nur Aufgaben-Map */
 export function normalizeWeekFromStorage(raw: unknown): ReinigungswocheWeekData {
   const emptyAufgaben = emptyDayMap()
-  const emptyAn = emptyAnwesendeProTag()
   const emptyFf = emptyFachfirmenProTag()
 
   const buildResult = (
     aufgaben: Record<DayKey, ReinigungEntry[]>,
     aufgabenSource: Record<string, unknown>,
-    an: Record<DayKey, string>,
     ffFromFile: Record<DayKey, string>,
+    bestellungen: ReinigungListenEintrag[],
+    wochenAufgaben: ReinigungListenEintrag[],
   ): ReinigungswocheWeekData => {
     const ff = { ...emptyFf }
     for (const d of DAY_ORDER) {
@@ -144,11 +177,11 @@ export function normalizeWeekFromStorage(raw: unknown): ReinigungswocheWeekData 
         ff[d] = migrated
       }
     }
-    return { aufgaben, anwesendeMitarbeiterProTag: an, fachfirmenProTag: ff }
+    return { aufgaben, fachfirmenProTag: ff, bestellungen, wochenAufgaben }
   }
 
   if (!raw || typeof raw !== 'object') {
-    return buildResult(emptyAufgaben, {}, emptyAn, emptyFf)
+    return buildResult(emptyAufgaben, {}, emptyFf, [], [])
   }
 
   const o = raw as Record<string, unknown>
@@ -156,13 +189,6 @@ export function normalizeWeekFromStorage(raw: unknown): ReinigungswocheWeekData 
   if (o.aufgaben && typeof o.aufgaben === 'object') {
     const aufgabenSource = o.aufgaben as Record<string, unknown>
     const aufgaben = ensureAufgabenShape(aufgabenSource)
-    const an = { ...emptyAn }
-    const ap = o.anwesendeMitarbeiterProTag
-    if (ap && typeof ap === 'object') {
-      for (const d of DAY_ORDER) {
-        an[d] = String((ap as Record<string, unknown>)[d] ?? '')
-      }
-    }
     const ffFromFile = { ...emptyFf }
     const fp = o.fachfirmenProTag
     if (fp && typeof fp === 'object') {
@@ -170,17 +196,23 @@ export function normalizeWeekFromStorage(raw: unknown): ReinigungswocheWeekData 
         ffFromFile[d] = String((fp as Record<string, unknown>)[d] ?? '')
       }
     }
-    return buildResult(aufgaben, aufgabenSource, an, ffFromFile)
+    return buildResult(
+      aufgaben,
+      aufgabenSource,
+      ffFromFile,
+      ensureListenArray(o.bestellungen),
+      ensureListenArray(o.wochenAufgaben),
+    )
   }
 
   const hasLegacyArrays = DAY_ORDER.some((d) => Array.isArray(o[d]))
   if (hasLegacyArrays) {
     const aufgabenSource = o
     const aufgaben = ensureAufgabenShape(raw)
-    return buildResult(aufgaben, aufgabenSource, emptyAn, emptyFf)
+    return buildResult(aufgaben, aufgabenSource, emptyFf, [], [])
   }
 
-  return buildResult(emptyAufgaben, {}, emptyAn, emptyFf)
+  return buildResult(emptyAufgaben, {}, emptyFf, [], [])
 }
 
 export function normalizeStoreFromStorage(store: ReinigungswocheStore | null | undefined): ReinigungswocheStore {
