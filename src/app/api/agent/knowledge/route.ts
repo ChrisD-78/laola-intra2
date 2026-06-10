@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { completeAnthropic, type AnthropicChatMessage } from '@/lib/anthropicMessages'
 import {
-  buildDocumentIndex,
   buildKnowledgeContext,
   KNOWLEDGE_SYSTEM_PROMPT,
-  selectRelevantDocuments,
+  listPdfDocuments,
+  loadIndexedDocumentsForQuery,
 } from '@/lib/agentDocumentKnowledge'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-/** PDF-Dokumente aus „Dokumente“ für die Wissensdatenbank. */
-export async function GET(request: NextRequest) {
+/** PDF-Dokumente aus „Dokumente“ (nur Metadaten, schnell). */
+export async function GET() {
   try {
-    const origin = request.nextUrl.origin
-    const docs = await buildDocumentIndex(origin)
+    const documents = await listPdfDocuments()
     return NextResponse.json({
-      documents: docs.map((d) => ({
+      documents: documents.map((d) => ({
         id: d.id,
         title: d.title,
         category: d.category,
         fileName: d.fileName,
       })),
-      count: docs.length,
+      count: documents.length,
     })
   } catch (e) {
     console.error('GET /api/agent/knowledge', e)
@@ -46,17 +45,26 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = request.nextUrl.origin
-    const index = await buildDocumentIndex(origin)
+    const metas = await listPdfDocuments()
 
-    if (index.length === 0) {
+    if (metas.length === 0) {
       return NextResponse.json({
-        text: 'Es sind noch keine PDF-Dokumente mit lesbarem Text im Bereich „Dokumente“ verfügbar. Bitte laden Sie zuerst PDFs unter Dokumente hoch.',
+        text: 'Es sind noch keine PDF-Dokumente im Bereich „Dokumente“ verfügbar. Bitte laden Sie zuerst PDFs unter Dokumente hoch.',
         sources: [],
         documentCount: 0,
       })
     }
 
-    const relevant = selectRelevantDocuments(index, message)
+    const relevant = await loadIndexedDocumentsForQuery(message, origin)
+
+    if (relevant.length === 0) {
+      return NextResponse.json({
+        text: `Es wurden ${metas.length} PDF(s) gefunden, aber der Text konnte nicht gelesen werden (z. B. gescanntes PDF ohne Textschicht). Bitte prüfen Sie die Dateien unter Dokumente.`,
+        sources: [],
+        documentCount: metas.length,
+      })
+    }
+
     const context = buildKnowledgeContext(relevant)
     const system = `${KNOWLEDGE_SYSTEM_PROMPT}\n\n### Dokumentenauszüge\n${context}`
 
@@ -84,7 +92,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       text,
       sources: relevant.map((d) => d.title),
-      documentCount: index.length,
+      documentCount: metas.length,
     })
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Interner Serverfehler'

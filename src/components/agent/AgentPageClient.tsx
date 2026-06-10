@@ -6,6 +6,11 @@ import {
   embedProtocolLogos,
   wrapProtocolDocument,
 } from '@/lib/agentProtocolDocument'
+import {
+  getBrowserSpeechRecognition,
+  readSpeechResults,
+  type BrowserSpeechRecognition,
+} from '@/lib/agentSpeechRecognition'
 
 type TabId = 'dashboard' | 'chat' | 'protocol' | 'mail'
 
@@ -91,6 +96,20 @@ function initials(name: string | null) {
   return name.slice(0, 2).toUpperCase()
 }
 
+async function parseAgentJson<T>(res: Response): Promise<T> {
+  const raw = await res.text()
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    const preview = raw.trim().slice(0, 80).replace(/\s+/g, ' ')
+    throw new Error(
+      res.ok
+        ? 'Ungültige Server-Antwort (kein JSON).'
+        : `Serverfehler (${res.status})${preview ? `: ${preview}` : ''}`,
+    )
+  }
+}
+
 async function callAgentAPI(
   system: string,
   messages: { role: 'user' | 'assistant'; content: string }[],
@@ -101,7 +120,7 @@ async function callAgentAPI(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ system, messages, max_tokens }),
   })
-  const data = await res.json()
+  const data = await parseAgentJson<{ error?: string; text?: string }>(res)
   if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen')
   return data.text as string
 }
@@ -134,7 +153,13 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [sendMailBusy, setSendMailBusy] = useState(false)
   const [hasAudio, setHasAudio] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [meetingTranscript, setMeetingTranscript] = useState('')
+  const [transcriptInterim, setTranscriptInterim] = useState('')
+  const [speechSupported, setSpeechSupported] = useState<boolean | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null)
+  const isRecordingRef = useRef(false)
+  const audioChunksRef = useRef<BlobPart[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [seconds, setSeconds] = useState(0)
   const [recordStatus, setRecordStatus] = useState('Klicken zum Aufnehmen')
@@ -157,6 +182,10 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   }, [])
 
   useEffect(() => {
+    setSpeechSupported(Boolean(getBrowserSpeechRecognition()))
+  }, [])
+
+  useEffect(() => {
     void (async () => {
       try {
         const res = await fetch('/api/agent/status')
@@ -173,12 +202,12 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
     setKnowledgeDocsLoading(true)
     void (async () => {
       try {
-        const res = await fetch('/api/agent/knowledge')
-        const data = (await res.json()) as {
+        const res = await fetch('/api/agent/knowledge', { cache: 'no-store' })
+        const data = await parseAgentJson<{
           documents?: KnowledgeDoc[]
           count?: number
           error?: string
-        }
+        }>(res)
         if (!res.ok) throw new Error(data.error || 'Dokumente konnten nicht geladen werden')
         const docs = Array.isArray(data.documents) ? data.documents : []
         setKnowledgeDocs(docs)
@@ -259,9 +288,10 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
       const res = await fetch('/api/agent/knowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify({ message: msg, history: chatHistory }),
       })
-      const data = (await res.json()) as { text?: string; error?: string }
+      const data = await parseAgentJson<{ text?: string; error?: string }>(res)
       if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen')
       const reply = data.text || ''
       setChatHistory((h) => [...h, { role: 'user', content: msg }, { role: 'assistant', content: reply }])
@@ -285,23 +315,40 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
 
   const generateProtocol = async () => {
     const title = meetingTitle.trim() || 'Besprechung'
+    const transcript = meetingTranscript.trim()
+
+    if (!transcript) {
+      showToast('Bitte zuerst eine Sprachaufnahme machen oder das Transkript eintragen.')
+      return
+    }
+
     setProtocolLoading(true)
     setProtocolHtml('')
-    const systemPrompt = `Du bist ein professioneller Protokollschreiber für die Stadtholding Landau / Bäderbook GmbH. 
+    const systemPrompt = `Du bist ein professioneller Protokollschreiber für die Stadtholding Landau / Bäderbook GmbH.
 Erstelle ein formelles Besprechungsprotokoll auf Deutsch in HTML-Format.
 Verwende diese HTML-Tags: h4 für Abschnitte, p für Text, ul/li für Aufzählungen.
 Kein eigenes Logo oder Briefkopf – der wird automatisch ergänzt.
-Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene Inhalte, Beschlüsse, Aufgaben mit Verantwortlichen, nächste Sitzung.`
 
-    const userMsg = `Erstelle ein realistisches Besprechungsprotokoll für:
+Wichtig:
+- Leite den Inhalt ausschließlich aus der Transkription ab.
+- Erfinde keine Themen, Beschlüsse oder Aufgaben, die nicht in der Transkription vorkommen.
+- Strukturiere das Protokoll mit: Kopfdaten, Tagesordnung, Besprochene Inhalte, Beschlüsse, Aufgaben mit Verantwortlichen, nächste Sitzung (falls erwähnt).`
+
+    const userMsg = `Erstelle ein Besprechungsprotokoll aus folgender Transkription.
+
+Metadaten:
 - Titel: ${title}
 - Datum: ${meetingDate}
 - Abteilung: ${meetingDept}
 - Teilnehmer: ${meetingParticipants || 'Nicht angegeben'}
-- Hinweis: Da keine echte Transkription vorliegt, erstelle ein plausibles Musterprotokoll, das der Nutzer dann bearbeiten kann.`
+
+Transkription (gesprochener Inhalt):
+---
+${transcript}
+---`
 
     try {
-      const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1200)
+      const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1600)
       setProtocolHtml(wrapProtocolDocument(html, { department: meetingDept }))
       showToast('Protokoll erzeugt')
     } catch (e) {
@@ -411,31 +458,91 @@ Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene 
     setSendMailBusy(false)
   }
 
+  const stopSpeechRecognition = useCallback(() => {
+    speechRecognitionRef.current?.stop()
+    speechRecognitionRef.current = null
+  }, [])
+
+  const startSpeechRecognition = useCallback(() => {
+    const SpeechRecognitionCtor = getBrowserSpeechRecognition()
+    if (!SpeechRecognitionCtor) {
+      setRecordStatus('Spracherkennung nicht verfügbar – Transkript bitte manuell eintragen')
+      return
+    }
+
+    const recognition = new SpeechRecognitionCtor()
+    recognition.lang = 'de-DE'
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
+
+    recognition.onresult = (event) => {
+      const { finalText, interimText } = readSpeechResults(event)
+      if (finalText) {
+        setMeetingTranscript((prev) => (prev ? `${prev} ${finalText}` : finalText).trim())
+      }
+      setTranscriptInterim(interimText)
+    }
+
+    recognition.onerror = (event) => {
+      if (event.error === 'not-allowed') {
+        showToast('Mikrofon für Spracherkennung nicht erlaubt')
+      }
+    }
+
+    recognition.onend = () => {
+      if (isRecordingRef.current) {
+        try {
+          recognition.start()
+        } catch {
+          /* bereits aktiv */
+        }
+      }
+    }
+
+    try {
+      recognition.start()
+      speechRecognitionRef.current = recognition
+    } catch {
+      showToast('Spracherkennung konnte nicht gestartet werden')
+    }
+  }, [showToast])
+
   const toggleRecording = async () => {
     if (!isRecording) {
       try {
+        audioChunksRef.current = []
+        setTranscriptInterim('')
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         const mr = new MediaRecorder(stream)
-        const chunks: BlobPart[] = []
-        mr.ondataavailable = (e) => chunks.push(e.data)
-        mr.onstop = () => {
-          setHasAudio(true)
-          showToast('Aufnahme beendet (lokal gespeichert)')
+        mr.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunksRef.current.push(e.data)
         }
-        mr.start()
+        mr.onstop = () => {
+          setHasAudio(audioChunksRef.current.length > 0)
+          setTranscriptInterim('')
+          stopSpeechRecognition()
+          showToast('Aufnahme beendet – Transkript wird für das Protokoll genutzt')
+        }
+        mr.start(1000)
         mediaRecorderRef.current = mr
+        isRecordingRef.current = true
         setIsRecording(true)
         setSeconds(0)
-        setRecordStatus('Aufnahme läuft…')
+        setRecordStatus('Aufnahme läuft – bitte sprechen …')
+        startSpeechRecognition()
         timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
       } catch {
         showToast('Mikrofonzugriff verweigert')
       }
     } else {
+      isRecordingRef.current = false
       mediaRecorderRef.current?.stop()
       mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop())
+      stopSpeechRecognition()
       setIsRecording(false)
       setRecordStatus('Aufnahme gespeichert')
+      setTranscriptInterim('')
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
@@ -533,7 +640,7 @@ Bitte schreibe eine passende Antwort.`
   const tabSub: Record<TabId, string> = {
     dashboard: currentUser ? `Willkommen zurück, ${currentUser}` : 'Übersicht KI-Module',
     chat: 'Antworten aus PDF-Dokumenten im Bereich „Dokumente“',
-    protocol: 'Besprechungen – Protokoll per KI',
+    protocol: 'Sprachaufnahme transkribieren und Protokoll erzeugen',
     mail: 'IMAP (Outlook→Gmail), Demo oder Mail einfügen',
   }
 
@@ -706,7 +813,7 @@ Bitte schreibe eine passende Antwort.`
             </div>
             <div className="flex-1 overflow-y-auto p-2 max-h-[420px] lg:max-h-none">
               {knowledgeDocsLoading && (
-                <p className="text-sm text-gray-500 px-3 py-4">PDF-Dokumente werden indexiert …</p>
+                <p className="text-sm text-gray-500 px-3 py-4">PDF-Dokumente werden geladen …</p>
               )}
               {!knowledgeDocsLoading && knowledgeDocs.length === 0 && (
                 <p className="text-sm text-gray-500 px-3 py-4">
@@ -811,7 +918,9 @@ Bitte schreibe eine passende Antwort.`
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
             <div className="px-5 py-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">🎙️ Aufnahme / Metadaten</h3>
-              <p className="text-xs text-gray-600">Mikrofon oder nur KI-Protokoll aus Stammdaten</p>
+              <p className="text-xs text-gray-600">
+                Sprache aufnehmen – der erkannte Text fließt ins Protokoll (Chrome/Edge empfohlen)
+              </p>
             </div>
             <div className="p-5 space-y-4 flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -868,29 +977,46 @@ Bitte schreibe eine passende Antwort.`
                   {isRecording ? '⏹️' : '🎙️'}
                 </button>
                 <p className="text-sm text-gray-600 mt-3">{recordStatus}</p>
+                {speechSupported === false && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    Automatische Spracherkennung nicht verfügbar. Bitte Transkript unten manuell eintragen.
+                  </p>
+                )}
               </div>
-              <label className="block text-center py-2 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700">
-                Audio-Datei wählen
-                <input
-                  type="file"
-                  accept="audio/*,video/*"
-                  className="hidden"
-                  onChange={() => {
-                    setHasAudio(true)
-                    showToast('Audio geladen (Demo – keine Transkription)')
+              <div>
+                <label className="text-xs font-medium text-gray-600">
+                  Transkription {isRecording ? '(wird erkannt …)' : '(bearbeitbar)'}
+                </label>
+                <textarea
+                  value={
+                    isRecording && transcriptInterim
+                      ? `${meetingTranscript}${meetingTranscript ? ' ' : ''}${transcriptInterim}`
+                      : meetingTranscript
+                  }
+                  onChange={(e) => {
+                    if (!isRecording) setMeetingTranscript(e.target.value)
                   }}
+                  readOnly={isRecording}
+                  rows={6}
+                  placeholder="Nach der Aufnahme erscheint hier der gesprochene Text. Sie können ihn auch manuell eintragen oder korrigieren."
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 resize-y min-h-[120px]"
                 />
-              </label>
+              </div>
               <button
                 type="button"
-                disabled={protocolLoading}
+                disabled={protocolLoading || !meetingTranscript.trim()}
                 onClick={() => void generateProtocol()}
                 className="w-full py-3 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:bg-gray-300"
               >
-                {protocolLoading ? '… wird generiert' : '✨ Protokoll generieren'}
+                {protocolLoading ? '… wird generiert' : '✨ Protokoll aus Transkript generieren'}
               </button>
-              {!hasAudio && (
-                <p className="text-xs text-gray-500 text-center">Protokoll-Button nutzt Stammdaten; Aufnahme ist optional.</p>
+              {!meetingTranscript.trim() && (
+                <p className="text-xs text-gray-500 text-center">
+                  Zuerst aufnehmen oder Transkript eintragen – das Protokoll basiert nur auf diesem Text.
+                </p>
+              )}
+              {hasAudio && meetingTranscript.trim() && (
+                <p className="text-xs text-emerald-700 text-center">Aufnahme und Transkript bereit.</p>
               )}
             </div>
           </div>

@@ -1,13 +1,15 @@
 import { neon } from '@neondatabase/serverless'
-import { PDFParse } from 'pdf-parse'
 
-export type IndexedDocument = {
+export type DocumentMeta = {
   id: string
   title: string
   description: string
   category: string
   fileName: string
   fileUrl: string
+}
+
+export type IndexedDocument = DocumentMeta & {
   text: string
 }
 
@@ -21,8 +23,8 @@ type DocumentRow = {
   file_url: string | null
 }
 
-const INDEX_TTL_MS = 15 * 60 * 1000
-let cachedIndex: { docs: IndexedDocument[]; builtAt: number } | null = null
+const TEXT_CACHE_TTL_MS = 30 * 60 * 1000
+const textCache = new Map<string, { text: string; builtAt: number }>()
 
 export const KNOWLEDGE_SYSTEM_PROMPT = `Du bist der interne Wissens-Assistent der Stadtholding Landau / Freizeitbad LA OLA.
 Du beantwortest Fragen ausschließlich auf Basis der bereitgestellten Auszüge aus PDF-Dokumenten des Intranet-Bereichs „Dokumente“.
@@ -61,22 +63,45 @@ function normalizeText(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
 
+function tokenize(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/[^a-zäöüß0-9]+/i)
+    .filter((t) => t.length > 2)
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} (Timeout nach ${ms}ms)`)), ms)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 async function extractPdfText(fileUrl: string): Promise<string> {
-  const res = await fetch(fileUrl, { cache: 'no-store' })
+  const res = await withTimeout(
+    fetch(fileUrl, { cache: 'no-store' }),
+    20_000,
+    'PDF-Download',
+  )
   if (!res.ok) {
     throw new Error(`PDF konnte nicht geladen werden (${res.status})`)
   }
+
   const data = new Uint8Array(await res.arrayBuffer())
+  const { PDFParse } = await import('pdf-parse')
   const parser = new PDFParse({ data })
-  const result = await parser.getText()
+  const result = await withTimeout(parser.getText(), 25_000, 'PDF-Textextraktion')
   return normalizeText(result.text || '')
 }
 
-export async function buildDocumentIndex(origin?: string): Promise<IndexedDocument[]> {
-  if (cachedIndex && Date.now() - cachedIndex.builtAt < INDEX_TTL_MS) {
-    return cachedIndex.docs
-  }
-
+export async function listPdfDocuments(): Promise<DocumentMeta[]> {
   const dbUrl = process.env.DATABASE_URL
   if (!dbUrl) {
     throw new Error('DATABASE_URL fehlt')
@@ -89,59 +114,55 @@ export async function buildDocumentIndex(origin?: string): Promise<IndexedDocume
     ORDER BY uploaded_at DESC
   `) as DocumentRow[]
 
-  const docs: IndexedDocument[] = []
-
-  for (const row of rows.filter(isPdfDocument)) {
-    if (!row.file_url) continue
-
-    const fileUrl = resolveDocumentFileUrl(row.file_url, origin)
-    const description = (row.description || '').trim()
-    let text = ''
-
-    try {
-      text = await extractPdfText(fileUrl)
-    } catch (e) {
-      console.error(`agent knowledge: PDF-Text für „${row.title}“`, e)
-    }
-
-    if (description) {
-      text = text ? `${description}\n\n${text}` : description
-    }
-
-    if (!text) continue
-
-    if (text.length > 120_000) {
-      text = `${text.slice(0, 120_000)}…`
-    }
-
-    docs.push({
+  return rows
+    .filter(isPdfDocument)
+    .filter((row) => Boolean(row.file_url))
+    .map((row) => ({
       id: row.id,
       title: row.title,
-      description,
+      description: (row.description || '').trim(),
       category: row.category,
       fileName: row.file_name,
-      fileUrl: row.file_url,
-      text,
-    })
+      fileUrl: row.file_url!,
+    }))
+}
+
+export async function getDocumentText(meta: DocumentMeta, origin?: string): Promise<string> {
+  const cached = textCache.get(meta.id)
+  if (cached && Date.now() - cached.builtAt < TEXT_CACHE_TTL_MS) {
+    return cached.text
   }
 
-  cachedIndex = { docs, builtAt: Date.now() }
-  return docs
+  const fileUrl = resolveDocumentFileUrl(meta.fileUrl, origin)
+  let text = ''
+
+  try {
+    text = await extractPdfText(fileUrl)
+  } catch (e) {
+    console.error(`agent knowledge: PDF-Text für „${meta.title}“`, e)
+  }
+
+  if (meta.description) {
+    text = text ? `${meta.description}\n\n${text}` : meta.description
+  }
+
+  if (text.length > 120_000) {
+    text = `${text.slice(0, 120_000)}…`
+  }
+
+  if (text) {
+    textCache.set(meta.id, { text, builtAt: Date.now() })
+  }
+
+  return text
 }
 
-function tokenize(query: string): string[] {
-  return query
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter((t) => t.length > 2)
-}
-
-export function scoreDocument(doc: IndexedDocument, query: string): number {
+export function scoreDocumentMeta(meta: DocumentMeta, query: string): number {
   const terms = tokenize(query)
   if (terms.length === 0) return 0
 
-  const titleLower = doc.title.toLowerCase()
-  const haystack = `${doc.title} ${doc.category} ${doc.description} ${doc.text}`.toLowerCase()
+  const titleLower = meta.title.toLowerCase()
+  const haystack = `${meta.title} ${meta.category} ${meta.description} ${meta.fileName}`.toLowerCase()
   let score = 0
 
   for (const term of terms) {
@@ -152,6 +173,33 @@ export function scoreDocument(doc: IndexedDocument, query: string): number {
   return score
 }
 
+export function scoreIndexedDocument(doc: IndexedDocument, query: string): number {
+  const metaScore = scoreDocumentMeta(doc, query)
+  const terms = tokenize(query)
+  if (terms.length === 0) return metaScore
+
+  const bodyLower = doc.text.toLowerCase()
+  let bodyScore = 0
+  for (const term of terms) {
+    if (bodyLower.includes(term)) bodyScore += term.length > 4 ? 4 : 2
+  }
+
+  return metaScore + bodyScore
+}
+
+export function selectRelevantMeta(docs: DocumentMeta[], query: string, maxDocs = 8): DocumentMeta[] {
+  if (docs.length === 0) return []
+
+  const scored = docs
+    .map((doc) => ({ doc, score: scoreDocumentMeta(doc, query) }))
+    .sort((a, b) => b.score - a.score)
+
+  const withHits = scored.filter((entry) => entry.score > 0).map((entry) => entry.doc)
+  if (withHits.length > 0) return withHits.slice(0, maxDocs)
+
+  return docs.slice(0, Math.min(maxDocs, docs.length))
+}
+
 export function selectRelevantDocuments(
   docs: IndexedDocument[],
   query: string,
@@ -160,13 +208,41 @@ export function selectRelevantDocuments(
   if (docs.length === 0) return []
 
   const scored = docs
-    .map((doc) => ({ doc, score: scoreDocument(doc, query) }))
+    .map((doc) => ({ doc, score: scoreIndexedDocument(doc, query) }))
     .sort((a, b) => b.score - a.score)
 
   const withHits = scored.filter((entry) => entry.score > 0).map((entry) => entry.doc)
   if (withHits.length > 0) return withHits.slice(0, maxDocs)
 
   return docs.slice(0, Math.min(maxDocs, docs.length))
+}
+
+export async function loadIndexedDocumentsForQuery(
+  query: string,
+  origin?: string,
+): Promise<IndexedDocument[]> {
+  const metas = await listPdfDocuments()
+  if (metas.length === 0) return []
+
+  const candidates = selectRelevantMeta(metas, query, 8)
+  const indexed: IndexedDocument[] = []
+
+  for (const meta of candidates) {
+    const text = await getDocumentText(meta, origin)
+    if (!text) continue
+    indexed.push({ ...meta, text })
+  }
+
+  if (indexed.length === 0) {
+    const fallback = metas.slice(0, 4)
+    for (const meta of fallback) {
+      const text = await getDocumentText(meta, origin)
+      if (!text) continue
+      indexed.push({ ...meta, text })
+    }
+  }
+
+  return selectRelevantDocuments(indexed, query)
 }
 
 export function buildKnowledgeContext(docs: IndexedDocument[], maxChars = 90_000): string {
@@ -191,5 +267,5 @@ export function buildKnowledgeContext(docs: IndexedDocument[], maxChars = 90_000
 }
 
 export function invalidateDocumentIndex(): void {
-  cachedIndex = null
+  textCache.clear()
 }
