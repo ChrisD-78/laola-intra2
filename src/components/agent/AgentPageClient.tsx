@@ -1,6 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  buildProtocolHtmlFile,
+  embedProtocolLogos,
+  wrapProtocolDocument,
+} from '@/lib/agentProtocolDocument'
 
 type TabId = 'dashboard' | 'chat' | 'protocol' | 'mail'
 
@@ -19,24 +24,12 @@ type MailItem = {
   aiReplyDraft?: string | null
 }
 
-const DOCS_CONTEXT = `Du bist der interne Wissens-Assistent der Stadtholding Landau / Freizeitbad LA OLA.
-Du hast Zugriff auf folgende interne Dokumente:
-1. Hausordnung LA OLA 2026 – enthält Regeln für Besucher, Aufsichtspflichten, Verbote, Öffnungszeiten (Mo-Fr 8-21h, Sa-So 9-20h)
-2. Führungsstile Training – LA OLA hat den kooperativen Führungsstil als Standard. Bei Notfällen sofortiger Wechsel zum autoritären Stil. Schichtwechselwünsche 14 Tage vorher einreichen (spätestens 5 Tage vor Schicht).
-3. Notfallprotokoll Wasser – Erste Hilfe Maßnahmen, Alarmierungskette
-4. Tarifordnung – Erwachsene 5,50€, Kinder (bis 14) 3,00€, Familienkarte 15,00€, Saisonkarte 89,00€
-5. Hygienekonzept 2025/26 – Duschen vor dem Einstieg, Badekappen in Schwimmerbecken
-
-Antworte auf Deutsch. Nenne am Ende der Antwort immer die Quelle in eckigen Klammern [Dokumentname].
-Wenn die Frage nicht aus den Dokumenten beantwortet werden kann, sage das ehrlich.`
-
-const INITIAL_DOCS = [
-  { name: 'Hausordnung LA OLA 2026', size: '245 KB' },
-  { name: 'Führungsstile Training', size: '189 KB' },
-  { name: 'Notfallprotokoll Wasser', size: '98 KB' },
-  { name: 'Tarifordnung Eintrittspreise', size: '56 KB' },
-  { name: 'Hygienekonzept 2025/26', size: '312 KB' },
-]
+type KnowledgeDoc = {
+  id: string
+  title: string
+  category: string
+  fileName: string
+}
 
 const MAILS: MailItem[] = [
   {
@@ -116,15 +109,17 @@ async function callAgentAPI(
 export default function AgentPageClient({ currentUser }: { currentUser: string | null }) {
   const [tab, setTab] = useState<TabId>('dashboard')
   const [toast, setToast] = useState<string | null>(null)
+  const [claudeConfigured, setClaudeConfigured] = useState<boolean | null>(null)
 
-  const [docs, setDocs] = useState(INITIAL_DOCS)
+  const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>([])
+  const [knowledgeDocsLoading, setKnowledgeDocsLoading] = useState(false)
   const [activeDocIndex, setActiveDocIndex] = useState(0)
   const [chatInput, setChatInput] = useState('')
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [chatUi, setChatUi] = useState<{ role: 'user' | 'bot'; text: string; typing?: boolean }[]>([
     {
       role: 'bot',
-      text: `Hallo! Ich bin Ihr Wissens-Assistent. Ich habe Zugriff auf **${INITIAL_DOCS.length} Dokumente** in Ihrer Datenbank. Fragen Sie mich zu Hausordnungen, Tarifen, Führungsrichtlinien oder anderen Unternehmensthemen!`,
+      text: 'Hallo! Ich bin Ihr Wissens-Assistent. Ich durchsuche die PDF-Dokumente aus dem Bereich „Dokumente“ und nenne die Quelle in eckigen Klammern.',
     },
   ])
   const [sendBusy, setSendBusy] = useState(false)
@@ -160,6 +155,52 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
   }, [])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/agent/status')
+        const data = (await res.json()) as { configured?: boolean }
+        setClaudeConfigured(Boolean(data.configured))
+      } catch {
+        setClaudeConfigured(false)
+      }
+    })()
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'chat') return
+    setKnowledgeDocsLoading(true)
+    void (async () => {
+      try {
+        const res = await fetch('/api/agent/knowledge')
+        const data = (await res.json()) as {
+          documents?: KnowledgeDoc[]
+          count?: number
+          error?: string
+        }
+        if (!res.ok) throw new Error(data.error || 'Dokumente konnten nicht geladen werden')
+        const docs = Array.isArray(data.documents) ? data.documents : []
+        setKnowledgeDocs(docs)
+        setActiveDocIndex(0)
+        if (docs.length > 0) {
+          setChatUi((ui) => {
+            if (ui.length !== 1 || ui[0]?.role !== 'bot') return ui
+            return [
+              {
+                role: 'bot',
+                text: `Hallo! Ich bin Ihr Wissens-Assistent. Ich habe Zugriff auf **${docs.length} PDF-Dokument(e)** aus „Dokumente“. Stellen Sie Ihre Frage – ich antworte mit Quellenangabe in eckigen Klammern.`,
+              },
+            ]
+          })
+        }
+      } catch (e) {
+        showToast(e instanceof Error ? e.message : 'Dokumente konnten nicht geladen werden')
+      } finally {
+        setKnowledgeDocsLoading(false)
+      }
+    })()
+  }, [tab, showToast])
 
   useEffect(() => {
     if (tab !== 'mail') return
@@ -214,9 +255,15 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
     setSendBusy(true)
     setChatUi((u) => [...u, { role: 'user', text: msg }, { role: 'bot', text: '', typing: true }])
 
-    const apiMessages = [...chatHistory, { role: 'user' as const, content: msg }]
     try {
-      const reply = await callAgentAPI(DOCS_CONTEXT, apiMessages, 800)
+      const res = await fetch('/api/agent/knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, history: chatHistory }),
+      })
+      const data = (await res.json()) as { text?: string; error?: string }
+      if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen')
+      const reply = data.text || ''
       setChatHistory((h) => [...h, { role: 'user', content: msg }, { role: 'assistant', content: reply }])
       setChatUi((u) => {
         const next = [...u]
@@ -236,12 +283,6 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
     setSendBusy(false)
   }
 
-  const addPdf = (f: File) => {
-    setDocs((d) => [{ name: f.name.replace(/\.pdf$/i, ''), size: `${(f.size / 1024).toFixed(0)} KB` }, ...d])
-    setActiveDocIndex(0)
-    showToast(`„${f.name}“ zur Liste hinzugefügt (Demo – kein echter Index)`)
-  }
-
   const generateProtocol = async () => {
     const title = meetingTitle.trim() || 'Besprechung'
     setProtocolLoading(true)
@@ -249,6 +290,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
     const systemPrompt = `Du bist ein professioneller Protokollschreiber für die Stadtholding Landau / Bäderbook GmbH. 
 Erstelle ein formelles Besprechungsprotokoll auf Deutsch in HTML-Format.
 Verwende diese HTML-Tags: h4 für Abschnitte, p für Text, ul/li für Aufzählungen.
+Kein eigenes Logo oder Briefkopf – der wird automatisch ergänzt.
 Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene Inhalte, Beschlüsse, Aufgaben mit Verantwortlichen, nächste Sitzung.`
 
     const userMsg = `Erstelle ein realistisches Besprechungsprotokoll für:
@@ -260,10 +302,14 @@ Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene 
 
     try {
       const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1200)
-      setProtocolHtml(html)
+      setProtocolHtml(wrapProtocolDocument(html, { department: meetingDept }))
       showToast('Protokoll erzeugt')
     } catch (e) {
-      setProtocolHtml(`<p>${e instanceof Error ? e.message : 'Fehler'}</p>`)
+      setProtocolHtml(
+        wrapProtocolDocument(`<p>${e instanceof Error ? e.message : 'Fehler'}</p>`, {
+          department: meetingDept,
+        }),
+      )
     }
     setProtocolLoading(false)
   }
@@ -276,18 +322,22 @@ Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene 
     showToast('Protokoll in Zwischenablage kopiert')
   }
 
-  const downloadProtocol = () => {
+  const downloadProtocol = async () => {
     const title = meetingTitle.trim() || 'Protokoll'
-    const blob = new Blob(
-      [`<!DOCTYPE html><html><body style="font-family:system-ui;max-width:800px;margin:40px auto">${protocolHtml}</body></html>`],
-      { type: 'text/html;charset=utf-8' },
-    )
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `Protokoll_${title.replace(/\s/g, '_')}.html`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    showToast('Download gestartet')
+    try {
+      const withEmbeddedLogos = await embedProtocolLogos(protocolHtml)
+      const blob = new Blob([buildProtocolHtmlFile(withEmbeddedLogos)], {
+        type: 'text/html;charset=utf-8',
+      })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `Protokoll_${title.replace(/\s/g, '_')}.html`
+      a.click()
+      URL.revokeObjectURL(a.href)
+      showToast('Download gestartet')
+    } catch {
+      showToast('Download fehlgeschlagen')
+    }
   }
 
   const sendAgentSmtpMail = async (payload: {
@@ -347,11 +397,12 @@ Das Protokoll soll enthalten: Kopfdaten, Tagesordnung (3-4 Punkte), Besprochene 
     const plain = (el.innerText || '').trim() || '(HTML-Protokoll, siehe E-Mail)'
     setSendMailBusy(true)
     try {
+      const htmlForMail = buildProtocolHtmlFile(await embedProtocolLogos(protocolHtml))
       await sendAgentSmtpMail({
         to,
         subject: title,
         text: plain,
-        html: protocolHtml,
+        html: htmlForMail,
       })
       showToast('Protokoll per E-Mail gesendet.')
     } catch (e) {
@@ -481,7 +532,7 @@ Bitte schreibe eine passende Antwort.`
   }
   const tabSub: Record<TabId, string> = {
     dashboard: currentUser ? `Willkommen zurück, ${currentUser}` : 'Übersicht KI-Module',
-    chat: 'Fragen zu Unternehmensdokumenten (Demo-Kontext)',
+    chat: 'Antworten aus PDF-Dokumenten im Bereich „Dokumente“',
     protocol: 'Besprechungen – Protokoll per KI',
     mail: 'IMAP (Outlook→Gmail), Demo oder Mail einfügen',
   }
@@ -513,11 +564,50 @@ Bitte schreibe eine passende Antwort.`
           <h2 className="text-lg font-semibold text-gray-900">{tabTitle[tab]}</h2>
           <p className="text-sm text-gray-600">{tabSub[tab]}</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          KI-Agent (Server-API)
+        <div
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${
+            claudeConfigured === null
+              ? 'bg-gray-50 border-gray-200 text-gray-600'
+              : claudeConfigured
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              claudeConfigured === null
+                ? 'bg-gray-400'
+                : claudeConfigured
+                  ? 'bg-emerald-500 animate-pulse'
+                  : 'bg-amber-500'
+            }`}
+          />
+          {claudeConfigured === null
+            ? 'Claude-Status wird geprüft…'
+            : claudeConfigured
+              ? 'Claude verbunden (Server)'
+              : 'Claude API fehlt auf dem Server'}
         </div>
       </div>
+
+      {claudeConfigured === false && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium mb-1">Claude API-Schlüssel in Netlify hinterlegen</p>
+          <p className="text-amber-900/90">
+            Netlify → <strong>Site configuration</strong> → <strong>Environment variables</strong> → Variable{' '}
+            <code className="text-xs bg-amber-100/80 px-1 rounded">ANTHROPIC_API_KEY</code> mit Ihrem Schlüssel von{' '}
+            <a
+              href="https://console.anthropic.com/settings/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-700 hover:underline"
+            >
+              console.anthropic.com
+            </a>{' '}
+            anlegen. Anschließend die Seite neu deployen – dann funktioniert die KI auf allen Geräten.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <NavBtn id="dashboard" label="Dashboard" icon="🏠" />
@@ -551,7 +641,7 @@ Bitte schreibe eine passende Antwort.`
               <div className="text-3xl mb-3">📚</div>
               <h3 className="font-semibold text-gray-900 mb-1">Wissens-Chatbot</h3>
               <p className="text-sm text-gray-600">
-                Fragen zu internen Themen – Antworten mit Quellenhinweis (Demo-Dokumentenkontext).
+                Fragen zu internen PDFs aus „Dokumente“ – Antworten mit Quellenangabe in eckigen Klammern.
               </p>
               <span className="inline-flex mt-4 text-sm font-medium text-blue-600">Zum Chatbot →</span>
             </button>
@@ -611,11 +701,21 @@ Bitte schreibe eine passende Antwort.`
       {tab === 'chat' && (
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 min-h-[520px]">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 font-semibold text-sm text-gray-800">Wissensdatenbank (Demo)</div>
+            <div className="px-4 py-3 border-b border-gray-200 font-semibold text-sm text-gray-800">
+              Wissensdatenbank · Dokumente
+            </div>
             <div className="flex-1 overflow-y-auto p-2 max-h-[420px] lg:max-h-none">
-              {docs.map((d, i) => (
+              {knowledgeDocsLoading && (
+                <p className="text-sm text-gray-500 px-3 py-4">PDF-Dokumente werden indexiert …</p>
+              )}
+              {!knowledgeDocsLoading && knowledgeDocs.length === 0 && (
+                <p className="text-sm text-gray-500 px-3 py-4">
+                  Noch keine PDFs in „Dokumente“. Bitte dort Dokumente hochladen.
+                </p>
+              )}
+              {knowledgeDocs.map((d, i) => (
                 <button
-                  key={`${d.name}-${i}`}
+                  key={d.id}
                   type="button"
                   onClick={() => setActiveDocIndex(i)}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm mb-1 ${
@@ -623,24 +723,18 @@ Bitte schreibe eine passende Antwort.`
                   }`}
                 >
                   <span>📄</span>
-                  <span className="flex-1 truncate">{d.name}</span>
-                  <span className="text-xs text-gray-500">{d.size}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate">{d.title}</span>
+                    <span className="block text-xs text-gray-500 truncate">{d.category}</span>
+                  </span>
                 </button>
               ))}
             </div>
-            <label className="m-3 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700">
-              ＋ PDF hinzufügen (Demo)
-              <input
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) addPdf(f)
-                  e.target.value = ''
-                }}
-              />
-            </label>
+            <div className="m-3 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+              {knowledgeDocs.length > 0
+                ? `${knowledgeDocs.length} PDF(s) aus „Dokumente“ werden für Antworten genutzt.`
+                : 'Neue PDFs unter Dokumente hochladen, dann Tab neu öffnen.'}
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col min-h-[480px]">
@@ -648,7 +742,9 @@ Bitte schreibe eine passende Antwort.`
               <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center text-lg">🤖</div>
               <div>
                 <h3 className="font-semibold text-gray-900">Wissens-Assistent</h3>
-                <p className="text-xs text-gray-600">Antworten per Claude (Server) · Demo-Dokumentenkontext</p>
+                <p className="text-xs text-gray-600">
+                  Antworten per Claude · Inhalte aus PDFs in „Dokumente“ · Quellen in [eckigen Klammern]
+                </p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[360px]">
@@ -810,7 +906,7 @@ Bitte schreibe eine passende Antwort.`
               )}
               {protocolHtml && (
                 <div
-                  className="protocol-output text-sm text-gray-800 [&_h4]:text-blue-800 [&_h4]:font-semibold [&_ul]:list-disc [&_ul]:pl-5"
+                  className="protocol-output rounded-xl border border-gray-100 bg-gray-50/50 p-4 lg:p-6 text-sm text-gray-800 [&_.laola-protocol]:max-w-none [&_h4]:text-blue-800 [&_h4]:font-semibold [&_h4]:mt-5 [&_h4]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_p]:my-1.5"
                   dangerouslySetInnerHTML={{ __html: protocolHtml }}
                 />
               )}
@@ -828,17 +924,17 @@ Bitte schreibe eine passende Antwort.`
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={copyProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
+                  <button type="button" onClick={copyProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm text-black">
                     Kopieren
                   </button>
-                  <button type="button" onClick={downloadProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm">
+                  <button type="button" onClick={downloadProtocol} className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm text-black">
                     HTML-Export
                   </button>
                   <button
                     type="button"
                     disabled={sendMailBusy}
                     onClick={() => void sendProtocolByMail()}
-                    className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm disabled:opacity-50"
+                    className="flex-1 min-w-[120px] py-2 rounded-lg border border-gray-200 hover:bg-blue-50 text-sm text-black disabled:opacity-50"
                   >
                     {sendMailBusy ? '…' : 'Per Mail senden'}
                   </button>

@@ -43,13 +43,7 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Interner Serverfehler'
     if (err.includes('ANTHROPIC_API_KEY')) {
-      return NextResponse.json(
-        {
-          error:
-            'KI ist nicht konfiguriert. Bitte ANTHROPIC_API_KEY in der Server-Umgebung (z. B. .env.local) setzen.',
-        },
-        { status: 503 },
-      )
+      return NextResponse.json({ error: err }, { status: 503 })
     }
     console.error('POST /api/agent/message', e)
     return NextResponse.json({ error: err }, { status: 500 })

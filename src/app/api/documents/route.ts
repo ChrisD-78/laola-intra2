@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
+import { invalidateDocumentIndex } from '@/lib/agentDocumentKnowledge'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
     `
 
     console.log('Document insert successful:', result[0])
+    invalidateDocumentIndex()
     return NextResponse.json(result[0], { status: 201 })
   } catch (error) {
     console.error('=== DOCUMENT CREATE ERROR ===')
@@ -89,6 +91,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await sql`DELETE FROM documents WHERE id = ${id}`
+    invalidateDocumentIndex()
 
     return NextResponse.json({ success: true })
   } catch (error) {

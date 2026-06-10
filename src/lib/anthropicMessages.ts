@@ -11,10 +11,10 @@ export async function completeAnthropic(options: {
   max_tokens?: number
   model?: string
 }): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim()
   if (!apiKey) {
     throw new Error(
-      'ANTHROPIC_API_KEY fehlt. Bitte in der Server-Umgebung setzen (z. B. .env.local / Netlify).',
+      'ANTHROPIC_API_KEY fehlt. Bitte in Netlify unter Site configuration → Environment variables setzen und neu deployen.',
     )
   }
 
