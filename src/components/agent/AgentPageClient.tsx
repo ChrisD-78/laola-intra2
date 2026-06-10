@@ -153,6 +153,8 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [sendMailBusy, setSendMailBusy] = useState(false)
   const [hasAudio, setHasAudio] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [audioFileName, setAudioFileName] = useState<string | null>(null)
+  const [audioTranscribing, setAudioTranscribing] = useState(false)
   const [meetingTranscript, setMeetingTranscript] = useState('')
   const [transcriptInterim, setTranscriptInterim] = useState('')
   const [speechSupported, setSpeechSupported] = useState<boolean | null>(null)
@@ -508,6 +510,41 @@ ${transcript}
     }
   }, [showToast])
 
+  const transcribeAudioFile = async (file: File) => {
+    if (isRecording) {
+      showToast('Bitte zuerst die laufende Aufnahme beenden.')
+      return
+    }
+    if (audioTranscribing) return
+
+    setAudioTranscribing(true)
+    setAudioFileName(file.name)
+    setRecordStatus(`Transkribiere „${file.name}" …`)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/agent/transcribe', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await parseAgentJson<{ text?: string; error?: string }>(res)
+      if (!res.ok) throw new Error(data.error || 'Transkription fehlgeschlagen')
+
+      const text = (data.text || '').trim()
+      if (!text) throw new Error('Kein Text erkannt.')
+
+      setMeetingTranscript(text)
+      setHasAudio(true)
+      setRecordStatus(`Audio-Datei „${file.name}" transkribiert`)
+      showToast('Transkript aus Audio-Datei erstellt')
+    } catch (e) {
+      setRecordStatus('Transkription fehlgeschlagen')
+      showToast(e instanceof Error ? e.message : 'Transkription fehlgeschlagen')
+    }
+    setAudioTranscribing(false)
+  }
+
   const toggleRecording = async () => {
     if (!isRecording) {
       try {
@@ -640,7 +677,7 @@ Bitte schreibe eine passende Antwort.`
   const tabSub: Record<TabId, string> = {
     dashboard: currentUser ? `Willkommen zurück, ${currentUser}` : 'Übersicht KI-Module',
     chat: 'Antworten aus PDF-Dokumenten im Bereich „Dokumente“',
-    protocol: 'Sprachaufnahme transkribieren und Protokoll erzeugen',
+    protocol: 'Live-Aufnahme oder Audio-Datei → Protokoll',
     mail: 'IMAP (Outlook→Gmail), Demo oder Mail einfügen',
   }
 
@@ -919,7 +956,7 @@ Bitte schreibe eine passende Antwort.`
             <div className="px-5 py-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">🎙️ Aufnahme / Metadaten</h3>
               <p className="text-xs text-gray-600">
-                Sprache aufnehmen – der erkannte Text fließt ins Protokoll (Chrome/Edge empfohlen)
+                Live-Aufnahme (Chrome/Edge) oder Audio-Datei hochladen – der Text fließt ins Protokoll
               </p>
             </div>
             <div className="p-5 space-y-4 flex-1">
@@ -969,23 +1006,48 @@ Bitte schreibe eine passende Antwort.`
                 <div className="text-3xl font-serif text-blue-800 mb-2">{formatTimer(seconds)}</div>
                 <button
                   type="button"
+                  disabled={audioTranscribing}
                   onClick={() => void toggleRecording()}
-                  className={`w-16 h-16 rounded-full text-2xl text-white shadow-lg transition-transform ${
+                  className={`w-16 h-16 rounded-full text-2xl text-white shadow-lg transition-transform disabled:opacity-50 ${
                     isRecording ? 'bg-red-600 animate-pulse' : 'bg-orange-500 hover:scale-105'
                   }`}
                 >
                   {isRecording ? '⏹️' : '🎙️'}
                 </button>
                 <p className="text-sm text-gray-600 mt-3">{recordStatus}</p>
+                <p className="text-xs text-gray-500 mt-1">Live-Mikrofonaufnahme</p>
                 {speechSupported === false && (
                   <p className="text-xs text-amber-700 mt-2">
                     Automatische Spracherkennung nicht verfügbar. Bitte Transkript unten manuell eintragen.
                   </p>
                 )}
               </div>
+              <label
+                className={`flex flex-col items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium cursor-pointer transition-colors ${
+                  audioTranscribing
+                    ? 'border-blue-200 bg-blue-50 text-blue-800 cursor-wait'
+                    : 'border-gray-200 bg-gray-50 text-gray-800 hover:border-blue-300 hover:bg-blue-50'
+                }`}
+              >
+                {audioTranscribing ? '⏳ Audio wird transkribiert …' : '📁 Audio-Datei wählen (MP3, M4A, WAV, WEBM)'}
+                <input
+                  type="file"
+                  accept="audio/*,video/mp4,video/webm,.mp3,.m4a,.wav,.webm,.ogg,.mp4"
+                  className="hidden"
+                  disabled={audioTranscribing || isRecording}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) void transcribeAudioFile(f)
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+              {audioFileName && !audioTranscribing && (
+                <p className="text-xs text-gray-600 text-center">Letzte Datei: {audioFileName}</p>
+              )}
               <div>
                 <label className="text-xs font-medium text-gray-600">
-                  Transkription {isRecording ? '(wird erkannt …)' : '(bearbeitbar)'}
+                  Transkription {isRecording ? '(wird erkannt …)' : audioTranscribing ? '(wird erstellt …)' : '(bearbeitbar)'}
                 </label>
                 <textarea
                   value={
@@ -998,13 +1060,13 @@ Bitte schreibe eine passende Antwort.`
                   }}
                   readOnly={isRecording}
                   rows={6}
-                  placeholder="Nach der Aufnahme erscheint hier der gesprochene Text. Sie können ihn auch manuell eintragen oder korrigieren."
+                  placeholder="Nach Aufnahme oder Audio-Datei erscheint hier der Text. Sie können ihn auch manuell eintragen oder korrigieren."
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 resize-y min-h-[120px]"
                 />
               </div>
               <button
                 type="button"
-                disabled={protocolLoading || !meetingTranscript.trim()}
+                disabled={protocolLoading || audioTranscribing || !meetingTranscript.trim()}
                 onClick={() => void generateProtocol()}
                 className="w-full py-3 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:bg-gray-300"
               >
@@ -1012,7 +1074,7 @@ Bitte schreibe eine passende Antwort.`
               </button>
               {!meetingTranscript.trim() && (
                 <p className="text-xs text-gray-500 text-center">
-                  Zuerst aufnehmen oder Transkript eintragen – das Protokoll basiert nur auf diesem Text.
+                  Zuerst aufnehmen, Audio-Datei hochladen oder Transkript eintragen.
                 </p>
               )}
               {hasAudio && meetingTranscript.trim() && (
