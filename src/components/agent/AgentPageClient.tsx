@@ -1080,7 +1080,7 @@ Bitte schreibe eine passende Antwort.`
               <code className="text-xs bg-white/80 px-1 rounded">EMAIL_USER</code> /{' '}
               <code className="text-xs bg-white/80 px-1 rounded">EMAIL_PASS</code>. Zum <strong>Empfang</strong> dient{' '}
               <strong>IMAP</strong> mit denselben Zugangsdaten. Für <strong>Antworten aus dem E-Mail-Assistenten</strong>{' '}
-              (und optional Protokoll-Mail) können Sie <strong>IONOS SMTP</strong> wie in der Netlify-Vorlage einrichten:{' '}
+              (und Protokoll-Mail) nutzen standardmäßig dieselben Gmail-Zugangsdaten. Optional <strong>IONOS SMTP</strong>:{' '}
               <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_USER</code>,{' '}
               <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_PASSWORD</code> (oder{' '}
               <code className="text-xs bg-white/80 px-1 rounded">SMTP_PASSWORD</code>), optional{' '}

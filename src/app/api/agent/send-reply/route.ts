@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import {
+  createAgentTransporter,
+  formatAgentSmtpError,
+  getAgentSmtpConfig,
+} from '@/lib/agentSmtp'
 
 export const runtime = 'nodejs'
-
-function agentSmtpConfig() {
-  const host = process.env.AGENT_SMTP_HOST || process.env.SMTP_HOST || 'smtp.ionos.de'
-  const port = parseInt(process.env.AGENT_SMTP_PORT || process.env.SMTP_PORT || '465', 10)
-  const user =
-    process.env.AGENT_SMTP_USER || process.env.SMTP_USER || process.env.EMAIL_USER || ''
-  const password =
-    process.env.AGENT_SMTP_PASSWORD ||
-    process.env.SMTP_PASSWORD ||
-    process.env.EMAIL_PASS ||
-    ''
-  const fromEmail =
-    process.env.AGENT_SMTP_FROM_EMAIL ||
-    process.env.SMTP_FROM_EMAIL ||
-    user ||
-    ''
-  const fromName = process.env.AGENT_SMTP_FROM_NAME || process.env.SMTP_FROM_NAME || 'LA OLA KI-Assistent'
-  return { host, port, secure: port === 465, user, password, fromEmail, fromName }
-}
 
 function isValidEmail(s: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
@@ -53,23 +38,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Ungültige oder fehlende Empfänger-Adresse' }, { status: 400 })
   }
 
-  const cfg = agentSmtpConfig()
-  if (!cfg.user || !cfg.password || !cfg.fromEmail) {
+  const cfg = getAgentSmtpConfig()
+  if (!cfg) {
     return NextResponse.json(
       {
         message:
-          'SMTP nicht konfiguriert (AGENT_SMTP_USER + AGENT_SMTP_PASSWORD bzw. SMTP_PASSWORD / AGENT_SMTP_FROM_EMAIL)',
+          'SMTP nicht konfiguriert. Setzen Sie EMAIL_USER + EMAIL_PASS (Gmail) oder AGENT_SMTP_USER + AGENT_SMTP_PASSWORD (IONOS).',
       },
       { status: 503 },
     )
   }
 
-  const transporter = nodemailer.createTransport({
-    host: cfg.host,
-    port: cfg.port,
-    secure: cfg.secure,
-    auth: { user: cfg.user, pass: cfg.password },
-  })
+  const transporter = createAgentTransporter(cfg)
 
   const footer = `\n\n---\nAutomatisch generiert am: ${
     typeof timestamp === 'string' && timestamp
@@ -81,6 +61,7 @@ export async function POST(request: NextRequest) {
     typeof replyTo === 'string' && replyTo.trim() && isValidEmail(replyTo) ? replyTo.trim() : cfg.fromEmail
 
   try {
+    await transporter.verify()
     await transporter.sendMail({
       from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
       to: toAddr,
@@ -95,7 +76,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: 'E-Mail erfolgreich gesendet' })
   } catch (err) {
     console.error('Agent SMTP Fehler:', err)
-    const msg = err instanceof Error ? err.message : 'Unbekannter Fehler'
-    return NextResponse.json({ message: `SMTP Fehler: ${msg}` }, { status: 500 })
+    return NextResponse.json({ message: formatAgentSmtpError(err) }, { status: 500 })
   }
 }

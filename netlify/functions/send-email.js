@@ -1,19 +1,60 @@
 const nodemailer = require('nodemailer')
 
+function envTrim(...keys) {
+  for (const key of keys) {
+    const value = (process.env[key] || '').trim()
+    if (value) return value
+  }
+  return ''
+}
+
 function smtpConfig() {
-  const host = process.env.AGENT_SMTP_HOST || process.env.SMTP_HOST || 'smtp.ionos.de'
-  const port = parseInt(process.env.AGENT_SMTP_PORT || process.env.SMTP_PORT || '465', 10)
-  const user =
-    process.env.AGENT_SMTP_USER || process.env.SMTP_USER || process.env.EMAIL_USER || ''
-  const pass =
-    process.env.AGENT_SMTP_PASSWORD ||
-    process.env.SMTP_PASSWORD ||
-    process.env.EMAIL_PASS ||
-    ''
-  const fromEmail =
-    process.env.AGENT_SMTP_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || user || ''
-  const fromName = process.env.AGENT_SMTP_FROM_NAME || process.env.SMTP_FROM_NAME || 'LA OLA KI-Assistent'
-  return { host, port, secure: port === 465, user, pass, fromEmail, fromName }
+  const fromName = envTrim('AGENT_SMTP_FROM_NAME', 'SMTP_FROM_NAME') || 'LA OLA KI-Assistent'
+  const agentUser = envTrim('AGENT_SMTP_USER', 'SMTP_USER')
+  const agentPass = envTrim('AGENT_SMTP_PASSWORD', 'SMTP_PASSWORD')
+
+  if (agentUser && agentPass) {
+    const port = parseInt(envTrim('AGENT_SMTP_PORT', 'SMTP_PORT') || '465', 10)
+    return {
+      mode: 'custom',
+      host: envTrim('AGENT_SMTP_HOST', 'SMTP_HOST') || 'smtp.ionos.de',
+      port,
+      secure: port === 465,
+      user: agentUser,
+      pass: agentPass,
+      fromEmail: envTrim('AGENT_SMTP_FROM_EMAIL', 'SMTP_FROM_EMAIL') || agentUser,
+      fromName,
+    }
+  }
+
+  const emailUser = envTrim('EMAIL_USER')
+  const emailPass = envTrim('EMAIL_PASS')
+  if (emailUser && emailPass) {
+    return {
+      mode: 'gmail',
+      user: emailUser,
+      pass: emailPass,
+      fromEmail: envTrim('AGENT_SMTP_FROM_EMAIL', 'SMTP_FROM_EMAIL') || emailUser,
+      fromName,
+    }
+  }
+
+  return null
+}
+
+function createTransporter(cfg) {
+  if (cfg.mode === 'gmail') {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: cfg.user, pass: cfg.pass },
+    })
+  }
+  return nodemailer.createTransport({
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: { user: cfg.user, pass: cfg.pass },
+  })
 }
 
 function corsHeaders() {
@@ -58,25 +99,21 @@ exports.handler = async (event) => {
   }
 
   const cfg = smtpConfig()
-  if (!cfg.user || !cfg.pass || !cfg.fromEmail) {
+  if (!cfg || !cfg.fromEmail) {
     return {
       statusCode: 503,
       headers: { 'Content-Type': 'application/json', ...corsHeaders() },
       body: JSON.stringify({
         message:
-          'SMTP nicht konfiguriert (AGENT_SMTP_USER, AGENT_SMTP_PASSWORD oder SMTP_PASSWORD, AGENT_SMTP_FROM_EMAIL)',
+          'SMTP nicht konfiguriert. Setzen Sie EMAIL_USER + EMAIL_PASS (Gmail) oder AGENT_SMTP_USER + AGENT_SMTP_PASSWORD.',
       }),
     }
   }
 
-  const transporter = nodemailer.createTransport({
-    host: cfg.host,
-    port: cfg.port,
-    secure: cfg.secure,
-    auth: { user: cfg.user, pass: cfg.pass },
-  })
+  const transporter = createTransporter(cfg)
 
   try {
+    await transporter.verify()
     await transporter.sendMail({
       from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
       to: to || cfg.fromEmail,
@@ -94,10 +131,11 @@ exports.handler = async (event) => {
     }
   } catch (err) {
     console.error('SMTP Fehler:', err)
+    const msg = err && err.message ? err.message : String(err)
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders() },
-      body: JSON.stringify({ message: 'SMTP Fehler: ' + (err && err.message ? err.message : String(err)) }),
+      body: JSON.stringify({ message: 'SMTP Fehler: ' + msg }),
     }
   }
 }

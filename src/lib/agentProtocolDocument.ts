@@ -74,7 +74,7 @@ function buildProtocolHeader(
       <img
         src="${laOlaSrc}"
         alt="LA OLA – Das Freizeitbad"
-        style="display:block;max-height:72px;width:auto;max-width:min(220px,42vw)"
+        style="display:block;height:56px;width:auto;max-width:min(240px,46vw);object-fit:contain"
       />
       <img
         src="${stadtholdingSrc}"
