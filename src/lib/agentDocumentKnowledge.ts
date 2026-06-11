@@ -48,6 +48,7 @@ Du beantwortest Fragen ausschließlich auf Basis der bereitgestellten Auszüge a
 
 Regeln:
 - Antworte auf Deutsch, präzise und verständlich.
+- Sprich die Mitarbeiterin / den Mitarbeiter immer in der Du-Form an – freundlich und kollegial, nie „Sie“.
 - Nutze nur Informationen aus den Dokumentenauszügen. Erfinde nichts dazu.
 - Nenne am Ende jeder Antwort die Quelle(n) in eckigen Klammern mit Dokumenttitel und Seite, exakt wie in der Kennzeichnung [Dokument: … | Seite …], z. B. [Hausordnung LA OLA, S. 4]. Bei mehreren Quellen nenne alle.
 - Beantworten die Auszüge die Frage nur teilweise: Gib die Teilantwort mit Quellen und sage klar, welche Information fehlt.
@@ -344,7 +345,7 @@ export function buildDocumentChunks(
 
 export type KnowledgeContextResult = {
   context: string
-  sources: { title: string; pages: number[] }[]
+  sources: { title: string; pages: number[]; fileUrl: string }[]
 }
 
 /**
@@ -395,20 +396,23 @@ export function buildKnowledgeContext(
   )
 
   const parts: string[] = []
-  const sourceMap = new Map<string, Set<number>>()
+  const sourceMap = new Map<string, { pages: Set<number>; fileUrl: string }>()
   for (const chunk of selected) {
     parts.push(
       `---\n[Dokument: ${chunk.doc.title} | Kategorie: ${chunk.doc.category} | Datei: ${chunk.doc.fileName} | Seite ${chunk.page}]\n${chunk.text}`,
     )
-    if (!sourceMap.has(chunk.doc.title)) sourceMap.set(chunk.doc.title, new Set())
-    sourceMap.get(chunk.doc.title)!.add(chunk.page)
+    if (!sourceMap.has(chunk.doc.title)) {
+      sourceMap.set(chunk.doc.title, { pages: new Set(), fileUrl: chunk.doc.fileUrl })
+    }
+    sourceMap.get(chunk.doc.title)!.pages.add(chunk.page)
   }
 
   return {
     context: parts.join('\n\n'),
-    sources: [...sourceMap.entries()].map(([title, pages]) => ({
+    sources: [...sourceMap.entries()].map(([title, entry]) => ({
       title,
-      pages: [...pages].sort((a, b) => a - b),
+      pages: [...entry.pages].sort((a, b) => a - b),
+      fileUrl: entry.fileUrl,
     })),
   }
 }

@@ -25,6 +25,7 @@ type KnowledgeDoc = {
 type KnowledgeSource = {
   title: string
   pages: number[]
+  url?: string
 }
 
 type ChatUiMessage = {
@@ -109,10 +110,11 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [activeDocIndex, setActiveDocIndex] = useState(0)
   const [chatInput, setChatInput] = useState('')
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const firstName = (currentUser || '').split(/\s+/)[0] || ''
   const [chatUi, setChatUi] = useState<ChatUiMessage[]>([
     {
       role: 'bot',
-      text: 'Hallo! Ich bin Ihr Wissens-Assistent. Ich durchsuche die PDF-Dokumente aus dem Bereich „Dokumente“ und nenne die Quelle mit Seitenangabe. Wenn mir eine Angabe fehlt, frage ich gezielt nach.',
+      text: `Hallo${firstName ? ` ${firstName}` : ''}! Ich bin dein Wissens-Assistent. Ich durchsuche die PDF-Dokumente aus dem Bereich „Dokumente“ und nenne dir die Quelle mit Seitenangabe. Wenn mir eine Angabe fehlt, frage ich gezielt nach.`,
     },
   ])
   const [sendBusy, setSendBusy] = useState(false)
@@ -204,7 +206,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
             return [
               {
                 role: 'bot',
-                text: `Hallo! Ich bin Ihr Wissens-Assistent. Ich habe Zugriff auf ${docs.length} PDF-Dokument(e) aus „Dokumente“. Stellen Sie Ihre Frage – ich antworte mit Quellenangabe (Titel + Seite) oder frage nach, wenn mir eine Angabe fehlt.`,
+                text: `Hallo${firstName ? ` ${firstName}` : ''}! Ich bin dein Wissens-Assistent. Ich habe Zugriff auf ${docs.length} PDF-Dokument(e) aus „Dokumente“. Stell mir deine Frage – ich antworte mit Quellenangabe (Titel + Seite) oder frage nach, wenn mir eine Angabe fehlt.`,
               },
             ]
           })
@@ -230,7 +232,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         cache: 'no-store',
-        body: JSON.stringify({ message: msg, history: chatHistory }),
+        body: JSON.stringify({ message: msg, history: chatHistory, userName: currentUser || '' }),
       })
       const data = await parseAgentJson<{
         text?: string
@@ -788,18 +790,35 @@ ${transcript}
                         <div className="whitespace-pre-wrap">{m.text}</div>
                         {m.sources && m.sources.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-sky-100">
-                            {m.sources.map((s) => (
-                              <span
-                                key={s.title}
-                                className="inline-flex items-center gap-1 rounded-full bg-white border border-sky-200 px-2 py-0.5 text-[11px] text-sky-900"
-                                title={`Seiten: ${s.pages.join(', ')}`}
-                              >
-                                📄 {s.title}
-                                {s.pages.length > 0 && (
-                                  <span className="text-sky-600">S. {s.pages.slice(0, 4).join(', ')}{s.pages.length > 4 ? ' …' : ''}</span>
-                                )}
-                              </span>
-                            ))}
+                            {m.sources.map((s) =>
+                              s.url ? (
+                                <a
+                                  key={s.title}
+                                  href={s.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 rounded-full bg-white border border-sky-200 px-2 py-0.5 text-[11px] text-sky-900 hover:bg-sky-100 hover:border-sky-400 hover:underline cursor-pointer"
+                                  title={`Dokument öffnen – Seiten: ${s.pages.join(', ')}`}
+                                >
+                                  📄 {s.title}
+                                  {s.pages.length > 0 && (
+                                    <span className="text-sky-600">S. {s.pages.slice(0, 4).join(', ')}{s.pages.length > 4 ? ' …' : ''}</span>
+                                  )}
+                                  <span className="text-sky-500">↗</span>
+                                </a>
+                              ) : (
+                                <span
+                                  key={s.title}
+                                  className="inline-flex items-center gap-1 rounded-full bg-white border border-sky-200 px-2 py-0.5 text-[11px] text-sky-900"
+                                  title={`Seiten: ${s.pages.join(', ')}`}
+                                >
+                                  📄 {s.title}
+                                  {s.pages.length > 0 && (
+                                    <span className="text-sky-600">S. {s.pages.slice(0, 4).join(', ')}{s.pages.length > 4 ? ' …' : ''}</span>
+                                  )}
+                                </span>
+                              ),
+                            )}
                           </div>
                         )}
                       </>

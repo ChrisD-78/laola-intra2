@@ -5,6 +5,7 @@ import {
   KNOWLEDGE_SYSTEM_PROMPT,
   listPdfDocuments,
   loadKnowledgeForQuery,
+  resolveDocumentFileUrl,
   warmDocumentIndex,
 } from '@/lib/agentDocumentKnowledge'
 
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const message = typeof body.message === 'string' ? body.message.trim() : ''
     const history = Array.isArray(body.history) ? body.history : []
+    const userName = typeof body.userName === 'string' ? body.userName.trim().slice(0, 100) : ''
+    const firstName = userName.split(/\s+/)[0] || ''
 
     if (!message) {
       return NextResponse.json({ error: 'Keine Frage übermittelt.' }, { status: 400 })
@@ -78,7 +81,11 @@ export async function POST(request: NextRequest) {
 
     const { context, sources } = buildKnowledgeContext(chunks)
 
-    let system = `${KNOWLEDGE_SYSTEM_PROMPT}\n\n### Dokumentenauszüge\n${context}`
+    let system = KNOWLEDGE_SYSTEM_PROMPT
+    if (firstName) {
+      system += `\n\n### Ansprache\nDie angemeldete Mitarbeiterin / der angemeldete Mitarbeiter heißt ${firstName}. Sprich sie/ihn mit dem Vornamen „${firstName}“ und in der Du-Form an (z. B. „Hallo ${firstName}, …“ oder „${firstName}, dabei musst du …“). Nutze den Namen natürlich und nicht in jedem Satz.`
+    }
+    system += `\n\n### Dokumentenauszüge\n${context}`
     if (skippedDocs.length > 0) {
       system += `\n\n### Hinweis\nFolgende Dokumente konnten in dieser Anfrage noch nicht gelesen werden: ${skippedDocs
         .map((d) => d.title)
@@ -111,6 +118,7 @@ export async function POST(request: NextRequest) {
       sources: sources.map((s) => ({
         title: s.title,
         pages: s.pages,
+        url: resolveDocumentFileUrl(s.fileUrl, origin),
       })),
       documentCount: totalDocs,
       usedDocuments: loadedDocs.map((d) => d.title),
