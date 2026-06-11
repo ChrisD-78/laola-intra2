@@ -11,23 +11,9 @@ import {
   readSpeechResults,
   type BrowserSpeechRecognition,
 } from '@/lib/agentSpeechRecognition'
+import MarketingTab from '@/components/agent/MarketingTab'
 
-type TabId = 'dashboard' | 'chat' | 'protocol' | 'mail'
-
-type MailItem = {
-  id: string
-  unread: boolean
-  priority: 'high' | 'mid' | 'low'
-  from: string
-  email: string
-  subject: string
-  preview: string
-  time: string
-  body: string
-  source: 'demo' | 'paste' | 'imap'
-  /** Aus Server (IMAP-Sync), falls schon erzeugt */
-  aiReplyDraft?: string | null
-}
+type TabId = 'dashboard' | 'chat' | 'protocol' | 'marketing'
 
 type KnowledgeDoc = {
   id: string
@@ -36,58 +22,17 @@ type KnowledgeDoc = {
   fileName: string
 }
 
-const MAILS: MailItem[] = [
-  {
-    id: 'd1',
-    source: 'demo',
-    unread: true,
-    priority: 'high',
-    from: 'Thorsten Hartmann',
-    email: 'th@stadtholding-landau.de',
-    subject: 'Angebot Bäderbook Platform – Rückfragen',
-    preview: 'Danke für das detaillierte Angebot. Wir haben einige Fragen zur...',
-    time: '09:15',
-    body: `Sehr geehrter Herr Hergesell,\n\nvielen Dank für Ihr detailliertes Angebot zur Bäderbook-Plattform vom 25. März 2026.\n\nWir haben das Dokument geprüft und haben folgende Rückfragen:\n\n1. Ist es möglich, die Anzahl der Online-Formulare im ersten Monat auf 8 statt der geplanten 6 zu erhöhen?\n2. Wie verhält sich die Datentransfer-Pauschale bei Spitzenzeiten (z.B. Sommersaison)?\n3. Gibt es einen SLA (Service Level Agreement) für Ausfallzeiten der Plattform?\n\nBitte teilen Sie uns auch mit, wann ein persönliches Gespräch möglich wäre.\n\nMit freundlichen Grüßen\nThorsten Hartmann\nStadtholding Landau`,
-  },
-  {
-    id: 'd2',
-    source: 'demo',
-    unread: true,
-    priority: 'mid',
-    from: 'Sarah Müller',
-    email: 's.mueller@la-ola.de',
-    subject: 'Dienstplan KW 15 – Änderungsantrag',
-    preview: 'Ich möchte meinen Schichtdienst am Freitag, 11. April tauschen...',
-    time: 'Gestern',
-    body: `Guten Tag,\n\nich möchte hiermit beantragen, meinen Schichtdienst am Freitag, den 11. April 2026 (Spätschicht 14:00–22:00 Uhr) zu tauschen.\n\nKollegin Anna Becker hat sich bereit erklärt, die Schicht zu übernehmen.\n\nKönnen Sie den Tausch genehmigen?\n\nMit freundlichen Grüßen\nSarah Müller\nRettungsschwimmerin LA OLA`,
-  },
-  {
-    id: 'd3',
-    source: 'demo',
-    unread: true,
-    priority: 'low',
-    from: 'Vintia Support',
-    email: 'support@vintia.de',
-    subject: 'Update: Kassensystem Version 4.2.1',
-    preview: 'Das Kassensystem wird am 02. April 2026 um 03:00 Uhr...',
-    time: 'Gestern',
-    body: `Sehr geehrte Damen und Herren,\n\nwir informieren Sie über das bevorstehende Update des Vintia Kassensystems auf Version 4.2.1.\n\nDas Update findet statt am:\nDienstag, 02. April 2026, 03:00–04:30 Uhr\n\nWährend dieser Zeit ist das System nicht verfügbar. Bitte planen Sie keine frühen Schichten ohne Kassenzugang.\n\nNeuerungen in Version 4.2.1:\n– Verbesserter Online-Ticketverkauf\n– Bugfixes Tagesabschluss\n– Neue Exportfunktionen\n\nMit freundlichen Grüßen\nVintia Support-Team`,
-  },
-  {
-    id: 'd4',
-    source: 'demo',
-    unread: false,
-    priority: 'mid',
-    from: 'Nicole Weber',
-    email: 'n.weber@stadtholding-landau.de',
-    subject: 'Termin Stadtholding Jour Fixe April',
-    preview: 'Der nächste Jour Fixe findet am 8. April um 10:00 Uhr statt...',
-    time: 'Mo, 25.3.',
-    body: `Hallo zusammen,\n\nder nächste Jour Fixe der Stadtholding findet statt am:\nDienstag, 8. April 2026, 10:00–11:30 Uhr, Raum 2.14\n\nTagesordnung:\n1. Saisonvorbereitung Freibad Landau\n2. Digitalisierungsprojekte Q2\n3. Sonstiges\n\nBitte Rückmeldung bis 3. April.\n\nViele Grüße\nNicole`,
-  },
-]
+type KnowledgeSource = {
+  title: string
+  pages: number[]
+}
 
-const PRIORITY_LABELS: Record<string, string> = { high: 'Hoch', mid: 'Mittel', low: 'Niedrig' }
+type ChatUiMessage = {
+  role: 'user' | 'bot'
+  text: string
+  typing?: boolean
+  sources?: KnowledgeSource[]
+}
 
 function initials(name: string | null) {
   if (!name) return '?'
@@ -125,6 +70,33 @@ async function callAgentAPI(
   return data.text as string
 }
 
+/** Bestes vom Browser unterstütztes Aufnahmeformat wählen (iOS Safari: audio/mp4). */
+function pickRecorderMimeType(): string {
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return ''
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ]
+  for (const type of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(type)) return type
+    } catch {
+      /* weiter probieren */
+    }
+  }
+  return ''
+}
+
+function fileExtensionForMime(mime: string): string {
+  if (mime.includes('mp4')) return 'mp4'
+  if (mime.includes('ogg')) return 'ogg'
+  if (mime.includes('mpeg')) return 'mp3'
+  return 'webm'
+}
+
 export default function AgentPageClient({ currentUser }: { currentUser: string | null }) {
   const [tab, setTab] = useState<TabId>('dashboard')
   const [toast, setToast] = useState<string | null>(null)
@@ -132,13 +104,15 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
 
   const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>([])
   const [knowledgeDocsLoading, setKnowledgeDocsLoading] = useState(false)
+  const [indexStatus, setIndexStatus] = useState<{ indexed: number; total: number } | null>(null)
+  const warmupRunningRef = useRef(false)
   const [activeDocIndex, setActiveDocIndex] = useState(0)
   const [chatInput, setChatInput] = useState('')
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
-  const [chatUi, setChatUi] = useState<{ role: 'user' | 'bot'; text: string; typing?: boolean }[]>([
+  const [chatUi, setChatUi] = useState<ChatUiMessage[]>([
     {
       role: 'bot',
-      text: 'Hallo! Ich bin Ihr Wissens-Assistent. Ich durchsuche die PDF-Dokumente aus dem Bereich „Dokumente“ und nenne die Quelle in eckigen Klammern.',
+      text: 'Hallo! Ich bin Ihr Wissens-Assistent. Ich durchsuche die PDF-Dokumente aus dem Bereich „Dokumente“ und nenne die Quelle mit Seitenangabe. Wenn mir eine Angabe fehlt, frage ich gezielt nach.',
     },
   ])
   const [sendBusy, setSendBusy] = useState(false)
@@ -161,22 +135,11 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null)
   const isRecordingRef = useRef(false)
+  const gotSpeechTextRef = useRef(false)
   const audioChunksRef = useRef<BlobPart[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [seconds, setSeconds] = useState(0)
   const [recordStatus, setRecordStatus] = useState('Klicken zum Aufnehmen')
-
-  const [mailList, setMailList] = useState<MailItem[]>(MAILS)
-  const [selectedMailId, setSelectedMailId] = useState<string | null>(null)
-  const [aiReply, setAiReply] = useState('')
-  const [mailReplyLoading, setMailReplyLoading] = useState(false)
-  const [replyReadonly, setReplyReadonly] = useState(true)
-
-  /** E-Mail manuell einfügen (ohne Outlook-Regel). */
-  const [pasteFrom, setPasteFrom] = useState('')
-  const [pasteEmail, setPasteEmail] = useState('')
-  const [pasteSubject, setPasteSubject] = useState('')
-  const [pasteBody, setPasteBody] = useState('')
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
@@ -197,6 +160,27 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
         setClaudeConfigured(false)
       }
     })()
+  }, [])
+
+  /** PDF-Index im Hintergrund aufwärmen, damit die erste Frage schnell ist. */
+  const warmKnowledgeIndex = useCallback(async () => {
+    if (warmupRunningRef.current) return
+    warmupRunningRef.current = true
+    try {
+      for (let round = 0; round < 10; round++) {
+        const res = await fetch('/api/agent/knowledge?warm=1', { cache: 'no-store' })
+        if (!res.ok) break
+        const data = (await res.json()) as { total?: number; indexed?: number; remaining?: number }
+        const total = data.total ?? 0
+        const indexed = data.indexed ?? 0
+        setIndexStatus({ indexed, total })
+        if (!data.remaining) break
+      }
+    } catch {
+      /* Warm-up ist optional */
+    } finally {
+      warmupRunningRef.current = false
+    }
   }, [])
 
   useEffect(() => {
@@ -220,10 +204,11 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
             return [
               {
                 role: 'bot',
-                text: `Hallo! Ich bin Ihr Wissens-Assistent. Ich habe Zugriff auf **${docs.length} PDF-Dokument(e)** aus „Dokumente“. Stellen Sie Ihre Frage – ich antworte mit Quellenangabe in eckigen Klammern.`,
+                text: `Hallo! Ich bin Ihr Wissens-Assistent. Ich habe Zugriff auf ${docs.length} PDF-Dokument(e) aus „Dokumente“. Stellen Sie Ihre Frage – ich antworte mit Quellenangabe (Titel + Seite) oder frage nach, wenn mir eine Angabe fehlt.`,
               },
             ]
           })
+          void warmKnowledgeIndex()
         }
       } catch (e) {
         showToast(e instanceof Error ? e.message : 'Dokumente konnten nicht geladen werden')
@@ -231,53 +216,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
         setKnowledgeDocsLoading(false)
       }
     })()
-  }, [tab, showToast])
-
-  useEffect(() => {
-    if (tab !== 'mail') return
-    void (async () => {
-      try {
-        const res = await fetch('/api/agent/inbox/messages')
-        const data = (await res.json()) as {
-          messages?: {
-            id: string
-            from_name: string | null
-            from_email: string | null
-            subject: string | null
-            body_text: string | null
-            received_at: string
-            ai_reply_draft: string | null
-          }[]
-        }
-        if (!Array.isArray(data.messages)) return
-        const mapped: MailItem[] = data.messages.map((row) => {
-          const body = row.body_text || ''
-          return {
-            id: row.id,
-            source: 'imap',
-            unread: false,
-            priority: 'mid',
-            from: row.from_name || 'Unbekannt',
-            email: row.from_email || '—',
-            subject: row.subject || '(Ohne Betreff)',
-            preview: body.length > 90 ? `${body.slice(0, 90).replace(/\s+/g, ' ')}…` : body.replace(/\s+/g, ' '),
-            time: new Date(row.received_at).toLocaleString('de-DE', {
-              dateStyle: 'short',
-              timeStyle: 'short',
-            }),
-            body,
-            aiReplyDraft: row.ai_reply_draft,
-          }
-        })
-        setMailList((prev) => {
-          const keep = prev.filter((m) => m.source === 'demo' || m.source === 'paste')
-          return [...mapped, ...keep]
-        })
-      } catch {
-        /* still show demos */
-      }
-    })()
-  }, [tab])
+  }, [tab, showToast, warmKnowledgeIndex])
 
   const sendChat = async () => {
     const msg = chatInput.trim()
@@ -293,14 +232,19 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
         cache: 'no-store',
         body: JSON.stringify({ message: msg, history: chatHistory }),
       })
-      const data = await parseAgentJson<{ text?: string; error?: string }>(res)
+      const data = await parseAgentJson<{
+        text?: string
+        error?: string
+        sources?: KnowledgeSource[]
+      }>(res)
       if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen')
       const reply = data.text || ''
+      const sources = Array.isArray(data.sources) ? data.sources : []
       setChatHistory((h) => [...h, { role: 'user', content: msg }, { role: 'assistant', content: reply }])
       setChatUi((u) => {
         const next = [...u]
         const i = next.length - 1
-        if (next[i]?.typing) next[i] = { role: 'bot', text: reply }
+        if (next[i]?.typing) next[i] = { role: 'bot', text: reply, sources }
         return next
       })
     } catch (e) {
@@ -407,32 +351,6 @@ ${transcript}
     if (!res.ok) throw new Error(data.message || 'Versand fehlgeschlagen')
   }
 
-  const sendAgentReplyMail = async () => {
-    if (!selectedMail || sendMailBusy) return
-    const body = aiReply.trim()
-    if (!body) {
-      showToast('Bitte zuerst einen Antworttext erzeugen oder eintragen.')
-      return
-    }
-    const to = selectedMail.email.trim()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-      showToast('Keine gültige Absender-E-Mail – Versand nicht möglich.')
-      return
-    }
-    setSendMailBusy(true)
-    try {
-      await sendAgentSmtpMail({
-        to,
-        subject: `Re: ${selectedMail.subject}`,
-        text: body,
-      })
-      showToast('E-Mail wurde gesendet.')
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Versand fehlgeschlagen')
-    }
-    setSendMailBusy(false)
-  }
-
   const sendProtocolByMail = async () => {
     if (!protocolHtml.trim() || sendMailBusy) return
     const to = protocolMailTo.trim()
@@ -467,10 +385,7 @@ ${transcript}
 
   const startSpeechRecognition = useCallback(() => {
     const SpeechRecognitionCtor = getBrowserSpeechRecognition()
-    if (!SpeechRecognitionCtor) {
-      setRecordStatus('Spracherkennung nicht verfügbar – Transkript bitte manuell eintragen')
-      return
-    }
+    if (!SpeechRecognitionCtor) return
 
     const recognition = new SpeechRecognitionCtor()
     recognition.lang = 'de-DE'
@@ -481,6 +396,7 @@ ${transcript}
     recognition.onresult = (event) => {
       const { finalText, interimText } = readSpeechResults(event)
       if (finalText) {
+        gotSpeechTextRef.current = true
         setMeetingTranscript((prev) => (prev ? `${prev} ${finalText}` : finalText).trim())
       }
       setTranscriptInterim(interimText)
@@ -506,20 +422,14 @@ ${transcript}
       recognition.start()
       speechRecognitionRef.current = recognition
     } catch {
-      showToast('Spracherkennung konnte nicht gestartet werden')
+      /* Aufnahme läuft weiter – Whisper-Fallback übernimmt nach dem Stopp */
     }
   }, [showToast])
 
-  const transcribeAudioFile = async (file: File) => {
-    if (isRecording) {
-      showToast('Bitte zuerst die laufende Aufnahme beenden.')
-      return
-    }
-    if (audioTranscribing) return
-
+  /** Audio (Datei oder Aufnahme) an den Server schicken und per Whisper transkribieren. */
+  const transcribeUpload = async (file: File, label: string) => {
     setAudioTranscribing(true)
-    setAudioFileName(file.name)
-    setRecordStatus(`Transkribiere „${file.name}" …`)
+    setRecordStatus(`Transkribiere ${label} …`)
 
     try {
       const formData = new FormData()
@@ -534,10 +444,10 @@ ${transcript}
       const text = (data.text || '').trim()
       if (!text) throw new Error('Kein Text erkannt.')
 
-      setMeetingTranscript(text)
+      setMeetingTranscript((prev) => (prev ? `${prev} ${text}`.trim() : text))
       setHasAudio(true)
-      setRecordStatus(`Audio-Datei „${file.name}" transkribiert`)
-      showToast('Transkript aus Audio-Datei erstellt')
+      setRecordStatus(`${label} transkribiert – Transkript bereit`)
+      showToast('Transkript erstellt')
     } catch (e) {
       setRecordStatus('Transkription fehlgeschlagen')
       showToast(e instanceof Error ? e.message : 'Transkription fehlgeschlagen')
@@ -545,13 +455,29 @@ ${transcript}
     setAudioTranscribing(false)
   }
 
+  const transcribeAudioFile = async (file: File) => {
+    if (isRecording) {
+      showToast('Bitte zuerst die laufende Aufnahme beenden.')
+      return
+    }
+    if (audioTranscribing) return
+    setAudioFileName(file.name)
+    await transcribeUpload(file, `„${file.name}“`)
+  }
+
   const toggleRecording = async () => {
     if (!isRecording) {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        showToast('Mikrofonaufnahme wird von diesem Browser nicht unterstützt (HTTPS erforderlich).')
+        return
+      }
       try {
         audioChunksRef.current = []
+        gotSpeechTextRef.current = false
         setTranscriptInterim('')
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const mr = new MediaRecorder(stream)
+        const mimeType = pickRecorderMimeType()
+        const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
         mr.ondataavailable = (e) => {
           if (e.data.size > 0) audioChunksRef.current.push(e.data)
         }
@@ -559,14 +485,31 @@ ${transcript}
           setHasAudio(audioChunksRef.current.length > 0)
           setTranscriptInterim('')
           stopSpeechRecognition()
-          showToast('Aufnahme beendet – Transkript wird für das Protokoll genutzt')
+
+          // Handy/Safari: keine (oder leere) Live-Spracherkennung →
+          // Aufnahme automatisch per Whisper transkribieren
+          const needsServerTranscription = !gotSpeechTextRef.current
+          if (needsServerTranscription && audioChunksRef.current.length > 0) {
+            const type = mr.mimeType || mimeType || 'audio/webm'
+            const blob = new Blob(audioChunksRef.current, { type })
+            const ext = fileExtensionForMime(type)
+            const file = new File([blob], `aufnahme.${ext}`, { type })
+            void transcribeUpload(file, 'Aufnahme')
+          } else {
+            showToast('Aufnahme beendet – Transkript wird für das Protokoll genutzt')
+          }
         }
         mr.start(1000)
         mediaRecorderRef.current = mr
         isRecordingRef.current = true
         setIsRecording(true)
         setSeconds(0)
-        setRecordStatus('Aufnahme läuft – bitte sprechen …')
+        const speechAvailable = Boolean(getBrowserSpeechRecognition())
+        setRecordStatus(
+          speechAvailable
+            ? 'Aufnahme läuft – bitte sprechen …'
+            : 'Aufnahme läuft – Transkript wird nach dem Stopp automatisch erstellt …',
+        )
         startSpeechRecognition()
         timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
       } catch {
@@ -590,95 +533,17 @@ ${transcript}
   const formatTimer = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
-  const selectedMail = mailList.find((m) => m.id === selectedMailId) || null
-
-  const generateMailReply = useCallback(
-    async (mail: MailItem) => {
-      setMailReplyLoading(true)
-      setAiReply('')
-      const signer = currentUser || 'LA OLA Intranet'
-      const systemPrompt = `Du bist der KI-E-Mail-Assistent von ${signer} (Bäderbook / LA OLA Landau).
-Schreibe eine professionelle, freundliche Antwort auf Deutsch auf die eingegangene E-Mail.
-Halte die Antwort konkret und praxistauglich. Signiere mit: "Mit freundlichen Grüßen\n${signer}\nLA OLA Landau"
-Gib NUR den Antworttext zurück, keine Erklärungen davor oder danach.`
-
-      const userMsg = `Eingehende E-Mail von ${mail.from} (${mail.email}):
-Betreff: ${mail.subject}
-Inhalt: ${mail.body}
-
-Bitte schreibe eine passende Antwort.`
-
-      try {
-        const reply = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 600)
-        setAiReply(reply)
-        setMailList((list) =>
-          list.map((m) =>
-            m.id === mail.id && m.source === 'imap' ? { ...m, aiReplyDraft: reply } : m,
-          ),
-        )
-      } catch (e) {
-        setAiReply(e instanceof Error ? e.message : 'Fehler beim Generieren')
-      }
-      setMailReplyLoading(false)
-    },
-    [currentUser],
-  )
-
-  const openMail = (id: string) => {
-    const mail = mailList.find((m) => m.id === id)
-    if (mail) {
-      setReplyReadonly(true)
-      if (mail.source === 'imap' && mail.aiReplyDraft) {
-        setAiReply(mail.aiReplyDraft)
-        setMailReplyLoading(false)
-      } else {
-        void generateMailReply(mail)
-      }
-    }
-    setMailList((list) => list.map((m) => (m.id === id ? { ...m, unread: false } : m)))
-    setSelectedMailId(id)
-  }
-
-  const analyzePastedMail = () => {
-    const subj = pasteSubject.trim()
-    const body = pasteBody.trim()
-    if (!subj || !body) {
-      showToast('Bitte Betreff und Nachrichtentext ausfüllen.')
-      return
-    }
-    const newId = `p-${Date.now()}`
-    const item: MailItem = {
-      id: newId,
-      source: 'paste',
-      unread: false,
-      priority: 'mid',
-      from: pasteFrom.trim() || 'Absender (nicht angegeben)',
-      email: pasteEmail.trim() || '—',
-      subject: subj,
-      preview:
-        body.length > 100 ? `${body.slice(0, 100).replace(/\s+/g, ' ')}…` : body.replace(/\s+/g, ' '),
-      time: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
-      body,
-    }
-    setMailList((list) => [item, ...list])
-    setSelectedMailId(newId)
-    setReplyReadonly(true)
-    setAiReply('')
-    void generateMailReply(item)
-    showToast('KI erstellt Antwortvorschlag …')
-  }
-
   const tabTitle: Record<TabId, string> = {
     dashboard: 'Dashboard',
     chat: 'Wissens-Chatbot',
     protocol: 'Protokoll-Generator',
-    mail: 'E-Mail-Assistent',
+    marketing: 'Marketing-Agent',
   }
   const tabSub: Record<TabId, string> = {
     dashboard: currentUser ? `Willkommen zurück, ${currentUser}` : 'Übersicht KI-Module',
-    chat: 'Antworten aus PDF-Dokumenten im Bereich „Dokumente“',
+    chat: 'Antworten aus PDF-Dokumenten im Bereich „Dokumente“ – mit Quellen und Seitenangabe',
     protocol: 'Live-Aufnahme oder Audio-Datei → Protokoll',
-    mail: 'IMAP (Outlook→Gmail), Demo oder Mail einfügen',
+    marketing: 'Pressemitteilungen, Instagram- und LinkedIn-Beiträge im LA OLA Design',
   }
 
   const NavBtn = ({ id, label, icon }: { id: TabId; label: string; icon: string }) => (
@@ -757,7 +622,7 @@ Bitte schreibe eine passende Antwort.`
         <NavBtn id="dashboard" label="Dashboard" icon="🏠" />
         <NavBtn id="chat" label="Wissens-Chatbot" icon="💬" />
         <NavBtn id="protocol" label="Protokoll-Generator" icon="🎙️" />
-        <NavBtn id="mail" label="E-Mail-Assistent" icon="✉️" />
+        <NavBtn id="marketing" label="Marketing-Agent" icon="📣" />
       </div>
 
       {tab === 'dashboard' && (
@@ -766,7 +631,7 @@ Bitte schreibe eine passende Antwort.`
             {[
               ['47', 'Chat-Anfragen heute (Demo)'],
               ['8', 'Protokolle generiert (Demo)'],
-              ['23', 'E-Mails verarbeitet (Demo)'],
+              ['5', 'Marketing-Beiträge (Demo)'],
               ['12', 'PDFs indexiert (Demo)'],
             ].map(([v, l]) => (
               <div key={l} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -785,7 +650,7 @@ Bitte schreibe eine passende Antwort.`
               <div className="text-3xl mb-3">📚</div>
               <h3 className="font-semibold text-gray-900 mb-1">Wissens-Chatbot</h3>
               <p className="text-sm text-gray-600">
-                Fragen zu internen PDFs aus „Dokumente“ – Antworten mit Quellenangabe in eckigen Klammern.
+                Fragen zu internen PDFs aus „Dokumente“ – Antworten mit Quellenangabe und Seite.
               </p>
               <span className="inline-flex mt-4 text-sm font-medium text-blue-600">Zum Chatbot →</span>
             </button>
@@ -796,18 +661,20 @@ Bitte schreibe eine passende Antwort.`
             >
               <div className="text-3xl mb-3">🎙️</div>
               <h3 className="font-semibold text-gray-900 mb-1">Protokoll-Generator</h3>
-              <p className="text-sm text-gray-600">Aufnahme oder Metadaten – KI erstellt ein Protokollentwurf.</p>
+              <p className="text-sm text-gray-600">Aufnahme oder Audio-Datei – KI erstellt ein Protokoll.</p>
               <span className="inline-flex mt-4 text-sm font-medium text-blue-600">Zum Generator →</span>
             </button>
             <button
               type="button"
-              onClick={() => setTab('mail')}
-              className="text-left bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all border-t-4 border-t-orange-500"
+              onClick={() => setTab('marketing')}
+              className="text-left bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all border-t-4 border-t-blue-700"
             >
-              <div className="text-3xl mb-3">✉️</div>
-              <h3 className="font-semibold text-gray-900 mb-1">E-Mail-Assistent</h3>
-              <p className="text-sm text-gray-600">Beispiel-Eingänge mit KI-Antwortvorschlag.</p>
-              <span className="inline-flex mt-4 text-sm font-medium text-blue-600">Zu den Mails →</span>
+              <div className="text-3xl mb-3">📣</div>
+              <h3 className="font-semibold text-gray-900 mb-1">Marketing-Agent</h3>
+              <p className="text-sm text-gray-600">
+                Pressemitteilungen, Instagram- und LinkedIn-Beiträge im LA OLA Design.
+              </p>
+              <span className="inline-flex mt-4 text-sm font-medium text-blue-600">Zum Marketing →</span>
             </button>
           </div>
 
@@ -817,7 +684,7 @@ Bitte schreibe eine passende Antwort.`
               {[
                 ['#0ea5e9', 'Chatbot: Frage zu Öffnungszeiten LA OLA', 'Heute, 09:42'],
                 ['#d97706', 'Protokoll: Schichtführer-Besprechung', 'Heute, 08:15'],
-                ['#ea580c', 'E-Mail von Thorsten Hartmann analysiert', 'Gestern, 17:30'],
+                ['#1d4ed8', 'Marketing: Instagram-Beitrag Mitternachtssauna', 'Gestern, 17:30'],
               ].map(([c, t, time]) => (
                 <li key={t} className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0">
                   <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ background: c as string }} />
@@ -875,9 +742,11 @@ Bitte schreibe eine passende Antwort.`
               ))}
             </div>
             <div className="m-3 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-900">
-              {knowledgeDocs.length > 0
-                ? `${knowledgeDocs.length} PDF(s) aus „Dokumente“ werden für Antworten genutzt.`
-                : 'Neue PDFs unter Dokumente hochladen, dann Tab neu öffnen.'}
+              {knowledgeDocs.length === 0 && 'Neue PDFs unter Dokumente hochladen, dann Tab neu öffnen.'}
+              {knowledgeDocs.length > 0 &&
+                (indexStatus && indexStatus.indexed < indexStatus.total
+                  ? `Indexierung läuft: ${indexStatus.indexed}/${indexStatus.total} PDFs bereit …`
+                  : `${knowledgeDocs.length} PDF(s) aus „Dokumente“ werden für Antworten genutzt.`)}
             </div>
           </div>
 
@@ -887,7 +756,7 @@ Bitte schreibe eine passende Antwort.`
               <div>
                 <h3 className="font-semibold text-gray-900">Wissens-Assistent</h3>
                 <p className="text-xs text-gray-600">
-                  Antworten per Claude · Inhalte aus PDFs in „Dokumente“ · Quellen in [eckigen Klammern]
+                  Antworten per Claude · Inhalte aus PDFs in „Dokumente“ · Quellen mit Seitenangabe
                 </p>
               </div>
             </div>
@@ -915,7 +784,25 @@ Bitte schreibe eine passende Antwort.`
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:0.3s]" />
                       </div>
                     ) : m.role === 'bot' ? (
-                      <div className="whitespace-pre-wrap">{m.text}</div>
+                      <>
+                        <div className="whitespace-pre-wrap">{m.text}</div>
+                        {m.sources && m.sources.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-sky-100">
+                            {m.sources.map((s) => (
+                              <span
+                                key={s.title}
+                                className="inline-flex items-center gap-1 rounded-full bg-white border border-sky-200 px-2 py-0.5 text-[11px] text-sky-900"
+                                title={`Seiten: ${s.pages.join(', ')}`}
+                              >
+                                📄 {s.title}
+                                {s.pages.length > 0 && (
+                                  <span className="text-sky-600">S. {s.pages.slice(0, 4).join(', ')}{s.pages.length > 4 ? ' …' : ''}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       m.text
                     )}
@@ -956,7 +843,7 @@ Bitte schreibe eine passende Antwort.`
             <div className="px-5 py-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">🎙️ Aufnahme / Metadaten</h3>
               <p className="text-xs text-gray-600">
-                Live-Aufnahme (Chrome/Edge) oder Audio-Datei hochladen – der Text fließt ins Protokoll
+                Live-Aufnahme oder Audio-Datei hochladen – der Text fließt ins Protokoll
               </p>
             </div>
             <div className="p-5 space-y-4 flex-1">
@@ -1017,8 +904,9 @@ Bitte schreibe eine passende Antwort.`
                 <p className="text-sm text-gray-600 mt-3">{recordStatus}</p>
                 <p className="text-xs text-gray-500 mt-1">Live-Mikrofonaufnahme</p>
                 {speechSupported === false && (
-                  <p className="text-xs text-amber-700 mt-2">
-                    Automatische Spracherkennung nicht verfügbar. Bitte Transkript unten manuell eintragen.
+                  <p className="text-xs text-sky-800 mt-2">
+                    📱 Auf diesem Gerät gibt es keine Live-Spracherkennung. Die Aufnahme wird nach dem
+                    Stopp automatisch per KI transkribiert.
                   </p>
                 )}
               </div>
@@ -1072,7 +960,7 @@ Bitte schreibe eine passende Antwort.`
               >
                 {protocolLoading ? '… wird generiert' : '✨ Protokoll aus Transkript generieren'}
               </button>
-              {!meetingTranscript.trim() && (
+              {!meetingTranscript.trim() && !audioTranscribing && (
                 <p className="text-xs text-gray-500 text-center">
                   Zuerst aufnehmen, Audio-Datei hochladen oder Transkript eintragen.
                 </p>
@@ -1102,7 +990,7 @@ Bitte schreibe eine passende Antwort.`
             {protocolHtml && (
               <div className="p-4 border-t border-gray-200 space-y-2">
                 <div>
-                  <label className="text-xs font-medium text-gray-600">Empfänger (SMTP wie E-Mail-Assistent)</label>
+                  <label className="text-xs font-medium text-gray-600">Empfänger (SMTP wie E-Mail-Versand)</label>
                   <input
                     type="email"
                     value={protocolMailTo}
@@ -1133,183 +1021,7 @@ Bitte schreibe eine passende Antwort.`
         </div>
       )}
 
-      {tab === 'mail' && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-sm text-sky-950">
-            <p className="font-semibold text-sky-900 mb-1">Echte Mails aus Outlook an den Agenten</p>
-            <p className="text-sky-900/90 leading-relaxed">
-              Der <strong>Formular-Versand</strong> nutzt <strong>SMTP (Gmail)</strong> via{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">EMAIL_USER</code> /{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">EMAIL_PASS</code>. Zum <strong>Empfang</strong> dient{' '}
-              <strong>IMAP</strong> mit denselben Zugangsdaten. Für <strong>Antworten aus dem E-Mail-Assistenten</strong>{' '}
-              (und Protokoll-Mail) nutzen standardmäßig dieselben Gmail-Zugangsdaten. Optional <strong>IONOS SMTP</strong>:{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_USER</code>,{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_PASSWORD</code> (oder{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">SMTP_PASSWORD</code>), optional{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_FROM_EMAIL</code> /{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">AGENT_SMTP_HOST</code>. Legen Sie in <strong>Outlook</strong>{' '}
-              eine Regel an: eingehende Mails <strong>weiterleiten an</strong> die IMAP-Gmail-Adresse. Cron:{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">POST/GET /api/agent/inbox/sync</code>. SQL:{' '}
-              <code className="text-xs bg-white/80 px-1 rounded">sql/create_agent_inbound_mails.sql</code>.
-            </p>
-          </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 min-h-[520px]">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center text-sm font-semibold">
-              Eingang
-              <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
-                {mailList.filter((m) => m.unread).length} neu
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {mailList.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => openMail(m.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-sky-50 ${
-                    selectedMailId === m.id ? 'bg-sky-50' : ''
-                  } ${m.unread ? 'font-medium' : ''}`}
-                >
-                  <div className="flex items-center gap-2 text-xs">
-                    {m.unread && <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />}
-                    <span className="truncate">{m.from}</span>
-                    <span
-                      className={`text-[10px] px-1.5 rounded ${
-                        m.priority === 'high'
-                          ? 'bg-red-100 text-red-700'
-                          : m.priority === 'mid'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {PRIORITY_LABELS[m.priority]}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-900 mt-0.5 truncate">{m.subject}</div>
-                  <div className="text-xs text-gray-500 truncate">{m.preview}</div>
-                  <div className="text-[11px] text-gray-400 mt-1">{m.time}</div>
-                </button>
-              ))}
-            </div>
-            <div className="border-t border-gray-200 p-3 bg-gray-50/90 space-y-2">
-              <p className="text-xs font-semibold text-gray-700">Echte E-Mail hier einfügen</p>
-              <p className="text-[11px] text-gray-500 leading-snug">
-                Alternative ohne Weiterleitung: Inhalt aus Outlook/Webmail kopieren – die KI erzeugt den Antwortvorschlag.
-              </p>
-              <input
-                type="text"
-                value={pasteFrom}
-                onChange={(e) => setPasteFrom(e.target.value)}
-                placeholder="Absendername (optional)"
-                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
-              />
-              <input
-                type="text"
-                value={pasteEmail}
-                onChange={(e) => setPasteEmail(e.target.value)}
-                placeholder="E-Mail-Adresse Absender (optional)"
-                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
-              />
-              <input
-                type="text"
-                value={pasteSubject}
-                onChange={(e) => setPasteSubject(e.target.value)}
-                placeholder="Betreff *"
-                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5"
-              />
-              <textarea
-                value={pasteBody}
-                onChange={(e) => setPasteBody(e.target.value)}
-                placeholder="Nachrichtentext *"
-                rows={4}
-                className="w-full text-xs rounded-lg border border-gray-200 px-2 py-1.5 resize-y"
-              />
-              <button
-                type="button"
-                onClick={analyzePastedMail}
-                disabled={mailReplyLoading}
-                className="w-full py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                Mit KI analysieren
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col min-h-[400px]">
-            {!selectedMail ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8">
-                <span className="text-5xl mb-3 opacity-50">✉️</span>
-                <p className="text-sm text-center max-w-sm">
-                  Server-Mails (IMAP) erscheinen oben in der Liste, oder Demo / unten einfügen.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="px-6 py-5 border-b border-gray-200">
-                  <h3 className="text-xl font-semibold text-blue-900">{selectedMail.subject}</h3>
-                  <div className="flex flex-wrap gap-4 text-xs text-gray-600 mt-2">
-                    <span>
-                      <strong className="text-gray-800">Von:</strong> {selectedMail.from} &lt;{selectedMail.email}&gt;
-                    </span>
-                    <span>
-                      <strong className="text-gray-800">Eingang:</strong> {selectedMail.time}
-                    </span>
-                  </div>
-                </div>
-                <div className="px-6 py-4 text-sm text-gray-800 whitespace-pre-wrap border-b border-gray-100 max-h-48 overflow-y-auto">
-                  {selectedMail.body}
-                </div>
-                <div className="flex-1 p-6 bg-sky-50/80 flex flex-col gap-3 min-h-[200px]">
-                  <div className="text-xs font-semibold text-blue-800 uppercase tracking-wide flex items-center gap-2">
-                    🤖 KI-Antwortvorschlag
-                    <span className="flex-1 h-px bg-blue-200" />
-                  </div>
-                  {mailReplyLoading && (
-                    <div className="h-1 bg-gradient-to-r from-blue-600 via-sky-400 to-blue-600 rounded animate-pulse" />
-                  )}
-                  <textarea
-                    value={aiReply}
-                    onChange={(e) => setAiReply(e.target.value)}
-                    readOnly={replyReadonly}
-                    rows={8}
-                    className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-900 bg-white focus:ring-2 focus:ring-blue-500"
-                    placeholder="Antwort wird generiert…"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={sendMailBusy}
-                      onClick={() => void sendAgentReplyMail()}
-                      className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {sendMailBusy ? 'Senden …' : 'Senden'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyReadonly(false)
-                        showToast('Antwort bearbeitbar')
-                      }}
-                      className="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-white"
-                    >
-                      Bearbeiten
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void generateMailReply(selectedMail)}
-                      className="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-white"
-                    >
-                      Neu generieren
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-        </div>
-      )}
+      {tab === 'marketing' && <MarketingTab onToast={showToast} />}
 
       {toast && (
         <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl bg-blue-900 text-white text-sm shadow-xl">

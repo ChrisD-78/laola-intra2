@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { CACHE_HEADER, jsonCache } from '@/lib/apiCache'
-import { invalidateDocumentIndex } from '@/lib/agentDocumentKnowledge'
+import { deleteDocumentTextCache, invalidateDocumentIndex } from '@/lib/agentDocumentKnowledge'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -92,6 +92,7 @@ export async function DELETE(request: NextRequest) {
 
     await sql`DELETE FROM documents WHERE id = ${id}`
     invalidateDocumentIndex()
+    await deleteDocumentTextCache(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

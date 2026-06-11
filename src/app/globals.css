@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Quellen explizit angeben, damit der Klassen-Scan unabhängig vom
+   Arbeitsverzeichnis des Build-Prozesses funktioniert */
+@source "../../src";
 
 :root {
   --background: #ffffff;

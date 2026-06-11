@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
+  /** true, sobald der Anmeldestatus aus localStorage gelesen wurde */
+  authReady: boolean
   isLoggedIn: boolean
   currentUser: string | null
   isAdmin: boolean
@@ -27,6 +29,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [authReady, setAuthReady] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentUser, setCurrentUser] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -51,6 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } else {
       console.log('AuthProvider: User is not logged in')
     }
+    setAuthReady(true)
   }, [])
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -128,6 +132,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }
 
   const value = {
+    authReady,
     isLoggedIn,
     currentUser,
     isAdmin,

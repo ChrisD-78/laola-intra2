@@ -12,25 +12,26 @@ interface ProtectedLayoutProps {
 }
 
 const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, authReady } = useAuth()
   const { isCollapsed } = useSidebar()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    // Wenn nicht angemeldet und nicht auf der Login-Seite, zur Login-Seite weiterleiten
-    if (!isLoggedIn && pathname !== '/login') {
+    // Erst umleiten, wenn der Anmeldestatus aus localStorage gelesen wurde –
+    // sonst wirft jeder harte Seitenaufruf eingeloggte Nutzer zur Login-Seite
+    if (authReady && !isLoggedIn && pathname !== '/login') {
       router.push('/login')
     }
-  }, [isLoggedIn, pathname, router])
+  }, [authReady, isLoggedIn, pathname, router])
 
   // Wenn auf der Login-Seite, nur den Inhalt anzeigen
   if (pathname === '/login') {
     return <>{children}</>
   }
 
-  // Wenn nicht angemeldet, nichts anzeigen (wird zur Login-Seite weitergeleitet)
-  if (!isLoggedIn) {
+  // Wenn Status noch nicht gelesen oder nicht angemeldet, nichts anzeigen
+  if (!authReady || !isLoggedIn) {
     return null
   }
 
