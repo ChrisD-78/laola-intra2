@@ -467,68 +467,137 @@ ${transcript}
     await transcribeUpload(file, `„${file.name}“`)
   }
 
-  const toggleRecording = async () => {
-    if (!isRecording) {
-      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-        showToast('Mikrofonaufnahme wird von diesem Browser nicht unterstützt (HTTPS erforderlich).')
-        return
-      }
-      try {
-        audioChunksRef.current = []
-        gotSpeechTextRef.current = false
-        setTranscriptInterim('')
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const mimeType = pickRecorderMimeType()
-        const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
-        mr.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunksRef.current.push(e.data)
-        }
-        mr.onstop = () => {
-          setHasAudio(audioChunksRef.current.length > 0)
-          setTranscriptInterim('')
-          stopSpeechRecognition()
+  /** Aufnahme abschließen: Chunks einsammeln und ggf. per Whisper transkribieren. */
+  const finalizeRecording = useCallback(
+    (mr: MediaRecorder | null, mimeType: string) => {
+      setHasAudio(audioChunksRef.current.length > 0)
 
-          // Handy/Safari: keine (oder leere) Live-Spracherkennung →
-          // Aufnahme automatisch per Whisper transkribieren
-          const needsServerTranscription = !gotSpeechTextRef.current
-          if (needsServerTranscription && audioChunksRef.current.length > 0) {
-            const type = mr.mimeType || mimeType || 'audio/webm'
-            const blob = new Blob(audioChunksRef.current, { type })
-            const ext = fileExtensionForMime(type)
-            const file = new File([blob], `aufnahme.${ext}`, { type })
-            void transcribeUpload(file, 'Aufnahme')
-          } else {
-            showToast('Aufnahme beendet – Transkript wird für das Protokoll genutzt')
-          }
-        }
-        mr.start(1000)
-        mediaRecorderRef.current = mr
-        isRecordingRef.current = true
-        setIsRecording(true)
-        setSeconds(0)
-        const speechAvailable = Boolean(getBrowserSpeechRecognition())
-        setRecordStatus(
-          speechAvailable
-            ? 'Aufnahme läuft – bitte sprechen …'
-            : 'Aufnahme läuft – Transkript wird nach dem Stopp automatisch erstellt …',
-        )
-        startSpeechRecognition()
-        timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
-      } catch {
-        showToast('Mikrofonzugriff verweigert')
+      // Handy/Safari: keine (oder leere) Live-Spracherkennung →
+      // Aufnahme automatisch per Whisper transkribieren
+      const needsServerTranscription = !gotSpeechTextRef.current
+      if (needsServerTranscription && audioChunksRef.current.length > 0) {
+        const type = mr?.mimeType || mimeType || 'audio/webm'
+        const blob = new Blob(audioChunksRef.current, { type })
+        const ext = fileExtensionForMime(type)
+        const file = new File([blob], `aufnahme.${ext}`, { type })
+        void transcribeUpload(file, 'Aufnahme')
+      } else if (needsServerTranscription) {
+        setRecordStatus('Keine Audiodaten aufgenommen – bitte erneut versuchen.')
+        showToast('Keine Audiodaten aufgenommen')
+      } else {
+        setRecordStatus('Aufnahme gespeichert – Transkript bereit')
+        showToast('Aufnahme beendet – Transkript wird für das Protokoll genutzt')
       }
-    } else {
-      isRecordingRef.current = false
-      mediaRecorderRef.current?.stop()
-      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop())
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showToast],
+  )
+
+  /**
+   * Aufnahme stoppen – jeder Schritt einzeln abgesichert, damit die UI auch
+   * dann zurückgesetzt wird, wenn das Handy (v. a. iOS Safari) beim Stoppen
+   * eine Exception wirft oder das onstop-Event nie feuert.
+   */
+  const stopRecording = useCallback(() => {
+    isRecordingRef.current = false
+    setIsRecording(false)
+    setTranscriptInterim('')
+    setRecordStatus('Aufnahme wird gespeichert …')
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    try {
       stopSpeechRecognition()
-      setIsRecording(false)
-      setRecordStatus('Aufnahme gespeichert')
-      setTranscriptInterim('')
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
+    } catch {
+      /* weiter – Aufnahme trotzdem beenden */
+    }
+
+    const mr = mediaRecorderRef.current
+    mediaRecorderRef.current = null
+    if (!mr) {
+      setRecordStatus('Klicken zum Aufnehmen')
+      return
+    }
+    const mimeType = mr.mimeType || ''
+
+    // Abschluss nur einmal ausführen – egal ob über onstop oder Sicherheitsnetz
+    let finalized = false
+    const finalizeOnce = () => {
+      if (finalized) return
+      finalized = true
+      finalizeRecording(mr, mimeType)
+    }
+    mr.onstop = finalizeOnce
+
+    try {
+      if (mr.state === 'recording' || mr.state === 'paused') {
+        try {
+          mr.requestData()
+        } catch {
+          /* optional – letzter Datenblock */
+        }
+        mr.stop()
       }
+    } catch {
+      /* stop() fehlgeschlagen – Sicherheitsnetz unten übernimmt */
+    }
+
+    try {
+      mr.stream.getTracks().forEach((t) => t.stop())
+    } catch {
+      /* Mikrofon-Tracks ließen sich nicht stoppen */
+    }
+
+    // Sicherheitsnetz: falls onstop auf dem Gerät nicht feuert
+    setTimeout(finalizeOnce, 1200)
+  }, [finalizeRecording, stopSpeechRecognition])
+
+  const startRecording = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      showToast('Mikrofonaufnahme wird von diesem Browser nicht unterstützt (HTTPS erforderlich).')
+      return
+    }
+    try {
+      audioChunksRef.current = []
+      gotSpeechTextRef.current = false
+      setTranscriptInterim('')
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = pickRecorderMimeType()
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+      mr.start(1000)
+      mediaRecorderRef.current = mr
+      isRecordingRef.current = true
+      setIsRecording(true)
+      setSeconds(0)
+      const speechAvailable = Boolean(getBrowserSpeechRecognition())
+      setRecordStatus(
+        speechAvailable
+          ? 'Aufnahme läuft – bitte sprechen …'
+          : 'Aufnahme läuft – Transkript wird nach dem Stopp automatisch erstellt …',
+      )
+      startSpeechRecognition()
+      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
+    } catch {
+      showToast('Mikrofonzugriff verweigert')
+    }
+  }, [showToast, startSpeechRecognition])
+
+  const lastToggleRef = useRef(0)
+  const toggleRecording = async () => {
+    // Schutz gegen doppelt ausgelöste Taps (Touch + Click auf Mobilgeräten)
+    const now = Date.now()
+    if (now - lastToggleRef.current < 500) return
+    lastToggleRef.current = now
+
+    if (isRecordingRef.current) {
+      stopRecording()
+    } else {
+      await startRecording()
     }
   }
 
