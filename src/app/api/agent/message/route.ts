@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { completeAnthropic, type AnthropicChatMessage } from '@/lib/anthropicMessages'
+import { logAgentEvent } from '@/lib/agentUsage'
 
 /**
  * Serverseitiger Proxy zu Anthropic (API-Key nie im Browser).
@@ -39,6 +40,8 @@ export async function POST(request: NextRequest) {
       max_tokens,
       model,
     })
+    // Diese Route wird aktuell nur vom Protokoll-Generator genutzt
+    await logAgentEvent('protocol')
     return NextResponse.json({ text })
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Interner Serverfehler'

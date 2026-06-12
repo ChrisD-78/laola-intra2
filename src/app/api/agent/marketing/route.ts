@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { completeAnthropic } from '@/lib/anthropicMessages'
+import { logAgentEvent } from '@/lib/agentUsage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -106,6 +107,8 @@ export async function POST(request: NextRequest) {
       messages: [{ role: 'user', content: userMsg }],
       max_tokens: CHANNEL_MAX_TOKENS[channel],
     })
+
+    await logAgentEvent('marketing')
 
     return NextResponse.json({ text: text.trim(), channel })
   } catch (e) {

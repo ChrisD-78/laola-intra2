@@ -28,6 +28,14 @@ type KnowledgeSource = {
   url?: string
 }
 
+type AgentStats = {
+  chatToday: number
+  protocolsTotal: number
+  marketingTotal: number
+  pdfsIndexed: number
+  pdfsTotal: number
+}
+
 type ChatUiMessage = {
   role: 'user' | 'bot'
   text: string
@@ -102,6 +110,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [tab, setTab] = useState<TabId>('dashboard')
   const [toast, setToast] = useState<string | null>(null)
   const [claudeConfigured, setClaudeConfigured] = useState<boolean | null>(null)
+  const [stats, setStats] = useState<AgentStats | null>(null)
 
   const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>([])
   const [knowledgeDocsLoading, setKnowledgeDocsLoading] = useState(false)
@@ -163,6 +172,21 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
       }
     })()
   }, [])
+
+  // Echte Dashboard-Kennzahlen laden (bei jedem Wechsel zurück aufs Dashboard aktualisieren)
+  useEffect(() => {
+    if (tab !== 'dashboard') return
+    void (async () => {
+      try {
+        const res = await fetch('/api/agent/stats', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = (await res.json()) as AgentStats
+        setStats(data)
+      } catch {
+        /* Kennzahlen sind optional */
+      }
+    })()
+  }, [tab])
 
   /** PDF-Index im Hintergrund aufwärmen, damit die erste Frage schnell ist. */
   const warmKnowledgeIndex = useCallback(async () => {
@@ -700,10 +724,17 @@ ${transcript}
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              ['47', 'Chat-Anfragen heute (Demo)'],
-              ['8', 'Protokolle generiert (Demo)'],
-              ['5', 'Marketing-Beiträge (Demo)'],
-              ['12', 'PDFs indexiert (Demo)'],
+              [stats ? String(stats.chatToday) : '–', 'Chat-Anfragen heute'],
+              [stats ? String(stats.protocolsTotal) : '–', 'Protokolle generiert'],
+              [stats ? String(stats.marketingTotal) : '–', 'Marketing-Beiträge'],
+              [
+                stats
+                  ? stats.pdfsTotal > 0 && stats.pdfsIndexed < stats.pdfsTotal
+                    ? `${stats.pdfsIndexed}/${stats.pdfsTotal}`
+                    : String(stats.pdfsIndexed)
+                  : '–',
+                'PDFs indexiert',
+              ],
             ].map(([v, l]) => (
               <div key={l} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
                 <div className="text-3xl font-bold text-blue-800">{v}</div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { completeAnthropic, type AnthropicChatMessage } from '@/lib/anthropicMessages'
+import { logAgentEvent } from '@/lib/agentUsage'
 import {
   buildKnowledgeContext,
   KNOWLEDGE_SYSTEM_PROMPT,
@@ -112,6 +113,8 @@ export async function POST(request: NextRequest) {
       messages: [...sanitizedHistory, { role: 'user', content: message }],
       max_tokens: 1500,
     })
+
+    await logAgentEvent('chat')
 
     return NextResponse.json({
       text,
