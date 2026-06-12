@@ -247,7 +247,7 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
       const data = await parseAgentJson<{ content?: string; error?: string }>(res)
       if (!res.ok) throw new Error(data.error || 'Briefing fehlgeschlagen')
       setBriefingText(data.content || '')
-      showToast('Briefing erstellt und auf dem Dashboard veröffentlicht ✅')
+      showToast('Briefing erstellt ✅')
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Briefing fehlgeschlagen')
     }
@@ -885,10 +885,10 @@ ${transcript}
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-gray-900">📨 Tägliches KI-Briefing</h3>
+                <h3 className="font-semibold text-gray-900">📨 KI-Briefing</h3>
                 <p className="text-sm text-gray-600">
-                  Fasst Aufgaben, Schichtbesetzung, Urlaubsanträge, Pinnwand und neue Dokumente zusammen –
-                  läuft automatisch jeden Morgen und erscheint als Info auf dem Haupt-Dashboard.
+                  Fasst auf Knopfdruck Aufgaben, Schichtbesetzung, Urlaubsanträge, Pinnwand und neue
+                  Dokumente zusammen – wird nur hier angezeigt, nicht veröffentlicht.
                 </p>
               </div>
               <button

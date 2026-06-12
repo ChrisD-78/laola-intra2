@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { completeAnthropic } from '@/lib/anthropicMessages'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
-
-const BRIEFING_TITLE_PREFIX = '🤖 KI-Briefing'
 
 type ShiftAssignment = { employeeId?: string; employeeName?: string }
 
@@ -138,7 +136,7 @@ async function collectFacts(): Promise<string> {
   return parts.filter(Boolean).join('\n\n')
 }
 
-/** Briefing generieren, als Dashboard-Info veröffentlichen und zurückgeben. */
+/** Briefing generieren und zurückgeben (nur Anzeige im Agent – keine Veröffentlichung). */
 async function createBriefing(): Promise<{ title: string; content: string }> {
   const facts = await collectFacts()
   const dateLabel = berlinDateLabel()
@@ -157,31 +155,12 @@ Regeln:
     max_tokens: 800,
   })
 
-  const title = `${BRIEFING_TITLE_PREFIX} – ${dateLabel}`
-  const sql = neon(process.env.DATABASE_URL!)
-  // Vorherige Briefings ersetzen, damit das Dashboard nicht zugemüllt wird
-  await sql`DELETE FROM dashboard_infos WHERE title LIKE ${`${BRIEFING_TITLE_PREFIX}%`}`
-  await sql`
-    INSERT INTO dashboard_infos (title, content, timestamp)
-    VALUES (${title}, ${content.trim()}, ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })})
-  `
-
-  return { title, content: content.trim() }
+  return { title: `🤖 KI-Briefing – ${dateLabel}`, content: content.trim() }
 }
 
-function checkCronKey(request: NextRequest): boolean {
-  const secret = process.env.AGENT_CRON_SECRET?.trim()
-  if (!secret) return true // kein Secret konfiguriert → interne Nutzung erlaubt
-  const provided = request.headers.get('x-cron-key') || request.nextUrl.searchParams.get('key') || ''
-  return provided === secret
-}
-
-/** POST: Briefing jetzt erstellen (Agent-Dashboard-Button oder Cron). */
-export async function POST(request: NextRequest) {
+/** POST: Briefing jetzt erstellen (Button im Agent-Dashboard). */
+export async function POST() {
   try {
-    if (!checkCronKey(request)) {
-      return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
-    }
     const briefing = await createBriefing()
     return NextResponse.json(briefing)
   } catch (e) {
@@ -192,9 +171,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/agent/briefing', e)
     return NextResponse.json({ error: err }, { status: 500 })
   }
-}
-
-/** GET: identisch zu POST – erlaubt einfache Cron-Aufrufe. */
-export async function GET(request: NextRequest) {
-  return POST(request)
 }
