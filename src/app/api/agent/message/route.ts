@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
         : 1024
     const model =
       typeof body.model === 'string' && body.model.trim() ? body.model.trim() : undefined
+    const usageDetail =
+      typeof body.usage_detail === 'string' ? body.usage_detail.trim().slice(0, 160) : ''
 
     const sanitized: AnthropicChatMessage[] = messages
       .filter(
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
       model,
     })
     // Diese Route wird aktuell nur vom Protokoll-Generator genutzt
-    await logAgentEvent('protocol')
+    await logAgentEvent('protocol', usageDetail)
     return NextResponse.json({ text })
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Interner Serverfehler'

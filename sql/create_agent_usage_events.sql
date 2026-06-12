@@ -5,5 +5,6 @@
 CREATE TABLE IF NOT EXISTS agent_usage_events (
   id BIGSERIAL PRIMARY KEY,
   event_type TEXT NOT NULL, -- 'chat' | 'protocol' | 'marketing'
+  detail TEXT,              -- z. B. Chat-Frage, Protokoll-Titel, Marketing-Thema
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

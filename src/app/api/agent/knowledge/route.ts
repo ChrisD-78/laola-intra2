@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       max_tokens: 1500,
     })
 
-    await logAgentEvent('chat')
+    await logAgentEvent('chat', message)
 
     return NextResponse.json({
       text,

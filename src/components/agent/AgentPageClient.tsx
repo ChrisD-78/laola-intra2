@@ -28,12 +28,40 @@ type KnowledgeSource = {
   url?: string
 }
 
+type AgentActivity = {
+  type: 'chat' | 'protocol' | 'marketing'
+  detail: string | null
+  createdAt: string
+}
+
 type AgentStats = {
   chatToday: number
   protocolsTotal: number
   marketingTotal: number
   pdfsIndexed: number
   pdfsTotal: number
+  activities?: AgentActivity[]
+}
+
+const ACTIVITY_STYLE: Record<AgentActivity['type'], { color: string; label: string }> = {
+  chat: { color: '#0ea5e9', label: 'Chatbot' },
+  protocol: { color: '#d97706', label: 'Protokoll' },
+  marketing: { color: '#1d4ed8', label: 'Marketing' },
+}
+
+/** Zeitstempel wie „Heute, 09:42" / „Gestern, 17:30" / „Mo, 25.03." formatieren. */
+function formatActivityTime(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const time = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  if (sameDay(date, today)) return `Heute, ${time}`
+  if (sameDay(date, yesterday)) return `Gestern, ${time}`
+  return `${date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })}, ${time}`
 }
 
 type ChatUiMessage = {
@@ -68,11 +96,12 @@ async function callAgentAPI(
   system: string,
   messages: { role: 'user' | 'assistant'; content: string }[],
   max_tokens: number,
+  usageDetail?: string,
 ) {
   const res = await fetch('/api/agent/message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system, messages, max_tokens }),
+    body: JSON.stringify({ system, messages, max_tokens, usage_detail: usageDetail || '' }),
   })
   const data = await parseAgentJson<{ error?: string; text?: string }>(res)
   if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen')
@@ -320,7 +349,7 @@ ${transcript}
 ---`
 
     try {
-      const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1600)
+      const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1600, title)
       setProtocolHtml(wrapProtocolDocument(html, { department: meetingDept }))
       showToast('Protokoll erzeugt')
     } catch (e) {
@@ -781,22 +810,39 @@ ${transcript}
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Letzte Aktivitäten (Beispiel)</h3>
-            <ul className="space-y-3 text-sm">
-              {[
-                ['#0ea5e9', 'Chatbot: Frage zu Öffnungszeiten LA OLA', 'Heute, 09:42'],
-                ['#d97706', 'Protokoll: Schichtführer-Besprechung', 'Heute, 08:15'],
-                ['#1d4ed8', 'Marketing: Instagram-Beitrag Mitternachtssauna', 'Gestern, 17:30'],
-              ].map(([c, t, time]) => (
-                <li key={t} className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0">
-                  <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ background: c as string }} />
-                  <div>
-                    <p className="text-gray-800">{t}</p>
-                    <p className="text-xs text-gray-500">{time}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <h3 className="font-semibold text-gray-900 mb-4">Letzte Aktivitäten</h3>
+            {!stats && <p className="text-sm text-gray-500">Aktivitäten werden geladen …</p>}
+            {stats && (!stats.activities || stats.activities.length === 0) && (
+              <p className="text-sm text-gray-500">
+                Noch keine Aktivitäten – nutze den Wissens-Chatbot, den Protokoll-Generator oder den
+                Marketing-Agenten, dann erscheinen die letzten Aktionen hier.
+              </p>
+            )}
+            {stats && stats.activities && stats.activities.length > 0 && (
+              <ul className="space-y-3 text-sm">
+                {stats.activities.map((a, i) => {
+                  const style = ACTIVITY_STYLE[a.type] || ACTIVITY_STYLE.chat
+                  return (
+                    <li
+                      key={`${a.createdAt}-${i}`}
+                      className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                        style={{ background: style.color }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-gray-800 truncate">
+                          {style.label}
+                          {a.detail ? `: ${a.detail}` : ''}
+                        </p>
+                        <p className="text-xs text-gray-500">{formatActivityTime(a.createdAt)}</p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
 
           <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">

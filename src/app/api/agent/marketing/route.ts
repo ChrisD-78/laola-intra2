@@ -108,7 +108,12 @@ export async function POST(request: NextRequest) {
       max_tokens: CHANNEL_MAX_TOKENS[channel],
     })
 
-    await logAgentEvent('marketing')
+    const channelLabels: Record<MarketingChannel, string> = {
+      press: 'Pressemitteilung',
+      instagram: 'Instagram',
+      linkedin: 'LinkedIn',
+    }
+    await logAgentEvent('marketing', `${channelLabels[channel]}: ${topic}`)
 
     return NextResponse.json({ text: text.trim(), channel })
   } catch (e) {

@@ -11,25 +11,35 @@ async function ensureTable() {
     CREATE TABLE IF NOT EXISTS agent_usage_events (
       id BIGSERIAL PRIMARY KEY,
       event_type TEXT NOT NULL,
+      detail TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+  // Bestandstabellen aus früherer Version um die Detail-Spalte ergänzen
+  await sql`ALTER TABLE agent_usage_events ADD COLUMN IF NOT EXISTS detail TEXT`
   tableReady = true
 }
 
 /**
- * Nutzung des Agenten zählen (Dashboard-Statistik).
+ * Nutzung des Agenten zählen (Dashboard-Statistik und Aktivitätenliste).
  * Fehler werden geschluckt – die Statistik darf nie eine KI-Antwort blockieren.
  */
-export async function logAgentEvent(type: AgentEventType): Promise<void> {
+export async function logAgentEvent(type: AgentEventType, detail?: string): Promise<void> {
   try {
     if (!process.env.DATABASE_URL) return
     await ensureTable()
     const sql = neon(process.env.DATABASE_URL)
-    await sql`INSERT INTO agent_usage_events (event_type) VALUES (${type})`
+    const cleanDetail = (detail || '').replace(/\s+/g, ' ').trim().slice(0, 160) || null
+    await sql`INSERT INTO agent_usage_events (event_type, detail) VALUES (${type}, ${cleanDetail})`
   } catch (e) {
     console.error('agent usage: Ereignis konnte nicht gezählt werden', e)
   }
+}
+
+export type AgentActivity = {
+  type: AgentEventType
+  detail: string | null
+  createdAt: string
 }
 
 export type AgentStats = {
@@ -38,9 +48,10 @@ export type AgentStats = {
   marketingTotal: number
   pdfsIndexed: number
   pdfsTotal: number
+  activities: AgentActivity[]
 }
 
-/** Echte Kennzahlen für das Agent-Dashboard. */
+/** Echte Kennzahlen und letzte Aktivitäten für das Agent-Dashboard. */
 export async function getAgentStats(): Promise<AgentStats> {
   const sql = neon(process.env.DATABASE_URL!)
   await ensureTable()
@@ -55,6 +66,13 @@ export async function getAgentStats(): Promise<AgentStats> {
       COUNT(*) FILTER (WHERE event_type = 'marketing') AS marketing_total
     FROM agent_usage_events
   `) as [{ chat_today: string; protocols_total: string; marketing_total: string }]
+
+  const activityRows = (await sql`
+    SELECT event_type, detail, created_at
+    FROM agent_usage_events
+    ORDER BY created_at DESC
+    LIMIT 6
+  `) as { event_type: AgentEventType; detail: string | null; created_at: string }[]
 
   let pdfsIndexed = 0
   let pdfsTotal = 0
@@ -79,5 +97,10 @@ export async function getAgentStats(): Promise<AgentStats> {
     marketingTotal: Number(counts.marketing_total) || 0,
     pdfsIndexed,
     pdfsTotal,
+    activities: activityRows.map((row) => ({
+      type: row.event_type,
+      detail: row.detail,
+      createdAt: new Date(row.created_at).toISOString(),
+    })),
   }
 }
