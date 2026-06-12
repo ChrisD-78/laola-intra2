@@ -34,6 +34,22 @@ type AgentActivity = {
   createdAt: string
 }
 
+type ExtractedTask = {
+  title: string
+  description: string
+  assigned_to: string
+  due_date: string
+  priority: 'Kritisch' | 'Hoch' | 'Mittel' | 'Niedrig'
+  selected: boolean
+}
+
+const TASK_PRIORITY_BADGE: Record<string, string> = {
+  Kritisch: 'bg-red-100 text-red-800',
+  Hoch: 'bg-orange-100 text-orange-800',
+  Mittel: 'bg-yellow-100 text-yellow-800',
+  Niedrig: 'bg-green-100 text-green-800',
+}
+
 type AgentStats = {
   chatToday: number
   protocolsTotal: number
@@ -140,6 +156,8 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [toast, setToast] = useState<string | null>(null)
   const [claudeConfigured, setClaudeConfigured] = useState<boolean | null>(null)
   const [stats, setStats] = useState<AgentStats | null>(null)
+  const [briefingLoading, setBriefingLoading] = useState(false)
+  const [briefingText, setBriefingText] = useState<string | null>(null)
 
   const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>([])
   const [knowledgeDocsLoading, setKnowledgeDocsLoading] = useState(false)
@@ -165,6 +183,9 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
   const [protocolLoading, setProtocolLoading] = useState(false)
   const [protocolMailTo, setProtocolMailTo] = useState('')
   const [sendMailBusy, setSendMailBusy] = useState(false)
+  const [extractedTasks, setExtractedTasks] = useState<ExtractedTask[] | null>(null)
+  const [tasksExtracting, setTasksExtracting] = useState(false)
+  const [tasksCreating, setTasksCreating] = useState(false)
   const [hasAudio, setHasAudio] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [audioFileName, setAudioFileName] = useState<string | null>(null)
@@ -216,6 +237,22 @@ export default function AgentPageClient({ currentUser }: { currentUser: string |
       }
     })()
   }, [tab])
+
+  /** KI-Briefing erstellen und als Dashboard-Info veröffentlichen. */
+  const createBriefing = async () => {
+    if (briefingLoading) return
+    setBriefingLoading(true)
+    try {
+      const res = await fetch('/api/agent/briefing', { method: 'POST' })
+      const data = await parseAgentJson<{ content?: string; error?: string }>(res)
+      if (!res.ok) throw new Error(data.error || 'Briefing fehlgeschlagen')
+      setBriefingText(data.content || '')
+      showToast('Briefing erstellt und auf dem Dashboard veröffentlicht ✅')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Briefing fehlgeschlagen')
+    }
+    setBriefingLoading(false)
+  }
 
   /** PDF-Index im Hintergrund aufwärmen, damit die erste Frage schnell ist. */
   const warmKnowledgeIndex = useCallback(async () => {
@@ -351,6 +388,7 @@ ${transcript}
     try {
       const html = await callAgentAPI(systemPrompt, [{ role: 'user', content: userMsg }], 1600, title)
       setProtocolHtml(wrapProtocolDocument(html, { department: meetingDept }))
+      setExtractedTasks(null)
       showToast('Protokoll erzeugt')
     } catch (e) {
       setProtocolHtml(
@@ -360,6 +398,77 @@ ${transcript}
       )
     }
     setProtocolLoading(false)
+  }
+
+  /** Aufgaben mit Verantwortlichem und Frist per KI aus dem Protokoll erkennen. */
+  const extractTasksFromProtocol = async () => {
+    if (!protocolHtml.trim() || tasksExtracting) return
+    setTasksExtracting(true)
+    setExtractedTasks(null)
+    try {
+      const el = document.createElement('div')
+      el.innerHTML = protocolHtml
+      const protocolText = (el.innerText || '').trim()
+      const res = await fetch('/api/agent/protocol-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          protocolText,
+          meetingDate,
+          participants: meetingParticipants,
+        }),
+      })
+      const data = await parseAgentJson<{ tasks?: Omit<ExtractedTask, 'selected'>[]; error?: string }>(res)
+      if (!res.ok) throw new Error(data.error || 'Aufgaben konnten nicht erkannt werden')
+      const tasks = (data.tasks || []).map((t) => ({ ...t, selected: true }))
+      setExtractedTasks(tasks)
+      showToast(
+        tasks.length > 0
+          ? `${tasks.length} Aufgabe(n) im Protokoll erkannt`
+          : 'Keine Aufgaben im Protokoll gefunden',
+      )
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Aufgaben konnten nicht erkannt werden')
+    }
+    setTasksExtracting(false)
+  }
+
+  /** Ausgewählte Aufgaben im Modul „Aufgaben" anlegen. */
+  const createSelectedTasks = async () => {
+    if (!extractedTasks || tasksCreating) return
+    const selected = extractedTasks.filter((t) => t.selected)
+    if (selected.length === 0) {
+      showToast('Bitte mindestens eine Aufgabe auswählen.')
+      return
+    }
+    setTasksCreating(true)
+    let created = 0
+    for (const task of selected) {
+      try {
+        const res = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: task.title,
+            description: task.description,
+            priority: task.priority,
+            status: 'Offen',
+            due_date: task.due_date,
+            assigned_to: task.assigned_to || 'Nicht zugewiesen',
+          }),
+        })
+        if (res.ok) created += 1
+      } catch {
+        /* einzelne Fehler unten gesammelt melden */
+      }
+    }
+    setTasksCreating(false)
+    if (created === selected.length) {
+      showToast(`${created} Aufgabe(n) im Modul „Aufgaben" angelegt ✅`)
+      setExtractedTasks(null)
+    } else {
+      showToast(`${created} von ${selected.length} Aufgaben angelegt – bitte erneut versuchen.`)
+    }
   }
 
   const copyProtocol = () => {
@@ -772,6 +881,32 @@ ${transcript}
             ))}
           </div>
 
+          {/* Tägliches KI-Briefing */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-gray-900">📨 Tägliches KI-Briefing</h3>
+                <p className="text-sm text-gray-600">
+                  Fasst Aufgaben, Schichtbesetzung, Urlaubsanträge, Pinnwand und neue Dokumente zusammen –
+                  läuft automatisch jeden Morgen und erscheint als Info auf dem Haupt-Dashboard.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={briefingLoading}
+                onClick={() => void createBriefing()}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-700 to-sky-500 text-white text-sm font-medium hover:from-blue-800 hover:to-sky-600 disabled:opacity-60 whitespace-nowrap"
+              >
+                {briefingLoading ? '⏳ wird erstellt …' : 'Jetzt erstellen'}
+              </button>
+            </div>
+            {briefingText && (
+              <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50/70 p-4 text-sm text-gray-800 whitespace-pre-wrap">
+                {briefingText}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               type="button"
@@ -1179,6 +1314,80 @@ ${transcript}
                   >
                     {sendMailBusy ? '…' : 'Per Mail senden'}
                   </button>
+                </div>
+
+                {/* KI-Aufgabenerkennung */}
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    disabled={tasksExtracting}
+                    onClick={() => void extractTasksFromProtocol()}
+                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-700 to-sky-500 text-white text-sm font-medium hover:from-blue-800 hover:to-sky-600 disabled:opacity-60"
+                  >
+                    {tasksExtracting
+                      ? '⏳ KI sucht Aufgaben im Protokoll …'
+                      : '📋 Aufgaben aus Protokoll erkennen'}
+                  </button>
+
+                  {extractedTasks && extractedTasks.length === 0 && (
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      Keine Aufgaben im Protokoll gefunden.
+                    </p>
+                  )}
+
+                  {extractedTasks && extractedTasks.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {extractedTasks.map((task, i) => (
+                        <label
+                          key={`${task.title}-${i}`}
+                          className={`flex gap-3 items-start rounded-lg border p-3 cursor-pointer transition-colors ${
+                            task.selected ? 'border-blue-300 bg-blue-50/60' : 'border-gray-200 bg-white opacity-70'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={task.selected}
+                            onChange={() =>
+                              setExtractedTasks((tasks) =>
+                                tasks
+                                  ? tasks.map((t, j) => (j === i ? { ...t, selected: !t.selected } : t))
+                                  : tasks,
+                              )
+                            }
+                            className="mt-1"
+                          />
+                          <span className="flex-1 min-w-0">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900">{task.title}</span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                  TASK_PRIORITY_BADGE[task.priority] || 'bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                {task.priority}
+                              </span>
+                            </span>
+                            {task.description && (
+                              <span className="block text-xs text-gray-600 mt-0.5">{task.description}</span>
+                            )}
+                            <span className="block text-xs text-gray-500 mt-1">
+                              👤 {task.assigned_to || 'Nicht zugewiesen'} · 📅 fällig {task.due_date}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        disabled={tasksCreating || extractedTasks.every((t) => !t.selected)}
+                        onClick={() => void createSelectedTasks()}
+                        className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {tasksCreating
+                          ? '… Aufgaben werden angelegt'
+                          : `✅ ${extractedTasks.filter((t) => t.selected).length} Aufgabe(n) im Modul „Aufgaben" anlegen`}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

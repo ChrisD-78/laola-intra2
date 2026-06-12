@@ -124,6 +124,8 @@ export default function Dokumente() {
         uploaded_by: currentUser || 'Unbekannt',
         file_url: uploaded.publicUrl,
       })
+      // Neues PDF direkt für den Wissens-Chatbot indexieren (im Hintergrund)
+      void fetch('/api/agent/knowledge?warm=1').catch(() => {})
       const fresh = await getDocuments()
       const mapped: Document[] = fresh.map((d: DocumentRecord) => ({
         id: d.id as string,

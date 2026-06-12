@@ -26,7 +26,40 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isPdf =
+    selectedFile != null &&
+    (selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf'))
+
+  /** PDF an die KI schicken und Titel/Beschreibung/Kategorie/Tags übernehmen. */
+  const fillWithAi = async () => {
+    if (!selectedFile || aiLoading) return
+    setAiLoading(true)
+    setAiError(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+      const res = await fetch('/api/agent/analyze-document', { method: 'POST', body: formData })
+      const data = (await res.json()) as {
+        title?: string
+        description?: string
+        category?: string
+        tags?: string[]
+        error?: string
+      }
+      if (!res.ok) throw new Error(data.error || 'KI-Analyse fehlgeschlagen')
+      if (data.title) setTitle(data.title)
+      if (data.description) setDescription(data.description)
+      if (data.category) setCategory(data.category)
+      if (data.tags && data.tags.length) setTags(data.tags.join(', '))
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : 'KI-Analyse fehlgeschlagen')
+    }
+    setAiLoading(false)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -313,6 +346,27 @@ const DokumentUploadForm = ({ onUploadDocument }: DokumentUploadFormProps) => {
                 accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
                 className="hidden"
               />
+
+              {isPdf && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={fillWithAi}
+                    disabled={aiLoading}
+                    className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-700 to-sky-500 text-white text-sm font-medium hover:from-blue-800 hover:to-sky-600 disabled:opacity-60 transition-colors"
+                  >
+                    {aiLoading
+                      ? '⏳ KI liest das Dokument …'
+                      : '✨ Mit KI ausfüllen (Titel, Beschreibung, Kategorie, Tags)'}
+                  </button>
+                  {aiError && <p className="text-xs text-red-600 mt-1.5">{aiError}</p>}
+                  {!aiError && !aiLoading && (
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Die KI liest das PDF und schlägt die Felder vor – Sie können alles noch anpassen.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Buttons */}

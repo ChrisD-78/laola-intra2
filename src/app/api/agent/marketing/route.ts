@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-export type MarketingChannel = 'press' | 'instagram' | 'linkedin'
+export type MarketingChannel = 'press' | 'instagram' | 'linkedin' | 'calendar'
 
 const BRAND_PROMPT = `Du bist der Marketing-Assistent des Freizeitbads LA OLA in Landau in der Pfalz (Betreiber: Stadtholding Landau in der Pfalz GmbH).
 
@@ -53,12 +53,25 @@ Pressekontakt
 - Klare Handlungsaufforderung am Ende.
 - Abschluss: 3–5 passende Hashtags (z. B. #LAOLA #Landau #Freizeitbad plus Thema).
 - Reiner Text, keine Markdown-Zeichen.`,
+  calendar: `Erstelle einen CONTENT-KALENDER (Redaktionsplan) für die Social-Media-Kanäle des LA OLA.
+
+Format: GENAU eine Zeile pro geplantem Beitrag, Felder mit | getrennt, KEINE Kopfzeile, kein Markdown:
+TT.MM.|Kanal|Beitragsidee|Hook/erste Zeile
+
+Regeln:
+- Kanal ist "Instagram", "LinkedIn" oder "Instagram + LinkedIn".
+- 2–4 Beiträge pro Woche, sinnvoll über den Zeitraum verteilt (TT.MM. = konkretes Datum im Zeitraum).
+- Mische Formate: Veranstaltungs-Ankündigungen, Blick hinter die Kulissen, Team-Vorstellungen, Tipps (Sauna/Schwimmen/Gesundheit), saisonale Anlässe (Ferien, Feiertage, Wetter), Rückblicke.
+- Beziehe die genannten Anlässe/Schwerpunkte ein und verteile sie passend.
+- Beitragsidee: 1 Satz. Hook: die geplante erste Zeile des Beitrags, neugierig machend.
+- Maximal 18 Zeilen.`,
 }
 
 const CHANNEL_MAX_TOKENS: Record<MarketingChannel, number> = {
   press: 1600,
   instagram: 900,
   linkedin: 900,
+  calendar: 1800,
 }
 
 /** Marketing-Agent: Pressemitteilung, Instagram- oder LinkedIn-Beitrag im LA OLA Stil. */
@@ -66,7 +79,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const channel = body.channel as MarketingChannel
-    if (!['press', 'instagram', 'linkedin'].includes(channel)) {
+    if (!['press', 'instagram', 'linkedin', 'calendar'].includes(channel)) {
       return NextResponse.json({ error: 'Unbekannter Kanal.' }, { status: 400 })
     }
 
@@ -112,6 +125,7 @@ export async function POST(request: NextRequest) {
       press: 'Pressemitteilung',
       instagram: 'Instagram',
       linkedin: 'LinkedIn',
+      calendar: 'Content-Kalender',
     }
     await logAgentEvent('marketing', `${channelLabels[channel]}: ${topic}`)
 

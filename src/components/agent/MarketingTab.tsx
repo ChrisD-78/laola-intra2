@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-type Channel = 'press' | 'instagram' | 'linkedin'
+type Channel = 'press' | 'instagram' | 'linkedin' | 'calendar'
 
 const CHANNELS: { id: Channel; icon: string; label: string; desc: string }[] = [
   {
@@ -23,6 +23,12 @@ const CHANNELS: { id: Channel; icon: string; label: string; desc: string }[] = [
     label: 'LinkedIn-Beitrag',
     desc: 'Professioneller Beitrag für die Unternehmensseite',
   },
+  {
+    id: 'calendar',
+    icon: '🗓️',
+    label: 'Content-Kalender',
+    desc: 'Redaktionsplan mit Beitragsideen für einen ganzen Zeitraum',
+  },
 ]
 
 const TONES = ['Standard (LA OLA Markenstimme)', 'Locker & verspielt', 'Sachlich & informativ', 'Festlich & feierlich', 'Dringend (z. B. kurzfristige Info)']
@@ -38,6 +44,103 @@ function renderWithHashtags(text: string) {
       <span key={i}>{part}</span>
     ),
   )
+}
+
+/** Content-Kalender-Zeilen (TT.MM.|Kanal|Idee|Hook) in Tabellenzeilen zerlegen. */
+function parseCalendarRows(text: string): { date: string; channel: string; idea: string; hook: string }[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.includes('|'))
+    .map((line) => {
+      const [date = '', channel = '', idea = '', hook = ''] = line.split('|').map((p) => p.trim())
+      return { date, channel, idea, hook }
+    })
+    .filter((row) => row.date && row.idea)
+}
+
+/** Instagram-Kachel (1080×1080) im LA OLA Design als PNG zeichnen und herunterladen. */
+async function downloadInstagramTile(hook: string) {
+  const size = 1080
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  // Blauer LA OLA Verlauf
+  const grad = ctx.createLinearGradient(0, 0, size, size)
+  grad.addColorStop(0, '#1e3a8a')
+  grad.addColorStop(0.55, '#1d4ed8')
+  grad.addColorStop(1, '#0ea5e9')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, size, size)
+
+  // Dekor: Wellen-Emojis
+  ctx.font = '72px serif'
+  ctx.globalAlpha = 0.85
+  ctx.fillText('🌊', 56, 120)
+  ctx.fillText('💦', size - 140, size - 64)
+  ctx.globalAlpha = 1
+
+  // Hook-Text mittig, umgebrochen
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'center'
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'
+  ctx.shadowBlur = 14
+  const words = hook.split(/\s+/)
+  const lines: string[] = []
+  let fontSize = 72
+  ctx.font = `bold ${fontSize}px Arial, sans-serif`
+  let current = ''
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word
+    if (ctx.measureText(test).width > size - 200 && current) {
+      lines.push(current)
+      current = word
+    } else {
+      current = test
+    }
+  }
+  if (current) lines.push(current)
+  if (lines.length > 5) fontSize = 56
+  ctx.font = `bold ${fontSize}px Arial, sans-serif`
+  const lineHeight = fontSize * 1.25
+  const startY = size / 2 - ((lines.length - 1) * lineHeight) / 2
+  lines.forEach((line, i) => ctx.fillText(line, size / 2, startY + i * lineHeight))
+  ctx.shadowBlur = 0
+
+  // Logo unten links auf weißer Plakette
+  try {
+    const img = new Image()
+    img.src = '/la-ola-logo.png'
+    await img.decode()
+    const logoH = 96
+    const logoW = (img.width / img.height) * logoH
+    const pad = 20
+    const x = 48
+    const y = size - 48 - logoH - pad * 2
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'
+    const w = logoW + pad * 2
+    const h = logoH + pad * 2
+    const r = 18
+    ctx.beginPath()
+    ctx.moveTo(x + r, y)
+    ctx.arcTo(x + w, y, x + w, y + h, r)
+    ctx.arcTo(x + w, y + h, x, y + h, r)
+    ctx.arcTo(x, y + h, x, y, r)
+    ctx.arcTo(x, y, x + w, y, r)
+    ctx.closePath()
+    ctx.fill()
+    ctx.drawImage(img, x + pad, y + pad, logoW, logoH)
+  } catch {
+    /* Kachel auch ohne Logo herunterladbar */
+  }
+
+  const a = document.createElement('a')
+  a.href = canvas.toDataURL('image/png')
+  a.download = `LA_OLA_Instagram_Kachel_${new Date().toISOString().split('T')[0]}.png`
+  a.click()
 }
 
 /** Instagram-Caption in Hook (1. Zeile), Rest und Bildidee zerlegen. */
@@ -115,6 +218,7 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
       press: 'Pressemitteilung',
       instagram: 'Instagram-Beitrag',
       linkedin: 'LinkedIn-Beitrag',
+      calendar: 'Content-Kalender',
     }
     const blob = new Blob([result], { type: 'text/plain;charset=utf-8' })
     const a = document.createElement('a')
@@ -130,7 +234,7 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
   return (
     <div className="space-y-4">
       {/* Kanalauswahl */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CHANNELS.map((c) => (
           <button
             key={c.id}
@@ -160,34 +264,48 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
           </div>
           <div className="p-5 space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-600">Thema / Anlass *</label>
+              <label className="text-xs font-medium text-gray-600">
+                {channel === 'calendar' ? 'Zeitraum *' : 'Thema / Anlass *'}
+              </label>
               <input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="z. B. Mitternachtssauna im Juli, neue Rutsche, Ferienprogramm"
+                placeholder={
+                  channel === 'calendar'
+                    ? 'z. B. Juli 2026 oder Sommerferien 2026'
+                    : 'z. B. Mitternachtssauna im Juli, neue Rutsche, Ferienprogramm'
+                }
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600">Wichtige Infos / Stichpunkte</label>
+              <label className="text-xs font-medium text-gray-600">
+                {channel === 'calendar' ? 'Anlässe / Schwerpunkte im Zeitraum' : 'Wichtige Infos / Stichpunkte'}
+              </label>
               <textarea
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 rows={5}
-                placeholder={'z. B.\n– Termin: Sa. 18.07., 20–24 Uhr\n– 5 Aufgüsse, Eintritt 19 €\n– Anmeldung an der Kasse'}
+                placeholder={
+                  channel === 'calendar'
+                    ? 'z. B.\n– 18.07. Mitternachtssauna\n– Sommerferien ab 07.07.\n– neuer Aqua-Fitness-Kurs'
+                    : 'z. B.\n– Termin: Sa. 18.07., 20–24 Uhr\n– 5 Aufgüsse, Eintritt 19 €\n– Anmeldung an der Kasse'
+                }
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 resize-y"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-gray-600">Datum / Zeitraum</label>
-                <input
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  placeholder="z. B. 18. Juli 2026"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-              </div>
+              {channel !== 'calendar' && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Datum / Zeitraum</label>
+                  <input
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    placeholder="z. B. 18. Juli 2026"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-xs font-medium text-gray-600">Zielgruppe</label>
                 <input
@@ -197,8 +315,6 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-gray-600">Tonalität</label>
                 <select
@@ -211,15 +327,17 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600">Handlungsaufforderung</label>
-                <input
-                  value={cta}
-                  onChange={(e) => setCta(e.target.value)}
-                  placeholder="z. B. Tickets online sichern"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-              </div>
+              {channel !== 'calendar' && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Handlungsaufforderung</label>
+                  <input
+                    value={cta}
+                    onChange={(e) => setCta(e.target.value)}
+                    placeholder="z. B. Tickets online sichern"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                  />
+                </div>
+              )}
             </div>
             {channel === 'press' && (
               <div>
@@ -335,9 +453,58 @@ export default function MarketingTab({ onToast }: { onToast: (msg: string) => vo
                   {renderWithHashtags(`${instagram.hook}\n\n${instagram.rest}`)}
                 </div>
                 {instagram.imageIdea && (
-                  <div className="mx-4 mb-4 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs text-sky-900">
+                  <div className="mx-4 mb-3 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs text-sky-900">
                     💡 <strong>Bildidee:</strong> {instagram.imageIdea}
                   </div>
+                )}
+                <div className="px-4 pb-4">
+                  <button
+                    type="button"
+                    onClick={() => void downloadInstagramTile(instagram.hook)}
+                    className="w-full py-2 rounded-lg border border-blue-300 text-blue-700 text-xs font-medium hover:bg-blue-50"
+                  >
+                    🖼️ Bild-Kachel als PNG herunterladen (1080×1080)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {result && resultChannel === 'calendar' && (
+              <div className="rounded-xl border border-gray-200 bg-white shadow-md overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-blue-50/60">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/la-ola-logo.png" alt="LA OLA" className="h-6 object-contain" />
+                  <p className="text-sm font-semibold text-blue-900">Content-Kalender</p>
+                </div>
+                {parseCalendarRows(result).length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-gray-600 border-b border-gray-200 bg-gray-50">
+                          <th className="px-3 py-2 whitespace-nowrap">Datum</th>
+                          <th className="px-3 py-2 whitespace-nowrap">Kanal</th>
+                          <th className="px-3 py-2">Beitragsidee</th>
+                          <th className="px-3 py-2">Hook</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {parseCalendarRows(result).map((row, i) => (
+                          <tr key={i} className="border-b border-gray-100 align-top hover:bg-sky-50/50">
+                            <td className="px-3 py-2 font-medium text-blue-900 whitespace-nowrap">{row.date}</td>
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <span className="inline-block rounded-full bg-blue-100 text-blue-800 px-2 py-0.5">
+                                {row.channel}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-gray-800">{row.idea}</td>
+                            <td className="px-3 py-2 text-gray-600 italic">{row.hook}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <pre className="p-4 text-xs text-gray-800 whitespace-pre-wrap">{result}</pre>
                 )}
               </div>
             )}
