@@ -60,14 +60,17 @@ const diffNewAssignments = (baseline: DaySchedule[], current: DaySchedule[]): Sh
 }
 
 export default function SchichtplanPage() {
-  const { currentUser, isAdmin } = useAuth()
+  const { currentUser, isAdmin, userRole } = useAuth()
+
+  // Admin-Ansicht und Schichtplan-Verwaltung für Admins UND Teamleiter.
+  // Alle anderen sehen ausschließlich ihre eigene Mitarbeiter-Ansicht.
+  const canManageSchichtplan = isAdmin || userRole === 'Teamleiter'
+
   const [viewMode, setViewMode] = useState<ViewMode>('employee')
 
-  // Admin-Ansicht ausschließlich für Konten mit Admin-Rechten.
-  // Alle anderen (inkl. Teamleiter) sehen nur ihre eigene Mitarbeiter-Ansicht.
   useEffect(() => {
-    setViewMode(isAdmin ? 'admin' : 'employee')
-  }, [isAdmin])
+    setViewMode(canManageSchichtplan ? 'admin' : 'employee')
+  }, [canManageSchichtplan])
   const [schedule, setSchedule] = useState<DaySchedule[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
@@ -116,7 +119,7 @@ export default function SchichtplanPage() {
         throw new Error('Failed to check sync status')
       }
       const data = await res.json()
-      setShowSyncButton(data.needsSync && isAdmin)
+      setShowSyncButton(data.needsSync && canManageSchichtplan)
     } catch (error) {
       console.error('Failed to check sync status:', error)
       // Nicht kritisch, einfach ignorieren
@@ -266,7 +269,7 @@ export default function SchichtplanPage() {
       checkSyncStatus()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, isAdmin])
+  }, [currentUser, canManageSchichtplan])
 
   const handleScheduleUpdate = async (newSchedule: DaySchedule[]) => {
     setSchedule(newSchedule)
@@ -725,9 +728,9 @@ export default function SchichtplanPage() {
     <div className="app">
       <nav className="navbar">
         <div className="nav-buttons">
-          {/* Ansichts-Umschalter nur für Admins. Mitarbeiter sehen ausschließlich
-              ihre eigene Ansicht – ganz ohne Umschalter. */}
-          {isAdmin && (
+          {/* Ansichts-Umschalter für Admins und Teamleiter. Mitarbeiter sehen
+              ausschließlich ihre eigene Ansicht – ganz ohne Umschalter. */}
+          {canManageSchichtplan && (
             <>
               <button
                 className={`nav-btn ${viewMode === 'admin' ? 'active' : ''}`}
@@ -743,7 +746,7 @@ export default function SchichtplanPage() {
               </button>
             </>
           )}
-          {isAdmin && showSyncButton && (
+          {canManageSchichtplan && showSyncButton && (
             <button
               className="nav-btn"
               onClick={syncUsers}
@@ -856,8 +859,8 @@ export default function SchichtplanPage() {
               <div className="text-center">
                 <div className="text-xl text-gray-600 mb-4">Kein Schichtplan für dein Konto hinterlegt</div>
                 <div className="text-sm text-gray-500 max-w-md">
-                  {isAdmin
-                    ? 'Für dein Admin-Konto ist kein eigener Mitarbeiter-Eintrag vorhanden. Bitte synchronisiere die Benutzer aus der Benutzerverwaltung oder lege dich als Mitarbeiter an.'
+                  {canManageSchichtplan
+                    ? 'Für dein Konto ist kein eigener Mitarbeiter-Eintrag vorhanden. Bitte synchronisiere die Benutzer aus der Benutzerverwaltung oder lege dich als Mitarbeiter an.'
                     : 'Für dein Benutzerkonto ist noch kein Mitarbeiter im Schichtplan hinterlegt. Bitte wende dich an die Schichtleitung.'}
                 </div>
               </div>
