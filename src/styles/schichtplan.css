@@ -3358,6 +3358,8 @@
 .notification-message {
   margin-bottom: 0.5rem;
   color: #333;
+  /* Mehrzeilige Nachrichten (z. B. mehrere neue Schichten) sauber umbrechen */
+  white-space: pre-line;
 }
 
 .notification-date {

@@ -18,6 +18,47 @@ const getMondayOfWeek = (date: Date): Date => {
   return new Date(d.setDate(diff))
 }
 
+type ShiftChange = {
+  employeeId: string
+  employeeName: string
+  date: string
+  area: string
+  shift: string
+}
+
+/** Alle Schichtzuweisungen eines Plans als Map (für Diff-Vergleiche). */
+const collectAssignments = (schedule: DaySchedule[]): Map<string, ShiftChange> => {
+  const map = new Map<string, ShiftChange>()
+  for (const day of schedule) {
+    for (const [area, shifts] of Object.entries(day.shifts || {})) {
+      for (const [shift, assignments] of Object.entries(shifts || {})) {
+        for (const assignment of assignments || []) {
+          const key = `${day.date}|${area}|${shift}|${assignment.employeeId}`
+          map.set(key, {
+            employeeId: assignment.employeeId,
+            employeeName: assignment.employeeName,
+            date: day.date,
+            area,
+            shift,
+          })
+        }
+      }
+    }
+  }
+  return map
+}
+
+/** Neue Zuweisungen seit der letzten Benachrichtigung ermitteln. */
+const diffNewAssignments = (baseline: DaySchedule[], current: DaySchedule[]): ShiftChange[] => {
+  const before = collectAssignments(baseline)
+  const after = collectAssignments(current)
+  const changes: ShiftChange[] = []
+  for (const [key, change] of after) {
+    if (!before.has(key)) changes.push(change)
+  }
+  return changes
+}
+
 export default function SchichtplanPage() {
   const { currentUser, isAdmin, userRole } = useAuth()
   const [viewMode, setViewMode] = useState<ViewMode>('employee')
@@ -44,6 +85,11 @@ export default function SchichtplanPage() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushService, setPushService] = useState<PushNotificationService | null>(null)
   const [pushInitializing, setPushInitializing] = useState(true)
+  const [notifySending, setNotifySending] = useState(false)
+  // Stand des Plans bei der letzten Benachrichtigung (für „Mitarbeiter benachrichtigen")
+  const notifyBaselineRef = useRef<DaySchedule[]>([])
+  // Zuletzt gespeicherter Stand je Tag (damit nur geänderte Tage gespeichert werden)
+  const lastSavedRef = useRef<Map<string, string>>(new Map())
   const adminViewRef = useRef<AdminViewRef>(null)
   const [showEmployeeForm, setShowEmployeeForm] = useState(false)
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false)
@@ -149,7 +195,11 @@ export default function SchichtplanPage() {
         throw new Error('Failed to load schedules')
       }
       const schedulesData = await schedulesRes.json()
-      setSchedule(Array.isArray(schedulesData) ? schedulesData : [])
+      const loadedSchedule: DaySchedule[] = Array.isArray(schedulesData) ? schedulesData : []
+      setSchedule(loadedSchedule)
+      // Referenzstände setzen: ab hier zählen Änderungen als „neu"
+      notifyBaselineRef.current = JSON.parse(JSON.stringify(loadedSchedule))
+      lastSavedRef.current = new Map(loadedSchedule.map((d) => [d.date, JSON.stringify(d)]))
 
       // Load vacation requests
       try {
@@ -226,19 +276,66 @@ export default function SchichtplanPage() {
 
   const handleScheduleUpdate = async (newSchedule: DaySchedule[]) => {
     setSchedule(newSchedule)
-    
-    // Save to database
-    for (const daySchedule of newSchedule) {
+
+    // Nur geänderte Tage speichern (vorher wurden bei jeder Änderung ALLE Tage gespeichert)
+    const changedDays = newSchedule.filter((day) => {
+      const serialized = JSON.stringify(day)
+      return lastSavedRef.current.get(day.date) !== serialized
+    })
+
+    for (const daySchedule of changedDays) {
       try {
-        await fetch('/api/schichtplan/schedules', {
+        const res = await fetch('/api/schichtplan/schedules', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(daySchedule)
         })
+        if (res.ok) {
+          lastSavedRef.current.set(daySchedule.date, JSON.stringify(daySchedule))
+        } else {
+          console.error('Failed to save schedule for', daySchedule.date, res.status)
+        }
       } catch (error) {
         console.error('Failed to save schedule:', error)
       }
     }
+  }
+
+  // Neue Schichtzuweisungen seit der letzten Benachrichtigung
+  const pendingShiftChanges = diffNewAssignments(notifyBaselineRef.current, schedule)
+  const pendingEmployeeCount = new Set(pendingShiftChanges.map((c) => c.employeeId)).size
+
+  /** Betroffene Mitarbeiter über ihre neuen Schichten informieren (Push + Glocke). */
+  const notifyAffectedEmployees = async () => {
+    if (notifySending || pendingShiftChanges.length === 0) return
+    setNotifySending(true)
+    try {
+      const res = await fetch('/api/schichtplan/notify-shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ changes: pendingShiftChanges })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Benachrichtigung fehlgeschlagen')
+
+      // Ab jetzt zählt der aktuelle Stand als benachrichtigt
+      notifyBaselineRef.current = JSON.parse(JSON.stringify(schedule))
+
+      let msg = `✅ ${data.employees} Mitarbeiter benachrichtigt.\n\n`
+      msg += `Push-Nachrichten gesendet: ${data.pushSent}`
+      if (data.pushFailed > 0) msg += ` (${data.pushFailed} fehlgeschlagen)`
+      if (!data.vapidConfigured) {
+        msg += '\n\n⚠️ Push ist auf dem Server nicht konfiguriert (VAPID-Keys fehlen) – es wurden nur In-App-Benachrichtigungen erstellt.'
+      } else if (Array.isArray(data.withoutPush) && data.withoutPush.length > 0) {
+        msg += `\n\nOhne Push (nicht aktiviert): ${data.withoutPush.join(', ')}`
+        msg += '\nDiese Mitarbeiter sehen die Info über die Glocke im Schichtplan.'
+      }
+      alert(msg)
+    } catch (error) {
+      console.error('Failed to notify employees:', error)
+      alert('Fehler beim Benachrichtigen: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'))
+    }
+    setNotifySending(false)
   }
 
   const handleEmployeesUpdate = async (newEmployees: Employee[]) => {
@@ -682,6 +779,28 @@ export default function SchichtplanPage() {
           </button>
           {viewMode === 'admin' && (
             <>
+              <button
+                className="nav-btn"
+                onClick={notifyAffectedEmployees}
+                disabled={notifySending || pendingShiftChanges.length === 0}
+                style={{
+                  background: pendingShiftChanges.length > 0 ? '#f59e0b' : '#9ca3af',
+                  color: 'white',
+                  opacity: notifySending ? 0.6 : 1,
+                  cursor: notifySending || pendingShiftChanges.length === 0 ? 'default' : 'pointer'
+                }}
+                title={
+                  pendingShiftChanges.length === 0
+                    ? 'Keine neuen Schichtzuweisungen seit der letzten Benachrichtigung'
+                    : `${pendingShiftChanges.length} neue Zuweisung(en) – betroffene Mitarbeiter per Push & Glocke informieren`
+                }
+              >
+                {notifySending
+                  ? '⏳ Sende …'
+                  : pendingShiftChanges.length > 0
+                    ? `📣 ${pendingEmployeeCount} Mitarbeiter benachrichtigen`
+                    : '📣 Mitarbeiter benachrichtigen'}
+              </button>
               <button
                 className="nav-btn"
                 onClick={() => {

@@ -176,8 +176,6 @@ export async function POST(request: NextRequest) {
       `
       return NextResponse.json(result[0], { status: 201 })
     }
-
-    return NextResponse.json(result[0], { status: 201 })
   } catch (error) {
     console.error('Failed to create employee:', error)
     return NextResponse.json(

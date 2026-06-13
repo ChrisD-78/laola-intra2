@@ -15,14 +15,18 @@ interface EmployeeViewProps {
   onMarkNotificationRead: (notificationId: string) => void
 }
 
-const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht']
+// Muss mit AdminView übereinstimmen – sonst sehen Mitarbeiter ihre
+// Reinigungsschichten in der Mitarbeiteransicht nicht
+const SHIFT_TYPES: ShiftType[] = ['Frühschicht', 'Mittelschicht', 'Spätschicht', 'Gastro Reinigung', 'Sauna Reinigung']
 const AREAS: AreaType[] = ['Halle', 'Kasse', 'Sauna', 'Reinigung', 'Gastro']
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
 
-const SHIFT_TIMES = {
+const SHIFT_TIMES: Record<ShiftType, string> = {
   'Frühschicht': '06:00 - 14:00',
   'Mittelschicht': '14:00 - 22:00',
-  'Spätschicht': '22:00 - 06:00'
+  'Spätschicht': '22:00 - 06:00',
+  'Gastro Reinigung': 'nach Plan',
+  'Sauna Reinigung': 'nach Plan'
 }
 
 export default function EmployeeView({
@@ -135,7 +139,7 @@ export default function EmployeeView({
                         className={`notification-item ${!notif.read ? 'unread' : ''}`}
                         onClick={() => onMarkNotificationRead(notif.id)}
                       >
-                        <div className="notification-message">{notif.message}</div>
+                        <div className="notification-message" style={{ whiteSpace: 'pre-line' }}>{notif.message}</div>
                         <div className="notification-date">
                           {new Date(notif.createdAt).toLocaleDateString('de-DE', {
                             day: '2-digit',

@@ -150,19 +150,20 @@ export class PushNotificationService {
               }
             }, 10000) // 10 Sekunden Timeout
 
-            const worker = this.registration.installing
+            const worker = this.registration?.installing
             if (!worker) {
               clearTimeout(timeout)
               resolve()
               return
             }
 
-            worker.addEventListener('statechange', function() {
-              console.log('Service Worker State:', this.state)
-              if (this.state === 'activated' || this.state === 'activating') {
+            // Arrow Function: „this" bleibt die Service-Klasse, Worker-Status über „worker"
+            worker.addEventListener('statechange', () => {
+              console.log('Service Worker State:', worker.state)
+              if (worker.state === 'activated' || worker.state === 'activating') {
                 clearTimeout(timeout)
                 resolve()
-              } else if (this.state === 'redundant') {
+              } else if (worker.state === 'redundant') {
                 clearTimeout(timeout)
                 // Prüfe ob bereits ein aktiver Worker existiert
                 if (this.registration?.active) {
@@ -172,7 +173,7 @@ export class PushNotificationService {
                 }
               }
             })
-            
+
             // Fallback: Prüfe nach 2 Sekunden ob Worker bereits aktiv ist
             setTimeout(() => {
               if (this.registration?.active) {
@@ -201,19 +202,20 @@ export class PushNotificationService {
               }
             }, 10000)
 
-            const worker = this.registration.waiting
+            const worker = this.registration?.waiting
             if (!worker) {
               clearTimeout(timeout)
               resolve()
               return
             }
 
-            worker.addEventListener('statechange', function() {
-              console.log('Service Worker State:', this.state)
-              if (this.state === 'activated' || this.state === 'activating') {
+            // Arrow Function: „this" bleibt die Service-Klasse, Worker-Status über „worker"
+            worker.addEventListener('statechange', () => {
+              console.log('Service Worker State:', worker.state)
+              if (worker.state === 'activated' || worker.state === 'activating') {
                 clearTimeout(timeout)
                 resolve()
-              } else if (this.state === 'redundant') {
+              } else if (worker.state === 'redundant') {
                 clearTimeout(timeout)
                 if (this.registration?.active) {
                   resolve()
@@ -352,7 +354,7 @@ export class PushNotificationService {
       // Erstelle Subscription
       this.subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(publicKey)
+        applicationServerKey: this.urlBase64ToUint8Array(publicKey) as BufferSource
       })
 
       console.log('Subscription erstellt, sende an Server...')

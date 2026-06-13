@@ -57,7 +57,7 @@ export interface VacationRequest {
 export interface Notification {
   id: string;
   employeeId: string;
-  type: 'vacation_approved' | 'vacation_rejected';
+  type: 'vacation_approved' | 'vacation_rejected' | 'shift_assigned';
   message: string;
   date: string;
   read: boolean;
