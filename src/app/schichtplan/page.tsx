@@ -60,17 +60,14 @@ const diffNewAssignments = (baseline: DaySchedule[], current: DaySchedule[]): Sh
 }
 
 export default function SchichtplanPage() {
-  const { currentUser, isAdmin, userRole } = useAuth()
+  const { currentUser, isAdmin } = useAuth()
   const [viewMode, setViewMode] = useState<ViewMode>('employee')
-  
-  // Update viewMode when isAdmin or Teamleiter changes
+
+  // Admin-Ansicht ausschließlich für Konten mit Admin-Rechten.
+  // Alle anderen (inkl. Teamleiter) sehen nur ihre eigene Mitarbeiter-Ansicht.
   useEffect(() => {
-    if (isAdmin || userRole === 'Teamleiter') {
-      setViewMode('admin')
-    } else {
-      setViewMode('employee')
-    }
-  }, [isAdmin, userRole])
+    setViewMode(isAdmin ? 'admin' : 'employee')
+  }, [isAdmin])
   const [schedule, setSchedule] = useState<DaySchedule[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
@@ -171,18 +168,15 @@ export default function SchichtplanPage() {
       
       setEmployees(Array.isArray(employeesData) ? employeesData : [])
       
-      // Finde aktuellen Benutzer in der Liste
+      // Mitarbeiter-Ansicht ist fest an das eingeloggte Konto gebunden.
+      // Kein Fallback auf einen fremden Mitarbeiter – sonst sähe man fremde Pläne.
       if (currentUser && employeesData.length > 0) {
-        const currentUserEmployee = employeesData.find((emp: any) => 
+        const currentUserEmployee = employeesData.find((emp: any) =>
           emp.userDisplayName === currentUser || emp.username === currentUser
         )
-        if (currentUserEmployee) {
-          setCurrentEmployeeId(currentUserEmployee.id)
-        } else if (!currentEmployeeId && employeesData.length > 0) {
-          setCurrentEmployeeId(employeesData[0].id)
-        }
-      } else if (employeesData.length > 0 && !currentEmployeeId) {
-        setCurrentEmployeeId(employeesData[0].id)
+        setCurrentEmployeeId(currentUserEmployee ? currentUserEmployee.id : '')
+      } else {
+        setCurrentEmployeeId('')
       }
 
       // Load schedules for current month
@@ -731,20 +725,24 @@ export default function SchichtplanPage() {
     <div className="app">
       <nav className="navbar">
         <div className="nav-buttons">
+          {/* Ansichts-Umschalter nur für Admins. Mitarbeiter sehen ausschließlich
+              ihre eigene Ansicht – ganz ohne Umschalter. */}
           {isAdmin && (
-            <button
-              className={`nav-btn ${viewMode === 'admin' ? 'active' : ''}`}
-              onClick={() => setViewMode('admin')}
-            >
-              👨‍💼 Admin
-            </button>
+            <>
+              <button
+                className={`nav-btn ${viewMode === 'admin' ? 'active' : ''}`}
+                onClick={() => setViewMode('admin')}
+              >
+                👨‍💼 Admin
+              </button>
+              <button
+                className={`nav-btn ${viewMode === 'employee' ? 'active' : ''}`}
+                onClick={() => setViewMode('employee')}
+              >
+                👤 Meine Ansicht
+              </button>
+            </>
           )}
-          <button
-            className={`nav-btn ${viewMode === 'employee' ? 'active' : ''}`}
-            onClick={() => setViewMode('employee')}
-          >
-            👤 Mitarbeiter
-          </button>
           {isAdmin && showSyncButton && (
             <button
               className="nav-btn"
@@ -824,26 +822,6 @@ export default function SchichtplanPage() {
             </>
           )}
         </div>
-        
-        {viewMode === 'employee' && (
-          <div className="employee-selector">
-            <select
-              value={currentEmployeeId}
-              onChange={(e) => setCurrentEmployeeId(e.target.value)}
-              className="employee-dropdown"
-            >
-              {employees.map(emp => {
-                // Zeige aktuellen Benutzer bevorzugt
-                const isCurrentUser = (emp as any).userDisplayName === currentUser
-                return (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName} {isCurrentUser ? '(Sie)' : ''}
-                  </option>
-                )
-              })}
-            </select>
-          </div>
-        )}
       </nav>
 
       <main className="main-content">
@@ -876,9 +854,11 @@ export default function SchichtplanPage() {
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="text-xl text-gray-600 mb-4">Keine Mitarbeiter gefunden</div>
-                <div className="text-sm text-gray-500">
-                  {isAdmin && 'Bitte synchronisieren Sie die Benutzer aus der Benutzerverwaltung.'}
+                <div className="text-xl text-gray-600 mb-4">Kein Schichtplan für dein Konto hinterlegt</div>
+                <div className="text-sm text-gray-500 max-w-md">
+                  {isAdmin
+                    ? 'Für dein Admin-Konto ist kein eigener Mitarbeiter-Eintrag vorhanden. Bitte synchronisiere die Benutzer aus der Benutzerverwaltung oder lege dich als Mitarbeiter an.'
+                    : 'Für dein Benutzerkonto ist noch kein Mitarbeiter im Schichtplan hinterlegt. Bitte wende dich an die Schichtleitung.'}
                 </div>
               </div>
             </div>
