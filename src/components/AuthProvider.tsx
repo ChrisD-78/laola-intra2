@@ -90,7 +90,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.setItem('currentUser', data.user.displayName)
         localStorage.setItem('isAdmin', data.user.isAdmin ? 'true' : 'false')
         localStorage.setItem('userRole', data.user.role || 'Benutzer')
-        
+
+        // Popup-Hinweise ("Aktuelle Informationen") sollen nach jedem Login
+        // einmal wieder erscheinen – Sitzungs-Markierung zurücksetzen.
+        sessionStorage.removeItem('popupShownThisSession')
+
         // Nach erfolgreichem Login zur Hauptseite weiterleiten
         setTimeout(() => {
           router.push('/')

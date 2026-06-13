@@ -88,14 +88,21 @@ export default function Dashboard() {
         }))
         setCurrentInfos(mapped)
 
-        // Prüfe auf Popup-Informationen (nur markierte)
-        const popupInfos = mapped.filter(info => info.isPopup)
-        if (popupInfos.length > 0) {
-          // Zeige die neueste Popup-Info, die noch nicht dismissed wurde
-          const dismissedPopups = JSON.parse(localStorage.getItem('dismissedPopups') || '[]')
-          const unDismissedPopup = popupInfos.find(info => !dismissedPopups.includes(info.id))
-          if (unDismissedPopup) {
-            setPopupInfo(unDismissedPopup)
+        // Popup nur EINMAL pro Login-Sitzung automatisch zeigen – beim ersten
+        // Öffnen des Dashboards nach dem Login. Beim Zurückwechseln aus anderen
+        // Bereichen erscheint es nicht erneut. Der Schalter wird beim Login
+        // zurückgesetzt (siehe AuthProvider).
+        const popupAlreadyHandled = sessionStorage.getItem('popupShownThisSession') === 'true'
+        if (!popupAlreadyHandled) {
+          sessionStorage.setItem('popupShownThisSession', 'true')
+          const popupInfos = mapped.filter(info => info.isPopup)
+          if (popupInfos.length > 0) {
+            // Dauerhaft weggeklickte Popups ("Nicht mehr anzeigen") überspringen
+            const dismissedPopups = JSON.parse(localStorage.getItem('dismissedPopups') || '[]')
+            const popupToShow = popupInfos.find(info => !dismissedPopups.includes(info.id))
+            if (popupToShow) {
+              setPopupInfo(popupToShow)
+            }
           }
         }
       } catch (e) {
